@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/manifest/0.1.0/schema.json",
+  "title": "WastelandForge Manifest",
+  "description": "Root WastelandForge project manifest and registry index.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "name",
+    "version",
+    "game",
+    "registries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the manifest contract.",
+      "const": "0.1.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "manifest"
+    },
+    "id": {
+      "description": "Stable dotted lowercase project identifier. Reverse-DNS style is recommended but not required.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$",
+      "examples": [
+        "io.github.theboyyss.examplemod"
+      ]
+    },
+    "name": {
+      "description": "Human-readable project name.",
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "description": "Project, mod, or package release version. This is separate from schemaVersion.",
+      "type": "string",
+      "minLength": 1
+    },
+    "game": {
+      "description": "Target game identifier.",
+      "const": "falloutnv"
+    },
+    "metadata": {
+      "description": "Optional project metadata.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nexusModId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        }
+      }
+    },
+    "registries": {
+      "description": "Registry roots. Paths may point to files or directories; the loader normalizes both into one logical graph.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dependencies",
+        "capabilities"
+      ],
+      "properties": {
+        "dependencies": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "capabilities": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "assets": {
+          "$ref": "#/$defs/relativePath"
+        }
+      }
+    },
+    "outputs": {
+      "description": "Declared generated outputs. Generated artifacts are disposable and must not become source truth.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "plugin": {
+          "$ref": "#/$defs/outputPath"
+        },
+        "docs": {
+          "$ref": "#/$defs/outputPath"
+        },
+        "buildManifest": {
+          "$ref": "#/$defs/outputPath"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "^(?:[a-zA-Z]:|/|\\\\\\\\)"
+      }
+    },
+    "outputPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.1.0",
+      "kind": "manifest",
+      "id": "io.github.theboyyss.examplemod",
+      "name": "Example Mod",
+      "version": "0.1.0",
+      "game": "falloutnv",
+      "metadata": {
+        "authors": [
+          "theboyyss"
+        ],
+        "license": "MIT",
+        "repository": "org/repo",
+        "nexusModId": null
+      },
+      "registries": {
+        "dependencies": "src/registries/dependencies/",
+        "capabilities": "src/registries/capabilities/",
+        "assets": "src/registries/assets/"
+      },
+      "outputs": {
+        "plugin": {
+          "path": "generated/plugins/ExampleMod.esp"
+        },
+        "docs": {
+          "path": "generated/docs/"
+        },
+        "buildManifest": {
+          "path": "generated/build/build-manifest.json"
+        }
+      }
+    }
+  ]
+}

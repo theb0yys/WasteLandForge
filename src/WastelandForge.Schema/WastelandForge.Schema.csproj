@@ -4,4 +4,9 @@
     <ProjectReference Include="..\WastelandForge.Core\WastelandForge.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\schemas\**\*.json" Link="schemas\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\schemas\**\*.json" Pack="true" PackagePath="schemas\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>
