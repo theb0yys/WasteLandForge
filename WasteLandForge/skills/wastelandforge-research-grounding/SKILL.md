@@ -33,6 +33,7 @@ Use these reports first:
 - Generation/build and ADR-009: `WastelandForge Generator and Build Pipeline Architecture-deep-research-report.md`.
 - CLI/DX and ADR-010: `R006 Developer Experience and CLI Workflow Model for WastelandForge-deep-research-report.md`.
 - Supplementary CLI/DX details where not conflicting with R006: `WastelandForge Developer Experience and CLI Workflow Model-deep-research-report.md`.
+- Validation, testing, CI, release, governance, and ADR-011: `WastelandForge Validation Testing CI Release and Governance-deep-research-report.md`.
 
 ## Binding rules
 
@@ -42,6 +43,10 @@ Use these reports first:
 - Forge integrates with GECK, xEdit, MO2, xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender, GECK Extender, Hot Reload, and kNVSE. It does not replace them.
 - No proprietary or redistribution-unclear dependency becomes a hard core requirement.
 - Runtime probes enrich capability detection; they do not replace local deterministic detection.
+- The validation stack is layered: load/source, schema, semantic, capability/environment, generation planning, output, package, release, then build manifest and reports.
+- Public fixtures are synthetic and redistributable. Do not use Bethesda assets or third-party mod files in public fixtures without explicit permission.
+- CI is GitHub Actions-first with a mandatory Windows lane, an Ubuntu fast-validation lane, SARIF emitted locally, TRX-native .NET test output, release dry-runs, checksums, and build manifests.
+- Implementation planning should target .NET 10 LTS unless a required dependency blocks it, while recording that R008 treats the target framework as an implementation choice.
 
 ## Output discipline
 

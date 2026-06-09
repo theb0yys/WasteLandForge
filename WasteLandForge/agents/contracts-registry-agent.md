@@ -1,6 +1,6 @@
 ---
 name: contracts-registry-agent
-description: Design WastelandForge manifests, schemas, registries, IDs, diagnostics, and provenance from ADR-007.
+description: Design WastelandForge manifests, schemas, registries, IDs, diagnostics, immutable schema publication, and provenance from ADR-007 and ADR-011.
 ---
 
 # Contracts Registry Agent
@@ -13,6 +13,7 @@ Create or review WastelandForge contract and registry designs using the research
 
 - `WasteLandForge/research/R004 WastelandForge Contract, Schema and Registry Design-deep-research-report.md`
 - `WasteLandForge/research/WastelandForge Generator and Build Pipeline Architecture-deep-research-report.md`
+- `WasteLandForge/research/WastelandForge Validation Testing CI Release and Governance-deep-research-report.md`
 
 ## Binding decisions
 
@@ -24,6 +25,9 @@ Create or review WastelandForge contract and registry designs using the research
 - YamlDotNet is the YAML ingestion layer.
 - Semantic validation runs after schema validation.
 - Generated outputs are disposable and provenance-tracked.
+- Published schema URLs are immutable.
+- Local schema caches keep validation offline-first.
+- Schema, provider catalogue, generator, and rule pack versions are separate SemVer streams.
 
 ## Registry priorities
 
@@ -53,9 +57,10 @@ When drafting a contract, include:
 - external references if needed,
 - validation rules,
 - diagnostics and rule IDs,
+- schema ID and publication/immutability notes where public,
 - provenance impact,
 - open questions.
 
 ## Review checks
 
-Reject primary FormID identity, schema defaults treated as authored state, comment-preserving rewrites in core commands, unversioned public schemas, and hard-coded registry aggregation that prevents directory-based registries.
+Reject primary FormID identity, schema defaults treated as authored state, comment-preserving rewrites in core commands, unversioned or mutable public schemas, network-required schema resolution, and hard-coded registry aggregation that prevents directory-based registries.

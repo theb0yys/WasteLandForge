@@ -11,6 +11,8 @@ They are intentionally research-bound. Each skill names the reports it depends o
 - `wastelandforge-contracts-registries`: YAML/JSON contracts, schemas, registries, diagnostics, and ADR-007.
 - `wastelandforge-capabilities-providers`: Capability/provider modeling, detection, versioning, scopes, and ADR-008.
 - `wastelandforge-build-cli-release`: Deterministic generation, build graph, R006 CLI surface, packaging, diagnostics, and ADR-009/010.
+- `wastelandforge-validation-release-governance`: R008 layered validation, testing, CI, release, governance, rule families, fixtures, and ADR-011.
+- `wastelandforge-implementation-planning`: v0.1 implementation planning after the completed 8-report foundation.
 - `wastelandforge-fnv-content-pipeline`: Asset, voice, dialogue, packaging, BSA, MCM, MO2, xEdit, and ADR-004.
 - `wastelandforge-narrative-reactivity`: Quest, dialogue, faction, world state, event history, and ADR-003.
 - `wastelandforge-ai-agent-governance`: AI platform layer, specialist agents, memory, approvals, voice risk, and ADR-005.

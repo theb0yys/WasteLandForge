@@ -12,6 +12,7 @@ Use:
 - `R004 WastelandForge Contract, Schema and Registry Design-deep-research-report.md`.
 - `Wasteland Forge Platform Architecture & System Design-deep-research-report.md`.
 - `WastelandForge Generator and Build Pipeline Architecture-deep-research-report.md` for generated outputs and provenance.
+- `WastelandForge Validation Testing CI Release and Governance-deep-research-report.md` for schema immutability, SemVer streams, local schema caches, and validation rule families.
 
 ## Contract decision
 
@@ -82,3 +83,9 @@ Keep rule IDs stable across console, JSON, SARIF, GitHub annotations, and future
 Every successful build must write a local `build-manifest.json` with Forge version, project ID, schema versions, source digests, generator versions, resolved capability set, output digests, and enough data to explain how artifacts were produced.
 
 Release-grade attestations can be added later, but local provenance is mandatory even offline.
+
+## Schema publication and version streams
+
+Published schema URLs are immutable. Local schema caches must allow validation without network access.
+
+Use separate SemVer streams for CLI/core packages, schemas, provider catalogues, generators, and rule packs. Record relevant schema, generator, provider catalogue, and rule pack versions in build manifests and diagnostics where they affect behavior.

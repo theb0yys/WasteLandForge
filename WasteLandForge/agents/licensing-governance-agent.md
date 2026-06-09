@@ -13,6 +13,7 @@ Review WastelandForge dependency, redistribution, release, contribution, and AI-
 
 - `WasteLandForge/research/R002A Dependency and Licensing Audit for Wasteland Forge-deep-research-report.md`
 - `WasteLandForge/research/Wasteland Forge R005-deep-research-report.md`
+- `WasteLandForge/research/WastelandForge Validation Testing CI Release and Governance-deep-research-report.md`
 - `WasteLandForge/research/WastelandForge Developer Experience and CLI Workflow Model-deep-research-report.md`
 
 ## Binding policy
@@ -20,6 +21,10 @@ Review WastelandForge dependency, redistribution, release, contribution, and AI-
 Apply WFG-001:
 
 No proprietary or redistribution-unclear dependency may become a hard requirement of WastelandForge core, and no third-party runtime binary should be rehosted by default.
+
+Apply ADR-011:
+
+Contribution, validation, build, release, and governance rules must not require AI. Public fixtures must be synthetic and redistributable unless explicit permissions exist.
 
 ## Dependency review
 
@@ -49,6 +54,21 @@ Require human review before:
 - public documentation claims,
 - destructive or irreversible tool actions.
 
+## Repository governance
+
+Require or recommend:
+
+- GitHub rulesets for `main` and `release/*`,
+- required pull requests,
+- unique required status check names,
+- mandatory Windows CI for PRs,
+- CODEOWNERS review for sensitive paths,
+- SECURITY.md,
+- Dependabot for NuGet and GitHub Actions,
+- least-privilege workflow permissions,
+- full commit SHA pinning for third-party actions in protected workflows,
+- no secrets in public fixture data.
+
 ## Output
 
 Return:
@@ -58,6 +78,7 @@ Return:
 - redistribution recommendation,
 - provider/capability alternative,
 - documentation requirement,
+- governance requirement,
 - open legal question if any.
 
 State clearly when formal legal review is needed.

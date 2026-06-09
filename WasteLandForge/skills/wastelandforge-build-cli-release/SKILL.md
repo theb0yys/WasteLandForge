@@ -11,6 +11,7 @@ Use:
 
 - `WastelandForge Generator and Build Pipeline Architecture-deep-research-report.md`.
 - `R006 Developer Experience and CLI Workflow Model for WastelandForge-deep-research-report.md`.
+- `WastelandForge Validation Testing CI Release and Governance-deep-research-report.md`.
 - `WastelandForge Developer Experience and CLI Workflow Model-deep-research-report.md` only for supplemental points that do not conflict with R006.
 - `R004 WastelandForge Contract, Schema and Registry Design-deep-research-report.md`.
 - `R005 WastelandForge Capability Detection and Provider Model-deep-research-report.md`.
@@ -162,10 +163,12 @@ Warnings should not fail unless configured as blocking diagnostics.
 
 ## CI and editor integration
 
-Assume PowerShell on Windows. GitHub Actions should run with `--no-input`, emit SARIF for durable analysis, archive build manifests and dist outputs, and use GitHub annotations only as convenience output.
+Assume PowerShell on Windows. GitHub Actions should run with `--no-input`, include a mandatory Windows lane, include an Ubuntu lane for fast validation, emit SARIF locally for durable analysis, produce TRX-native .NET test output, archive build manifests and dist outputs, and use GitHub annotations only as convenience output.
+
+Production workflows should use least-privilege permissions and pin third-party actions to full commit SHAs. Use explicit SDK versions through `global.json` and CI setup rather than trusting hosted runner preinstalls.
 
 For v0.1 editor integration, ship schemas, VS Code tasks, and problem matchers. Defer a full extension or language server until the command and diagnostic schemas stabilize.
 
 ## Packaging
 
-v0.1 packaging should be a deterministic staging tree plus ZIP metadata. `package` should arrive as soon as build manifests and staging are stable. `release prepare` and `release verify` should follow. `release publish` waits until release governance is locked down. Add FOMOD later as a specialized adapter. Sort files, normalize mtimes using `SOURCE_DATE_EPOCH` or a source-derived timestamp when release reproducibility matters, and record package digests.
+v0.1 packaging should be a deterministic staging tree plus ZIP metadata. `package` should arrive as soon as build manifests and staging are stable. `release prepare` and `release verify` should follow. `release publish` waits until release governance is locked down. Add FOMOD later as a specialized adapter. Sort files, normalize mtimes using `SOURCE_DATE_EPOCH` or a source-derived timestamp when release reproducibility matters, record package digests, and run release dry-runs before publishing. Optional GitHub artifact attestations or SLSA-style provenance can layer on top of the mandatory local build manifest.

@@ -12,7 +12,8 @@ Use:
 - `R005 WastelandForge Capability Detection and Provider Model-deep-research-report.md`.
 - `R002A Dependency and Licensing Audit for Wasteland Forge-deep-research-report.md`.
 - `WastelandForge Generator and Build Pipeline Architecture-deep-research-report.md`.
-- `WastelandForge Developer Experience and CLI Workflow Model-deep-research-report.md`.
+- `R006 Developer Experience and CLI Workflow Model for WastelandForge-deep-research-report.md`.
+- `WastelandForge Validation Testing CI Release and Governance-deep-research-report.md` for `WF-CAP-*` release/CI gating and fixture policy.
 
 ## ADR-008 decision
 
@@ -147,3 +148,5 @@ JIP Script Runner generation must declare event prefixes, size budget, provider 
 Reserve `WF-CAP-*` diagnostics for missing required capability, optional capability unavailable, unsupported provider version, wrong-scope install, unknown capability, detector failure, conflicting providers, declared-but-unused capability, missing fallback, and runtime-only capability unverifiable offline.
 
 Explain why a capability is unavailable, including transitive provider evidence. Do not emit only "missing dependency".
+
+In CI and public fixtures, capability checks must use synthetic providers, declared fixtures, or local deterministic detectors. Do not require public CI to include Bethesda assets, third-party mod files, or a real game install.

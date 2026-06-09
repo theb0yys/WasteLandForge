@@ -13,7 +13,8 @@ Design or review capability/provider catalogues, environment scans, dependency r
 
 - `WasteLandForge/research/R005 WastelandForge Capability Detection and Provider Model-deep-research-report.md`
 - `WasteLandForge/research/R002A Dependency and Licensing Audit for Wasteland Forge-deep-research-report.md`
-- `WasteLandForge/research/WastelandForge Developer Experience and CLI Workflow Model-deep-research-report.md`
+- `WasteLandForge/research/R006 Developer Experience and CLI Workflow Model for WastelandForge-deep-research-report.md`
+- `WasteLandForge/research/WastelandForge Validation Testing CI Release and Governance-deep-research-report.md` for `WF-CAP-*` release/CI gating and fixture policy
 
 ## Binding decisions
 
