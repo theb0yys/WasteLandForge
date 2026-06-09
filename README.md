@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 7 establishes
-formal fixture-backed test coverage.
+The project is currently in gated v0.1 implementation. Gate 8 establishes
+the CI and governance baseline.
 
 ## Architecture Spine
 
@@ -16,22 +16,22 @@ formal fixture-backed test coverage.
 
 ## Current Gate
 
-Gate 7 creates:
+Gate 8 creates:
 
-- xUnit v3 test framework wiring,
-- fixture validation tests,
-- schema and semantic tests,
-- CLI help and JSON golden tests,
-- Windows path/filesystem tests,
-- backwards-compatibility tests,
-- TRX-capable local test execution.
+- GitHub Actions CI with `validate-ubuntu` and mandatory `build-test-windows` lanes,
+- serial solution-level test execution using the Gate 7 verified `-m:1` path,
+- TRX artifact collection,
+- local placeholder SARIF generation and optional GitHub SARIF upload,
+- CI build manifest and checksum artifacts,
+- CODEOWNERS, Dependabot, SECURITY.md, PR template, and ruleset baseline docs.
 
 It intentionally does not create:
 
 - YAML ingestion,
 - JsonSchema.Net runtime schema evaluation,
-- SARIF output,
-- CI workflows,
+- canonical SARIF diagnostic projection from real validation issues,
+- real release packaging or publish flows,
+- Forge-owned build-manifest writer,
 - generation, packaging, release, or capability scan implementations.
 
 Those belong to later gates recorded in `WasteLandForge/planning/`.

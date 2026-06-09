@@ -1,0 +1,162 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'release/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_NOLOGO: true
+  NUGET_XMLDOC_MODE: skip
+
+jobs:
+  validate-ubuntu:
+    name: validate-ubuntu
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0 # v6.0.3
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        shell: pwsh
+        run: dotnet restore WastelandForge.sln
+
+      - name: Build
+        shell: pwsh
+        run: dotnet build WastelandForge.sln -c Release --no-restore
+
+      - name: Test
+        shell: pwsh
+        run: dotnet test WastelandForge.sln -c Release --no-build --no-restore -m:1 --logger "trx;LogFilePrefix=validate-ubuntu" --results-directory TestResults/validate-ubuntu
+
+      - name: Write CI governance artifacts
+        shell: pwsh
+        run: ./eng/ci/New-CiArtifacts.ps1 -Lane validate-ubuntu -OutputDirectory artifacts/validate-ubuntu -WriteSarif
+
+      - name: Upload TRX and CI artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: validate-ubuntu-results
+          path: |
+            TestResults/validate-ubuntu/**/*.trx
+            artifacts/validate-ubuntu/**
+          if-no-files-found: warn
+
+      - name: Upload SARIF
+        if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@1a818fd5f97ed0ee9a823421bd5b171add01227f # v4.36.2
+        with:
+          sarif_file: artifacts/validate-ubuntu/wastelandforge-validation.sarif
+          category: wastelandforge-validation
+
+  build-test-windows:
+    name: build-test-windows
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0 # v6.0.3
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        shell: pwsh
+        run: dotnet restore WastelandForge.sln
+
+      - name: Build
+        shell: pwsh
+        run: dotnet build WastelandForge.sln -c Release --no-restore
+
+      - name: Test
+        shell: pwsh
+        run: dotnet test WastelandForge.sln -c Release --no-build --no-restore -m:1 --logger "trx;LogFilePrefix=build-test-windows" --results-directory TestResults/build-test-windows
+
+      - name: Write CI governance artifacts
+        shell: pwsh
+        run: ./eng/ci/New-CiArtifacts.ps1 -Lane build-test-windows -OutputDirectory artifacts/build-test-windows
+
+      - name: Upload TRX and CI artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: build-test-windows-results
+          path: |
+            TestResults/build-test-windows/**/*.trx
+            artifacts/build-test-windows/**
+          if-no-files-found: warn
+
+  release-dry-run:
+    name: release-dry-run
+    runs-on: windows-latest
+    needs:
+      - validate-ubuntu
+      - build-test-windows
+    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0 # v6.0.3
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        shell: pwsh
+        run: dotnet restore WastelandForge.sln
+
+      - name: Build
+        shell: pwsh
+        run: dotnet build WastelandForge.sln -c Release --no-restore
+
+      - name: Validate release fixture
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/release-dry-run | Out-Null
+          $json = & dotnet run --project src/WastelandForge.Cli/WastelandForge.Cli.csproj -c Release --no-build -- validate fixtures/projects/ExampleMod --format json --no-input
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+          $json | Set-Content -LiteralPath artifacts/release-dry-run/validation.json -Encoding utf8
+
+      - name: Write release dry-run governance artifacts
+        shell: pwsh
+        run: ./eng/ci/New-CiArtifacts.ps1 -Lane release-dry-run -OutputDirectory artifacts/release-dry-run
+
+      - name: Upload release dry-run artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-dry-run-results
+          path: artifacts/release-dry-run/**
+          if-no-files-found: warn

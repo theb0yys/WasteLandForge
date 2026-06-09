@@ -18,4 +18,10 @@ Required before release publish exists:
 - governance checks,
 - explicit human approval.
 
-Gate 9 may implement release dry-run behavior. Public release publishing remains out of scope until verification and governance gates exist.
+Gate 8 adds a `release-dry-run` CI status check that validates the synthetic
+fixture and emits CI governance artifacts. It is not the full Forge release
+dry-run.
+
+Gate 9 implements release dry-run behavior, Forge-owned build manifests, and
+release verification evidence. Public release publishing remains out of scope
+until verification and governance gates exist.

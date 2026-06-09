@@ -1,0 +1,16 @@
+# Gate 8 baseline.
+# GitHub remote owner inferred from origin: https://github.com/theb0yys/WasteLandForge.git
+
+* @theb0yys
+
+/AGENTS.md @theb0yys
+/.github/ @theb0yys
+/WasteLandForge/research/ @theb0yys
+/WasteLandForge/planning/ @theb0yys
+/docs/adr/ @theb0yys
+/docs/governance/ @theb0yys
+/schemas/ @theb0yys
+/src/WastelandForge.Core/ @theb0yys
+/src/WastelandForge.Schema/ @theb0yys
+/src/WastelandForge.Validation/ @theb0yys
+/eng/ @theb0yys

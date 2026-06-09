@@ -12,9 +12,10 @@ Gate status:
 - `gates/gate-005-loader-validation-pipeline.md` - Gate 5, loader and validation pipeline.
 - `gates/gate-006-cli-skeleton.md` - Gate 6, CLI skeleton.
 - `gates/gate-007-fixtures-tests.md` - Gate 7, fixtures and tests.
+- `gates/gate-008-ci-governance-baseline.md` - Gate 8, CI and governance baseline.
 
 Next gate:
 
-- Gate 8 - CI and governance baseline.
+- Gate 9 - release dry-run and build manifest evidence.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

@@ -18,6 +18,12 @@ The correctness path is local, deterministic, and AI-optional. Build, validation
 
 `forge validate` must not rewrite source contracts. Formatting, migration, or source rewriting must be explicit opt-in commands.
 
+Gate 8 CI uses these required check names:
+
+- `validate-ubuntu`
+- `build-test-windows`
+- `release-dry-run` on `main` and `release/*`
+
 ## Fixtures
 
 Public fixtures must be synthetic and redistributable. Do not commit Bethesda game assets or third-party mod files unless explicit permission exists and the governance policy has been updated.
@@ -29,3 +35,9 @@ Generated outputs belong under `generated/` or `dist/` and must remain disposabl
 ## Command Surface
 
 Do not invent CLI aliases outside ADR-010/R006. The canonical command surface is documented in `docs/adr/ADR-010.md`.
+
+## AI Assistance
+
+Contributors are never required to use AI. If AI materially assisted a change,
+the pull request template asks for disclosure and the submitter remains
+responsible for the submitted work.
