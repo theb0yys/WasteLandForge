@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\WastelandForge.Registry\WastelandForge.Registry.csproj" />
+    <ProjectReference Include="..\..\src\WastelandForge.Validation\WastelandForge.Validation.csproj" />
+  </ItemGroup>
+
+</Project>

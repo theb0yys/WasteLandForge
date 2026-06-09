@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <WastelandForgeTargetFramework>net10.0</WastelandForgeTargetFramework>
+    <WastelandForgeSdkVersion>10.0.300</WastelandForgeSdkVersion>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WastelandForge.Core\WastelandForge.Core.csproj" />
+    <ProjectReference Include="..\WastelandForge.Schema\WastelandForge.Schema.csproj" />
+    <ProjectReference Include="..\WastelandForge.Registry\WastelandForge.Registry.csproj" />
+    <ProjectReference Include="..\WastelandForge.Validation\WastelandForge.Validation.csproj" />
+    <ProjectReference Include="..\WastelandForge.Generation\WastelandForge.Generation.csproj" />
+    <ProjectReference Include="..\WastelandForge.Provenance\WastelandForge.Provenance.csproj" />
+  </ItemGroup>
+
+</Project>

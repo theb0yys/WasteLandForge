@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\WastelandForge.Core\WastelandForge.Core.csproj" />
+  </ItemGroup>
+
+</Project>

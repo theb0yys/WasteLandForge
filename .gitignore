@@ -1,0 +1,26 @@
+# WastelandForge generated outputs
+generated/*
+!generated/.gitkeep
+dist/*
+!dist/.gitkeep
+
+# Local Forge state
+.wastelandforge/cache/
+.wastelandforge/logs/
+.wastelandforge/tmp/
+
+# .NET and test outputs
+bin/
+obj/
+TestResults/
+artifacts/
+coverage/
+*.trx
+
+# Editor and OS noise
+.vs/
+.vscode/.ropeproject/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,11 @@
+<Project>
+  <Import Project="eng/versions.props" />
+
+  <PropertyGroup>
+    <TargetFramework>$(WastelandForgeTargetFramework)</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+</Project>
