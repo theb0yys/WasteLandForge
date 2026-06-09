@@ -2,7 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 1 establishes the repository and ADR skeleton only; .NET solution and project creation starts in Gate 2.
+The project is currently in gated v0.1 implementation. Gate 6 establishes the
+first canonical CLI skeleton.
 
 ## Architecture Spine
 
@@ -15,23 +16,25 @@ The project is currently in gated v0.1 implementation. Gate 1 establishes the re
 
 ## Current Gate
 
-Gate 1 creates:
+Gate 6 creates:
 
-- repository layout,
-- ADR files,
-- governance placeholders,
-- source/output boundaries,
-- project README and contribution skeleton.
+- canonical ADR-010 command dispatch,
+- Git-style top-level and subcommand help,
+- `forge --version`,
+- stable exit-code mapping,
+- `--format` plumbing for text and JSON output,
+- reserved skeleton responses for commands not implemented yet.
 
 It intentionally does not create:
 
-- `WastelandForge.sln`,
-- C# project files,
-- `global.json`,
-- package references,
-- executable CLI code.
+- YAML ingestion,
+- JsonSchema.Net runtime schema evaluation,
+- SARIF output,
+- formal fixture tests,
+- CI workflows,
+- generation, packaging, release, or capability scan implementations.
 
-Those belong to Gate 2.
+Those belong to later gates recorded in `WasteLandForge/planning/`.
 
 ## Source and Output Boundaries
 

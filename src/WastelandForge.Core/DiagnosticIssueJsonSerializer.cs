@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace WastelandForge.Core;
@@ -17,6 +18,14 @@ public static class DiagnosticIssueJsonSerializer
         ArgumentNullException.ThrowIfNull(issue);
 
         return JsonSerializer.Serialize(ToJsonModel(issue), SerializerOptions);
+    }
+
+    public static JsonNode ToJsonNode(DiagnosticIssue issue)
+    {
+        ArgumentNullException.ThrowIfNull(issue);
+
+        return JsonSerializer.SerializeToNode(ToJsonModel(issue), SerializerOptions)
+            ?? throw new InvalidOperationException("Diagnostic issue JSON serialization returned null.");
     }
 
     private static DiagnosticIssueJsonModel ToJsonModel(DiagnosticIssue issue)

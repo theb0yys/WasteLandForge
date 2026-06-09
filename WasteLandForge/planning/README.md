@@ -9,9 +9,11 @@ Gate status:
 - `gates/gate-002-solution-sdk-baseline.md` - Gate 2, solution and SDK baseline.
 - `gates/gate-003-schema-package-skeleton.md` - Gate 3, schema package skeleton.
 - `gates/gate-004-core-domain-diagnostics.md` - Gate 4, core domain and diagnostics.
+- `gates/gate-005-loader-validation-pipeline.md` - Gate 5, loader and validation pipeline.
+- `gates/gate-006-cli-skeleton.md` - Gate 6, CLI skeleton.
 
 Next gate:
 
-- Gate 5 - loader and validation pipeline.
+- Gate 7 - fixtures and tests.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

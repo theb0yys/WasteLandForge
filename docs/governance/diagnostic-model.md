@@ -31,6 +31,22 @@ Locations can include:
 - `line`
 - `column`
 
+## Diagnostic Reports
+
+Gate 5 adds a deterministic report wrapper for validation runs:
+
+- `formatVersion`: machine-readable output contract version.
+- `tool`: tool metadata for the emitting command, including version once defined.
+- `command`: command name that produced the payload.
+- `project`: optional project metadata, including stable dotted lowercase project ID when available.
+- `summary`: error, warning, and note counts.
+- `issues`: sorted diagnostic issue objects.
+
+Reports are the machine-readable output for `forge validate --format json`.
+
 ## Gate Ownership
 
 Gate 4 creates the core C# model and deterministic JSON serialization. SARIF output is a later projection, not part of Gate 4.
+
+Gate 5 creates the diagnostic report aggregate and uses it for loader and
+validation pipeline output.

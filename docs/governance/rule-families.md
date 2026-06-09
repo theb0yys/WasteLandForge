@@ -19,4 +19,5 @@ WastelandForge diagnostic rule IDs use reserved families:
 | `WF-GOV-*` | Governance rules |
 | `WF-SEC-*` | Security and policy rules |
 
-Gate 4 defines the issue model. Gate 5 and later assign concrete rule IDs to emitted validator findings.
+Gate 4 defines the issue model. Gate 5 assigns the first concrete load,
+schema, and semantic rule IDs for the loader and validation pipeline.
