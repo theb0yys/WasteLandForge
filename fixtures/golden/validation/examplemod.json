@@ -1,0 +1,17 @@
+{
+  "formatVersion": "1.0",
+  "tool": {
+    "name": "WastelandForge",
+    "version": "0.1.0"
+  },
+  "command": "validate",
+  "project": {
+    "id": "io.github.theboyyss.examplemod"
+  },
+  "summary": {
+    "errors": 0,
+    "warnings": 0,
+    "notes": 0
+  },
+  "issues": []
+}

@@ -17,4 +17,5 @@ and validation pipeline:
 - `projects/BrokenCases/MissingCapability` - deterministic `WF-SEM-014`
   failure case for an unknown capability reference.
 
-Formal fixture test project wiring remains Gate 7 work.
+Gate 7 adds golden outputs under `golden/` for CLI help and validation JSON
+contract tests.

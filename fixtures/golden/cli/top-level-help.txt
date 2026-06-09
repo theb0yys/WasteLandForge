@@ -1,0 +1,49 @@
+WastelandForge 0.1.0
+
+Usage:
+  forge <command> [options]
+  forge help [command]
+  forge --version
+
+Commands:
+  init
+  validate
+  capabilities list
+  capabilities scan
+  capabilities explain
+  generate
+  build
+  package
+  release verify
+  release prepare
+  release publish
+  docs
+  graph
+  explain
+  clean
+  doctor export
+  help
+  --version
+
+Global options in Gate 6:
+  -h, --help
+  --version
+  --format <human|plain|json|sarif|github>
+  --project <path>
+  --no-input
+
+Examples:
+  forge validate fixtures/projects/ExampleMod --format json
+  forge capabilities scan --help
+  forge release verify --help
+
+Exit codes:
+  0 success
+  1 command completed with blocking diagnostics
+  2 usage, parse, or reserved command error
+  3 project or configuration discovery error
+  4 capability or environment resolution failure
+  5 external tool or provider execution failure
+  6 unsafe operation refused or confirmation required
+  7 interrupted or cancelled
+  8 internal error

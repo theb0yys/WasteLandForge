@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 6 establishes the
-first canonical CLI skeleton.
+The project is currently in gated v0.1 implementation. Gate 7 establishes
+formal fixture-backed test coverage.
 
 ## Architecture Spine
 
@@ -16,21 +16,21 @@ first canonical CLI skeleton.
 
 ## Current Gate
 
-Gate 6 creates:
+Gate 7 creates:
 
-- canonical ADR-010 command dispatch,
-- Git-style top-level and subcommand help,
-- `forge --version`,
-- stable exit-code mapping,
-- `--format` plumbing for text and JSON output,
-- reserved skeleton responses for commands not implemented yet.
+- xUnit v3 test framework wiring,
+- fixture validation tests,
+- schema and semantic tests,
+- CLI help and JSON golden tests,
+- Windows path/filesystem tests,
+- backwards-compatibility tests,
+- TRX-capable local test execution.
 
 It intentionally does not create:
 
 - YAML ingestion,
 - JsonSchema.Net runtime schema evaluation,
 - SARIF output,
-- formal fixture tests,
 - CI workflows,
 - generation, packaging, release, or capability scan implementations.
 

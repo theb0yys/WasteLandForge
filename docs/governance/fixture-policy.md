@@ -24,3 +24,7 @@ Disallowed public fixture material:
 - generated outputs treated as source truth.
 
 Private extended fixtures may use user-supplied real installs or mods, but they must stay out of public CI and public repositories unless explicit permissions exist.
+
+Gate 7 adds public golden fixtures for CLI help and validation JSON output.
+These files are synthetic text/JSON contracts and contain no Bethesda assets,
+third-party mod files, private install paths, or generated plugin binaries.
