@@ -1,6 +1,6 @@
 ---
 name: wastelandforge-platform-architecture
-description: Use this skill for WastelandForge platform architecture, module boundaries, runtime-vs-external design, ownership decisions, integration boundaries, and ADR-002/002A/006 work. It should trigger whenever a task asks what Forge should own, integrate with, avoid replacing, or structure as core/capabilities/agents/integrations.
+description: Use this skill for WastelandForge platform architecture, module boundaries, runtime-vs-external design, ownership decisions, integration boundaries, validation/governance boundaries, and ADR-002/002A/006/011 work. It should trigger whenever a task asks what Forge should own, integrate with, avoid replacing, or structure as core/capabilities/agents/integrations.
 ---
 
 # WastelandForge Platform Architecture
@@ -13,6 +13,7 @@ Use these reports:
 - `Fallout New Vegas Tooling Ecosystem and Modding Landscape-deep-research-report.md`.
 - `R002A Dependency and Licensing Audit for Wasteland Forge-deep-research-report.md`.
 - `Fallout New Vegas Engine and Technical Architecture-deep-research-report.md` when engine limits or ADR-001 scope matters.
+- `WastelandForge Validation Testing CI Release and Governance-deep-research-report.md` when validation, CI, release, fixture, or governance ownership matters.
 
 ## Architecture decision
 
@@ -32,7 +33,7 @@ Agents
 Integrations
 ```
 
-The core owns contracts, registries, validation, generation, documentation generation, packaging metadata, provenance, and release automation.
+The core owns contracts, registries, layered validation, generation, documentation generation, packaging metadata, local build manifests, provenance, release automation, and governance checks that protect source truth.
 
 External providers own their domains: GECK/GECK Extender for authoring, xEdit for record inspection/conflicts/cleaning, MO2 for profiles and virtual filesystem workflows, xNVSE and its ecosystem for runtime extension, MCM/UIO for UI conventions, and NifSkope/Blender/NifTools for asset editing.
 
@@ -68,6 +69,7 @@ forge/
     packaging/
     provenance/
     changelogs/
+    governance/
 ```
 
 Keep this as a single repo-centric product with strict module boundaries. Do not default to microservices; the research says the FNV workflow is local, file-centric, editor-centric, and mod-manager-centric.

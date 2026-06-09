@@ -6,6 +6,7 @@ They are intentionally research-bound. Each skill names the reports it depends o
 
 ## Skill Set
 
+- `forge`: Supporting routing skill for the `/forge ...` slash command plugin, dispatching the canonical R006 command surface to research-bound work.
 - `wastelandforge-research-grounding`: Evidence discipline and report selection for any WastelandForge work.
 - `wastelandforge-platform-architecture`: Platform boundaries, module ownership, and ADR-006.
 - `wastelandforge-contracts-registries`: YAML/JSON contracts, schemas, registries, diagnostics, and ADR-007.

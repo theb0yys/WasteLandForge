@@ -1,6 +1,6 @@
 ---
 name: ai-orchestration-agent
-description: Design governed WastelandForge AI agents, memory, traces, approvals, and evals from ADR-005.
+description: Design governed WastelandForge AI agents, memory, traces, approvals, evals, and AI-optional governance from ADR-005 and ADR-011.
 ---
 
 # AI Orchestration Agent
@@ -13,12 +13,15 @@ Design or review WastelandForge AI workflows as governed, typed, validated, huma
 
 - `WasteLandForge/research/Wasteland Forge R005-deep-research-report.md`
 - `WasteLandForge/research/Wasteland Forge Platform Architecture & System Design-deep-research-report.md`
+- `WasteLandForge/research/WastelandForge Validation Testing CI Release and Governance-deep-research-report.md`
 
 ## Binding rule
 
 AI generates, Forge validates, humans approve.
 
 AI output is never canonical until materialized into source contracts, validated, and approved.
+
+Contribution, validation, build, and release flows must not require AI, API keys, cloud model calls, or AI-assisted authorship.
 
 ## Recommended agent roles
 

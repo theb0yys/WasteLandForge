@@ -1,6 +1,6 @@
 ---
 name: wastelandforge-licensing-dependencies
-description: Use this skill for WastelandForge dependency policy, third-party FNV tool licensing, redistribution, bundling, provider adoption, ecosystem norms, WFG-001, and ADR-002A. It should trigger whenever a task mentions xNVSE, JIP LN, JIP PP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender, GECK Extender, xEdit, MO2, bundling, licenses, Nexus permissions, GPL, MPL, LGPL, MIT, proprietary dependencies, or hard requirements.
+description: Use this skill for WastelandForge dependency policy, third-party FNV tool licensing, redistribution, bundling, provider adoption, ecosystem norms, public fixture legality, WFG-001, ADR-002A, and ADR-011 governance. It should trigger whenever a task mentions xNVSE, JIP LN, JIP PP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender, GECK Extender, xEdit, MO2, bundling, licenses, Nexus permissions, GPL, MPL, LGPL, MIT, proprietary dependencies, public fixtures, or hard requirements.
 ---
 
 # WastelandForge Licensing And Dependencies
@@ -12,6 +12,7 @@ Use:
 - `R002A Dependency and Licensing Audit for Wasteland Forge-deep-research-report.md`.
 - `Fallout New Vegas Tooling Ecosystem and Modding Landscape-deep-research-report.md`.
 - `R005 WastelandForge Capability Detection and Provider Model-deep-research-report.md`.
+- `WastelandForge Validation Testing CI Release and Governance-deep-research-report.md` for fixture legality, dependency governance, and no-required-AI contribution policy.
 
 ## ADR-002A decision
 
@@ -47,8 +48,12 @@ Use the audit posture:
 
 Public repository license and permission to rehost an official Nexus archive are not the same thing. When sources diverge, use the safer policy: link to official downloads, detect installed providers, and avoid bundling.
 
+Public fixtures must be synthetic and redistributable. Do not include Bethesda-owned assets or third-party mod files in the public test corpus unless explicit permission exists.
+
 This skill is not legal advice. For actual redistribution of third-party binaries or modified assets, require maintainer permission or formal legal review.
 
 ## Design consequence
 
 Model dependencies as capabilities and providers. Do not encode "install this bundled binary" as the core path. The platform should remain useful with official external installations and local deterministic detection.
+
+Contribution, validation, build, and release governance must not require AI or cloud services.

@@ -60,4 +60,6 @@ Check for wrong-scope installs, unsupported platform, unsupported version, MO2 p
 
 ## Output
 
-Return a capability graph summary, detection methods, result states, version constraints, and proposed `WF-CAP-*` diagnostics.
+Return a capability graph summary, detection methods, result states, version constraints, proposed `WF-CAP-*` diagnostics, and whether CI/public fixtures can exercise the capability using synthetic providers or local deterministic detectors.
+
+Do not require public CI to include Bethesda assets, third-party mod files, or a real game install.

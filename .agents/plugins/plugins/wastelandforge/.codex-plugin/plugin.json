@@ -1,0 +1,21 @@
+{
+  "name": "wastelandforge",
+  "version": "0.1.0",
+  "description": "Research-bound WastelandForge slash commands for Codex.",
+  "author": {
+    "name": "WastelandForge"
+  },
+  "license": "UNLICENSED",
+  "interface": {
+    "displayName": "WastelandForge",
+    "shortDescription": "Route Forge commands through WastelandForge research.",
+    "longDescription": "Adds slash-command access to the WastelandForge command surface defined by ADR-010 and R006, with R008/ADR-011 validation and release governance gates.",
+    "developerName": "WastelandForge",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": "Use /forge to work on WastelandForge through its research-bound command surface."
+  }
+}

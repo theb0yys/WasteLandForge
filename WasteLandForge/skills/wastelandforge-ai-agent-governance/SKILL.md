@@ -1,6 +1,6 @@
 ---
 name: wastelandforge-ai-agent-governance
-description: Use this skill for WastelandForge AI features, specialist agents, model/provider adapters, voice generation governance, human approvals, memory, traces, evals, prompt safety, AI-assisted coding, and ADR-005. It should trigger whenever a task mentions AI, agents, LLMs, dialogue drafting, quest drafting, voice generation, model providers, evaluations, guardrails, or agent workflows.
+description: Use this skill for WastelandForge AI features, specialist agents, model/provider adapters, voice generation governance, human approvals, memory, traces, evals, prompt safety, AI-assisted coding, no-required-AI contribution policy, and ADR-005/011. It should trigger whenever a task mentions AI, agents, LLMs, dialogue drafting, quest drafting, voice generation, model providers, evaluations, guardrails, agent workflows, AI disclosure, or AI-optional governance.
 ---
 
 # WastelandForge AI And Agent Governance
@@ -12,12 +12,15 @@ Use:
 - `Wasteland Forge R005-deep-research-report.md`.
 - `Wasteland Forge Platform Architecture & System Design-deep-research-report.md`.
 - `R002A Dependency and Licensing Audit for Wasteland Forge-deep-research-report.md` for dependency policy.
+- `WastelandForge Validation Testing CI Release and Governance-deep-research-report.md` for AI-optional contribution, validation, build, and release governance.
 
 ## ADR-005 decision
 
 AI is a governed platform layer: AI generates, Forge validates, humans approve.
 
 AI outputs are typed draft artifacts, not final canonical content. They must become ordinary YAML/JSON contracts, pass deterministic validation, and receive human approval before becoming source truth.
+
+R008/ADR-011 adds the governance constraint that contribution, validation, build, and release flows must not require AI, API keys, cloud model calls, or AI-assisted authorship.
 
 ## Agent architecture
 

@@ -16,7 +16,7 @@ Design or review WastelandForge validation behavior across load/source checks, s
 - `WasteLandForge/research/WastelandForge Generator and Build Pipeline Architecture-deep-research-report.md`
 - `WasteLandForge/research/R006 Developer Experience and CLI Workflow Model for WastelandForge-deep-research-report.md`
 - `WasteLandForge/research/WastelandForge Validation Testing CI Release and Governance-deep-research-report.md`
-- `WasteLandForge/research/WastelandForge Developer Experience and CLI Workflow Model-deep-research-report.md` only for supplemental details that do not conflict with R006
+- `WasteLandForge/research/WastelandForge Developer Experience and CLI Workflow Model-deep-research-report.md` only for supplemental details that do not conflict with R006 or R008
 
 ## Layers
 

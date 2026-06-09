@@ -6,6 +6,7 @@ Use them as role instructions for subagents or focused Codex threads. Each promp
 
 ## Agents
 
+- `forge-command-agent.md`: Command routing prompt for `/forge ...` and canonical R006 command implementation slices.
 - `research-agent.md`: Evidence extraction and research discipline.
 - `platform-architect-agent.md`: Hybrid capability platform and module boundaries.
 - `contracts-registry-agent.md`: Manifest, schema, registry, diagnostics, immutable schema publication, and provenance contracts.

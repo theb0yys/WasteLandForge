@@ -1,6 +1,6 @@
 ---
 name: wastelandforge-build-cli-release
-description: Use this skill for WastelandForge generation, build graph planning, incremental builds, provenance, packaging, release automation, CLI command design, diagnostics output, CI, VS Code integration, and ADR-009/010. It should trigger whenever a task mentions forge validate, generate, build, docs, package, clean, graph, explain, release, doctor export, capabilities scan, SARIF, GitHub Actions, or generated artifacts.
+description: Use this skill for WastelandForge generation, build graph planning, incremental builds, provenance, packaging, release automation, CLI command design, diagnostics output, CI, VS Code integration, and ADR-009/010/011. It should trigger whenever a task mentions forge validate, generate, build, docs, package, clean, graph, explain, release, doctor export, capabilities scan, SARIF, GitHub Actions, or generated artifacts.
 ---
 
 # WastelandForge Build, CLI, And Release
@@ -12,7 +12,7 @@ Use:
 - `WastelandForge Generator and Build Pipeline Architecture-deep-research-report.md`.
 - `R006 Developer Experience and CLI Workflow Model for WastelandForge-deep-research-report.md`.
 - `WastelandForge Validation Testing CI Release and Governance-deep-research-report.md`.
-- `WastelandForge Developer Experience and CLI Workflow Model-deep-research-report.md` only for supplemental points that do not conflict with R006.
+- `WastelandForge Developer Experience and CLI Workflow Model-deep-research-report.md` only for supplemental points that do not conflict with R006 or R008.
 - `R004 WastelandForge Contract, Schema and Registry Design-deep-research-report.md`.
 - `R005 WastelandForge Capability Detection and Provider Model-deep-research-report.md`.
 
@@ -25,15 +25,16 @@ Use this graph:
 ```text
 Source registries
   -> normalisation to canonical JSON graph
+  -> load / source validation
   -> schema validation
   -> semantic validation
-  -> capability resolution
-  -> build planning
+  -> capability and environment validation
+  -> generation planning
   -> generator execution
-  -> post-generation validation
-  -> provenance manifest
-  -> staging
-  -> package / release
+  -> output validation
+  -> package validation
+  -> release validation
+  -> build manifest and reports
 ```
 
 Invalidate generator nodes when any input digest, generator version, effective schema version, or resolved capability set changes. Prefer hash-based build state for Forge's planner.

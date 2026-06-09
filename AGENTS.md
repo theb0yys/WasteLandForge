@@ -71,4 +71,6 @@ Project-local skills live under `WasteLandForge/skills/`.
 
 Specialist agent prompts live under `WasteLandForge/agents/`.
 
+The project-local slash command plugin lives under `.agents/plugins/plugins/wastelandforge/`. Its `/forge <command>` command is the slash entrypoint for the ADR-010/R006 command surface. `/forge` is a prompt command that routes work to the appropriate skill or agent; it must stay aligned with the future real `forge` CLI and must not invent aliases outside the canonical command surface.
+
 Use the smallest relevant skill or agent for the task. If a task crosses domains, start with the research grounding skill or research agent, then hand off to the specific domain prompt.

@@ -1,0 +1,20 @@
+{
+  "name": "wastelandforge-local",
+  "interface": {
+    "displayName": "WastelandForge Local"
+  },
+  "plugins": [
+    {
+      "name": "wastelandforge",
+      "source": {
+        "source": "local",
+        "path": "./plugins/wastelandforge"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
