@@ -160,6 +160,20 @@ Gate 40 adds dialogue registry schema `0.16.0` schema/catalog coverage in
 `WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
 companion state gate schema fixture coverage in `WastelandForge.SemanticTests`.
 
+Gate 41 adds dialogue registry schema `0.17.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+result-script side-effect gate schema fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 42 adds dialogue registry schema `0.18.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+condition boolean composition schema fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 43 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
+dialogue condition logic references that do not resolve to authored
+line-local conditions.
+
 Run the full local suite serially:
 
 ```text

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "0.18.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingdialogueconditionlogicreference.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.missingdialogueconditionlogicreference.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingdialogueconditionlogicreference.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingdialogueconditionlogicreference.quest.intro",
+      "topicId": "io.github.theboyyss.missingdialogueconditionlogicreference.topic.greeting",
+      "promptText": "Synthetic condition logic reference prompt.",
+      "priority": 10,
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.missingdialogueconditionlogicreference.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.missingdialogueconditionlogicreference.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.missingdialogueconditionlogicreference.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "conditionIds": [
+          "io.github.theboyyss.missingdialogueconditionlogicreference.dialogue.intro.condition.missing"
+        ],
+        "summary": "Synthetic line-local condition boolean composition declaration with a missing condition reference."
+      },
+      "responseText": "Synthetic dialogue line with missing condition logic reference."
+    }
+  ]
+}

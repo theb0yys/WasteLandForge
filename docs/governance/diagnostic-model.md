@@ -191,5 +191,21 @@ because the Gate 40 companion state gate fields do not yet reference a
 companion registry or other authored state; invalid companion state gate shape
 is reported through `WF-SCHEMA-001`.
 
+Gate 41 adds dialogue registry schema `0.17.0` for explicit line-local
+result-script side-effect gate skeleton declarations. It adds no new semantic
+rule because the Gate 41 side-effect gate fields do not yet reference an
+effect registry or other authored state; invalid result-script side-effect
+gate shape is reported through `WF-SCHEMA-001`.
+
+Gate 42 adds dialogue registry schema `0.18.0` for explicit line-local
+condition boolean composition skeleton declarations. It adds no new semantic
+rule because Gate 42 only validates the composition shape; condition ID
+reference resolution remains a later semantic rule. Invalid condition boolean
+composition shape is reported through `WF-SCHEMA-001`.
+
+Gate 43 adds no new schema. It adds `WF-SEM-034` for dialogue condition logic
+`conditionIds` entries that do not resolve to conditions authored on the same
+dialogue line.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

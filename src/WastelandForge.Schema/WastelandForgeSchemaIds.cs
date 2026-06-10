@@ -22,6 +22,8 @@ public static class WastelandForgeSchemaIds
     public const string Dialogue0140 = "https://schemas.wastelandforge.dev/fnv/dialogue/0.14.0/schema.json";
     public const string Dialogue0150 = "https://schemas.wastelandforge.dev/fnv/dialogue/0.15.0/schema.json";
     public const string Dialogue0160 = "https://schemas.wastelandforge.dev/fnv/dialogue/0.16.0/schema.json";
+    public const string Dialogue0170 = "https://schemas.wastelandforge.dev/fnv/dialogue/0.17.0/schema.json";
+    public const string Dialogue0180 = "https://schemas.wastelandforge.dev/fnv/dialogue/0.18.0/schema.json";
     public const string Quest010 = "https://schemas.wastelandforge.dev/fnv/quests/0.1.0/schema.json";
     public const string Quest020 = "https://schemas.wastelandforge.dev/fnv/quests/0.2.0/schema.json";
     public const string Quest030 = "https://schemas.wastelandforge.dev/fnv/quests/0.3.0/schema.json";

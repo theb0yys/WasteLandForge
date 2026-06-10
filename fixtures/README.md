@@ -265,3 +265,25 @@ with a synthetic line-local companion state gate declaration, and adds:
 - `projects/BrokenCases/InvalidDialogueCompanionStateGateRegistry` - runtime
   dialogue registry schema failure case for companion state gate shape without
   the required state key.
+
+Gate 41 updates `projects/ExampleMod` to dialogue registry schema `0.17.0`
+with a synthetic line-local result-script side-effect gate declaration, and
+adds:
+
+- `projects/BrokenCases/InvalidDialogueResultScriptSideEffectGateRegistry` -
+  runtime dialogue registry schema failure case for result-script side-effect
+  gate shape without the required state key.
+
+Gate 42 updates `projects/ExampleMod` to dialogue registry schema `0.18.0`
+with a synthetic line-local condition boolean composition declaration, and
+adds:
+
+- `projects/BrokenCases/InvalidDialogueConditionLogicRegistry` - runtime
+  dialogue registry schema failure case for condition boolean composition
+  shape without the required operator key.
+
+Gate 43 preserves dialogue registry schema `0.18.0` and adds:
+
+- `projects/BrokenCases/MissingDialogueConditionLogicReference` -
+  deterministic `WF-SEM-034` failure case for a dialogue condition logic
+  reference that is not authored as a condition on the same line.

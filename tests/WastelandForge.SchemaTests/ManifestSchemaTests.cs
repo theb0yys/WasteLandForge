@@ -70,6 +70,8 @@ public sealed class ManifestSchemaTests
     [InlineData("dialogue", "0.14.0", WastelandForgeSchemaIds.Dialogue0140, "dialogue")]
     [InlineData("dialogue", "0.15.0", WastelandForgeSchemaIds.Dialogue0150, "dialogue")]
     [InlineData("dialogue", "0.16.0", WastelandForgeSchemaIds.Dialogue0160, "dialogue")]
+    [InlineData("dialogue", "0.17.0", WastelandForgeSchemaIds.Dialogue0170, "dialogue")]
+    [InlineData("dialogue", "0.18.0", WastelandForgeSchemaIds.Dialogue0180, "dialogue")]
     public void RegistrySchemaFilesParseAsJson(string directoryName, string version, string schemaId, string expectedKind)
     {
         var schemaPath = Path.Combine(RepositoryRoot(), "schemas", directoryName, version, "schema.json");
@@ -107,6 +109,8 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Dialogue0140, "dialogue", "0.14.0", "schemas/dialogue/0.14.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Dialogue0150, "dialogue", "0.15.0", "schemas/dialogue/0.15.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Dialogue0160, "dialogue", "0.16.0", "schemas/dialogue/0.16.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0170, "dialogue", "0.17.0", "schemas/dialogue/0.17.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0180, "dialogue", "0.18.0", "schemas/dialogue/0.18.0/schema.json")]
     public void BuiltInCatalogResolvesRegistrySchemas(string schemaId, string expectedKind, string expectedVersion, string expectedPath)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);
@@ -144,6 +148,8 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Dialogue0140)]
     [InlineData(WastelandForgeSchemaIds.Dialogue0150)]
     [InlineData(WastelandForgeSchemaIds.Dialogue0160)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0170)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0180)]
     public void BuiltInCatalogReadsEmbeddedRegistrySchemas(string schemaId)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);

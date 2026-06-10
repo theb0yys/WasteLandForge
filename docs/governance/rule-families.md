@@ -88,3 +88,9 @@ Gate 39 adds no new `WF-SEM-*` rule; invalid dialogue event history gate shape
 is covered by `WF-SCHEMA-001`.
 Gate 40 adds no new `WF-SEM-*` rule; invalid dialogue companion state gate
 shape is covered by `WF-SCHEMA-001`.
+Gate 41 adds no new `WF-SEM-*` rule; invalid dialogue result-script
+side-effect gate shape is covered by `WF-SCHEMA-001`.
+Gate 42 adds no new `WF-SEM-*` rule; invalid dialogue condition boolean
+composition shape is covered by `WF-SCHEMA-001`.
+Gate 43 adds `WF-SEM-034` for dialogue condition logic references that are not
+authored on the same dialogue line.

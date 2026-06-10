@@ -326,6 +326,36 @@ public sealed class ValidationPipelineFixtureTests
     }
 
     [Fact]
+    public void InvalidDialogueResultScriptSideEffectGateRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueResultScriptSideEffectGateRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/resultScriptSideEffectGates/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("state", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueConditionLogicRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueConditionLogicRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/conditionLogic", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("operator", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void InvalidDialogueTopicRegistryUsesRuntimeSchemaDiagnostics()
     {
         var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueTopicRegistry"));
@@ -721,6 +751,22 @@ public sealed class ValidationPipelineFixtureTests
         Assert.Equal("/lines/1/priority", issue.PrimaryLocation.Pointer?.ToString());
         Assert.Equal("wf:sem:033:io.github.theboyyss.duplicatedialoguepromptroute.dialogue.intro.hello.alt:promptRoute", issue.Fingerprint);
         Assert.Contains("Shared prompt", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingDialogueConditionLogicReferenceEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingDialogueConditionLogicReference"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-034", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/conditionLogic/conditionIds/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:034:io.github.theboyyss.missingdialogueconditionlogicreference.dialogue.intro.hello:io.github.theboyyss.missingdialogueconditionlogicreference.dialogue.intro.conditionlogic.all:io.github.theboyyss.missingdialogueconditionlogicreference.dialogue.intro.condition.missing", issue.Fingerprint);
+        Assert.Contains("condition.missing", issue.Message, StringComparison.Ordinal);
     }
 
     [Fact]

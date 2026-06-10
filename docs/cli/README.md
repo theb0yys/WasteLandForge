@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 40 dialogue companion state gate skeleton baseline
+Status: Gate 43 dialogue condition logic reference validation baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -94,6 +94,13 @@ forge --version
   line-local dialogue event history gate skeleton declarations.
 - `forge validate` supports dialogue registry schema `0.16.0` for explicit
   line-local dialogue companion state gate skeleton declarations.
+- `forge validate` supports dialogue registry schema `0.17.0` for explicit
+  line-local dialogue result-script side-effect gate skeleton declarations.
+- `forge validate` supports dialogue registry schema `0.18.0` for explicit
+  line-local dialogue condition boolean composition skeleton declarations.
+- `forge validate` emits `WF-SEM-034` when a dialogue condition logic
+  `conditionIds` entry does not resolve to a condition authored on the same
+  dialogue line.
 - `forge validate` emits `WF-SEM-022` when a dialogue condition stage
   reference does not resolve inside the dialogue line's referenced quest.
 - `forge validate` emits `WF-SEM-023` when a dialogue condition variable

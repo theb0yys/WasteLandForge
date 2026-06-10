@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "0.18.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueconditionlogicregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueconditionlogicregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueconditionlogicregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueconditionlogicregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueconditionlogicregistry.topic.greeting",
+      "promptText": "Synthetic condition logic prompt.",
+      "priority": 10,
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueconditionlogicregistry.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.invaliddialogueconditionlogicregistry.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.invaliddialogueconditionlogicregistry.dialogue.intro.conditionlogic.invalid",
+        "conditionIds": [
+          "io.github.theboyyss.invaliddialogueconditionlogicregistry.dialogue.intro.condition.started"
+        ],
+        "summary": "Synthetic invalid line-local condition boolean composition declaration."
+      },
+      "responseText": "Synthetic dialogue line with invalid condition logic shape."
+    }
+  ]
+}

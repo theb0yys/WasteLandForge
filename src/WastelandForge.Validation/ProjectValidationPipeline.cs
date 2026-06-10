@@ -115,6 +115,12 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> DialogueRegistrySchema0160 = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Dialogue0160,
         "Dialogue registry schema 0.16.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0170 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0170,
+        "Dialogue registry schema 0.17.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0180 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0180,
+        "Dialogue registry schema 0.18.0"));
 
     private static JsonSchema LoadBuiltInSchema(string schemaId, string label)
     {
@@ -619,6 +625,8 @@ public sealed class ProjectValidationPipeline
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.3.0") => QuestRegistrySchema030.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => QuestRegistrySchema020.Value,
             "quest" => QuestRegistrySchema.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.18.0") => DialogueRegistrySchema0180.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.17.0") => DialogueRegistrySchema0170.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.16.0") => DialogueRegistrySchema0160.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.15.0") => DialogueRegistrySchema0150.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.14.0") => DialogueRegistrySchema0140.Value,
@@ -1047,6 +1055,7 @@ public sealed class ProjectValidationPipeline
         }
 
         ValidateDialoguePromptRoutes(dialogueDocuments, issues, projectId);
+        ValidateDialogueConditionLogicReferences(dialogueDocuments, issues, projectId);
 
         if (questDocuments.Count == 0)
         {
@@ -1620,6 +1629,41 @@ public sealed class ProjectValidationPipeline
                     "Use a distinct priority or prompt text for one of the dialogue lines.",
                     "WF-SEM-033",
                     $"wf:sem:033:{promptRoute.LineId}:promptRoute"));
+            }
+        }
+    }
+
+    private static void ValidateDialogueConditionLogicReferences(
+        IReadOnlyCollection<RegistryDocument> dialogueDocuments,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        foreach (var document in dialogueDocuments)
+        {
+            foreach (var reference in ReadDialogueConditionLogicReferences(document))
+            {
+                if (reference.ConditionIds.Contains(reference.ConditionId))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-034",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue condition logic references unknown condition",
+                    $"Dialogue condition logic '{reference.LogicId}' on line '{reference.LineId}' references condition '{reference.ConditionId}' but that condition is not authored on the same line.",
+                    CreateSourceLocation(document.DisplayPath, $"/lines/{reference.LineIndex}/conditionLogic/conditionIds/{reference.ConditionIdIndex}", document.SourceLocations),
+                    projectId,
+                    [
+                        CreateSourceLocation(
+                            document.DisplayPath,
+                            $"/lines/{reference.LineIndex}/conditions",
+                            document.SourceLocations)
+                    ],
+                    "Add the referenced condition to the line conditions or update conditionLogic.conditionIds.",
+                    "WF-SEM-034",
+                    $"wf:sem:034:{reference.LineId}:{reference.LogicId}:{reference.ConditionId}"));
             }
         }
     }
@@ -2668,6 +2712,77 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static IEnumerable<DialogueConditionLogicReference> ReadDialogueConditionLogicReferences(RegistryDocument document)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line ||
+                line["conditionLogic"] is not JsonObject conditionLogic ||
+                conditionLogic["conditionIds"] is not JsonArray conditionIds)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            var logicId = GetString(conditionLogic, "id");
+            if (lineId is null || logicId is null)
+            {
+                continue;
+            }
+
+            var authoredConditionIds = ReadLineConditionIds(line)
+                .ToHashSet(StringComparer.Ordinal);
+            for (var conditionIdIndex = 0; conditionIdIndex < conditionIds.Count; conditionIdIndex++)
+            {
+                if (conditionIds[conditionIdIndex]?.GetValueKind() != JsonValueKind.String)
+                {
+                    continue;
+                }
+
+                var conditionId = conditionIds[conditionIdIndex]?.GetValue<string>();
+                if (string.IsNullOrWhiteSpace(conditionId))
+                {
+                    continue;
+                }
+
+                yield return new DialogueConditionLogicReference(
+                    lineIndex,
+                    conditionIdIndex,
+                    lineId,
+                    logicId,
+                    conditionId,
+                    authoredConditionIds);
+            }
+        }
+    }
+
+    private static IEnumerable<string> ReadLineConditionIds(JsonObject line)
+    {
+        if (line["conditions"] is not JsonArray conditions)
+        {
+            yield break;
+        }
+
+        foreach (var conditionNode in conditions)
+        {
+            if (conditionNode is not JsonObject condition)
+            {
+                continue;
+            }
+
+            var conditionId = GetString(condition, "id");
+            if (conditionId is not null)
+            {
+                yield return conditionId;
+            }
+        }
+    }
+
     private static IEnumerable<DialogueVoiceWorkItem> ReadDialogueVoiceWorkItems(RegistryDocument document)
     {
         if (document.Root["lines"] is not JsonArray lines)
@@ -3193,6 +3308,14 @@ public sealed class ProjectValidationPipeline
         string MutationId,
         string VariableId,
         QuestReferenceData QuestData);
+
+    private sealed record DialogueConditionLogicReference(
+        int LineIndex,
+        int ConditionIdIndex,
+        string LineId,
+        string LogicId,
+        string ConditionId,
+        IReadOnlySet<string> ConditionIds);
 
     private sealed record QuestObjectiveStageReference(
         int QuestIndex,

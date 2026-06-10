@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 40 establishes
-the first dialogue companion state gate source-contract skeleton.
+The project is currently in gated v0.1 implementation. Gate 43 establishes
+dialogue condition logic reference validation.
 
 ## Architecture Spine
 
@@ -16,13 +16,13 @@ the first dialogue companion state gate source-contract skeleton.
 
 ## Current Gate
 
-Gate 40 creates:
+Gate 43 creates:
 
 - optional `registries.quests` manifest wiring,
 - immutable Draft 2020-12 dialogue registry schemas for `0.1.0`, `0.2.0`,
   `0.3.0`, `0.4.0`, `0.5.0`, `0.6.0`, `0.7.0`, `0.8.0`, `0.9.0`,
-  `0.10.0`, `0.11.0`, `0.12.0`, `0.13.0`, `0.14.0`, `0.15.0`, and
-  `0.16.0`,
+  `0.10.0`, `0.11.0`, `0.12.0`, `0.13.0`, `0.14.0`, `0.15.0`, `0.16.0`,
+  `0.17.0`, and `0.18.0`,
 - immutable Draft 2020-12 quest registry schemas for `0.1.0`, `0.2.0`,
   `0.3.0`, `0.4.0`, `0.5.0`, and `0.6.0`,
 - runtime dialogue registry schema validation,
@@ -32,9 +32,10 @@ Gate 40 creates:
   result-script declarations, topic declarations, `linkTo` and `linkFrom`
   topic links, explicit priority, prompt route, Speech Challenge, skill gate,
   perk gate, faction gate, reputation gate, identity gate, local world flag
-  gate, event history gate, and companion state gate declarations, and a
-  quest-level dialogue gate declaration plus a dialogue result-script
-  quest-variable increment declaration,
+  gate, event history gate, companion state gate, and result-script
+  side-effect gate declarations plus condition boolean composition
+  declarations, and a quest-level dialogue gate declaration plus a dialogue
+  result-script quest-variable increment declaration,
 - a valid synthetic `ExampleMod` quest registry with stage and objective
   declarations plus transition, condition, and stage result-script
   declarations plus quest variable declarations,
@@ -82,6 +83,9 @@ Gate 40 creates:
   are declared but have no authored dialogue line endpoint,
 - `WF-SEM-033` semantic validation for duplicate authored prompt routes with
   the same `topicId`, `promptText`, and `priority`,
+- `WF-SEM-034` semantic validation for dialogue condition logic entries whose
+  `conditionIds` references do not resolve to conditions authored on the same
+  dialogue line,
 - deterministic fixtures for invalid quest registry shape, invalid
   stage/objective shape, missing dialogue quest references, and missing quest
   objective stage references, plus invalid transition shape and missing
@@ -103,12 +107,14 @@ Gate 40 creates:
   gate shape, invalid dialogue faction gate shape, invalid dialogue reputation
   gate shape, invalid dialogue identity gate shape, invalid dialogue local
   world flag gate shape, invalid dialogue event history gate shape, and
-  invalid dialogue companion state gate shape, and duplicate dialogue prompt
-  routes.
+  invalid dialogue companion state gate shape, invalid dialogue result-script
+  side-effect gate shape, invalid dialogue condition boolean composition
+  shape, missing dialogue condition logic references, and duplicate dialogue
+  prompt routes.
 
-Gate 40 preserves the earlier asset, voice, dialogue registry, dialogue
+Gate 43 preserves the earlier asset, voice, dialogue registry, dialogue
 voice worklist, and dialogue quest reference validation from Gates 14 through
-39.
+42.
 
 It intentionally does not create:
 
@@ -152,6 +158,11 @@ It intentionally does not create:
 - exact companion registry resolution, companion-specific observer model,
   companion state taxonomy, trust/history/trigger value semantics, GECK
   condition mapping, or companion state gate execution semantics,
+- exact result-script side-effect registry resolution, effect taxonomy, raw
+  script semantics, execution ordering, GECK condition mapping, or
+  side-effect gate execution semantics,
+- exact nested condition groups, negation, precedence, short-circuit behavior,
+  GECK condition-list mapping, or condition composition execution semantics,
 - plugin record compilation,
 - external tool-backed asset inspection,
 - provider/environment detection or capability scans,

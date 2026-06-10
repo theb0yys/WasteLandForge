@@ -133,7 +133,17 @@ public static class WastelandForgeSchemaCatalog
             WastelandForgeSchemaIds.Dialogue0160,
             "dialogue",
             "0.16.0",
-            "schemas/dialogue/0.16.0/schema.json")
+            "schemas/dialogue/0.16.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue0170,
+            "dialogue",
+            "0.17.0",
+            "schemas/dialogue/0.17.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue0180,
+            "dialogue",
+            "0.18.0",
+            "schemas/dialogue/0.18.0/schema.json")
     ];
 
     public static IReadOnlyList<SchemaResource> BuiltIn => BuiltInSchemas;

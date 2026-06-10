@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.16.0",
+  "schemaVersion": "0.18.0",
   "kind": "dialogue",
   "id": "io.github.theboyyss.examplemod.dialogue",
   "topics": [
@@ -109,6 +109,14 @@
           "summary": "Synthetic line-local companion state gate declaration."
         }
       ],
+      "resultScriptSideEffectGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.resultscriptsideeffectgate.synthetic",
+          "effect": "syntheticResultScriptSideEffect",
+          "state": "applied",
+          "summary": "Synthetic line-local result-script side-effect gate declaration."
+        }
+      ],
       "responseText": "Synthetic hello line.",
       "conditions": [
         {
@@ -125,6 +133,15 @@
           "summary": "Synthetic dialogue condition over quest variable state."
         }
       ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.examplemod.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "conditionIds": [
+          "io.github.theboyyss.examplemod.dialogue.intro.condition.started",
+          "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephasezero"
+        ],
+        "summary": "Synthetic line-local condition boolean composition declaration."
+      },
       "resultScripts": [
         {
           "id": "io.github.theboyyss.examplemod.dialogue.intro.result.advance",

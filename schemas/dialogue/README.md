@@ -118,3 +118,24 @@ resolution, companion-specific observer models, companion state taxonomy,
 trust/history/trigger value semantics, GECK condition mapping, evaluation
 semantics, and generated plugin records remain later narrative and tooling
 gates.
+
+Gate 41 adds `0.17.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal line-local `resultScriptSideEffectGates` declarations with
+explicit authored result-script side-effect keys and expected states. Exact
+effect registry resolution, effect taxonomy, raw script semantics, execution
+ordering, GECK condition mapping, evaluation semantics, and generated plugin
+records remain later narrative and tooling gates.
+
+Gate 42 adds `0.18.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal line-local `conditionLogic` declarations with one explicit
+`all`/`any` group over authored condition IDs. Exact condition ID reference
+resolution, nested groups, negation, precedence, short-circuit behavior, GECK
+condition-list mapping, evaluation semantics, and generated plugin records
+remain later narrative and tooling gates.
+
+Gate 43 adds no new schema. It preserves `0.18.0/schema.json` and adds
+semantic validation that `conditionLogic.conditionIds` entries resolve to
+conditions authored on the same dialogue line. Nested groups, negation,
+precedence, short-circuit behavior, GECK condition-list mapping, evaluation
+semantics, and generated plugin records remain later narrative and tooling
+gates.

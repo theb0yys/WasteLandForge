@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "0.17.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueresultscriptsideeffectgateregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueresultscriptsideeffectgateregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueresultscriptsideeffectgateregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueresultscriptsideeffectgateregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueresultscriptsideeffectgateregistry.topic.greeting",
+      "promptText": "Synthetic result-script side-effect gate prompt.",
+      "priority": 10,
+      "resultScriptSideEffectGates": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueresultscriptsideeffectgateregistry.dialogue.intro.resultscriptsideeffectgate.synthetic",
+          "effect": "syntheticResultScriptSideEffect"
+        }
+      ],
+      "responseText": "Synthetic dialogue line with invalid result-script side-effect gate shape."
+    }
+  ]
+}

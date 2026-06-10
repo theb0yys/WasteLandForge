@@ -153,3 +153,18 @@ Gate 40 adds dialogue registry schema `0.16.0` runtime validation for
 line-local dialogue companion state gate skeletons in
 `WastelandForge.Validation`. It adds no semantic rule because the new fields do
 not yet reference a companion registry or other authored state.
+
+Gate 41 adds dialogue registry schema `0.17.0` runtime validation for
+line-local dialogue result-script side-effect gate skeletons in
+`WastelandForge.Validation`. It adds no semantic rule because the new fields do
+not yet reference an effect registry or other authored state.
+
+Gate 42 adds dialogue registry schema `0.18.0` runtime validation for
+line-local dialogue condition boolean composition skeletons in
+`WastelandForge.Validation`. It adds no semantic rule because the new fields do
+not yet resolve condition IDs to authored conditions.
+
+Gate 43 adds semantic dialogue condition logic reference validation in
+`WastelandForge.Validation`. It emits `WF-SEM-034` when a schema-valid
+`conditionLogic.conditionIds[]` entry does not resolve to a condition authored
+on the same dialogue line.

@@ -45,9 +45,12 @@ Gate status:
 - `gates/gate-038-dialogue-local-world-flag-gate-skeleton.md` - Gate 38, dialogue local world flag gate skeleton.
 - `gates/gate-039-dialogue-event-history-gate-skeleton.md` - Gate 39, dialogue event history gate skeleton.
 - `gates/gate-040-dialogue-companion-state-gate-skeleton.md` - Gate 40, dialogue companion state gate skeleton.
+- `gates/gate-041-dialogue-result-script-side-effect-gate-skeleton.md` - Gate 41, dialogue result-script side-effect gate skeleton.
+- `gates/gate-042-dialogue-condition-boolean-composition-skeleton.md` - Gate 42, dialogue condition boolean composition skeleton.
+- `gates/gate-043-dialogue-condition-logic-reference-validation.md` - Gate 43, dialogue condition logic reference validation.
 
 Next gate:
 
-- Gate 41 - dialogue result-script side-effect gate skeleton.
+- Gate 44 - dialogue nested condition group skeleton.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

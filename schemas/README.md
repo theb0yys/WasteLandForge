@@ -48,6 +48,8 @@ Do not overwrite a released schema in place. Schema migrations are explicit tool
 - `dialogue/0.14.0/schema.json` - dialogue registry schema with local world flag gate skeletons.
 - `dialogue/0.15.0/schema.json` - dialogue registry schema with event history gate skeletons.
 - `dialogue/0.16.0/schema.json` - dialogue registry schema with companion state gate skeletons.
+- `dialogue/0.17.0/schema.json` - dialogue registry schema with result-script side-effect gate skeletons.
+- `dialogue/0.18.0/schema.json` - dialogue registry schema with condition boolean composition skeletons.
 
 Gate 12 evaluates the embedded manifest schema at runtime. Gate 13 evaluates
 embedded dependency and capability registry schemas at runtime. Gate 14
@@ -80,4 +82,9 @@ schema `0.13.0` while preserving earlier dialogue registry schemas. Gate 38
 adds dialogue registry schema `0.14.0` while preserving earlier dialogue
 registry schemas. Gate 39 adds dialogue registry schema `0.15.0` while
 preserving earlier dialogue registry schemas. Gate 40 adds dialogue registry
-schema `0.16.0` while preserving earlier dialogue registry schemas.
+schema `0.16.0` while preserving earlier dialogue registry schemas. Gate 41
+adds dialogue registry schema `0.17.0` while preserving earlier dialogue
+registry schemas. Gate 42 adds dialogue registry schema `0.18.0` while
+preserving earlier dialogue registry schemas. Gate 43 adds no new schema; it
+preserves dialogue registry schema `0.18.0` and adds semantic validation over
+schema-valid dialogue condition logic references.
