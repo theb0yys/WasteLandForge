@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "0.14.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueworldflaggateregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueworldflaggateregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueworldflaggateregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueworldflaggateregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueworldflaggateregistry.topic.greeting",
+      "promptText": "Synthetic local world flag gate prompt.",
+      "priority": 10,
+      "worldFlagGates": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueworldflaggateregistry.dialogue.intro.worldflaggate.freesidepower",
+          "flag": "freesidePowerRestored"
+        }
+      ],
+      "responseText": "Synthetic dialogue line with invalid local world flag gate shape."
+    }
+  ]
+}

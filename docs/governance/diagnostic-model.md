@@ -145,5 +145,51 @@ Gate 32 adds dialogue registry schema `0.8.0` for explicit line priority and
 prompt route declarations. It adds `WF-SEM-033` for duplicate prompt routes
 with the same `topicId`, `promptText`, and `priority`.
 
+Gate 33 adds dialogue registry schema `0.9.0` for explicit line Speech
+Challenge skeleton declarations. It adds no new semantic rule because the Gate
+33 Speech Challenge fields do not yet reference other authored state and exact
+threshold/evaluation semantics remain open; invalid Speech Challenge shape is
+reported through `WF-SCHEMA-001`.
+
+Gate 34 adds dialogue registry schema `0.10.0` for explicit line-local skill
+gate skeleton declarations. It adds no new semantic rule because the Gate 34
+skill gate fields do not yet reference a skill registry or other authored
+state; invalid skill gate shape is reported through `WF-SCHEMA-001`.
+
+Gate 35 adds dialogue registry schema `0.11.0` for explicit line-local perk
+gate skeleton declarations. It adds no new semantic rule because the Gate 35
+perk gate fields do not yet reference a perk registry or other authored state;
+invalid perk gate shape is reported through `WF-SCHEMA-001`.
+
+Gate 36 adds dialogue registry schema `0.12.0` for explicit line-local faction
+relation and reputation standing gate skeleton declarations. It adds no new
+semantic rule because the Gate 36 faction and reputation gate fields do not
+yet reference faction or reputation registries; invalid faction/reputation gate
+shape is reported through `WF-SCHEMA-001`.
+
+Gate 37 adds dialogue registry schema `0.13.0` for explicit line-local
+identity gate skeleton declarations. It adds no new semantic rule because the
+Gate 37 identity gate fields do not yet reference an identity registry or other
+authored state; invalid identity gate shape is reported through
+`WF-SCHEMA-001`.
+
+Gate 38 adds dialogue registry schema `0.14.0` for explicit line-local local
+world flag gate skeleton declarations. It adds no new semantic rule because
+the Gate 38 world flag gate fields do not yet reference a world-state registry
+or other authored state; invalid local world flag gate shape is reported
+through `WF-SCHEMA-001`.
+
+Gate 39 adds dialogue registry schema `0.15.0` for explicit line-local event
+history gate skeleton declarations. It adds no new semantic rule because the
+Gate 39 event history gate fields do not yet reference an event-history
+registry or other authored state; invalid event history gate shape is reported
+through `WF-SCHEMA-001`.
+
+Gate 40 adds dialogue registry schema `0.16.0` for explicit line-local
+companion state gate skeleton declarations. It adds no new semantic rule
+because the Gate 40 companion state gate fields do not yet reference a
+companion registry or other authored state; invalid companion state gate shape
+is reported through `WF-SCHEMA-001`.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

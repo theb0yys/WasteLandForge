@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.8.0",
+  "schemaVersion": "0.16.0",
   "kind": "dialogue",
   "id": "io.github.theboyyss.examplemod.dialogue",
   "topics": [
@@ -42,6 +42,73 @@
       "speaker": "ExampleSpeaker",
       "promptText": "Synthetic greeting prompt.",
       "priority": 10,
+      "speechChallenge": {
+        "skill": "speech",
+        "threshold": 25,
+        "summary": "Synthetic Speech Challenge declaration."
+      },
+      "skillGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.skillgate.science",
+          "skill": "science",
+          "threshold": 50,
+          "summary": "Synthetic line-local skill gate declaration."
+        }
+      ],
+      "perkGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.perkgate.synthetic",
+          "perk": "syntheticPerk",
+          "summary": "Synthetic line-local perk gate declaration."
+        }
+      ],
+      "factionGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.factiongate.ncr",
+          "faction": "ncr",
+          "relation": "ally",
+          "summary": "Synthetic line-local faction relation gate declaration."
+        }
+      ],
+      "reputationGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.reputationgate.ncr",
+          "faction": "ncr",
+          "standing": "liked",
+          "summary": "Synthetic line-local reputation standing gate declaration."
+        }
+      ],
+      "identityGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.identitygate.synthetic",
+          "identity": "syntheticIdentity",
+          "summary": "Synthetic line-local identity gate declaration."
+        }
+      ],
+      "worldFlagGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.worldflaggate.freesidepower",
+          "flag": "freesidePowerRestored",
+          "state": "true",
+          "summary": "Synthetic line-local local world flag gate declaration."
+        }
+      ],
+      "eventHistoryGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.eventhistorygate.synthetic",
+          "event": "syntheticEventObserved",
+          "state": "recorded",
+          "summary": "Synthetic line-local event history gate declaration."
+        }
+      ],
+      "companionStateGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.companionstategate.synthetic",
+          "companion": "syntheticCompanion",
+          "state": "syntheticCompanionState",
+          "summary": "Synthetic line-local companion state gate declaration."
+        }
+      ],
       "responseText": "Synthetic hello line.",
       "conditions": [
         {

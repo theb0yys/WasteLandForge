@@ -114,3 +114,42 @@ endpoint, without adding a new schema version.
 Gate 32 adds dialogue registry schema `0.8.0` runtime validation for dialogue
 priority and prompt routing skeletons in `WastelandForge.Validation`. It adds
 semantic duplicate prompt route validation for schema-valid dialogue documents.
+
+Gate 33 adds dialogue registry schema `0.9.0` runtime validation for dialogue
+Speech Challenge skeletons in `WastelandForge.Validation`. It adds no semantic
+rule because the new fields do not yet reference other authored state.
+
+Gate 34 adds dialogue registry schema `0.10.0` runtime validation for
+line-local dialogue skill gate skeletons in `WastelandForge.Validation`. It
+adds no semantic rule because the new fields do not yet reference a skill
+registry or other authored state.
+
+Gate 35 adds dialogue registry schema `0.11.0` runtime validation for
+line-local dialogue perk gate skeletons in `WastelandForge.Validation`. It adds
+no semantic rule because the new fields do not yet reference a perk registry or
+other authored state.
+
+Gate 36 adds dialogue registry schema `0.12.0` runtime validation for
+line-local dialogue faction relation and reputation standing gate skeletons in
+`WastelandForge.Validation`. It adds no semantic rule because the new fields do
+not yet reference faction or reputation registries.
+
+Gate 37 adds dialogue registry schema `0.13.0` runtime validation for
+line-local dialogue identity gate skeletons in `WastelandForge.Validation`. It
+adds no semantic rule because the new fields do not yet reference an identity
+registry or other authored state.
+
+Gate 38 adds dialogue registry schema `0.14.0` runtime validation for
+line-local dialogue local world flag gate skeletons in
+`WastelandForge.Validation`. It adds no semantic rule because the new fields do
+not yet reference a world-state registry or other authored state.
+
+Gate 39 adds dialogue registry schema `0.15.0` runtime validation for
+line-local dialogue event history gate skeletons in `WastelandForge.Validation`.
+It adds no semantic rule because the new fields do not yet reference an
+event-history registry or other authored state.
+
+Gate 40 adds dialogue registry schema `0.16.0` runtime validation for
+line-local dialogue companion state gate skeletons in
+`WastelandForge.Validation`. It adds no semantic rule because the new fields do
+not yet reference a companion registry or other authored state.

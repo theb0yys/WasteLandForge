@@ -63,3 +63,58 @@ declares `promptText`, so prompt routes are explicit source state rather than
 implicit defaults. Exact GECK priority range, priority ordering, prompt routing
 execution, condition-aware prompt selection, response routing, and generated
 plugin records remain later narrative and tooling gates.
+
+Gate 33 adds `0.9.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal line-local `speechChallenge` declarations with `skill: "speech"`
+and an explicit integer `threshold`. Exact GECK threshold ranges, success and
+failure routing, challenge display behavior, evaluation semantics, non-Speech
+skill gates, and generated plugin records remain later narrative and tooling
+gates.
+
+Gate 34 adds `0.10.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal line-local `skillGates` declarations with explicit skill keys and
+integer thresholds. Exact game skill taxonomy, GECK condition mapping,
+threshold ranges, evaluation semantics, Speech Challenge integration,
+non-skill gates, and generated plugin records remain later narrative and
+tooling gates.
+
+Gate 35 adds `0.11.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal line-local `perkGates` declarations with explicit authored perk
+keys. Exact perk taxonomy, perk registry resolution, GECK condition mapping,
+evaluation semantics, non-perk gates, and generated plugin records remain
+later narrative and tooling gates.
+
+Gate 36 adds `0.12.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal line-local `factionGates` and `reputationGates` declarations,
+keeping operational faction relation separate from social reputation standing.
+Exact faction registry resolution, relation taxonomy, reputation standing
+taxonomy, GECK condition mapping, evaluation semantics, and generated plugin
+records remain later narrative and tooling gates.
+
+Gate 37 adds `0.13.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal line-local `identityGates` declarations with explicit authored
+identity keys. Exact identity taxonomy, actor/player identity mapping, GECK
+condition mapping, evaluation semantics, and generated plugin records remain
+later narrative and tooling gates.
+
+Gate 38 adds `0.14.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal line-local `worldFlagGates` declarations with explicit authored
+local world flag keys and expected states. Exact world-state registry
+resolution, local world flag taxonomy, boolean/value modeling, scope semantics,
+GECK condition mapping, evaluation semantics, and generated plugin records
+remain later narrative and tooling gates.
+
+Gate 39 adds `0.15.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal line-local `eventHistoryGates` declarations with explicit
+authored event history signal keys and expected states. Exact event-history
+registry resolution, event signal taxonomy, lifecycle modeling, consumer
+routing, time horizon semantics, GECK condition mapping, evaluation semantics,
+and generated plugin records remain later narrative and tooling gates.
+
+Gate 40 adds `0.16.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal line-local `companionStateGates` declarations with explicit
+authored companion keys and companion state keys. Exact companion registry
+resolution, companion-specific observer models, companion state taxonomy,
+trust/history/trigger value semantics, GECK condition mapping, evaluation
+semantics, and generated plugin records remain later narrative and tooling
+gates.

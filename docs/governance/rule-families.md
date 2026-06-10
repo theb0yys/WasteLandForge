@@ -72,3 +72,19 @@ dialogue line endpoint and `WF-SEM-032` for dialogue `linkFrom` source topics
 with no authored dialogue line endpoint.
 Gate 32 adds `WF-SEM-033` for duplicate dialogue prompt routes with the same
 `topicId`, `promptText`, and `priority`.
+Gate 33 adds no new `WF-SEM-*` rule; invalid dialogue Speech Challenge shape
+is covered by `WF-SCHEMA-001`.
+Gate 34 adds no new `WF-SEM-*` rule; invalid dialogue skill gate shape is
+covered by `WF-SCHEMA-001`.
+Gate 35 adds no new `WF-SEM-*` rule; invalid dialogue perk gate shape is
+covered by `WF-SCHEMA-001`.
+Gate 36 adds no new `WF-SEM-*` rule; invalid dialogue faction and reputation
+gate shape is covered by `WF-SCHEMA-001`.
+Gate 37 adds no new `WF-SEM-*` rule; invalid dialogue identity gate shape is
+covered by `WF-SCHEMA-001`.
+Gate 38 adds no new `WF-SEM-*` rule; invalid dialogue local world flag gate
+shape is covered by `WF-SCHEMA-001`.
+Gate 39 adds no new `WF-SEM-*` rule; invalid dialogue event history gate shape
+is covered by `WF-SCHEMA-001`.
+Gate 40 adds no new `WF-SEM-*` rule; invalid dialogue companion state gate
+shape is covered by `WF-SCHEMA-001`.

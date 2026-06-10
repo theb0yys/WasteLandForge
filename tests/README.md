@@ -128,6 +128,38 @@ Gate 32 adds dialogue registry schema `0.8.0` schema/catalog coverage in
 route schema and duplicate prompt route fixture coverage in
 `WastelandForge.SemanticTests`.
 
+Gate 33 adds dialogue registry schema `0.9.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus Speech
+Challenge schema fixture coverage in `WastelandForge.SemanticTests`.
+
+Gate 34 adds dialogue registry schema `0.10.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus skill
+gate schema fixture coverage in `WastelandForge.SemanticTests`.
+
+Gate 35 adds dialogue registry schema `0.11.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus perk
+gate schema fixture coverage in `WastelandForge.SemanticTests`.
+
+Gate 36 adds dialogue registry schema `0.12.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus faction
+and reputation gate schema fixture coverage in `WastelandForge.SemanticTests`.
+
+Gate 37 adds dialogue registry schema `0.13.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+identity gate schema fixture coverage in `WastelandForge.SemanticTests`.
+
+Gate 38 adds dialogue registry schema `0.14.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus local
+world flag gate schema fixture coverage in `WastelandForge.SemanticTests`.
+
+Gate 39 adds dialogue registry schema `0.15.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus event
+history gate schema fixture coverage in `WastelandForge.SemanticTests`.
+
+Gate 40 adds dialogue registry schema `0.16.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+companion state gate schema fixture coverage in `WastelandForge.SemanticTests`.
+
 Run the full local suite serially:
 
 ```text

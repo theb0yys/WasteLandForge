@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "0.10.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueskillgateregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueskillgateregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueskillgateregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueskillgateregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueskillgateregistry.topic.greeting",
+      "promptText": "Synthetic skill gate prompt.",
+      "priority": 10,
+      "skillGates": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueskillgateregistry.dialogue.intro.skillgate.science",
+          "skill": "science"
+        }
+      ],
+      "responseText": "Synthetic dialogue line with invalid skill gate shape."
+    }
+  ]
+}

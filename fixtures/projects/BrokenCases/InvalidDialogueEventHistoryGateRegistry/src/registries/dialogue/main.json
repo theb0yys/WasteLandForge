@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "0.15.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueeventhistorygateregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueeventhistorygateregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueeventhistorygateregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueeventhistorygateregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueeventhistorygateregistry.topic.greeting",
+      "promptText": "Synthetic event history gate prompt.",
+      "priority": 10,
+      "eventHistoryGates": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueeventhistorygateregistry.dialogue.intro.eventhistorygate.synthetic",
+          "event": "syntheticEventObserved"
+        }
+      ],
+      "responseText": "Synthetic dialogue line with invalid event history gate shape."
+    }
+  ]
+}

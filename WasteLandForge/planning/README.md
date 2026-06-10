@@ -37,9 +37,17 @@ Gate status:
 - `gates/gate-030-dialogue-link-from-skeleton.md` - Gate 30, dialogue Link From skeleton.
 - `gates/gate-031-dialogue-link-graph-validation-skeleton.md` - Gate 31, dialogue link graph validation skeleton.
 - `gates/gate-032-dialogue-priority-prompt-routing-skeleton.md` - Gate 32, dialogue priority and prompt routing skeleton.
+- `gates/gate-033-dialogue-speech-challenge-skeleton.md` - Gate 33, dialogue Speech Challenge skeleton.
+- `gates/gate-034-dialogue-skill-gate-skeleton.md` - Gate 34, dialogue skill gate skeleton.
+- `gates/gate-035-dialogue-perk-gate-skeleton.md` - Gate 35, dialogue perk gate skeleton.
+- `gates/gate-036-dialogue-faction-reputation-gate-skeleton.md` - Gate 36, dialogue faction and reputation gate skeleton.
+- `gates/gate-037-dialogue-identity-gate-skeleton.md` - Gate 37, dialogue identity gate skeleton.
+- `gates/gate-038-dialogue-local-world-flag-gate-skeleton.md` - Gate 38, dialogue local world flag gate skeleton.
+- `gates/gate-039-dialogue-event-history-gate-skeleton.md` - Gate 39, dialogue event history gate skeleton.
+- `gates/gate-040-dialogue-companion-state-gate-skeleton.md` - Gate 40, dialogue companion state gate skeleton.
 
 Next gate:
 
-- Gate 33 - dialogue speech challenge skeleton.
+- Gate 41 - dialogue result-script side-effect gate skeleton.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

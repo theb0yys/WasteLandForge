@@ -62,6 +62,14 @@ public sealed class ManifestSchemaTests
     [InlineData("dialogue", "0.6.0", WastelandForgeSchemaIds.Dialogue060, "dialogue")]
     [InlineData("dialogue", "0.7.0", WastelandForgeSchemaIds.Dialogue070, "dialogue")]
     [InlineData("dialogue", "0.8.0", WastelandForgeSchemaIds.Dialogue080, "dialogue")]
+    [InlineData("dialogue", "0.9.0", WastelandForgeSchemaIds.Dialogue090, "dialogue")]
+    [InlineData("dialogue", "0.10.0", WastelandForgeSchemaIds.Dialogue0100, "dialogue")]
+    [InlineData("dialogue", "0.11.0", WastelandForgeSchemaIds.Dialogue0110, "dialogue")]
+    [InlineData("dialogue", "0.12.0", WastelandForgeSchemaIds.Dialogue0120, "dialogue")]
+    [InlineData("dialogue", "0.13.0", WastelandForgeSchemaIds.Dialogue0130, "dialogue")]
+    [InlineData("dialogue", "0.14.0", WastelandForgeSchemaIds.Dialogue0140, "dialogue")]
+    [InlineData("dialogue", "0.15.0", WastelandForgeSchemaIds.Dialogue0150, "dialogue")]
+    [InlineData("dialogue", "0.16.0", WastelandForgeSchemaIds.Dialogue0160, "dialogue")]
     public void RegistrySchemaFilesParseAsJson(string directoryName, string version, string schemaId, string expectedKind)
     {
         var schemaPath = Path.Combine(RepositoryRoot(), "schemas", directoryName, version, "schema.json");
@@ -91,6 +99,14 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Dialogue060, "dialogue", "0.6.0", "schemas/dialogue/0.6.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Dialogue070, "dialogue", "0.7.0", "schemas/dialogue/0.7.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Dialogue080, "dialogue", "0.8.0", "schemas/dialogue/0.8.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue090, "dialogue", "0.9.0", "schemas/dialogue/0.9.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0100, "dialogue", "0.10.0", "schemas/dialogue/0.10.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0110, "dialogue", "0.11.0", "schemas/dialogue/0.11.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0120, "dialogue", "0.12.0", "schemas/dialogue/0.12.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0130, "dialogue", "0.13.0", "schemas/dialogue/0.13.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0140, "dialogue", "0.14.0", "schemas/dialogue/0.14.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0150, "dialogue", "0.15.0", "schemas/dialogue/0.15.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0160, "dialogue", "0.16.0", "schemas/dialogue/0.16.0/schema.json")]
     public void BuiltInCatalogResolvesRegistrySchemas(string schemaId, string expectedKind, string expectedVersion, string expectedPath)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);
@@ -120,6 +136,14 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Dialogue060)]
     [InlineData(WastelandForgeSchemaIds.Dialogue070)]
     [InlineData(WastelandForgeSchemaIds.Dialogue080)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue090)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0100)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0110)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0120)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0130)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0140)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0150)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0160)]
     public void BuiltInCatalogReadsEmbeddedRegistrySchemas(string schemaId)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);

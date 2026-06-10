@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "0.9.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialoguespeechchallengeregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguespeechchallengeregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguespeechchallengeregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialoguespeechchallengeregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialoguespeechchallengeregistry.topic.greeting",
+      "promptText": "Synthetic Speech Challenge prompt.",
+      "priority": 10,
+      "speechChallenge": {
+        "skill": "speech"
+      },
+      "responseText": "Synthetic dialogue line with invalid Speech Challenge shape."
+    }
+  ]
+}

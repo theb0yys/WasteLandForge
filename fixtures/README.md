@@ -205,3 +205,63 @@ synthetic line priority and prompt route declarations, and adds:
 - `projects/BrokenCases/DuplicateDialoguePromptRoute` - deterministic
   `WF-SEM-033` failure case for duplicate authored prompt routes with the same
   topic, prompt text, and priority.
+
+Gate 33 updates `projects/ExampleMod` to dialogue registry schema `0.9.0` with
+a synthetic Speech Challenge declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialogueSpeechChallengeRegistry` - runtime
+  dialogue registry schema failure case for Speech Challenge shape without the
+  required threshold.
+
+Gate 34 updates `projects/ExampleMod` to dialogue registry schema `0.10.0`
+with a synthetic line-local skill gate declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialogueSkillGateRegistry` - runtime dialogue
+  registry schema failure case for skill gate shape without the required
+  threshold.
+
+Gate 35 updates `projects/ExampleMod` to dialogue registry schema `0.11.0`
+with a synthetic line-local perk gate declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialoguePerkGateRegistry` - runtime dialogue
+  registry schema failure case for perk gate shape without the required perk
+  key.
+
+Gate 36 updates `projects/ExampleMod` to dialogue registry schema `0.12.0`
+with synthetic line-local faction relation and reputation standing gate
+declarations, and adds:
+
+- `projects/BrokenCases/InvalidDialogueFactionGateRegistry` - runtime dialogue
+  registry schema failure case for faction gate shape without the required
+  relation key.
+- `projects/BrokenCases/InvalidDialogueReputationGateRegistry` - runtime
+  dialogue registry schema failure case for reputation gate shape without the
+  required standing key.
+
+Gate 37 updates `projects/ExampleMod` to dialogue registry schema `0.13.0`
+with a synthetic line-local identity gate declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialogueIdentityGateRegistry` - runtime
+  dialogue registry schema failure case for identity gate shape without the
+  required identity key.
+
+Gate 38 updates `projects/ExampleMod` to dialogue registry schema `0.14.0`
+with a synthetic line-local local world flag gate declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialogueWorldFlagGateRegistry` - runtime
+  dialogue registry schema failure case for local world flag gate shape
+  without the required state key.
+
+Gate 39 updates `projects/ExampleMod` to dialogue registry schema `0.15.0`
+with a synthetic line-local event history gate declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialogueEventHistoryGateRegistry` - runtime
+  dialogue registry schema failure case for event history gate shape without
+  the required state key.
+
+Gate 40 updates `projects/ExampleMod` to dialogue registry schema `0.16.0`
+with a synthetic line-local companion state gate declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialogueCompanionStateGateRegistry` - runtime
+  dialogue registry schema failure case for companion state gate shape without
+  the required state key.

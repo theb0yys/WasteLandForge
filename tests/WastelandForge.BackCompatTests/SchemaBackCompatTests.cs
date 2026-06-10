@@ -66,6 +66,30 @@ public sealed class SchemaBackCompatTests
         Assert.Equal(
             "https://schemas.wastelandforge.dev/fnv/dialogue/0.8.0/schema.json",
             WastelandForgeSchemaIds.Dialogue080);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.9.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue090);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.10.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0100);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.11.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0110);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.12.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0120);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.13.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0130);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.14.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0140);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.15.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0150);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.16.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0160);
     }
 
     [Fact]
@@ -97,6 +121,14 @@ public sealed class SchemaBackCompatTests
     [InlineData(WastelandForgeSchemaIds.Dialogue060, "dialogue", "0.6.0")]
     [InlineData(WastelandForgeSchemaIds.Dialogue070, "dialogue", "0.7.0")]
     [InlineData(WastelandForgeSchemaIds.Dialogue080, "dialogue", "0.8.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue090, "dialogue", "0.9.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0100, "dialogue", "0.10.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0110, "dialogue", "0.11.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0120, "dialogue", "0.12.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0130, "dialogue", "0.13.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0140, "dialogue", "0.14.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0150, "dialogue", "0.15.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0160, "dialogue", "0.16.0")]
     public void RegistrySchemaCatalogKeepsVersionedResources(string schemaId, string expectedKind, string expectedVersion)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);

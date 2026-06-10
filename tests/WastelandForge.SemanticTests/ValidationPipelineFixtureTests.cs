@@ -191,6 +191,141 @@ public sealed class ValidationPipelineFixtureTests
     }
 
     [Fact]
+    public void InvalidDialogueSpeechChallengeRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueSpeechChallengeRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/speechChallenge", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("threshold", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueSkillGateRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueSkillGateRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/skillGates/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("threshold", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialoguePerkGateRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialoguePerkGateRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/perkGates/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("perk", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueFactionGateRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueFactionGateRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/factionGates/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("relation", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueReputationGateRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueReputationGateRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/reputationGates/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("standing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueIdentityGateRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueIdentityGateRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/identityGates/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("identity", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueWorldFlagGateRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueWorldFlagGateRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/worldFlagGates/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("state", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueEventHistoryGateRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueEventHistoryGateRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/eventHistoryGates/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("state", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueCompanionStateGateRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueCompanionStateGateRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/companionStateGates/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("state", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void InvalidDialogueTopicRegistryUsesRuntimeSchemaDiagnostics()
     {
         var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueTopicRegistry"));

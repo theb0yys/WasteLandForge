@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 32 dialogue priority and prompt routing baseline
+Status: Gate 40 dialogue companion state gate skeleton baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -77,6 +77,23 @@ forge --version
   dialogue `linkFrom` source topic declarations.
 - `forge validate` supports dialogue registry schema `0.8.0` for explicit
   dialogue priority and prompt route declarations.
+- `forge validate` supports dialogue registry schema `0.9.0` for explicit
+  dialogue Speech Challenge skeleton declarations.
+- `forge validate` supports dialogue registry schema `0.10.0` for explicit
+  line-local dialogue skill gate skeleton declarations.
+- `forge validate` supports dialogue registry schema `0.11.0` for explicit
+  line-local dialogue perk gate skeleton declarations.
+- `forge validate` supports dialogue registry schema `0.12.0` for explicit
+  line-local dialogue faction relation and reputation standing gate skeleton
+  declarations.
+- `forge validate` supports dialogue registry schema `0.13.0` for explicit
+  line-local dialogue identity gate skeleton declarations.
+- `forge validate` supports dialogue registry schema `0.14.0` for explicit
+  line-local dialogue local world flag gate skeleton declarations.
+- `forge validate` supports dialogue registry schema `0.15.0` for explicit
+  line-local dialogue event history gate skeleton declarations.
+- `forge validate` supports dialogue registry schema `0.16.0` for explicit
+  line-local dialogue companion state gate skeleton declarations.
 - `forge validate` emits `WF-SEM-022` when a dialogue condition stage
   reference does not resolve inside the dialogue line's referenced quest.
 - `forge validate` emits `WF-SEM-023` when a dialogue condition variable

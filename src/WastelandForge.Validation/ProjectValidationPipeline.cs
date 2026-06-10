@@ -91,6 +91,30 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> DialogueRegistrySchema080 = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Dialogue080,
         "Dialogue registry schema 0.8.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema090 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue090,
+        "Dialogue registry schema 0.9.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0100 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0100,
+        "Dialogue registry schema 0.10.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0110 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0110,
+        "Dialogue registry schema 0.11.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0120 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0120,
+        "Dialogue registry schema 0.12.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0130 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0130,
+        "Dialogue registry schema 0.13.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0140 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0140,
+        "Dialogue registry schema 0.14.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0150 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0150,
+        "Dialogue registry schema 0.15.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0160 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0160,
+        "Dialogue registry schema 0.16.0"));
 
     private static JsonSchema LoadBuiltInSchema(string schemaId, string label)
     {
@@ -595,6 +619,14 @@ public sealed class ProjectValidationPipeline
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.3.0") => QuestRegistrySchema030.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => QuestRegistrySchema020.Value,
             "quest" => QuestRegistrySchema.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.16.0") => DialogueRegistrySchema0160.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.15.0") => DialogueRegistrySchema0150.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.14.0") => DialogueRegistrySchema0140.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.13.0") => DialogueRegistrySchema0130.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.12.0") => DialogueRegistrySchema0120.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.11.0") => DialogueRegistrySchema0110.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.10.0") => DialogueRegistrySchema0100.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.9.0") => DialogueRegistrySchema090.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.8.0") => DialogueRegistrySchema080.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.7.0") => DialogueRegistrySchema070.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.6.0") => DialogueRegistrySchema060.Value,

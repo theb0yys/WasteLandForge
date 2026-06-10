@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 32 establishes
-the first dialogue priority and prompt routing skeleton.
+The project is currently in gated v0.1 implementation. Gate 40 establishes
+the first dialogue companion state gate source-contract skeleton.
 
 ## Architecture Spine
 
@@ -16,11 +16,13 @@ the first dialogue priority and prompt routing skeleton.
 
 ## Current Gate
 
-Gate 32 creates:
+Gate 40 creates:
 
 - optional `registries.quests` manifest wiring,
 - immutable Draft 2020-12 dialogue registry schemas for `0.1.0`, `0.2.0`,
-  `0.3.0`, `0.4.0`, `0.5.0`, `0.6.0`, `0.7.0`, and `0.8.0`,
+  `0.3.0`, `0.4.0`, `0.5.0`, `0.6.0`, `0.7.0`, `0.8.0`, `0.9.0`,
+  `0.10.0`, `0.11.0`, `0.12.0`, `0.13.0`, `0.14.0`, `0.15.0`, and
+  `0.16.0`,
 - immutable Draft 2020-12 quest registry schemas for `0.1.0`, `0.2.0`,
   `0.3.0`, `0.4.0`, `0.5.0`, and `0.6.0`,
 - runtime dialogue registry schema validation,
@@ -28,7 +30,9 @@ Gate 32 creates:
 - a valid synthetic `ExampleMod` dialogue registry with line-local
   quest-stage and quest-variable condition declarations plus dialogue
   result-script declarations, topic declarations, `linkTo` and `linkFrom`
-  topic links, explicit priority and prompt route declarations, and a
+  topic links, explicit priority, prompt route, Speech Challenge, skill gate,
+  perk gate, faction gate, reputation gate, identity gate, local world flag
+  gate, event history gate, and companion state gate declarations, and a
   quest-level dialogue gate declaration plus a dialogue result-script
   quest-variable increment declaration,
 - a valid synthetic `ExampleMod` quest registry with stage and objective
@@ -94,12 +98,17 @@ Gate 32 creates:
   result-script mutation variable references, invalid dialogue Link From
   shape, missing dialogue Link From source topic references, missing dialogue
   Link To target line endpoints, and missing dialogue Link From source line
-  endpoints, invalid dialogue prompt route shape, and duplicate dialogue
-  prompt routes.
+  endpoints, invalid dialogue prompt route shape, invalid dialogue Speech
+  Challenge shape, invalid dialogue skill gate shape, invalid dialogue perk
+  gate shape, invalid dialogue faction gate shape, invalid dialogue reputation
+  gate shape, invalid dialogue identity gate shape, invalid dialogue local
+  world flag gate shape, invalid dialogue event history gate shape, and
+  invalid dialogue companion state gate shape, and duplicate dialogue prompt
+  routes.
 
-Gate 32 preserves the earlier asset, voice, dialogue registry, dialogue
+Gate 40 preserves the earlier asset, voice, dialogue registry, dialogue
 voice worklist, and dialogue quest reference validation from Gates 14 through
-31.
+39.
 
 It intentionally does not create:
 
@@ -124,6 +133,25 @@ It intentionally does not create:
 - full dialogue graph traversal and cycle checks,
 - exact GECK priority range, priority ordering, prompt routing execution,
   response routing, and condition-aware prompt selection,
+- Speech Challenge success/failure routing, display behavior, exact threshold
+  ranges, or execution semantics,
+- exact skill taxonomy, skill threshold ranges, skill gate condition mapping,
+  or skill gate execution semantics,
+- exact perk taxonomy, perk registry resolution, perk condition mapping, or
+  perk gate execution semantics,
+- exact faction registry resolution, faction relation taxonomy, reputation
+  standing taxonomy, or faction/reputation gate execution semantics,
+- exact identity taxonomy, actor/player identity mapping, or identity gate
+  execution semantics,
+- exact local world flag taxonomy, world-state registry resolution,
+  boolean/value modeling, scope semantics, GECK condition mapping, or local
+  world flag gate execution semantics,
+- exact event-history registry resolution, event signal taxonomy, lifecycle
+  modeling, consumer routing, time horizon semantics, GECK condition mapping,
+  or event history gate execution semantics,
+- exact companion registry resolution, companion-specific observer model,
+  companion state taxonomy, trust/history/trigger value semantics, GECK
+  condition mapping, or companion state gate execution semantics,
 - plugin record compilation,
 - external tool-backed asset inspection,
 - provider/environment detection or capability scans,

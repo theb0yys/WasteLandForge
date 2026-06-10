@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "0.13.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueidentitygateregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueidentitygateregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueidentitygateregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueidentitygateregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueidentitygateregistry.topic.greeting",
+      "promptText": "Synthetic identity gate prompt.",
+      "priority": 10,
+      "identityGates": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueidentitygateregistry.dialogue.intro.identitygate.synthetic"
+        }
+      ],
+      "responseText": "Synthetic dialogue line with invalid identity gate shape."
+    }
+  ]
+}

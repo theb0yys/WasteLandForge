@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "0.16.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialoguecompanionstategateregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguecompanionstategateregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguecompanionstategateregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialoguecompanionstategateregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialoguecompanionstategateregistry.topic.greeting",
+      "promptText": "Synthetic companion state gate prompt.",
+      "priority": 10,
+      "companionStateGates": [
+        {
+          "id": "io.github.theboyyss.invaliddialoguecompanionstategateregistry.dialogue.intro.companionstategate.synthetic",
+          "companion": "syntheticCompanion"
+        }
+      ],
+      "responseText": "Synthetic dialogue line with invalid companion state gate shape."
+    }
+  ]
+}

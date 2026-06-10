@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "0.12.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialoguefactiongateregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguefactiongateregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguefactiongateregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialoguefactiongateregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialoguefactiongateregistry.topic.greeting",
+      "promptText": "Synthetic faction gate prompt.",
+      "priority": 10,
+      "factionGates": [
+        {
+          "id": "io.github.theboyyss.invaliddialoguefactiongateregistry.dialogue.intro.factiongate.ncr",
+          "faction": "ncr"
+        }
+      ],
+      "responseText": "Synthetic dialogue line with invalid faction gate shape."
+    }
+  ]
+}
