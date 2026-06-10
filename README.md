@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 15 establishes
-asset path semantic validation.
+The project is currently in gated v0.1 implementation. Gate 16 establishes
+asset type-specific semantic validation.
 
 ## Architecture Spine
 
@@ -16,21 +16,25 @@ asset path semantic validation.
 
 ## Current Gate
 
-Gate 15 creates:
+Gate 16 creates:
 
-- deterministic `WF-ASSET-*` diagnostics for asset path semantics,
+- deterministic `WF-ASSET-*` diagnostics for asset path and type semantics,
 - source-path project-root containment checks,
 - required source file existence checks,
 - target path traversal checks,
 - basic target extension checks by asset type,
-- deterministic fixtures for invalid asset paths.
+- minimal source signature checks for DDS, WAV, OGG, NIF, and KF targets,
+- target root convention checks by asset type,
+- deterministic fixtures for invalid asset paths and invalid asset types.
 
 It intentionally does not create:
 
 - VS Code problem matchers,
 - release publishing,
 - ZIP/FOMOD package creation,
-- deep NIF, DDS, WAV, OGG, LIP, or BSA validation,
+- deep NIF, DDS, WAV, OGG, LIP, KF, RDT, or BSA validation,
+- voice/dialogue asset pairing,
+- external tool-backed asset inspection,
 - provider/environment detection or capability scans,
 - generation, packaging, release, or capability scan implementations.
 

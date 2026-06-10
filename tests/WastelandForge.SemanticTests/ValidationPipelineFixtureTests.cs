@@ -112,6 +112,17 @@ public sealed class ValidationPipelineFixtureTests
     }
 
     [Fact]
+    public void InvalidAssetTypesEmitTypeSpecificAssetDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidAssetTypes"));
+
+        Assert.True(report.HasErrors);
+        Assert.Equal(2, report.Issues.Count);
+        AssertAssetIssue(report, "WF-ASSET-005", "/assets/0/source");
+        AssertAssetIssue(report, "WF-ASSET-006", "/assets/1/target");
+    }
+
+    [Fact]
     public void UnsupportedYamlFeatureEmitsLoadDiagnostic()
     {
         var report = ValidateFixture(Path.Combine("BrokenCases", "UnsupportedYamlFeature"));

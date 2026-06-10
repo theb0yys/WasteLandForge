@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 15 asset path semantic validation baseline
+Status: Gate 16 asset type-specific validation baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -48,6 +48,10 @@ forge --version
   registry paths that escape the project, are missing when required, traverse
   outside the game-relative target root, or use a target extension that does
   not match the declared asset type.
+- `forge validate` emits `WF-ASSET-005` when a source file with a known target
+  extension does not match the minimal expected file signature.
+- `forge validate` emits `WF-ASSET-006` when a game-relative target path does
+  not use the expected root folder for the declared asset type.
 - `forge release verify` runs the Gate 9 release dry-run verifier and writes
   local evidence under project `dist/`.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.

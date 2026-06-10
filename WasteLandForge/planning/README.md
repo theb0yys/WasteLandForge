@@ -20,9 +20,10 @@ Gate status:
 - `gates/gate-013-registry-schema-validation.md` - Gate 13, dependency and capability registry schema validation.
 - `gates/gate-014-asset-registry-schema-validation.md` - Gate 14, asset registry schema validation.
 - `gates/gate-015-asset-path-semantic-validation.md` - Gate 15, asset path semantic validation.
+- `gates/gate-016-asset-type-specific-validation.md` - Gate 16, asset type-specific validation.
 
 Next gate:
 
-- Gate 16 - asset type-specific validation.
+- Gate 17 - voice and dialogue asset validation.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

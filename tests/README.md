@@ -46,6 +46,10 @@ asset registry fixture coverage in `WastelandForge.SemanticTests`.
 Gate 15 adds asset path semantic fixture coverage in
 `WastelandForge.SemanticTests`.
 
+Gate 16 adds asset type-specific semantic fixture coverage in
+`WastelandForge.SemanticTests` for source signatures and target root
+conventions.
+
 Run the full local suite serially:
 
 ```text

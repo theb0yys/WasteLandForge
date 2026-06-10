@@ -33,3 +33,8 @@ validation path.
 Gate 15 adds asset path semantic validation in `WastelandForge.Validation`,
 including source containment, required source existence, target traversal, and
 basic asset-type target extension checks.
+
+Gate 16 adds asset type-specific semantic validation in
+`WastelandForge.Validation`, including minimal source signature checks for DDS,
+WAV, OGG, NIF, and KF targets plus target-root convention checks by declared
+asset type.

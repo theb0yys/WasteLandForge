@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "asset",
+  "id": "io.github.theboyyss.invalidassettypes.assets",
+  "assets": [
+    {
+      "id": "io.github.theboyyss.invalidassettypes.assets.texture.badheader",
+      "assetType": "texture",
+      "source": "src/assets/textures/bad.dds",
+      "target": "textures/InvalidAssetTypes/bad.dds",
+      "required": true
+    },
+    {
+      "id": "io.github.theboyyss.invalidassettypes.assets.mesh.wrongroot",
+      "assetType": "mesh",
+      "source": "src/assets/meshes/wrongroot.nif",
+      "target": "textures/InvalidAssetTypes/wrongroot.nif",
+      "required": true
+    }
+  ]
+}

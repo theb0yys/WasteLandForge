@@ -69,5 +69,9 @@ when the manifest declares an asset registry root.
 Gate 15 adds `WF-ASSET-*` semantic diagnostics for asset source and target path
 rules after asset registry schema validation succeeds.
 
+Gate 16 adds type-specific `WF-ASSET-*` semantic diagnostics for minimal source
+file signatures and target-root conventions after asset path validation
+succeeds.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

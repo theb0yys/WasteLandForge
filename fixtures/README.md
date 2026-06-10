@@ -48,3 +48,9 @@ Gate 15 adds tiny synthetic asset source files for valid fixtures and:
 - `projects/BrokenCases/InvalidAssetPaths` - deterministic `WF-ASSET-001`
   through `WF-ASSET-004` failure cases for source escape, missing source,
   target traversal, and target extension mismatch.
+
+Gate 16 adds:
+
+- `projects/BrokenCases/InvalidAssetTypes` - deterministic `WF-ASSET-005`
+  and `WF-ASSET-006` failure cases for source signature mismatch and target
+  root mismatch.

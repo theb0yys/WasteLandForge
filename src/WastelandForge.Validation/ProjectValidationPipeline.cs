@@ -25,6 +25,18 @@ public sealed class ProjectValidationPipeline
         ["documentation"] = [".md", ".txt"]
     };
 
+    private static readonly IReadOnlyDictionary<string, string[]> AssetTargetPrefixes = new Dictionary<string, string[]>(StringComparer.Ordinal)
+    {
+        ["mesh"] = ["meshes/"],
+        ["texture"] = ["textures/"],
+        ["audio"] = ["sound/"],
+        ["voice"] = ["sound/voice/"],
+        ["lip"] = ["sound/voice/"],
+        ["animation"] = ["meshes/"],
+        ["interface"] = ["menus/", "textures/interface/"],
+        ["config"] = ["config/"]
+    };
+
     private static readonly Lazy<JsonSchema> ManifestSchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Manifest010,
         "Manifest schema 0.1.0"));
@@ -734,6 +746,8 @@ public sealed class ProjectValidationPipeline
                 ValidateAssetSourcePath(projectRoot, document, asset, issues, projectId);
                 ValidateAssetTargetPath(document, asset, issues, projectId);
                 ValidateAssetTargetExtension(document, asset, issues, projectId);
+                ValidateAssetSourceSignature(projectRoot, document, asset, issues, projectId);
+                ValidateAssetTargetRoot(document, asset, issues, projectId);
             }
         }
     }
@@ -831,6 +845,74 @@ public sealed class ProjectValidationPipeline
             suggestedFix: "Use a target file extension that matches the declared asset type.",
             docsRule: "WF-ASSET-004",
             fingerprint: $"wf:asset:004:{asset.Id}"));
+    }
+
+    private static void ValidateAssetSourceSignature(
+        string projectRoot,
+        RegistryDocument document,
+        AssetEntry asset,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        var absoluteSource = Path.GetFullPath(Path.Combine(projectRoot, asset.Source));
+        if (!IsInside(projectRoot, absoluteSource) || !File.Exists(absoluteSource))
+        {
+            return;
+        }
+
+        if (!TryGetAssetSignature(asset.Target, out var expectedSignature, out var isMatch))
+        {
+            return;
+        }
+
+        var bytes = File.ReadAllBytes(absoluteSource);
+        if (isMatch(bytes))
+        {
+            return;
+        }
+
+        issues.Add(CreateIssue(
+            "WF-ASSET-005",
+            DiagnosticSeverity.Error,
+            "asset",
+            "Asset source signature does not match target type",
+            $"Asset '{asset.Id}' source file must look like {expectedSignature}.",
+            CreateSourceLocation(document.DisplayPath, $"/assets/{asset.Index}/source", document.SourceLocations),
+            projectId,
+            suggestedFix: "Use a source file whose header matches the declared asset target type.",
+            docsRule: "WF-ASSET-005",
+            fingerprint: $"wf:asset:005:{asset.Id}"));
+    }
+
+    private static void ValidateAssetTargetRoot(
+        RegistryDocument document,
+        AssetEntry asset,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        if (!IsSafeRelativeAssetPath(asset.Target) ||
+            !AssetTargetPrefixes.TryGetValue(asset.AssetType, out var allowedPrefixes))
+        {
+            return;
+        }
+
+        var normalizedTarget = NormalizeAssetPath(asset.Target);
+        if (allowedPrefixes.Any(prefix => normalizedTarget.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        issues.Add(CreateIssue(
+            "WF-ASSET-006",
+            DiagnosticSeverity.Error,
+            "asset",
+            "Asset target root does not match asset type",
+            $"Asset '{asset.Id}' type '{asset.AssetType}' target must start with {FormatAllowedPrefixes(allowedPrefixes)}.",
+            CreateSourceLocation(document.DisplayPath, $"/assets/{asset.Index}/target", document.SourceLocations),
+            projectId,
+            suggestedFix: "Use the game-data folder convention that matches the declared asset type.",
+            docsRule: "WF-ASSET-006",
+            fingerprint: $"wf:asset:006:{asset.Id}"));
     }
 
     private static void RunCapabilityPlaceholder()
@@ -1167,6 +1249,11 @@ public sealed class ProjectValidationPipeline
             !StringComparer.Ordinal.Equals(segment, ".."));
     }
 
+    private static string NormalizeAssetPath(string path)
+    {
+        return path.Replace('\\', '/').TrimStart('/');
+    }
+
     private static string FormatAllowedExtensions(IReadOnlyList<string> extensions)
     {
         return extensions.Count switch
@@ -1176,6 +1263,71 @@ public sealed class ProjectValidationPipeline
             2 => $"the {extensions[0]} or {extensions[1]} extension",
             _ => string.Join(", ", extensions.Take(extensions.Count - 1)) + $", or {extensions[^1]} extensions"
         };
+    }
+
+    private static string FormatAllowedPrefixes(IReadOnlyList<string> prefixes)
+    {
+        return prefixes.Count switch
+        {
+            0 => "a valid target root",
+            1 => $"'{prefixes[0]}'",
+            2 => $"'{prefixes[0]}' or '{prefixes[1]}'",
+            _ => string.Join(", ", prefixes.Take(prefixes.Count - 1).Select(prefix => $"'{prefix}'")) + $", or '{prefixes[^1]}'"
+        };
+    }
+
+    private static bool TryGetAssetSignature(
+        string target,
+        out string expectedSignature,
+        out Func<byte[], bool> isMatch)
+    {
+        switch (Path.GetExtension(target).ToLowerInvariant())
+        {
+            case ".dds":
+                expectedSignature = "a DDS file with a DDS magic header";
+                isMatch = bytes => StartsWithAscii(bytes, "DDS ");
+                return true;
+            case ".wav":
+                expectedSignature = "a WAV file with RIFF/WAVE headers";
+                isMatch = bytes => StartsWithAscii(bytes, "RIFF") && HasAsciiAt(bytes, "WAVE", 8);
+                return true;
+            case ".ogg":
+                expectedSignature = "an OGG file with an OggS capture pattern";
+                isMatch = bytes => StartsWithAscii(bytes, "OggS");
+                return true;
+            case ".nif":
+            case ".kf":
+                expectedSignature = "a Gamebryo file header";
+                isMatch = bytes => StartsWithAscii(bytes, "Gamebryo File Format");
+                return true;
+            default:
+                expectedSignature = string.Empty;
+                isMatch = _ => true;
+                return false;
+        }
+    }
+
+    private static bool StartsWithAscii(byte[] bytes, string value)
+    {
+        return HasAsciiAt(bytes, value, 0);
+    }
+
+    private static bool HasAsciiAt(byte[] bytes, string value, int offset)
+    {
+        if (bytes.Length < offset + value.Length)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < value.Length; index++)
+        {
+            if (bytes[offset + index] != value[index])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static bool IsYamlNonSpecificTag(string tag)

@@ -33,3 +33,5 @@ Gate 15 adds the first concrete `WF-ASSET-*` diagnostics:
 `WF-ASSET-001` for asset source escape, `WF-ASSET-002` for missing required
 source files, `WF-ASSET-003` for non-game-relative target paths, and
 `WF-ASSET-004` for target extension mismatch.
+Gate 16 adds `WF-ASSET-005` for source signature mismatch and `WF-ASSET-006`
+for target root mismatch.

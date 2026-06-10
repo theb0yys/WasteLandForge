@@ -10,3 +10,7 @@ manifest, dependency, and capability bootstrap schemas. Gate 14 adds
 Gate 15 validates schema-valid asset paths semantically. The schema still
 defines contract shape only; path existence, traversal, and extension checks
 belong to validation rules.
+
+Gate 16 adds type-specific semantic validation for minimal source signatures
+and target root conventions. The schema remains contract-shape only; content
+inspection and game-data placement rules stay in validation code.
