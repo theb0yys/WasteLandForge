@@ -7,6 +7,7 @@
   "game": "falloutnv",
   "registries": {
     "dependencies": "src/registries/dependencies/",
-    "capabilities": "src/registries/capabilities/"
+    "capabilities": "src/registries/capabilities/",
+    "assets": "src/registries/assets/"
   }
 }

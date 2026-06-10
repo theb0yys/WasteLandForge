@@ -1,0 +1,9 @@
+schemaVersion: "0.1.0"
+kind: manifest
+id: io.github.theboyyss.unsupportedyaml
+name: Unsupported YAML Feature
+version: "0.1.0"
+game: falloutnv
+registries: &registryRoots
+  dependencies: src/registries/dependencies/
+  capabilities: src/registries/capabilities/

@@ -1,0 +1,11 @@
+schemaVersion: "0.1.0"
+kind: asset
+id: io.github.theboyyss.yamlexample.assets
+assets:
+  - id: io.github.theboyyss.yamlexample.assets.config.settings
+    assetType: config
+    source: src/assets/config/settings.json
+    target: config/YamlExample/settings.json
+    required: true
+    tags:
+      - synthetic

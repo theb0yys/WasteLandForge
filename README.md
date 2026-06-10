@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 11 establishes
-Markdown diagnostic summaries and GitHub annotation output.
+The project is currently in gated v0.1 implementation. Gate 15 establishes
+asset path semantic validation.
 
 ## Architecture Spine
 
@@ -16,24 +16,22 @@ Markdown diagnostic summaries and GitHub annotation output.
 
 ## Current Gate
 
-Gate 11 creates:
+Gate 15 creates:
 
-- Markdown summaries from the canonical diagnostic model,
-- GitHub workflow-command annotations from the canonical diagnostic model,
-- `forge validate --format github`,
-- `forge validate --summary <path>`,
-- `forge release verify --format github`,
-- `forge release verify --summary <path>`,
-- CI Markdown summary artifacts.
+- deterministic `WF-ASSET-*` diagnostics for asset path semantics,
+- source-path project-root containment checks,
+- required source file existence checks,
+- target path traversal checks,
+- basic target extension checks by asset type,
+- deterministic fixtures for invalid asset paths.
 
 It intentionally does not create:
 
-- YAML ingestion,
-- JsonSchema.Net runtime schema evaluation,
-- line-precise YAML diagnostics,
 - VS Code problem matchers,
 - release publishing,
 - ZIP/FOMOD package creation,
+- deep NIF, DDS, WAV, OGG, LIP, or BSA validation,
+- provider/environment detection or capability scans,
 - generation, packaging, release, or capability scan implementations.
 
 Those belong to later gates recorded in `WasteLandForge/planning/`.

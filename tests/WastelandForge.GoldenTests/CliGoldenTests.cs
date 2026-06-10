@@ -45,7 +45,7 @@ public sealed class CliGoldenTests
         Assert.Equal("WF-SEM-014", (string?)json["runs"]?[0]?["results"]?[0]?["ruleId"]);
         Assert.Equal("error", (string?)json["runs"]?[0]?["results"]?[0]?["level"]);
         Assert.Equal("src/registries/dependencies/main.json", (string?)json["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["artifactLocation"]?["uri"]);
-        Assert.Equal("wf:sem:014:runtime.ui.fake_provider", (string?)json["runs"]?[0]?["results"]?[0]?["partialFingerprints"]?["wastelandforgeFingerprint"]);
+        Assert.Equal("wf:sem:014:runtime.ui.fakeprovider", (string?)json["runs"]?[0]?["results"]?[0]?["partialFingerprints"]?["wastelandforgeFingerprint"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -81,7 +81,7 @@ public sealed class CliGoldenTests
 
         Assert.Equal(1, result.ExitCode);
         Assert.Contains("::error file=src/registries/dependencies/main.json,title=WF-SEM-014 Unknown capability reference::", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Dependency registry references capability 'runtime.ui.fake_provider' which is not defined.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Dependency registry references capability 'runtime.ui.fakeprovider' which is not defined.", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Location: src/registries/dependencies/main.json#/requires/capabilities/0/id", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Fix: Declare the capability in the capability registry or remove the dependency.", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);

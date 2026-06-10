@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 11 Markdown and GitHub diagnostics baseline
+Status: Gate 15 asset path semantic validation baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -36,6 +36,18 @@ forge --version
 - `forge help <command>` and `<command> --help` show command help.
 - `forge --version` prints the CLI version.
 - `forge validate` runs the Gate 5 loader and validation pipeline.
+- `forge validate` accepts `wastelandforge.json`, `wastelandforge.yaml`, or
+  `wastelandforge.yml` manifests and normalizes source contracts to canonical
+  JSON before validation.
+- `forge validate` evaluates the embedded manifest JSON Schema at runtime.
+- `forge validate` evaluates embedded dependency and capability registry
+  JSON Schemas at runtime before semantic capability-reference checks.
+- `forge validate` evaluates embedded asset registry JSON Schemas at runtime
+  when the manifest declares `registries.assets`.
+- `forge validate` emits `WF-ASSET-*` diagnostics for schema-valid asset
+  registry paths that escape the project, are missing when required, traverse
+  outside the game-relative target root, or use a target extension that does
+  not match the declared asset type.
 - `forge release verify` runs the Gate 9 release dry-run verifier and writes
   local evidence under project `dist/`.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.
@@ -96,6 +108,9 @@ with:
 
 When `GITHUB_STEP_SUMMARY` is present, GitHub format also appends the Markdown
 diagnostic summary to that environment file.
+
+YAML-backed diagnostics may include line and column values when the loader can
+map the normalized JSON Pointer back to the YAML source node.
 
 ## Markdown Summary Output
 

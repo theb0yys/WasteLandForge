@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/capabilities/0.1.0/schema.json",
+  "title": "WastelandForge Capability Registry",
+  "description": "Capability registry for WastelandForge provider-backed requirements.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "title",
+    "satisfiedBy",
+    "requires",
+    "scope",
+    "stability",
+    "features"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the capability registry contract.",
+      "const": "0.1.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "capability"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "satisfiedBy": {
+      "description": "Provider data that can satisfy this capability.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/providerReference"
+      },
+      "uniqueItems": true
+    },
+    "requires": {
+      "description": "Capabilities that this capability transitively requires.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capabilityReference"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "scope": {
+      "description": "Primary scope where the capability is satisfied.",
+      "enum": [
+        "root",
+        "data-managed",
+        "mo2-managed",
+        "mo2-profile",
+        "editor-root",
+        "editor-data-managed",
+        "external-tool",
+        "runtime-session",
+        "generated",
+        "unknown"
+      ]
+    },
+    "stability": {
+      "type": "string",
+      "minLength": 1
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$"
+    },
+    "providerReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "providerType"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "providerType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "$ref": "#/$defs/versionConstraint"
+        }
+      }
+    },
+    "capabilityReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "version": {
+          "$ref": "#/$defs/versionConstraint"
+        }
+      }
+    },
+    "versionConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scheme"
+      ],
+      "properties": {
+        "scheme": {
+          "enum": [
+            "semver",
+            "integer",
+            "scaled-integer",
+            "string",
+            "unknown",
+            "custom"
+          ]
+        },
+        "minInclusive": {
+          "type": "string",
+          "minLength": 1
+        },
+        "maxExclusive": {
+          "type": "string",
+          "minLength": 1
+        },
+        "equals": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.1.0",
+      "kind": "capability",
+      "id": "runtime.scripting.xnvse",
+      "title": "xNVSE runtime scripting",
+      "satisfiedBy": [
+        {
+          "id": "provider.xnvse",
+          "providerType": "runtime"
+        }
+      ],
+      "requires": {
+        "capabilities": []
+      },
+      "scope": "runtime-session",
+      "stability": "stable",
+      "features": [
+        "script-extender"
+      ]
+    }
+  ]
+}

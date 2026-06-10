@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "manifest",
+  "id": "io.github.theboyyss.invalidassetregistry",
+  "name": "Invalid Asset Registry",
+  "version": "0.1.0",
+  "game": "falloutnv",
+  "registries": {
+    "dependencies": "src/registries/dependencies/",
+    "capabilities": "src/registries/capabilities/",
+    "assets": "src/registries/assets/"
+  }
+}

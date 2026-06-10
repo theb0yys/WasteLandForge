@@ -1,0 +1,14 @@
+schemaVersion: "0.1.0"
+kind: manifest
+id: io.github.theboyyss.yamlexample
+name: YAML Example Mod
+version: "0.1.0"
+game: falloutnv
+metadata:
+  authors:
+    - theboyyss
+  license: MIT
+registries:
+  dependencies: src/registries/dependencies/
+  capabilities: src/registries/capabilities/
+  assets: src/registries/assets/

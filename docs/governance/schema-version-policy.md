@@ -32,4 +32,9 @@ https://schemas.wastelandforge.dev/fnv/manifest/0.1.0/schema.json
 
 ## Gate Ownership
 
-Gate 3 establishes this convention. Later gates may add schemas, resolver behavior, validation, editor companion schemas, and migration commands without weakening immutability.
+Gate 3 establishes this convention. Gate 12 evaluates the embedded manifest
+schema at runtime during source validation. Gate 13 evaluates the embedded
+dependency and capability registry schemas at runtime. Gate 14 evaluates the
+embedded asset registry schema at runtime. Later gates may add resolver
+behavior, editor companion schemas, and migration commands without weakening
+immutability.

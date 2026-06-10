@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "manifest",
+  "id": "io.github.theboyyss.invaliddependencyregistry",
+  "name": "Invalid Dependency Registry",
+  "version": "0.1.0",
+  "game": "falloutnv",
+  "registries": {
+    "dependencies": "src/registries/dependencies/",
+    "capabilities": "src/registries/capabilities/"
+  }
+}

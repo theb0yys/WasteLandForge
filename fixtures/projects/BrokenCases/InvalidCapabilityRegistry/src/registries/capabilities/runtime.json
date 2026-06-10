@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "capability",
+  "id": "runtime.scripting.xnvse",
+  "title": "xNVSE runtime scripting",
+  "requires": {
+    "capabilities": []
+  },
+  "scope": "runtime-session",
+  "stability": "stable",
+  "features": [
+    "script-extender"
+  ]
+}

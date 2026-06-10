@@ -19,3 +19,17 @@ later gates implement each workflow.
 
 Gate 10 and Gate 11 add diagnostic projections in `WastelandForge.Core`:
 SARIF, Markdown summaries, and GitHub workflow-command annotations.
+
+Gate 12 adds YAML source contract ingestion and runtime manifest JSON Schema
+evaluation in `WastelandForge.Validation`, backed by embedded schema text from
+`WastelandForge.Schema`.
+
+Gate 13 adds dependency and capability registry JSON Schema evaluation through
+the same validation path.
+
+Gate 14 adds optional asset registry JSON Schema evaluation through the same
+validation path.
+
+Gate 15 adds asset path semantic validation in `WastelandForge.Validation`,
+including source containment, required source existence, target traversal, and
+basic asset-type target extension checks.

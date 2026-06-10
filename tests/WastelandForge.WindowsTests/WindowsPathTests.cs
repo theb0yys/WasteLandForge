@@ -38,7 +38,22 @@ public sealed class WindowsPathTests
             {
               "schemaVersion": "0.1.0",
               "kind": "capability",
-              "id": "runtime.scripting.xnvse"
+              "id": "runtime.scripting.xnvse",
+              "title": "xNVSE runtime scripting",
+              "satisfiedBy": [
+                {
+                  "id": "provider.xnvse",
+                  "providerType": "runtime"
+                }
+              ],
+              "requires": {
+                "capabilities": []
+              },
+              "scope": "runtime-session",
+              "stability": "stable",
+              "features": [
+                "script-extender"
+              ]
             }
             """);
 
@@ -86,7 +101,7 @@ public sealed class WindowsPathTests
               "requires": {
                 "capabilities": [
                   {
-                    "id": "runtime.ui.fake_provider"
+                    "id": "runtime.ui.fakeprovider"
                   }
                 ]
               }
@@ -98,7 +113,22 @@ public sealed class WindowsPathTests
             {
               "schemaVersion": "0.1.0",
               "kind": "capability",
-              "id": "runtime.scripting.xnvse"
+              "id": "runtime.scripting.xnvse",
+              "title": "xNVSE runtime scripting",
+              "satisfiedBy": [
+                {
+                  "id": "provider.xnvse",
+                  "providerType": "runtime"
+                }
+              ],
+              "requires": {
+                "capabilities": []
+              },
+              "scope": "runtime-session",
+              "stability": "stable",
+              "features": [
+                "script-extender"
+              ]
             }
             """);
 

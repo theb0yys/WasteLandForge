@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/assets/0.1.0/schema.json",
+  "title": "WastelandForge Asset Registry",
+  "description": "Asset registry for WastelandForge source-controlled content paths.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "assets"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the asset registry contract.",
+      "const": "0.1.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "asset"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "assets": {
+      "description": "Source-controlled assets declared for validation, generation, packaging, or release workflows.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/assetEntry"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "^(?:[a-zA-Z]:|/|\\\\\\\\)"
+      }
+    },
+    "assetEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "assetType",
+        "source",
+        "target"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "assetType": {
+          "enum": [
+            "mesh",
+            "texture",
+            "audio",
+            "voice",
+            "lip",
+            "animation",
+            "interface",
+            "config",
+            "script",
+            "documentation",
+            "other"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "target": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "requires": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/capabilityReference"
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "capabilityReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.1.0",
+      "kind": "asset",
+      "id": "io.github.theboyyss.examplemod.assets",
+      "assets": [
+        {
+          "id": "io.github.theboyyss.examplemod.assets.interface.settings",
+          "assetType": "config",
+          "source": "src/assets/config/settings.json",
+          "target": "config/ExampleMod/settings.json",
+          "required": true,
+          "tags": [
+            "synthetic"
+          ]
+        }
+      ]
+    }
+  ]
+}

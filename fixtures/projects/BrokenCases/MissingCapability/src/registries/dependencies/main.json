@@ -5,7 +5,7 @@
   "requires": {
     "capabilities": [
       {
-        "id": "runtime.ui.fake_provider"
+        "id": "runtime.ui.fakeprovider"
       }
     ]
   }

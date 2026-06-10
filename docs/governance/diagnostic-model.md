@@ -55,5 +55,19 @@ the same canonical issue data. GitHub annotations include line and column only
 when canonical `SourceLocation` includes line and column values; JSON Pointer
 remains the canonical value-level location.
 
+Gate 12 adds YAML source location mapping for YAML-backed source contracts.
+Manifest schema diagnostics are emitted from runtime JSON Schema evaluation
+against the normalized canonical JSON object, while locations still use the
+canonical JSON Pointer and optional source line and column.
+
+Gate 13 extends runtime schema diagnostics to dependency and capability
+registry documents before semantic cross-registry validation runs.
+
+Gate 14 extends runtime schema diagnostics to optional asset registry documents
+when the manifest declares an asset registry root.
+
+Gate 15 adds `WF-ASSET-*` semantic diagnostics for asset source and target path
+rules after asset registry schema validation succeeds.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

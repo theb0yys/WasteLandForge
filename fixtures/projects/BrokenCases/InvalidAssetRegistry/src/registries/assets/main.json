@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "asset",
+  "id": "io.github.theboyyss.invalidassetregistry.assets",
+  "assets": [
+    {
+      "id": "io.github.theboyyss.invalidassetregistry.assets.config.settings",
+      "assetType": "config",
+      "source": "src/assets/config/settings.json"
+    }
+  ]
+}

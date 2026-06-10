@@ -16,9 +16,13 @@ Gate status:
 - `gates/gate-009-release-dry-run-build-manifest.md` - Gate 9, release dry-run and build manifest evidence.
 - `gates/gate-010-sarif-diagnostic-projection.md` - Gate 10, canonical SARIF diagnostic projection.
 - `gates/gate-011-markdown-github-diagnostics.md` - Gate 11, Markdown summaries and GitHub annotations.
+- `gates/gate-012-yaml-runtime-schema-validation.md` - Gate 12, YAML ingestion and runtime manifest schema validation.
+- `gates/gate-013-registry-schema-validation.md` - Gate 13, dependency and capability registry schema validation.
+- `gates/gate-014-asset-registry-schema-validation.md` - Gate 14, asset registry schema validation.
+- `gates/gate-015-asset-path-semantic-validation.md` - Gate 15, asset path semantic validation.
 
 Next gate:
 
-- Gate 12 - YAML ingestion and runtime schema validation.
+- Gate 16 - asset type-specific validation.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

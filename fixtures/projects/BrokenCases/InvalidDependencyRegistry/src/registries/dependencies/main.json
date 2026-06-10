@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "dependency",
+  "id": "io.github.theboyyss.invaliddependencyregistry.dependencies",
+  "requires": {
+    "capabilities": [
+      {
+        "phase": [
+          "validation"
+        ]
+      }
+    ]
+  }
+}

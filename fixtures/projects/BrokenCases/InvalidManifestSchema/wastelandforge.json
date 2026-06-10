@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "manifest",
+  "id": "ExampleMod",
+  "name": "Invalid Manifest Schema",
+  "version": "0.1.0",
+  "game": "falloutnv",
+  "registries": {
+    "dependencies": "src/registries/dependencies/main.json",
+    "capabilities": "src/registries/capabilities/runtime.json"
+  }
+}

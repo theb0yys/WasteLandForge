@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "asset",
+  "id": "io.github.theboyyss.invalidassetpaths.assets",
+  "assets": [
+    {
+      "id": "io.github.theboyyss.invalidassetpaths.assets.config.escape",
+      "assetType": "config",
+      "source": "../outside/settings.json",
+      "target": "config/InvalidAssetPaths/escape.json",
+      "required": true
+    },
+    {
+      "id": "io.github.theboyyss.invalidassetpaths.assets.config.missing",
+      "assetType": "config",
+      "source": "src/assets/config/missing.json",
+      "target": "config/InvalidAssetPaths/missing.json",
+      "required": true
+    },
+    {
+      "id": "io.github.theboyyss.invalidassetpaths.assets.config.target",
+      "assetType": "config",
+      "source": "src/assets/config/settings.json",
+      "target": "../outside/settings.json",
+      "required": true
+    },
+    {
+      "id": "io.github.theboyyss.invalidassetpaths.assets.texture.icon",
+      "assetType": "texture",
+      "source": "src/assets/textures/icon.png",
+      "target": "textures/InvalidAssetPaths/icon.png",
+      "required": true
+    }
+  ]
+}

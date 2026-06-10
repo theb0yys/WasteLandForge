@@ -15,3 +15,5 @@ Dependency rules:
 - Record dependency blockers as open implementation checks before changing gate scope.
 
 Gate 2 checks .NET target and package compatibility before solution baseline work is accepted.
+Gate 13 validates dependency and capability registry contracts before semantic
+capability-reference checks or later provider detection can run.
