@@ -14,6 +14,9 @@ local CI governance artifacts, creates placeholder SARIF for the upload surface,
 and adds CODEOWNERS, SECURITY.md, Dependabot, a PR template, and repository
 ruleset guidance.
 
+Gate 10 supersedes the placeholder SARIF surface with
+`forge validate --format sarif`.
+
 This gate does not implement canonical SARIF diagnostic projection, YAML
 ingestion, JsonSchema.Net runtime validation, real release packaging, release
 publishing, or the Forge-owned build-manifest writer.
@@ -52,8 +55,9 @@ Gate 8 CI provides these status checks:
 - `build-test-windows`
 - `release-dry-run` on `main`, `release/*`, and manual dispatch
 
-The Ubuntu lane restores, builds, tests, emits TRX, writes placeholder SARIF,
-and attempts SARIF upload as an optional publishing surface.
+The Ubuntu lane restores, builds, tests, emits TRX, and attempts SARIF upload
+as an optional publishing surface. Gate 10 replaces the placeholder SARIF file
+with CLI-generated SARIF.
 
 The Windows lane restores, builds, tests, emits TRX, and writes CI governance
 artifacts.
@@ -79,7 +83,7 @@ Commands:
 dotnet build WastelandForge.sln -c Release
 dotnet test WastelandForge.sln -c Release --no-build --no-restore -m:1 --logger "console;verbosity=minimal"
 dotnet test WastelandForge.sln -c Release --no-build --no-restore -m:1 --logger trx --results-directory TestResults/Gate8
-./eng/ci/New-CiArtifacts.ps1 -Lane local-gate8 -OutputDirectory artifacts/gate8-local -WriteSarif
+./eng/ci/New-CiArtifacts.ps1 -Lane local-gate8 -OutputDirectory artifacts/gate8-local
 dotnet run --project src/WastelandForge.Cli/WastelandForge.Cli.csproj -c Release --no-build -- validate fixtures/projects/ExampleMod --format json --no-input
 git diff --check
 ```
@@ -101,7 +105,7 @@ TRX files emitted under TestResults/Gate8.
 CI governance artifacts emitted under artifacts/gate8-local:
   build-manifest.json
   checksums.sha256
-  wastelandforge-validation.sarif
+Gate 10 now emits wastelandforge-validation.sarif through forge validate.
 Release fixture validation command succeeded.
 git diff --check passed with CRLF normalization warnings only.
 ```
@@ -111,9 +115,9 @@ git diff --check passed with CRLF normalization warnings only.
 | Check | Status | Gate |
 |---|---|---|
 | Apply GitHub repository rulesets for `main` and `release/*`. | Open | Repository settings |
-| Replace placeholder SARIF with canonical diagnostic SARIF projection. | Open | Later diagnostics gate |
-| Replace release-dry-run placeholder with real release verification and Forge build-manifest writer. | Open | Gate 9 |
-| Resolve or keep documenting solution-level parallel VSTest/xUnit hang. | Open | Gate 9 |
+| Replace placeholder SARIF with canonical diagnostic SARIF projection. | Complete | Gate 10 |
+| Replace release-dry-run placeholder with real release verification and Forge build-manifest writer. | Complete | Gate 9 |
+| Resolve or keep documenting solution-level parallel VSTest/xUnit hang. | Open | Later test gate |
 
 ## Next Gate
 

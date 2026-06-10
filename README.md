@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 8 establishes
-the CI and governance baseline.
+The project is currently in gated v0.1 implementation. Gate 11 establishes
+Markdown diagnostic summaries and GitHub annotation output.
 
 ## Architecture Spine
 
@@ -16,22 +16,24 @@ the CI and governance baseline.
 
 ## Current Gate
 
-Gate 8 creates:
+Gate 11 creates:
 
-- GitHub Actions CI with `validate-ubuntu` and mandatory `build-test-windows` lanes,
-- serial solution-level test execution using the Gate 7 verified `-m:1` path,
-- TRX artifact collection,
-- local placeholder SARIF generation and optional GitHub SARIF upload,
-- CI build manifest and checksum artifacts,
-- CODEOWNERS, Dependabot, SECURITY.md, PR template, and ruleset baseline docs.
+- Markdown summaries from the canonical diagnostic model,
+- GitHub workflow-command annotations from the canonical diagnostic model,
+- `forge validate --format github`,
+- `forge validate --summary <path>`,
+- `forge release verify --format github`,
+- `forge release verify --summary <path>`,
+- CI Markdown summary artifacts.
 
 It intentionally does not create:
 
 - YAML ingestion,
 - JsonSchema.Net runtime schema evaluation,
-- canonical SARIF diagnostic projection from real validation issues,
-- real release packaging or publish flows,
-- Forge-owned build-manifest writer,
+- line-precise YAML diagnostics,
+- VS Code problem matchers,
+- release publishing,
+- ZIP/FOMOD package creation,
 - generation, packaging, release, or capability scan implementations.
 
 Those belong to later gates recorded in `WasteLandForge/planning/`.

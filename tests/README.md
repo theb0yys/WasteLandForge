@@ -20,6 +20,17 @@ the existing test projects:
 - `WastelandForge.WindowsTests` - Windows path and filesystem behavior.
 - `WastelandForge.BackCompatTests` - immutable schema/catalog compatibility.
 
+Gate 9 adds release dry-run tests for Forge-owned build manifest and checksum
+evidence through `WastelandForge.UnitTests` and CLI coverage through
+`WastelandForge.GoldenTests`.
+
+Gate 10 adds SARIF projection tests in `WastelandForge.UnitTests` and CLI SARIF
+contract/output-file tests in `WastelandForge.GoldenTests`.
+
+Gate 11 adds Markdown summary and GitHub annotation projection tests in
+`WastelandForge.UnitTests` and CLI coverage for `--format github`, `--summary`,
+and `GITHUB_STEP_SUMMARY` behavior in `WastelandForge.GoldenTests`.
+
 Run the full local suite serially:
 
 ```text

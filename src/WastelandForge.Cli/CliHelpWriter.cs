@@ -40,11 +40,14 @@ internal static class CliHelpWriter
         }
 
         writer.WriteLine();
-        writer.WriteLine("Global options in Gate 6:");
+        writer.WriteLine("Implemented global options:");
         writer.WriteLine("  -h, --help");
         writer.WriteLine("  --version");
+        writer.WriteLine("  -o, --output <path>");
+        writer.WriteLine("  --summary <path>");
         writer.WriteLine("  --format <human|plain|json|sarif|github>");
         writer.WriteLine("  --project <path>");
+        writer.WriteLine("  --dry-run");
         writer.WriteLine("  --no-input");
         writer.WriteLine();
         writer.WriteLine("Examples:");
@@ -83,6 +86,8 @@ internal static class CliHelpWriter
                 WriteReleaseHelp(writer);
                 return true;
             case "release verify":
+                WriteReleaseVerifyHelp(writer);
+                return true;
             case "release prepare":
             case "release publish":
                 WriteReservedCommandHelp(writer, commandPath, "Release verification and publishing are reserved by ADR-011.");
@@ -101,7 +106,7 @@ internal static class CliHelpWriter
             case "graph":
             case "explain":
             case "clean":
-                WriteReservedCommandHelp(writer, commandPath, "This command is part of the ADR-010 command surface and is reserved in Gate 6.");
+                WriteReservedCommandHelp(writer, commandPath, "This command is part of the ADR-010 command surface and is reserved for a later gate.");
                 return true;
             case "help":
                 WriteTopLevel(writer);
@@ -116,12 +121,14 @@ internal static class CliHelpWriter
         writer.WriteLine("forge validate");
         writer.WriteLine();
         writer.WriteLine("Usage:");
-        writer.WriteLine("  forge validate [project-root] [--project <path>] [--format human|plain|json] [--no-input]");
+        writer.WriteLine("  forge validate [project-root] [--project <path>] [--output <path>] [--summary <path>] [--format human|plain|json|sarif|github] [--no-input]");
         writer.WriteLine();
         writer.WriteLine("Runs the Gate 5 loader and validation pipeline.");
         writer.WriteLine();
         writer.WriteLine("Examples:");
         writer.WriteLine("  forge validate fixtures/projects/ExampleMod --format json");
+        writer.WriteLine("  forge validate fixtures/projects/ExampleMod --format sarif --output artifacts/wastelandforge-validation.sarif");
+        writer.WriteLine("  forge validate fixtures/projects/ExampleMod --format github --summary artifacts/wastelandforge-validation.md");
         writer.WriteLine("  forge validate --project fixtures/projects/BrokenCases/MissingCapability --format plain");
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
@@ -139,7 +146,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge capabilities scan [options]");
         writer.WriteLine("  forge capabilities explain <capability-or-provider-id> [options]");
         writer.WriteLine();
-        writer.WriteLine("Capability commands are reserved in Gate 6. Detection remains local-first and deterministic.");
+        writer.WriteLine("Capability commands are reserved for a later gate. Detection remains local-first and deterministic.");
     }
 
     private static void WriteReleaseHelp(TextWriter writer)
@@ -151,7 +158,34 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge release prepare [options]");
         writer.WriteLine("  forge release publish [options]");
         writer.WriteLine();
-        writer.WriteLine("Release commands are reserved in Gate 6. Publishing requires explicit approval and later governance gates.");
+        writer.WriteLine("Release verify is implemented. Release prepare and publish remain reserved for later governance gates.");
+    }
+
+    private static void WriteReleaseVerifyHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge release verify");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge release verify [project-root] [--project <path>] [--output dist/<name>] [--summary <path>] [--format human|plain|json|sarif|github] [--dry-run] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Runs Gate 9 release dry-run verification and writes local release evidence under project dist/.");
+        writer.WriteLine();
+        writer.WriteLine("Outputs:");
+        writer.WriteLine("  dist/release-dry-run/staging/");
+        writer.WriteLine("  dist/release-dry-run/validation.json");
+        writer.WriteLine("  dist/release-dry-run/release-summary.json");
+        writer.WriteLine("  dist/release-dry-run/build-manifest.json");
+        writer.WriteLine("  dist/release-dry-run/checksums.sha256");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge release verify fixtures/projects/ExampleMod --format json --no-input");
+        writer.WriteLine("  forge release verify fixtures/projects/ExampleMod --format github --summary artifacts/release-verify.md --no-input");
+        writer.WriteLine("  forge release verify --project fixtures/projects/ExampleMod --output dist/gate9 --dry-run");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 release dry-run evidence written");
+        writer.WriteLine("  1 blocking diagnostics found");
+        writer.WriteLine("  2 usage or unsupported format");
     }
 
     private static void WriteDoctorHelp(TextWriter writer)
@@ -161,7 +195,7 @@ internal static class CliHelpWriter
         writer.WriteLine("Usage:");
         writer.WriteLine("  forge doctor export [options]");
         writer.WriteLine();
-        writer.WriteLine("Doctor export is reserved in Gate 6 and must remain redacted and AI-optional.");
+        writer.WriteLine("Doctor export is reserved for a later gate and must remain redacted and AI-optional.");
     }
 
     private static void WriteReservedCommandHelp(TextWriter writer, string commandPath, string note)
@@ -172,6 +206,6 @@ internal static class CliHelpWriter
         writer.WriteLine($"  forge {commandPath} [options]");
         writer.WriteLine();
         writer.WriteLine(note);
-        writer.WriteLine("Use --format json for a machine-readable Gate 6 skeleton status.");
+        writer.WriteLine("Use --format json for a machine-readable reserved-command status.");
     }
 }

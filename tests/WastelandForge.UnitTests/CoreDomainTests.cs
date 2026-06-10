@@ -111,4 +111,106 @@ public sealed class CoreDomainTests
         Assert.Equal(1, (int?)node["summary"]?["errors"]);
         Assert.Equal("WF-SEM-014", (string?)node["issues"]?[0]?["ruleId"]);
     }
+
+    [Fact]
+    public void DiagnosticReportSarifMapsCanonicalIssues()
+    {
+        var report = new DiagnosticReport(
+            LogicalId.Parse("io.github.theboyyss.examplemod"),
+            [
+                new DiagnosticIssue(
+                    RuleId.Parse("WF-SEM-014"),
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Unknown capability reference",
+                    "Dependency registry references capability 'runtime.ui.fake_provider' which is not defined.",
+                    new SourceLocation(
+                        "src/registries/dependencies/main.json",
+                        JsonPointer.Parse("/requires/capabilities/0/id"),
+                        18,
+                        7),
+                    LogicalId.Parse("io.github.theboyyss.examplemod"),
+                    [
+                        new SourceLocation(
+                            "src/registries/capabilities/runtime.json",
+                            JsonPointer.Parse("/id"))
+                    ],
+                    "Declare the capability in the capability registry or remove the dependency.",
+                    new Uri("https://docs.wastelandforge.dev/rules/WF-SEM-014"),
+                    "wf:sem:014:runtime.ui.fake_provider")
+            ]);
+
+        var json = DiagnosticReportSarifSerializer.Serialize(report, "0.1.0");
+        var node = JsonNode.Parse(json) ?? throw new InvalidOperationException("SARIF JSON did not parse.");
+
+        Assert.Equal("https://json.schemastore.org/sarif-2.1.0.json", (string?)node["$schema"]);
+        Assert.Equal("2.1.0", (string?)node["version"]);
+        Assert.Equal("WastelandForge", (string?)node["runs"]?[0]?["tool"]?["driver"]?["name"]);
+        Assert.Equal("0.1.0", (string?)node["runs"]?[0]?["tool"]?["driver"]?["semanticVersion"]);
+        Assert.Equal("WF-SEM-014", (string?)node["runs"]?[0]?["tool"]?["driver"]?["rules"]?[0]?["id"]);
+        Assert.Equal("Unknown capability reference", (string?)node["runs"]?[0]?["tool"]?["driver"]?["rules"]?[0]?["shortDescription"]?["text"]);
+        Assert.Equal("WF-SEM-014", (string?)node["runs"]?[0]?["results"]?[0]?["ruleId"]);
+        Assert.Equal("error", (string?)node["runs"]?[0]?["results"]?[0]?["level"]);
+        Assert.Equal("src/registries/dependencies/main.json", (string?)node["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["artifactLocation"]?["uri"]);
+        Assert.Equal(18, (int?)node["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["region"]?["startLine"]);
+        Assert.Equal(7, (int?)node["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["region"]?["startColumn"]);
+        Assert.Equal("/requires/capabilities/0/id", (string?)node["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["properties"]?["jsonPointer"]);
+        Assert.Equal("wf:sem:014:runtime.ui.fake_provider", (string?)node["runs"]?[0]?["results"]?[0]?["partialFingerprints"]?["wastelandforgeFingerprint"]);
+        Assert.Equal("src/registries/capabilities/runtime.json", (string?)node["runs"]?[0]?["results"]?[0]?["relatedLocations"]?[0]?["physicalLocation"]?["artifactLocation"]?["uri"]);
+    }
+
+    [Fact]
+    public void DiagnosticReportMarkdownSummarizesCanonicalIssues()
+    {
+        var report = new DiagnosticReport(
+            LogicalId.Parse("io.github.theboyyss.examplemod"),
+            [
+                new DiagnosticIssue(
+                    RuleId.Parse("WF-SEM-014"),
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Unknown capability reference",
+                    "Dependency registry references capability 'runtime.ui.fake_provider' which is not defined.",
+                    new SourceLocation("src/registries/dependencies/main.json", JsonPointer.Parse("/requires/capabilities/0/id")),
+                    suggestedFix: "Declare the capability in the capability registry or remove the dependency.",
+                    docsUri: new Uri("https://docs.wastelandforge.dev/rules/WF-SEM-014"),
+                    fingerprint: "wf:sem:014:runtime.ui.fake_provider")
+            ]);
+
+        var markdown = DiagnosticReportMarkdownRenderer.Render(report);
+
+        Assert.Contains("# WastelandForge Diagnostics", markdown, StringComparison.Ordinal);
+        Assert.Contains("Summary: 1 error(s), 0 warning(s), 0 note(s)", markdown, StringComparison.Ordinal);
+        Assert.Contains("| Error | `WF-SEM-014` | `src/registries/dependencies/main.json#/requires/capabilities/0/id` | Unknown capability reference |", markdown, StringComparison.Ordinal);
+        Assert.Contains("Fix: Declare the capability in the capability registry or remove the dependency.", markdown, StringComparison.Ordinal);
+        Assert.Contains("Fingerprint: `wf:sem:014:runtime.ui.fake_provider`", markdown, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DiagnosticReportGitHubAnnotationsMapCanonicalIssues()
+    {
+        var report = new DiagnosticReport(
+            LogicalId.Parse("io.github.theboyyss.examplemod"),
+            [
+                new DiagnosticIssue(
+                    RuleId.Parse("WF-SEM-014"),
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Unknown capability reference, escaped",
+                    "Dependency registry references capability 'runtime.ui.fake_provider' which is 100% not defined.",
+                    new SourceLocation(
+                        "src/registries/dependencies/main.json",
+                        JsonPointer.Parse("/requires/capabilities/0/id"),
+                        18,
+                        7),
+                    suggestedFix: "Declare the capability in the capability registry or remove the dependency.")
+            ]);
+
+        var annotations = DiagnosticReportGitHubAnnotationRenderer.Render(report);
+
+        Assert.Contains("::error file=src/registries/dependencies/main.json,line=18,col=7,title=WF-SEM-014 Unknown capability reference%2C escaped::", annotations, StringComparison.Ordinal);
+        Assert.Contains("100%25 not defined.", annotations, StringComparison.Ordinal);
+        Assert.Contains("Location: src/registries/dependencies/main.json#/requires/capabilities/0/id", annotations, StringComparison.Ordinal);
+        Assert.Contains("Fix: Declare the capability in the capability registry or remove the dependency.", annotations, StringComparison.Ordinal);
+    }
 }

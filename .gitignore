@@ -3,6 +3,7 @@ generated/*
 !generated/.gitkeep
 dist/*
 !dist/.gitkeep
+fixtures/projects/**/dist/
 
 # Local Forge state
 .wastelandforge/cache/

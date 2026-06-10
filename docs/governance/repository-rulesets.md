@@ -42,7 +42,9 @@ Escalations are job-scoped:
 
 - Keep solution-level `dotnet test` serial with `-m:1` until the Gate 7
   parallel VSTest/xUnit hang is resolved.
-- GitHub SARIF upload remains an optional publishing surface. Local SARIF
-  generation is the correctness path.
-- Gate 9 must replace the release-dry-run fixture validation with the real
-  release verification and Forge build-manifest flow.
+- GitHub SARIF upload remains an optional publishing surface. Gate 10 local
+  `forge validate --format sarif` generation is the correctness path.
+- Gate 11 adds GitHub annotations and Markdown job summaries as convenience
+  projections; they do not replace local validation or SARIF artifacts.
+- Gate 9 replaced the release-dry-run fixture validation with `forge release
+  verify`, Forge-owned `build-manifest.json`, and checksums.

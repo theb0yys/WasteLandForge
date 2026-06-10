@@ -46,7 +46,14 @@ Reports are the machine-readable output for `forge validate --format json`.
 
 ## Gate Ownership
 
-Gate 4 creates the core C# model and deterministic JSON serialization. SARIF output is a later projection, not part of Gate 4.
+Gate 4 creates the core C# model and deterministic JSON serialization.
+
+Gate 10 adds SARIF 2.1.0 projection from the same canonical issue data.
+
+Gate 11 adds Markdown summaries and GitHub workflow-command annotations from
+the same canonical issue data. GitHub annotations include line and column only
+when canonical `SourceLocation` includes line and column values; JSON Pointer
+remains the canonical value-level location.
 
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

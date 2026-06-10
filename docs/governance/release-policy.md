@@ -18,10 +18,15 @@ Required before release publish exists:
 - governance checks,
 - explicit human approval.
 
-Gate 8 adds a `release-dry-run` CI status check that validates the synthetic
-fixture and emits CI governance artifacts. It is not the full Forge release
-dry-run.
+Gate 9 implements release dry-run behavior through `forge release verify`.
 
-Gate 9 implements release dry-run behavior, Forge-owned build manifests, and
-release verification evidence. Public release publishing remains out of scope
-until verification and governance gates exist.
+The command validates first, stages synthetic release evidence under project
+`dist/`, writes Forge-owned `build-manifest.json`, writes `checksums.sha256`,
+and emits release summary and validation reports.
+
+Gate 11 adds release diagnostic projections through `forge release verify
+--format github` and `forge release verify --summary <path>`. These projections
+report diagnostics only; release evidence still lives under project `dist/`.
+
+Public release publishing remains out of scope until later verification and
+governance gates exist.

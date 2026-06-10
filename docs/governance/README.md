@@ -11,4 +11,13 @@ Governance documents here preserve project rules before enforcement is implement
 - `schema-version-policy.md` - immutable schema ID and version rules.
 
 Gate 8 creates CI, CODEOWNERS, SECURITY.md, Dependabot, PR template, and
-repository ruleset baseline docs. Release dry-run implementation remains Gate 9.
+repository ruleset baseline docs.
+
+Gate 9 creates release dry-run evidence, Forge-owned build manifests, and
+checksums through `forge release verify`.
+
+Gate 10 creates canonical SARIF 2.1.0 diagnostic projection through
+`forge validate --format sarif`.
+
+Gate 11 creates Markdown diagnostic summaries and GitHub workflow-command
+annotations through `--summary <path>` and `--format github`.

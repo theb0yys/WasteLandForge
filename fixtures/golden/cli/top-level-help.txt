@@ -25,11 +25,14 @@ Commands:
   help
   --version
 
-Global options in Gate 6:
+Implemented global options:
   -h, --help
   --version
+  -o, --output <path>
+  --summary <path>
   --format <human|plain|json|sarif|github>
   --project <path>
+  --dry-run
   --no-input
 
 Examples:

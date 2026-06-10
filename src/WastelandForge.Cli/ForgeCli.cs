@@ -1,4 +1,5 @@
 using WastelandForge.Core;
+using WastelandForge.Provenance;
 using WastelandForge.Validation;
 
 namespace WastelandForge.Cli;
@@ -73,6 +74,11 @@ internal static class ForgeCli
             return RunValidate(resolution.RemainingArgs);
         }
 
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "release verify"))
+        {
+            return RunReleaseVerify(resolution.RemainingArgs);
+        }
+
         return RunReservedCommand(resolution.CommandPath, resolution.RemainingArgs);
     }
 
@@ -104,24 +110,65 @@ internal static class ForgeCli
             return (int)CliExitCode.Usage;
         }
 
-        if (StringComparer.Ordinal.Equals(parse.Format, "sarif") ||
-            StringComparer.Ordinal.Equals(parse.Format, "github"))
-        {
-            WriteUsage(parse.Format, "validate", $"--format {parse.Format} is reserved for a later diagnostics projection gate.");
-            return (int)CliExitCode.Usage;
-        }
-
         var report = new ProjectValidationPipeline().Validate(parse.ProjectPath);
-        if (CliConstants.IsMachineFormat(parse.Format))
+        if (StringComparer.Ordinal.Equals(parse.Format, "sarif"))
         {
-            Console.WriteLine(DiagnosticReportJsonSerializer.Serialize(report, CliConstants.Version));
+            WritePayload(parse.OutputPath, DiagnosticReportSarifSerializer.Serialize(report, CliConstants.Version));
+        }
+        else if (StringComparer.Ordinal.Equals(parse.Format, "github"))
+        {
+            WritePayload(parse.OutputPath, DiagnosticReportGitHubAnnotationRenderer.Render(report), appendFinalNewline: false);
+        }
+        else if (CliConstants.IsMachineFormat(parse.Format))
+        {
+            WritePayload(parse.OutputPath, DiagnosticReportJsonSerializer.Serialize(report, CliConstants.Version));
         }
         else
         {
-            Console.Write(DiagnosticReportTextRenderer.Render(report));
+            WritePayload(parse.OutputPath, DiagnosticReportTextRenderer.Render(report), appendFinalNewline: false);
         }
 
+        WriteMarkdownSummary(parse.SummaryPath, report, "validate", writeGitHubStepSummary: StringComparer.Ordinal.Equals(parse.Format, "github"));
+
         return report.HasErrors
+            ? (int)CliExitCode.BlockingDiagnostics
+            : (int)CliExitCode.Success;
+    }
+
+    private static int RunReleaseVerify(string[] args)
+    {
+        var parse = ParseReleaseVerifyOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "release verify", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var result = new ReleaseDryRunVerifier().Verify(new ReleaseDryRunOptions(
+            parse.ProjectPath,
+            parse.OutputPath,
+            CliConstants.Version));
+
+        if (StringComparer.Ordinal.Equals(parse.Format, "sarif"))
+        {
+            Console.WriteLine(DiagnosticReportSarifSerializer.Serialize(result.Diagnostics, CliConstants.Version, "release verify"));
+        }
+        else if (StringComparer.Ordinal.Equals(parse.Format, "github"))
+        {
+            Console.Write(DiagnosticReportGitHubAnnotationRenderer.Render(result.Diagnostics));
+        }
+        else if (CliConstants.IsMachineFormat(parse.Format))
+        {
+            Console.WriteLine(ReleaseDryRunJsonSerializer.Serialize(result));
+        }
+        else
+        {
+            Console.Write(ReleaseDryRunTextRenderer.Render(result));
+        }
+
+        WriteMarkdownSummary(parse.SummaryPath, result.Diagnostics, "release verify", writeGitHubStepSummary: StringComparer.Ordinal.Equals(parse.Format, "github"));
+
+        return result.HasErrors
             ? (int)CliExitCode.BlockingDiagnostics
             : (int)CliExitCode.Success;
     }
@@ -141,7 +188,7 @@ internal static class ForgeCli
         }
         else
         {
-            Console.WriteLine($"forge {commandPath} is reserved by ADR-010 but is not implemented in Gate 6.");
+            Console.WriteLine($"forge {commandPath} is reserved by ADR-010 but is not implemented in the current gate.");
         }
 
         return (int)CliExitCode.Usage;
@@ -195,6 +242,8 @@ internal static class ForgeCli
     {
         var format = "human";
         var projectPath = ".";
+        string? outputPath = null;
+        string? summaryPath = null;
         var projectWasSet = false;
 
         for (var index = 0; index < args.Length; index++)
@@ -232,6 +281,29 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputPath))
+                {
+                    return ValidateParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputPath = explicitOutputPath;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--summary"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitSummaryPath))
+                {
+                    return ValidateParseResult.Fail(format, "Missing value for --summary.");
+                }
+
+                summaryPath = explicitSummaryPath;
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--no-input"))
             {
                 continue;
@@ -251,7 +323,96 @@ internal static class ForgeCli
             projectWasSet = true;
         }
 
-        return ValidateParseResult.Ok(projectPath, format);
+        return ValidateParseResult.Ok(projectPath, outputPath, summaryPath, format);
+    }
+
+    private static ReleaseVerifyParseResult ParseReleaseVerifyOptions(string[] args)
+    {
+        var format = "human";
+        var projectPath = ".";
+        string? outputPath = null;
+        string? summaryPath = null;
+        var projectWasSet = false;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return ReleaseVerifyParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return ReleaseVerifyParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return ReleaseVerifyParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectWasSet)
+                {
+                    return ReleaseVerifyParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                projectWasSet = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputPath))
+                {
+                    return ReleaseVerifyParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputPath = explicitOutputPath;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--summary"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitSummaryPath))
+                {
+                    return ReleaseVerifyParseResult.Fail(format, "Missing value for --summary.");
+                }
+
+                summaryPath = explicitSummaryPath;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--dry-run") ||
+                StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return ReleaseVerifyParseResult.Fail(format, $"Unsupported release verify option '{arg}'.");
+            }
+
+            if (projectWasSet)
+            {
+                return ReleaseVerifyParseResult.Fail(format, "Project root was specified more than once.");
+            }
+
+            projectPath = arg;
+            projectWasSet = true;
+        }
+
+        return ReleaseVerifyParseResult.Ok(projectPath, outputPath, summaryPath, format);
     }
 
     private static string ParseReservedFormat(string[] args, out string? error)
@@ -281,7 +442,7 @@ internal static class ForgeCli
             if (StringComparer.Ordinal.Equals(format, "sarif") ||
                 StringComparer.Ordinal.Equals(format, "github"))
             {
-                error = $"--format {format} is reserved for a later diagnostics projection gate.";
+                error = $"--format {format} is only available for diagnostic commands in the current gate.";
                 return format;
             }
         }
@@ -310,6 +471,64 @@ internal static class ForgeCli
         }
 
         Console.Error.WriteLine(message);
+    }
+
+    private static void WritePayload(string? outputPath, string payload, bool appendFinalNewline = true)
+    {
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            if (appendFinalNewline)
+            {
+                Console.WriteLine(payload);
+            }
+            else
+            {
+                Console.Write(payload);
+            }
+
+            return;
+        }
+
+        var fullPath = Path.GetFullPath(outputPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(fullPath) ?? ".");
+        File.WriteAllText(fullPath, appendFinalNewline ? payload + Environment.NewLine : payload);
+    }
+
+    private static void WriteMarkdownSummary(
+        string? summaryPath,
+        DiagnosticReport report,
+        string command,
+        bool writeGitHubStepSummary)
+    {
+        var markdown = DiagnosticReportMarkdownRenderer.Render(report, command);
+        string? fullSummaryPath = null;
+
+        if (!string.IsNullOrWhiteSpace(summaryPath))
+        {
+            fullSummaryPath = Path.GetFullPath(summaryPath);
+            Directory.CreateDirectory(Path.GetDirectoryName(fullSummaryPath) ?? ".");
+            File.WriteAllText(fullSummaryPath, markdown);
+        }
+
+        if (!writeGitHubStepSummary)
+        {
+            return;
+        }
+
+        var githubStepSummary = Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY");
+        if (string.IsNullOrWhiteSpace(githubStepSummary))
+        {
+            return;
+        }
+
+        var fullGitHubStepSummaryPath = Path.GetFullPath(githubStepSummary);
+        if (StringComparer.OrdinalIgnoreCase.Equals(fullSummaryPath, fullGitHubStepSummaryPath))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(fullGitHubStepSummaryPath) ?? ".");
+        File.AppendAllText(fullGitHubStepSummaryPath, markdown + Environment.NewLine);
     }
 
     private static bool HasHelpFlag(IEnumerable<string> args)
@@ -349,13 +568,30 @@ internal static class ForgeCli
     private sealed record ValidateParseResult(
         bool Success,
         string ProjectPath,
+        string? OutputPath,
+        string? SummaryPath,
         string Format,
         string Message)
     {
-        public static ValidateParseResult Ok(string projectPath, string format) =>
-            new(true, projectPath, format, string.Empty);
+        public static ValidateParseResult Ok(string projectPath, string? outputPath, string? summaryPath, string format) =>
+            new(true, projectPath, outputPath, summaryPath, format, string.Empty);
 
         public static ValidateParseResult Fail(string format, string message) =>
-            new(false, string.Empty, format, message);
+            new(false, string.Empty, null, null, format, message);
+    }
+
+    private sealed record ReleaseVerifyParseResult(
+        bool Success,
+        string ProjectPath,
+        string? OutputPath,
+        string? SummaryPath,
+        string Format,
+        string Message)
+    {
+        public static ReleaseVerifyParseResult Ok(string projectPath, string? outputPath, string? summaryPath, string format) =>
+            new(true, projectPath, outputPath, summaryPath, format, string.Empty);
+
+        public static ReleaseVerifyParseResult Fail(string format, string message) =>
+            new(false, string.Empty, null, null, format, message);
     }
 }

@@ -49,9 +49,19 @@ jobs:
         shell: pwsh
         run: dotnet test WastelandForge.sln -c Release --no-build --no-restore -m:1 --logger "trx;LogFilePrefix=validate-ubuntu" --results-directory TestResults/validate-ubuntu
 
+      - name: Export SARIF
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/validate-ubuntu | Out-Null
+          dotnet run --project src/WastelandForge.Cli/WastelandForge.Cli.csproj -c Release --no-build -- validate fixtures/projects/ExampleMod --format sarif --output artifacts/validate-ubuntu/wastelandforge-validation.sarif --no-input
+
+      - name: Export GitHub annotations and Markdown summary
+        shell: pwsh
+        run: dotnet run --project src/WastelandForge.Cli/WastelandForge.Cli.csproj -c Release --no-build -- validate fixtures/projects/ExampleMod --format github --summary artifacts/validate-ubuntu/wastelandforge-validation.md --no-input
+
       - name: Write CI governance artifacts
         shell: pwsh
-        run: ./eng/ci/New-CiArtifacts.ps1 -Lane validate-ubuntu -OutputDirectory artifacts/validate-ubuntu -WriteSarif
+        run: ./eng/ci/New-CiArtifacts.ps1 -Lane validate-ubuntu -OutputDirectory artifacts/validate-ubuntu
 
       - name: Upload TRX and CI artifacts
         if: always()
@@ -139,24 +149,23 @@ jobs:
         shell: pwsh
         run: dotnet build WastelandForge.sln -c Release --no-restore
 
-      - name: Validate release fixture
+      - name: Release dry-run
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts/release-dry-run | Out-Null
-          $json = & dotnet run --project src/WastelandForge.Cli/WastelandForge.Cli.csproj -c Release --no-build -- validate fixtures/projects/ExampleMod --format json --no-input
-          if ($LASTEXITCODE -ne 0) {
-            exit $LASTEXITCODE
+          $json = & dotnet run --project src/WastelandForge.Cli/WastelandForge.Cli.csproj -c Release --no-build -- release verify fixtures/projects/ExampleMod --format json --summary artifacts/release-dry-run/release-verify.md --no-input
+          $exitCode = $LASTEXITCODE
+          $json | Set-Content -LiteralPath artifacts/release-dry-run/release-verify.json -Encoding utf8
+          if ($exitCode -ne 0) {
+            exit $exitCode
           }
-          $json | Set-Content -LiteralPath artifacts/release-dry-run/validation.json -Encoding utf8
-
-      - name: Write release dry-run governance artifacts
-        shell: pwsh
-        run: ./eng/ci/New-CiArtifacts.ps1 -Lane release-dry-run -OutputDirectory artifacts/release-dry-run
 
       - name: Upload release dry-run artifacts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-dry-run-results
-          path: artifacts/release-dry-run/**
+          path: |
+            artifacts/release-dry-run/**
+            fixtures/projects/ExampleMod/dist/release-dry-run/**
           if-no-files-found: warn

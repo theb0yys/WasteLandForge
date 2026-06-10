@@ -13,9 +13,12 @@ Gate status:
 - `gates/gate-006-cli-skeleton.md` - Gate 6, CLI skeleton.
 - `gates/gate-007-fixtures-tests.md` - Gate 7, fixtures and tests.
 - `gates/gate-008-ci-governance-baseline.md` - Gate 8, CI and governance baseline.
+- `gates/gate-009-release-dry-run-build-manifest.md` - Gate 9, release dry-run and build manifest evidence.
+- `gates/gate-010-sarif-diagnostic-projection.md` - Gate 10, canonical SARIF diagnostic projection.
+- `gates/gate-011-markdown-github-diagnostics.md` - Gate 11, Markdown summaries and GitHub annotations.
 
 Next gate:
 
-- Gate 9 - release dry-run and build manifest evidence.
+- Gate 12 - YAML ingestion and runtime schema validation.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

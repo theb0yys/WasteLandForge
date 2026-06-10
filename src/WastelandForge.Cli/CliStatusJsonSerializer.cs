@@ -13,7 +13,7 @@ internal static class CliStatusJsonSerializer
 
     public static string SerializeReservedCommand(string commandPath)
     {
-        return CreateStatus(commandPath, "reserved", $"forge {commandPath} is reserved by ADR-010 but is not implemented in Gate 6.", 1)
+        return CreateStatus(commandPath, "reserved", $"forge {commandPath} is reserved by ADR-010 but is not implemented in the current gate.", 1)
             .ToJsonString(SerializerOptions);
     }
 

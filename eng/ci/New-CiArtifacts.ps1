@@ -8,9 +8,7 @@ param(
     [ValidateNotNullOrEmpty()]
     [string] $OutputDirectory,
 
-    [string] $RepositoryRoot,
-
-    [switch] $WriteSarif
+    [string] $RepositoryRoot
 )
 
 $ErrorActionPreference = 'Stop'
@@ -71,39 +69,6 @@ if ([string]::IsNullOrWhiteSpace($ref)) {
     $ref = 'local'
 }
 
-if ($WriteSarif) {
-    $sarif = [ordered] @{
-        '$schema' = 'https://json.schemastore.org/sarif-2.1.0.json'
-        version = '2.1.0'
-        runs = @(
-            [ordered] @{
-                tool = [ordered] @{
-                    driver = [ordered] @{
-                        name = 'WastelandForge Validation'
-                        informationUri = 'https://github.com/theb0yys/WasteLandForge'
-                        semanticVersion = '0.1.0'
-                        rules = @()
-                    }
-                }
-                invocations = @(
-                    [ordered] @{
-                        executionSuccessful = $true
-                        properties = [ordered] @{
-                            gate = 'Gate 8'
-                            lane = $Lane
-                            note = 'Placeholder SARIF until canonical SARIF diagnostic projection is implemented.'
-                        }
-                    }
-                )
-                results = @()
-            }
-        )
-    }
-
-    $sarifJson = $sarif | ConvertTo-Json -Depth 20
-    Write-Utf8NoBom -Path (Join-Path $resolvedOutputDirectory 'wastelandforge-validation.sarif') -Content ($sarifJson + [Environment]::NewLine)
-}
-
 $manifest = [ordered] @{
     formatVersion = '0.1'
     kind = 'wastelandforge.ci-build-manifest'
@@ -131,7 +96,7 @@ $manifest = [ordered] @{
     )
     notes = @(
         'This is a Gate 8 CI governance manifest.',
-        'The Forge build-manifest writer and release verification flow remain Gate 9 work.'
+        'Release dry-run build manifests are emitted by forge release verify.'
     )
 }
 
