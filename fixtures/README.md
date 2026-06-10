@@ -69,3 +69,38 @@ matching voice/lip assets, and adds:
 - `projects/BrokenCases/MissingDialogueVoiceAssets` - deterministic
   `WF-SEM-015` failure case for a dialogue voice work item whose declared
   voice/lip assets are absent.
+
+Gate 19 updates `projects/ExampleMod` with a synthetic quest registry and adds:
+
+- `projects/BrokenCases/InvalidQuestRegistry` - runtime quest registry schema
+  failure case.
+- `projects/BrokenCases/MissingDialogueQuestReference` - deterministic
+  `WF-SEM-016` failure case for a dialogue `questId` that is not declared in
+  the quest registry.
+
+Gate 20 updates `projects/ExampleMod` to quest registry schema `0.2.0` with
+synthetic stage and objective declarations, and adds:
+
+- `projects/BrokenCases/InvalidQuestStageObjectiveRegistry` - runtime quest
+  registry schema failure case for invalid objective shape.
+- `projects/BrokenCases/MissingQuestObjectiveStageReference` - deterministic
+  `WF-SEM-017` failure case for an objective stage reference that is not
+  declared in the same quest.
+
+Gate 21 updates `projects/ExampleMod` to quest registry schema `0.3.0` with a
+synthetic transition declaration, and adds:
+
+- `projects/BrokenCases/InvalidQuestTransitionRegistry` - runtime quest
+  registry schema failure case for invalid transition shape.
+- `projects/BrokenCases/MissingQuestTransitionStageReference` - deterministic
+  `WF-SEM-018` failure case for a transition stage reference that is not
+  declared in the same quest.
+
+Gate 22 updates `projects/ExampleMod` to quest registry schema `0.4.0` with a
+synthetic stage-done condition declaration, and adds:
+
+- `projects/BrokenCases/InvalidQuestConditionRegistry` - runtime quest
+  registry schema failure case for invalid condition shape.
+- `projects/BrokenCases/MissingQuestConditionStageReference` - deterministic
+  `WF-SEM-019` failure case for a condition stage reference that is not
+  declared in the same quest.

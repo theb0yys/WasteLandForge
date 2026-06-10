@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 18 establishes
-the first dialogue registry and voice worklist skeleton.
+The project is currently in gated v0.1 implementation. Gate 22 establishes
+the first quest condition skeleton.
 
 ## Architecture Spine
 
@@ -16,25 +16,31 @@ the first dialogue registry and voice worklist skeleton.
 
 ## Current Gate
 
-Gate 18 creates:
+Gate 22 creates:
 
-- deterministic `WF-ASSET-*` diagnostics for asset path and type semantics,
-- source-path project-root containment checks,
-- required source file existence checks,
-- target path traversal checks,
-- basic target extension checks by asset type,
-- minimal source signature checks for DDS, WAV, OGG, NIF, and KF targets,
-- target root convention checks by asset type,
-- voice/lip target shape checks for `sound/voice/<PluginName>/<VoiceType>/<FileName>`,
-- voice WAV/OGG pair checks by game-relative target stem,
-- matching LIP asset checks by game-relative target stem,
-- a Draft 2020-12 dialogue registry schema,
-- optional `registries.dialogue` manifest wiring,
-- dialogue voice worklist declarations,
-- `WF-SEM-015` cross-registry validation from dialogue voice work items to
-  declared voice/lip assets,
-- deterministic fixtures for invalid asset paths, invalid asset types, and
-  invalid voice assets, plus dialogue registry and voice worklist failures.
+- optional `registries.quests` manifest wiring,
+- immutable Draft 2020-12 quest registry schemas for `0.1.0`, `0.2.0`,
+  `0.3.0`, and `0.4.0`,
+- runtime quest registry schema validation,
+- a valid synthetic `ExampleMod` quest registry with stage and objective
+  declarations plus transition and condition declarations,
+- `WF-SEM-016` cross-registry validation from dialogue `questId` values to
+  declared quest IDs,
+- `WF-SEM-017` semantic validation for quest objectives whose stage references
+  do not resolve to stages declared in the same quest,
+- `WF-SEM-018` semantic validation for quest transitions whose stage references
+  do not resolve to stages declared in the same quest,
+- `WF-SEM-019` semantic validation for quest conditions whose stage references
+  do not resolve to stages declared in the same quest,
+- deterministic fixtures for invalid quest registry shape, invalid
+  stage/objective shape, missing dialogue quest references, and missing quest
+  objective stage references, plus invalid transition shape and missing
+  transition stage references, invalid condition shape, and missing condition
+  stage references.
+
+Gate 22 preserves the earlier asset, voice, dialogue registry, dialogue
+voice worklist, and dialogue quest reference validation from Gates 14 through
+21.
 
 It intentionally does not create:
 
@@ -46,7 +52,11 @@ It intentionally does not create:
 - validation that voice filenames correspond to dialogue records in a master file,
 - GECK lip processing asset detection,
 - full GECK dialogue condition language,
-- quest registry validation,
+- full GECK condition language,
+- result scripts, variables, lockouts, or branch semantics,
+- condition evaluation or result-script execution semantics,
+- external plugin record validation for quest references,
+- dialogue topic reference validation,
 - plugin record compilation,
 - external tool-backed asset inspection,
 - provider/environment detection or capability scans,

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.invalidqueststageobjectiveregistry.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.invalidqueststageobjectiveregistry.quest.intro",
+      "title": "Invalid Synthetic Quest",
+      "stages": [
+        {
+          "id": "io.github.theboyyss.invalidqueststageobjectiveregistry.quest.intro.stage.start",
+          "stage": 10
+        }
+      ],
+      "objectives": [
+        {
+          "id": "io.github.theboyyss.invalidqueststageobjectiveregistry.quest.intro.objective.missingtext"
+        }
+      ]
+    }
+  ]
+}

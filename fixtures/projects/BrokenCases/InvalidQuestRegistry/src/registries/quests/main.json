@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.invalidquestregistry.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.invalidquestregistry.quest.intro"
+    }
+  ]
+}

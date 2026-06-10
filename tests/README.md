@@ -59,6 +59,26 @@ Gate 18 adds dialogue registry schema/catalog coverage in
 dialogue registry and voice worklist fixture coverage in
 `WastelandForge.SemanticTests`.
 
+Gate 19 adds quest registry schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus quest
+registry and dialogue quest reference fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 20 adds quest registry schema `0.2.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+stage/objective schema and objective stage-reference fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 21 adds quest registry schema `0.3.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+transition schema and transition stage-reference fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 22 adds quest registry schema `0.4.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+condition schema and condition stage-reference fixture coverage in
+`WastelandForge.SemanticTests`.
+
 Run the full local suite serially:
 
 ```text

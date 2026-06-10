@@ -25,6 +25,18 @@ public sealed class SchemaBackCompatTests
             "https://schemas.wastelandforge.dev/fnv/assets/0.1.0/schema.json",
             WastelandForgeSchemaIds.Asset010);
         Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/quests/0.1.0/schema.json",
+            WastelandForgeSchemaIds.Quest010);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/quests/0.2.0/schema.json",
+            WastelandForgeSchemaIds.Quest020);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/quests/0.3.0/schema.json",
+            WastelandForgeSchemaIds.Quest030);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/quests/0.4.0/schema.json",
+            WastelandForgeSchemaIds.Quest040);
+        Assert.Equal(
             "https://schemas.wastelandforge.dev/fnv/dialogue/0.1.0/schema.json",
             WastelandForgeSchemaIds.Dialogue010);
     }
@@ -41,17 +53,21 @@ public sealed class SchemaBackCompatTests
     }
 
     [Theory]
-    [InlineData(WastelandForgeSchemaIds.Dependency010, "dependency")]
-    [InlineData(WastelandForgeSchemaIds.Capability010, "capability")]
-    [InlineData(WastelandForgeSchemaIds.Asset010, "asset")]
-    [InlineData(WastelandForgeSchemaIds.Dialogue010, "dialogue")]
-    public void RegistrySchemaCatalogKeepsVersionedResources(string schemaId, string expectedKind)
+    [InlineData(WastelandForgeSchemaIds.Dependency010, "dependency", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.Capability010, "capability", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.Asset010, "asset", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.Quest010, "quest", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.Quest020, "quest", "0.2.0")]
+    [InlineData(WastelandForgeSchemaIds.Quest030, "quest", "0.3.0")]
+    [InlineData(WastelandForgeSchemaIds.Quest040, "quest", "0.4.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue010, "dialogue", "0.1.0")]
+    public void RegistrySchemaCatalogKeepsVersionedResources(string schemaId, string expectedKind, string expectedVersion)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);
 
         Assert.True(found);
         Assert.NotNull(resource);
-        Assert.Equal("0.1.0", resource.Version);
+        Assert.Equal(expectedVersion, resource.Version);
         Assert.Equal(expectedKind, resource.Kind);
     }
 }

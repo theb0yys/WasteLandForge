@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.missingquestobjectivestagereference.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.missingquestobjectivestagereference.quest.intro",
+      "title": "Synthetic Quest With Missing Stage Reference",
+      "stages": [
+        {
+          "id": "io.github.theboyyss.missingquestobjectivestagereference.quest.intro.stage.start",
+          "stage": 10
+        }
+      ],
+      "objectives": [
+        {
+          "id": "io.github.theboyyss.missingquestobjectivestagereference.quest.intro.objective.find",
+          "text": "Find the synthetic marker.",
+          "startStageId": "io.github.theboyyss.missingquestobjectivestagereference.quest.intro.stage.missing"
+        }
+      ]
+    }
+  ]
+}

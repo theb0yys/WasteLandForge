@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingdialoguequestreference.dialogue",
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingdialoguequestreference.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingdialoguequestreference.quest.missing",
+      "topicId": "io.github.theboyyss.missingdialoguequestreference.topic.greeting",
+      "responseText": "Synthetic line with an unknown quest reference."
+    }
+  ]
+}

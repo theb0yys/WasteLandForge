@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "0.4.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.invalidquestconditionregistry.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.invalidquestconditionregistry.quest.intro",
+      "title": "Invalid Condition Synthetic Quest",
+      "stages": [
+        {
+          "id": "io.github.theboyyss.invalidquestconditionregistry.quest.intro.stage.start",
+          "stage": 10
+        }
+      ],
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.invalidquestconditionregistry.quest.intro.condition.missingstage",
+          "conditionType": "stageDone"
+        }
+      ]
+    }
+  ]
+}

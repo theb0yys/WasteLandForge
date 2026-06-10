@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "manifest",
+  "id": "io.github.theboyyss.invalidquesttransitionregistry",
+  "name": "Invalid Quest Transition Registry",
+  "version": "0.1.0",
+  "game": "falloutnv",
+  "registries": {
+    "dependencies": "src/registries/dependencies/",
+    "capabilities": "src/registries/capabilities/",
+    "quests": "src/registries/quests/"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "0.3.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.missingquesttransitionstagereference.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.missingquesttransitionstagereference.quest.intro",
+      "title": "Synthetic Quest With Missing Transition Stage Reference",
+      "stages": [
+        {
+          "id": "io.github.theboyyss.missingquesttransitionstagereference.quest.intro.stage.start",
+          "stage": 10
+        }
+      ],
+      "transitions": [
+        {
+          "id": "io.github.theboyyss.missingquesttransitionstagereference.quest.intro.transition.missingtarget",
+          "fromStageId": "io.github.theboyyss.missingquesttransitionstagereference.quest.intro.stage.start",
+          "toStageId": "io.github.theboyyss.missingquesttransitionstagereference.quest.intro.stage.missing"
+        }
+      ]
+    }
+  ]
+}

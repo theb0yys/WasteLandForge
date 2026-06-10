@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "0.4.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.missingquestconditionstagereference.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.missingquestconditionstagereference.quest.intro",
+      "title": "Synthetic Quest With Missing Condition Stage Reference",
+      "stages": [
+        {
+          "id": "io.github.theboyyss.missingquestconditionstagereference.quest.intro.stage.start",
+          "stage": 10
+        }
+      ],
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.missingquestconditionstagereference.quest.intro.condition.missingstage",
+          "conditionType": "stageDone",
+          "stageId": "io.github.theboyyss.missingquestconditionstagereference.quest.intro.stage.missing"
+        }
+      ]
+    }
+  ]
+}

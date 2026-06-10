@@ -25,6 +25,26 @@ public static class WastelandForgeSchemaCatalog
             "0.1.0",
             "schemas/assets/0.1.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.Quest010,
+            "quest",
+            "0.1.0",
+            "schemas/quests/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Quest020,
+            "quest",
+            "0.2.0",
+            "schemas/quests/0.2.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Quest030,
+            "quest",
+            "0.3.0",
+            "schemas/quests/0.3.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Quest040,
+            "quest",
+            "0.4.0",
+            "schemas/quests/0.4.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.Dialogue010,
             "dialogue",
             "0.1.0",

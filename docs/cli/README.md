@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 18 dialogue registry and voice worklist baseline
+Status: Gate 22 quest condition baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -63,6 +63,22 @@ forge --version
 - `forge validate` emits `WF-SEM-015` when a dialogue voice work item does not
   have matching `.wav`, `.ogg`, and `.lip` assets declared in the asset
   registry.
+- `forge validate` evaluates embedded quest registry JSON Schemas at runtime
+  when the manifest declares `registries.quests`.
+- `forge validate` emits `WF-SEM-016` when a dialogue `questId` references a
+  quest ID that is not declared in the quest registry.
+- `forge validate` supports quest registry schema `0.2.0` for stage and
+  objective skeleton declarations.
+- `forge validate` emits `WF-SEM-017` when a quest objective stage reference
+  does not resolve to a stage declared in the same quest.
+- `forge validate` supports quest registry schema `0.3.0` for transition
+  skeleton declarations.
+- `forge validate` emits `WF-SEM-018` when a quest transition stage reference
+  does not resolve to a stage declared in the same quest.
+- `forge validate` supports quest registry schema `0.4.0` for condition
+  skeleton declarations.
+- `forge validate` emits `WF-SEM-019` when a quest condition stage reference
+  does not resolve to a stage declared in the same quest.
 - `forge release verify` runs the Gate 9 release dry-run verifier and writes
   local evidence under project `dist/`.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.

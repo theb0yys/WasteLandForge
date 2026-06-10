@@ -8,3 +8,6 @@ The schema is a skeleton: it captures dialogue line identity, quest/topic
 ownership, response text, and optional voice worklist fields. Full GECK
 condition language, result script modeling, and plugin record compilation
 remain later narrative gates.
+
+Gate 19 validates dialogue `questId` references against declared quest IDs when
+the project manifest declares a quest registry.

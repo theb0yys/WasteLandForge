@@ -80,5 +80,21 @@ Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.
 
+Gate 19 extends runtime schema diagnostics to optional quest registry documents
+and adds `WF-SEM-016` for dialogue `questId` values that do not resolve to a
+declared quest ID.
+
+Gate 20 adds quest registry schema `0.2.0` for stage and objective skeletons
+and adds `WF-SEM-017` for quest objective stage references that do not resolve
+inside the declaring quest.
+
+Gate 21 adds quest registry schema `0.3.0` for transition skeletons and adds
+`WF-SEM-018` for quest transition stage references that do not resolve inside
+the declaring quest.
+
+Gate 22 adds quest registry schema `0.4.0` for condition skeletons and adds
+`WF-SEM-019` for quest condition stage references that do not resolve inside
+the declaring quest.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

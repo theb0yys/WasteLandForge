@@ -46,3 +46,21 @@ WAV/OGG/LIP pair checks by game-relative voice target stem.
 Gate 18 adds dialogue registry runtime schema validation and dialogue voice
 worklist semantic validation in `WastelandForge.Validation`, backed by the
 embedded dialogue schema in `WastelandForge.Schema`.
+
+Gate 19 adds quest registry runtime schema validation and dialogue `questId`
+semantic validation in `WastelandForge.Validation`, backed by the embedded
+quest schema in `WastelandForge.Schema`.
+
+Gate 20 adds quest registry schema `0.2.0` runtime validation and quest
+objective stage-reference semantic validation in `WastelandForge.Validation`,
+while preserving quest registry schema `0.1.0` in `WastelandForge.Schema`.
+
+Gate 21 adds quest registry schema `0.3.0` runtime validation and quest
+transition stage-reference semantic validation in `WastelandForge.Validation`,
+while preserving earlier quest registry schema versions in
+`WastelandForge.Schema`.
+
+Gate 22 adds quest registry schema `0.4.0` runtime validation and quest
+condition stage-reference semantic validation in `WastelandForge.Validation`,
+while preserving earlier quest registry schema versions in
+`WastelandForge.Schema`.

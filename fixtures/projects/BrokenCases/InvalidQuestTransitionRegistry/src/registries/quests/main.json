@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "0.3.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.invalidquesttransitionregistry.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.invalidquesttransitionregistry.quest.intro",
+      "title": "Invalid Transition Synthetic Quest",
+      "stages": [
+        {
+          "id": "io.github.theboyyss.invalidquesttransitionregistry.quest.intro.stage.start",
+          "stage": 10
+        }
+      ],
+      "transitions": [
+        {
+          "id": "io.github.theboyyss.invalidquesttransitionregistry.quest.intro.transition.missingtarget"
+        }
+      ]
+    }
+  ]
+}

@@ -23,9 +23,13 @@ Gate status:
 - `gates/gate-016-asset-type-specific-validation.md` - Gate 16, asset type-specific validation.
 - `gates/gate-017-voice-dialogue-asset-validation.md` - Gate 17, voice and dialogue asset validation.
 - `gates/gate-018-dialogue-registry-voice-worklist-skeleton.md` - Gate 18, dialogue registry and voice worklist skeleton.
+- `gates/gate-019-quest-registry-dialogue-reference-validation.md` - Gate 19, quest registry skeleton and dialogue quest reference validation.
+- `gates/gate-020-quest-stages-objectives-skeleton.md` - Gate 20, quest stages and objectives skeleton.
+- `gates/gate-021-quest-stage-transition-skeleton.md` - Gate 21, quest stage transition skeleton.
+- `gates/gate-022-quest-condition-skeleton.md` - Gate 22, quest condition skeleton.
 
 Next gate:
 
-- Gate 19 - quest registry skeleton and dialogue quest reference validation.
+- Gate 23 - quest result-script skeleton.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

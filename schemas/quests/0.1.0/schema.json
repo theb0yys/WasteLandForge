@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/quests/0.1.0/schema.json",
+  "title": "WastelandForge Quest Registry",
+  "description": "Quest registry for WastelandForge source-controlled quest declarations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "quests"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the quest registry contract.",
+      "const": "0.1.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "quest"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "quests": {
+      "description": "Source-controlled quest declarations.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/questEntry"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pluginName": {
+      "type": "string",
+      "pattern": "^[^/\\\\]+\\.(?:[Ee][Ss][Mm]|[Ee][Ss][Pp])$"
+    },
+    "questEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "externalRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/externalRef"
+          },
+          "uniqueItems": true
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "externalRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "plugin"
+      ],
+      "properties": {
+        "provider": {
+          "enum": [
+            "geck",
+            "xedit"
+          ]
+        },
+        "plugin": {
+          "$ref": "#/$defs/pluginName"
+        },
+        "editorId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "formId": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f]{8}$"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.1.0",
+      "kind": "quest",
+      "id": "io.github.theboyyss.examplemod.quests",
+      "quests": [
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro",
+          "title": "Synthetic Intro Quest",
+          "summary": "Synthetic quest declaration used by fixtures.",
+          "externalRefs": [
+            {
+              "provider": "geck",
+              "plugin": "ExampleMod.esm",
+              "editorId": "WFIntroQuest"
+            }
+          ],
+          "tags": [
+            "synthetic"
+          ]
+        }
+      ]
+    }
+  ]
+}

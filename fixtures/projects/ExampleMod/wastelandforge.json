@@ -9,6 +9,7 @@
     "dependencies": "src/registries/dependencies/",
     "capabilities": "src/registries/capabilities/",
     "assets": "src/registries/assets/",
+    "quests": "src/registries/quests/",
     "dialogue": "src/registries/dialogue/"
   }
 }

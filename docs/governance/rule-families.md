@@ -39,3 +39,11 @@ Gate 17 adds `WF-ASSET-007` for invalid voice target shape, `WF-ASSET-008`
 for incomplete WAV/OGG voice pairs, and `WF-ASSET-009` for missing LIP pairs.
 Gate 18 adds `WF-SEM-015` for dialogue voice worklist entries missing declared
 voice/lip assets.
+Gate 19 adds `WF-SEM-016` for dialogue `questId` references that are not
+declared in the quest registry.
+Gate 20 adds `WF-SEM-017` for quest objective stage references that are not
+declared in the same quest.
+Gate 21 adds `WF-SEM-018` for quest transition stage references that are not
+declared in the same quest.
+Gate 22 adds `WF-SEM-019` for quest condition stage references that are not
+declared in the same quest.

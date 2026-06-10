@@ -93,6 +93,9 @@
         "assets": {
           "$ref": "#/$defs/relativePath"
         },
+        "quests": {
+          "$ref": "#/$defs/relativePath"
+        },
         "dialogue": {
           "$ref": "#/$defs/relativePath"
         }
@@ -156,6 +159,7 @@
         "dependencies": "src/registries/dependencies/",
         "capabilities": "src/registries/capabilities/",
         "assets": "src/registries/assets/",
+        "quests": "src/registries/quests/",
         "dialogue": "src/registries/dialogue/"
       },
       "outputs": {
