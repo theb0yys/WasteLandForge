@@ -127,5 +127,23 @@ gate condition stage references that do not resolve inside the gate quest, and
 `WF-SEM-028` for quest-level dialogue gate condition variable references that
 do not resolve inside the gate quest.
 
+Gate 29 adds dialogue registry schema `0.6.0` for dialogue result-script
+quest-variable increment mutation declarations. It adds `WF-SEM-029` for
+dialogue result-script mutation variable references that do not resolve inside
+the dialogue line's referenced quest.
+
+Gate 30 adds dialogue registry schema `0.7.0` for minimal dialogue `linkFrom`
+source topic declarations. It adds `WF-SEM-030` for dialogue `linkFrom` source
+topic references that do not resolve to declared dialogue topics.
+
+Gate 31 adds no new schema. It adds derived dialogue link graph endpoint
+validation over schema-valid dialogue `0.7.0` documents: `WF-SEM-031` for
+`linkTo` target topics with no authored dialogue line, and `WF-SEM-032` for
+`linkFrom` source topics with no authored dialogue line.
+
+Gate 32 adds dialogue registry schema `0.8.0` for explicit line priority and
+prompt route declarations. It adds `WF-SEM-033` for duplicate prompt routes
+with the same `topicId`, `promptText`, and `priority`.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

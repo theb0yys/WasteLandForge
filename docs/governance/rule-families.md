@@ -63,3 +63,12 @@ Gate 28 adds `WF-SEM-026` for dialogue quest gates that reference undeclared
 quests, `WF-SEM-027` for dialogue quest gate stage references that are not
 declared inside the gate quest, and `WF-SEM-028` for dialogue quest gate
 variable references that are not declared inside the gate quest.
+Gate 29 adds `WF-SEM-029` for dialogue result-script mutation variable
+references that are not declared inside the dialogue line's referenced quest.
+Gate 30 adds `WF-SEM-030` for dialogue `linkFrom` source topic references
+that are not declared in dialogue topics.
+Gate 31 adds `WF-SEM-031` for dialogue `linkTo` target topics with no authored
+dialogue line endpoint and `WF-SEM-032` for dialogue `linkFrom` source topics
+with no authored dialogue line endpoint.
+Gate 32 adds `WF-SEM-033` for duplicate dialogue prompt routes with the same
+`topicId`, `promptText`, and `priority`.

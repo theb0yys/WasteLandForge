@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "0.7.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingdialoguelinksourceline.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.missingdialoguelinksourceline.topic.greeting",
+      "title": "Synthetic Greeting"
+    },
+    {
+      "id": "io.github.theboyyss.missingdialoguelinksourceline.topic.followup",
+      "title": "Synthetic Follow Up"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingdialoguelinksourceline.dialogue.intro.followup",
+      "questId": "io.github.theboyyss.missingdialoguelinksourceline.quest.intro",
+      "topicId": "io.github.theboyyss.missingdialoguelinksourceline.topic.followup",
+      "responseText": "Synthetic dialogue line with a declared but empty Link From source topic.",
+      "links": [
+        {
+          "id": "io.github.theboyyss.missingdialoguelinksourceline.dialogue.intro.link.fromgreeting",
+          "linkType": "linkFrom",
+          "sourceTopicId": "io.github.theboyyss.missingdialoguelinksourceline.topic.greeting"
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.5.0",
+  "schemaVersion": "0.8.0",
   "kind": "dialogue",
   "id": "io.github.theboyyss.examplemod.dialogue",
   "topics": [
@@ -40,6 +40,8 @@
       "questId": "io.github.theboyyss.examplemod.quest.intro",
       "topicId": "io.github.theboyyss.examplemod.topic.greeting",
       "speaker": "ExampleSpeaker",
+      "promptText": "Synthetic greeting prompt.",
+      "priority": 10,
       "responseText": "Synthetic hello line.",
       "conditions": [
         {
@@ -60,6 +62,15 @@
         {
           "id": "io.github.theboyyss.examplemod.dialogue.intro.result.advance",
           "scriptType": "dialogueResult",
+          "mutations": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.result.advance.mutation.dialoguephase",
+              "mutationType": "questVariableIncrement",
+              "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+              "deltaInteger": 1,
+              "summary": "Synthetic dialogue result-script variable increment declaration."
+            }
+          ],
           "summary": "Synthetic dialogue result-script declaration."
         }
       ],
@@ -76,6 +87,24 @@
         "voiceType": "ExampleVoice",
         "fileStem": "intro_hello"
       },
+      "tags": [
+        "synthetic"
+      ]
+    },
+    {
+      "id": "io.github.theboyyss.examplemod.dialogue.intro.followup",
+      "questId": "io.github.theboyyss.examplemod.quest.intro",
+      "topicId": "io.github.theboyyss.examplemod.topic.followup",
+      "priority": 20,
+      "responseText": "Synthetic follow-up line.",
+      "links": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.link.fromgreeting",
+          "linkType": "linkFrom",
+          "sourceTopicId": "io.github.theboyyss.examplemod.topic.greeting",
+          "summary": "Synthetic Link From declaration."
+        }
+      ],
       "tags": [
         "synthetic"
       ]

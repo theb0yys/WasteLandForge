@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "0.6.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.quest.intro",
+      "title": "Synthetic Intro Quest",
+      "variables": [
+        {
+          "id": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.quest.intro.variable.dialoguephase",
+          "variableType": "integer",
+          "initialValue": 0
+        }
+      ]
+    }
+  ]
+}

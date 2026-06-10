@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 28 dialogue quest-level gate baseline
+Status: Gate 32 dialogue priority and prompt routing baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -71,6 +71,12 @@ forge --version
   topic declarations and minimal `linkTo` topic link declarations.
 - `forge validate` supports dialogue registry schema `0.5.0` for quest-level
   dialogue gate declarations.
+- `forge validate` supports dialogue registry schema `0.6.0` for
+  result-script quest-variable increment mutation declarations.
+- `forge validate` supports dialogue registry schema `0.7.0` for minimal
+  dialogue `linkFrom` source topic declarations.
+- `forge validate` supports dialogue registry schema `0.8.0` for explicit
+  dialogue priority and prompt route declarations.
 - `forge validate` emits `WF-SEM-022` when a dialogue condition stage
   reference does not resolve inside the dialogue line's referenced quest.
 - `forge validate` emits `WF-SEM-023` when a dialogue condition variable
@@ -85,6 +91,17 @@ forge --version
   stage reference does not resolve inside the gate's referenced quest.
 - `forge validate` emits `WF-SEM-028` when a dialogue quest gate condition
   variable reference does not resolve inside the gate's referenced quest.
+- `forge validate` emits `WF-SEM-029` when a dialogue result-script mutation
+  variable reference does not resolve inside the dialogue line's referenced
+  quest.
+- `forge validate` emits `WF-SEM-030` when a dialogue `linkFrom` source topic
+  does not resolve to a declared dialogue topic when topics are declared.
+- `forge validate` emits `WF-SEM-031` when a dialogue `linkTo` target topic is
+  declared but no dialogue line uses that target topic.
+- `forge validate` emits `WF-SEM-032` when a dialogue `linkFrom` source topic
+  is declared but no dialogue line uses that source topic.
+- `forge validate` emits `WF-SEM-033` when multiple dialogue lines declare the
+  same `topicId`, `promptText`, and `priority` prompt route.
 - `forge validate` evaluates embedded quest registry JSON Schemas at runtime
   when the manifest declares `registries.quests`.
 - `forge validate` emits `WF-SEM-016` when a dialogue `questId` references a

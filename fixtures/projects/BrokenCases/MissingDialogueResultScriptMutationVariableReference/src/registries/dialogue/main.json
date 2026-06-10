@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "0.6.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.quest.intro",
+      "topicId": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.topic.greeting",
+      "responseText": "Synthetic dialogue line with a missing result-script mutation variable reference.",
+      "resultScripts": [
+        {
+          "id": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.dialogue.intro.result.advance",
+          "scriptType": "dialogueResult",
+          "mutations": [
+            {
+              "id": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.dialogue.intro.result.advance.mutation.missingvariable",
+              "mutationType": "questVariableIncrement",
+              "variableId": "io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.quest.intro.variable.missing",
+              "deltaInteger": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

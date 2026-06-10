@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "0.6.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueresultscriptmutationregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueresultscriptmutationregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueresultscriptmutationregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueresultscriptmutationregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueresultscriptmutationregistry.topic.greeting",
+      "responseText": "Synthetic invalid dialogue result-script mutation line.",
+      "resultScripts": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueresultscriptmutationregistry.dialogue.intro.result.advance",
+          "scriptType": "dialogueResult",
+          "mutations": [
+            {
+              "id": "io.github.theboyyss.invaliddialogueresultscriptmutationregistry.dialogue.intro.result.advance.mutation.missingtype",
+              "variableId": "io.github.theboyyss.invaliddialogueresultscriptmutationregistry.quest.intro.variable.dialoguephase",
+              "deltaInteger": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

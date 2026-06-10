@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 28 establishes
-the first dialogue quest-level gate skeleton.
+The project is currently in gated v0.1 implementation. Gate 32 establishes
+the first dialogue priority and prompt routing skeleton.
 
 ## Architecture Spine
 
@@ -16,19 +16,21 @@ the first dialogue quest-level gate skeleton.
 
 ## Current Gate
 
-Gate 28 creates:
+Gate 32 creates:
 
 - optional `registries.quests` manifest wiring,
 - immutable Draft 2020-12 dialogue registry schemas for `0.1.0`, `0.2.0`,
-  `0.3.0`, `0.4.0`, and `0.5.0`,
+  `0.3.0`, `0.4.0`, `0.5.0`, `0.6.0`, `0.7.0`, and `0.8.0`,
 - immutable Draft 2020-12 quest registry schemas for `0.1.0`, `0.2.0`,
   `0.3.0`, `0.4.0`, `0.5.0`, and `0.6.0`,
 - runtime dialogue registry schema validation,
 - runtime quest registry schema validation,
 - a valid synthetic `ExampleMod` dialogue registry with line-local
   quest-stage and quest-variable condition declarations plus dialogue
-  result-script declarations, topic declarations, a `linkTo` topic link, and
-  a quest-level dialogue gate declaration,
+  result-script declarations, topic declarations, `linkTo` and `linkFrom`
+  topic links, explicit priority and prompt route declarations, and a
+  quest-level dialogue gate declaration plus a dialogue result-script
+  quest-variable increment declaration,
 - a valid synthetic `ExampleMod` quest registry with stage and objective
   declarations plus transition, condition, and stage result-script
   declarations plus quest variable declarations,
@@ -64,6 +66,18 @@ Gate 28 creates:
 - `WF-SEM-028` semantic validation for dialogue quest-level gate conditions
   whose quest variable references do not resolve inside the gate's referenced
   quest,
+- `WF-SEM-029` semantic validation for dialogue result-script variable
+  mutations whose variable references do not resolve inside the dialogue
+  line's referenced quest,
+- `WF-SEM-030` semantic validation for dialogue `linkFrom` source topic
+  references that do not resolve to declared dialogue topics when topics are
+  declared,
+- `WF-SEM-031` semantic validation for dialogue `linkTo` target topics that
+  are declared but have no authored dialogue line endpoint,
+- `WF-SEM-032` semantic validation for dialogue `linkFrom` source topics that
+  are declared but have no authored dialogue line endpoint,
+- `WF-SEM-033` semantic validation for duplicate authored prompt routes with
+  the same `topicId`, `promptText`, and `priority`,
 - deterministic fixtures for invalid quest registry shape, invalid
   stage/objective shape, missing dialogue quest references, and missing quest
   objective stage references, plus invalid transition shape and missing
@@ -75,12 +89,17 @@ Gate 28 creates:
   dialogue result-script shape, invalid dialogue topic shape, missing dialogue
   topic references, missing dialogue topic link references, invalid dialogue
   quest gate shape, missing dialogue quest gate references, missing dialogue
-  quest gate stage references, and missing dialogue quest gate variable
-  references.
+  quest gate stage references, missing dialogue quest gate variable references,
+  invalid dialogue result-script mutation shape, and missing dialogue
+  result-script mutation variable references, invalid dialogue Link From
+  shape, missing dialogue Link From source topic references, missing dialogue
+  Link To target line endpoints, and missing dialogue Link From source line
+  endpoints, invalid dialogue prompt route shape, and duplicate dialogue
+  prompt routes.
 
-Gate 28 preserves the earlier asset, voice, dialogue registry, dialogue
+Gate 32 preserves the earlier asset, voice, dialogue registry, dialogue
 voice worklist, and dialogue quest reference validation from Gates 14 through
-27.
+31.
 
 It intentionally does not create:
 
@@ -95,14 +114,16 @@ It intentionally does not create:
   equality skeletons,
 - full GECK condition language,
 - dialogue quest gate execution, ordering, or compilation semantics,
-- raw result-script bodies, result-script mutation semantics, variable
-  mutation, lockouts, or branch semantics,
+- raw result-script bodies, full result-script mutation semantics, quest stage
+  mutations, lockouts, or branch semantics,
 - condition evaluation or result-script execution semantics,
 - dialogue condition compilation into plugin records,
 - dialogue result-script compilation into plugin records,
 - external plugin record validation for quest or topic references,
-- full dialogue graph traversal, `Link From` modeling, cycle checks,
-  ordering, priority, and response routing,
+- reciprocal Link To/Link From requirements,
+- full dialogue graph traversal and cycle checks,
+- exact GECK priority range, priority ordering, prompt routing execution,
+  response routing, and condition-aware prompt selection,
 - plugin record compilation,
 - external tool-backed asset inspection,
 - provider/environment detection or capability scans,

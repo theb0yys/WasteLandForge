@@ -57,6 +57,15 @@ public sealed class SchemaBackCompatTests
         Assert.Equal(
             "https://schemas.wastelandforge.dev/fnv/dialogue/0.5.0/schema.json",
             WastelandForgeSchemaIds.Dialogue050);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.6.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue060);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.7.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue070);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.8.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue080);
     }
 
     [Fact]
@@ -85,6 +94,9 @@ public sealed class SchemaBackCompatTests
     [InlineData(WastelandForgeSchemaIds.Dialogue030, "dialogue", "0.3.0")]
     [InlineData(WastelandForgeSchemaIds.Dialogue040, "dialogue", "0.4.0")]
     [InlineData(WastelandForgeSchemaIds.Dialogue050, "dialogue", "0.5.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue060, "dialogue", "0.6.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue070, "dialogue", "0.7.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue080, "dialogue", "0.8.0")]
     public void RegistrySchemaCatalogKeepsVersionedResources(string schemaId, string expectedKind, string expectedVersion)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);

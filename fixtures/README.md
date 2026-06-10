@@ -168,3 +168,40 @@ a synthetic quest-level dialogue gate, and adds:
 - `projects/BrokenCases/MissingDialogueQuestGateVariableReference` -
   deterministic `WF-SEM-028` failure case for a dialogue quest gate condition
   variable reference that is not declared in the gate's referenced quest.
+
+Gate 29 updates `projects/ExampleMod` to dialogue registry schema `0.6.0` with
+a synthetic dialogue result-script quest-variable increment mutation, and adds:
+
+- `projects/BrokenCases/InvalidDialogueResultScriptMutationRegistry` -
+  runtime dialogue registry schema failure case for invalid mutation shape.
+- `projects/BrokenCases/MissingDialogueResultScriptMutationVariableReference`
+  - deterministic `WF-SEM-029` failure case for a dialogue result-script
+  mutation variable reference that is not declared in the dialogue line's
+  referenced quest.
+
+Gate 30 updates `projects/ExampleMod` to dialogue registry schema `0.7.0` with
+a synthetic dialogue `linkFrom` source topic declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialogueLinkFromRegistry` - runtime dialogue
+  registry schema failure case for invalid Link From shape.
+- `projects/BrokenCases/MissingDialogueLinkFromReference` - deterministic
+  `WF-SEM-030` failure case for a dialogue `linkFrom` source topic reference
+  that is not declared in dialogue topics.
+
+Gate 31 preserves dialogue registry schema `0.7.0` and adds:
+
+- `projects/BrokenCases/MissingDialogueLinkTargetLine` - deterministic
+  `WF-SEM-031` failure case for a dialogue `linkTo` target topic that is
+  declared but has no authored dialogue line endpoint.
+- `projects/BrokenCases/MissingDialogueLinkSourceLine` - deterministic
+  `WF-SEM-032` failure case for a dialogue `linkFrom` source topic that is
+  declared but has no authored dialogue line endpoint.
+
+Gate 32 updates `projects/ExampleMod` to dialogue registry schema `0.8.0` with
+synthetic line priority and prompt route declarations, and adds:
+
+- `projects/BrokenCases/InvalidDialoguePromptRouteRegistry` - runtime dialogue
+  registry schema failure case for prompt text without explicit priority.
+- `projects/BrokenCases/DuplicateDialoguePromptRoute` - deterministic
+  `WF-SEM-033` failure case for duplicate authored prompt routes with the same
+  topic, prompt text, and priority.

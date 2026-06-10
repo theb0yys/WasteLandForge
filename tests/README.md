@@ -109,6 +109,25 @@ Gate 28 adds dialogue registry schema `0.5.0` schema/catalog coverage in
 dialogue quest gate schema and quest-state reference fixture coverage in
 `WastelandForge.SemanticTests`.
 
+Gate 29 adds dialogue registry schema `0.6.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+dialogue result-script mutation schema and mutation variable-reference fixture
+coverage in `WastelandForge.SemanticTests`.
+
+Gate 30 adds dialogue registry schema `0.7.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+dialogue Link From schema and source topic-reference fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 31 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
+dialogue link graph endpoints: `linkTo` targets and `linkFrom` sources that are
+declared topics but have no authored dialogue line.
+
+Gate 32 adds dialogue registry schema `0.8.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus prompt
+route schema and duplicate prompt route fixture coverage in
+`WastelandForge.SemanticTests`.
+
 Run the full local suite serially:
 
 ```text

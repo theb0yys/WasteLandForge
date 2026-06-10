@@ -33,9 +33,13 @@ Gate status:
 - `gates/gate-026-dialogue-result-script-skeleton.md` - Gate 26, dialogue result-script skeleton.
 - `gates/gate-027-dialogue-topic-link-skeleton.md` - Gate 27, dialogue topic link skeleton.
 - `gates/gate-028-dialogue-quest-level-gate-skeleton.md` - Gate 28, dialogue quest-level gate skeleton.
+- `gates/gate-029-dialogue-result-script-variable-mutation-skeleton.md` - Gate 29, dialogue result-script variable mutation skeleton.
+- `gates/gate-030-dialogue-link-from-skeleton.md` - Gate 30, dialogue Link From skeleton.
+- `gates/gate-031-dialogue-link-graph-validation-skeleton.md` - Gate 31, dialogue link graph validation skeleton.
+- `gates/gate-032-dialogue-priority-prompt-routing-skeleton.md` - Gate 32, dialogue priority and prompt routing skeleton.
 
 Next gate:
 
-- Gate 29 - dialogue result-script variable mutation skeleton.
+- Gate 33 - dialogue speech challenge skeleton.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

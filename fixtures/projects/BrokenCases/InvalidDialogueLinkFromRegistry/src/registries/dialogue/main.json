@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "0.7.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialoguelinkfromregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguelinkfromregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    },
+    {
+      "id": "io.github.theboyyss.invaliddialoguelinkfromregistry.topic.followup",
+      "title": "Synthetic Follow Up"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguelinkfromregistry.dialogue.intro.followup",
+      "questId": "io.github.theboyyss.invaliddialoguelinkfromregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialoguelinkfromregistry.topic.followup",
+      "responseText": "Synthetic dialogue line with an invalid Link From declaration.",
+      "links": [
+        {
+          "id": "io.github.theboyyss.invaliddialoguelinkfromregistry.dialogue.intro.link.fromgreeting",
+          "linkType": "linkFrom"
+        }
+      ]
+    }
+  ]
+}

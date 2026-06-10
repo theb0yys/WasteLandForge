@@ -95,3 +95,22 @@ quest-level dialogue gate skeletons in `WastelandForge.Validation`. It adds
 semantic checks for gate quest references plus gate condition stage and
 variable references while preserving earlier dialogue registry schema versions
 in `WastelandForge.Schema`.
+
+Gate 29 adds dialogue registry schema `0.6.0` runtime validation for dialogue
+result-script quest-variable mutation skeletons in `WastelandForge.Validation`.
+It adds semantic checks for mutation variable references while preserving
+earlier dialogue registry schema versions in `WastelandForge.Schema`.
+
+Gate 30 adds dialogue registry schema `0.7.0` runtime validation for dialogue
+Link From skeletons in `WastelandForge.Validation`. It adds semantic checks for
+`linkFrom` source topic references while preserving earlier dialogue registry
+schema versions in `WastelandForge.Schema`.
+
+Gate 31 adds semantic dialogue link graph endpoint validation in
+`WastelandForge.Validation`. It adds checks for declared `linkTo` target topics
+and declared `linkFrom` source topics that have no authored dialogue line
+endpoint, without adding a new schema version.
+
+Gate 32 adds dialogue registry schema `0.8.0` runtime validation for dialogue
+priority and prompt routing skeletons in `WastelandForge.Validation`. It adds
+semantic duplicate prompt route validation for schema-valid dialogue documents.

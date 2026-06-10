@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "0.8.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.duplicatedialoguepromptroute.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.duplicatedialoguepromptroute.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.duplicatedialoguepromptroute.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.duplicatedialoguepromptroute.quest.intro",
+      "topicId": "io.github.theboyyss.duplicatedialoguepromptroute.topic.greeting",
+      "promptText": "Shared prompt",
+      "priority": 10,
+      "responseText": "Synthetic first dialogue line for a prompt route."
+    },
+    {
+      "id": "io.github.theboyyss.duplicatedialoguepromptroute.dialogue.intro.hello.alt",
+      "questId": "io.github.theboyyss.duplicatedialoguepromptroute.quest.intro",
+      "topicId": "io.github.theboyyss.duplicatedialoguepromptroute.topic.greeting",
+      "promptText": "Shared prompt",
+      "priority": 10,
+      "responseText": "Synthetic duplicate dialogue line for a prompt route."
+    }
+  ]
+}

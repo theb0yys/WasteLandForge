@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "0.8.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialoguepromptrouteregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguepromptrouteregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguepromptrouteregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialoguepromptrouteregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialoguepromptrouteregistry.topic.greeting",
+      "promptText": "Synthetic prompt without explicit priority.",
+      "responseText": "Synthetic dialogue line with invalid prompt route shape."
+    }
+  ]
+}

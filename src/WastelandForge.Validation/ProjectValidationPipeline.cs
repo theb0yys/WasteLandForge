@@ -82,6 +82,15 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> DialogueRegistrySchema050 = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Dialogue050,
         "Dialogue registry schema 0.5.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema060 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue060,
+        "Dialogue registry schema 0.6.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema070 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue070,
+        "Dialogue registry schema 0.7.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema080 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue080,
+        "Dialogue registry schema 0.8.0"));
 
     private static JsonSchema LoadBuiltInSchema(string schemaId, string label)
     {
@@ -586,6 +595,9 @@ public sealed class ProjectValidationPipeline
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.3.0") => QuestRegistrySchema030.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => QuestRegistrySchema020.Value,
             "quest" => QuestRegistrySchema.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.8.0") => DialogueRegistrySchema080.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.7.0") => DialogueRegistrySchema070.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.6.0") => DialogueRegistrySchema060.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.5.0") => DialogueRegistrySchema050.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.4.0") => DialogueRegistrySchema040.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.3.0") => DialogueRegistrySchema030.Value,
@@ -895,6 +907,10 @@ public sealed class ProjectValidationPipeline
         var dialogueTopicIds = dialogueDocuments
             .SelectMany(ReadDialogueTopicIds)
             .ToHashSet(StringComparer.Ordinal);
+        var dialogueLineTopicIds = dialogueDocuments
+            .SelectMany(ReadDialogueTopicReferences)
+            .Select(topicReference => topicReference.TopicId)
+            .ToHashSet(StringComparer.Ordinal);
         if (dialogueTopicIds.Count > 0)
         {
             foreach (var document in dialogueDocuments)
@@ -922,26 +938,83 @@ public sealed class ProjectValidationPipeline
 
                 foreach (var linkReference in ReadDialogueTopicLinkReferences(document))
                 {
-                    if (dialogueTopicIds.Contains(linkReference.TargetTopicId))
+                    if (!dialogueTopicIds.Contains(linkReference.TargetTopicId))
+                    {
+                        issues.Add(CreateIssue(
+                            "WF-SEM-025",
+                            DiagnosticSeverity.Error,
+                            "semantic",
+                            "Dialogue link references unknown topic",
+                            $"Dialogue link '{linkReference.LinkId}' on line '{linkReference.LineId}' references topic '{linkReference.TargetTopicId}' but that topic is not declared.",
+                            CreateSourceLocation(document.DisplayPath, $"/lines/{linkReference.LineIndex}/links/{linkReference.LinkIndex}/targetTopicId", document.SourceLocations),
+                            projectId,
+                            dialogueDocuments.Select(ToDialogueRelatedLocation).ToArray(),
+                            "Declare the target topic in the dialogue registry or update the dialogue link target.",
+                            "WF-SEM-025",
+                            $"wf:sem:025:{linkReference.LineId}:{linkReference.LinkId}:targetTopicId"));
+                        continue;
+                    }
+
+                    if (dialogueLineTopicIds.Contains(linkReference.TargetTopicId))
                     {
                         continue;
                     }
 
                     issues.Add(CreateIssue(
-                        "WF-SEM-025",
+                        "WF-SEM-031",
                         DiagnosticSeverity.Error,
                         "semantic",
-                        "Dialogue link references unknown topic",
-                        $"Dialogue link '{linkReference.LinkId}' on line '{linkReference.LineId}' references topic '{linkReference.TargetTopicId}' but that topic is not declared.",
+                        "Dialogue link graph target has no authored line",
+                        $"Dialogue link '{linkReference.LinkId}' on line '{linkReference.LineId}' targets topic '{linkReference.TargetTopicId}' but no dialogue line uses that topic.",
                         CreateSourceLocation(document.DisplayPath, $"/lines/{linkReference.LineIndex}/links/{linkReference.LinkIndex}/targetTopicId", document.SourceLocations),
                         projectId,
                         dialogueDocuments.Select(ToDialogueRelatedLocation).ToArray(),
-                        "Declare the target topic in the dialogue registry or update the dialogue link target.",
-                        "WF-SEM-025",
-                        $"wf:sem:025:{linkReference.LineId}:{linkReference.LinkId}:targetTopicId"));
+                        "Add at least one dialogue line with the target topicId or update the dialogue link target.",
+                        "WF-SEM-031",
+                        $"wf:sem:031:{linkReference.LineId}:{linkReference.LinkId}:targetTopicLine"));
+                }
+
+                foreach (var linkReference in ReadDialogueTopicLinkFromReferences(document))
+                {
+                    if (!dialogueTopicIds.Contains(linkReference.SourceTopicId))
+                    {
+                        issues.Add(CreateIssue(
+                            "WF-SEM-030",
+                            DiagnosticSeverity.Error,
+                            "semantic",
+                            "Dialogue Link From references unknown topic",
+                            $"Dialogue Link From '{linkReference.LinkId}' on line '{linkReference.LineId}' references topic '{linkReference.SourceTopicId}' but that topic is not declared.",
+                            CreateSourceLocation(document.DisplayPath, $"/lines/{linkReference.LineIndex}/links/{linkReference.LinkIndex}/sourceTopicId", document.SourceLocations),
+                            projectId,
+                            dialogueDocuments.Select(ToDialogueRelatedLocation).ToArray(),
+                            "Declare the source topic in the dialogue registry or update the dialogue Link From source.",
+                            "WF-SEM-030",
+                            $"wf:sem:030:{linkReference.LineId}:{linkReference.LinkId}:sourceTopicId"));
+                        continue;
+                    }
+
+                    if (dialogueLineTopicIds.Contains(linkReference.SourceTopicId))
+                    {
+                        continue;
+                    }
+
+                    issues.Add(CreateIssue(
+                        "WF-SEM-032",
+                        DiagnosticSeverity.Error,
+                        "semantic",
+                        "Dialogue link graph source has no authored line",
+                        $"Dialogue Link From '{linkReference.LinkId}' on line '{linkReference.LineId}' uses source topic '{linkReference.SourceTopicId}' but no dialogue line uses that topic.",
+                        CreateSourceLocation(document.DisplayPath, $"/lines/{linkReference.LineIndex}/links/{linkReference.LinkIndex}/sourceTopicId", document.SourceLocations),
+                        projectId,
+                        dialogueDocuments.Select(ToDialogueRelatedLocation).ToArray(),
+                        "Add at least one dialogue line with the source topicId or update the dialogue Link From source.",
+                        "WF-SEM-032",
+                        $"wf:sem:032:{linkReference.LineId}:{linkReference.LinkId}:sourceTopicLine"));
                 }
             }
         }
+
+        ValidateDialoguePromptRoutes(dialogueDocuments, issues, projectId);
 
         if (questDocuments.Count == 0)
         {
@@ -1077,6 +1150,27 @@ public sealed class ProjectValidationPipeline
                     "Declare the variable in the referenced quest or update the dialogue condition variable reference.",
                     "WF-SEM-023",
                     $"wf:sem:023:{variableReference.LineId}:{variableReference.ConditionId}:variableId"));
+            }
+
+            foreach (var mutationReference in ReadDialogueResultScriptVariableMutationReferences(document, questDataById))
+            {
+                if (mutationReference.QuestData.VariableIds.Contains(mutationReference.VariableId))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-029",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue result script mutation references unknown quest variable",
+                    $"Dialogue result script mutation '{mutationReference.MutationId}' on result script '{mutationReference.ResultScriptId}' references variable '{mutationReference.VariableId}' but that variable is not declared in quest '{mutationReference.QuestId}'.",
+                    CreateSourceLocation(document.DisplayPath, $"/lines/{mutationReference.LineIndex}/resultScripts/{mutationReference.ResultScriptIndex}/mutations/{mutationReference.MutationIndex}/variableId", document.SourceLocations),
+                    projectId,
+                    [CreateSourceLocation(mutationReference.QuestData.Document.DisplayPath, $"/quests/{mutationReference.QuestData.QuestIndex}/variables", mutationReference.QuestData.Document.SourceLocations)],
+                    "Declare the variable in the dialogue line's referenced quest or update the result-script mutation variable reference.",
+                    "WF-SEM-029",
+                    $"wf:sem:029:{mutationReference.LineId}:{mutationReference.ResultScriptId}:{mutationReference.MutationId}:variableId"));
             }
         }
     }
@@ -1456,6 +1550,44 @@ public sealed class ProjectValidationPipeline
                     suggestedFix: "Declare the matching LIP asset under the same sound/voice plugin and voice type path.",
                     docsRule: "WF-ASSET-009",
                     fingerprint: $"wf:asset:009:{voiceTarget.Record.Asset.Id}"));
+            }
+        }
+    }
+
+    private static void ValidateDialoguePromptRoutes(
+        IReadOnlyCollection<RegistryDocument> dialogueDocuments,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        var promptRoutesByKey = new Dictionary<DialoguePromptRouteKey, DialoguePromptRoute>();
+        foreach (var document in dialogueDocuments)
+        {
+            foreach (var promptRoute in ReadDialoguePromptRoutes(document))
+            {
+                var key = new DialoguePromptRouteKey(promptRoute.TopicId, promptRoute.PromptText, promptRoute.Priority);
+                if (!promptRoutesByKey.TryGetValue(key, out var firstPromptRoute))
+                {
+                    promptRoutesByKey[key] = promptRoute;
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-033",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue prompt route is ambiguous",
+                    $"Dialogue line '{promptRoute.LineId}' duplicates prompt route '{promptRoute.PromptText}' for topic '{promptRoute.TopicId}' at priority {promptRoute.Priority.ToString(CultureInfo.InvariantCulture)} already used by line '{firstPromptRoute.LineId}'.",
+                    CreateSourceLocation(document.DisplayPath, $"/lines/{promptRoute.LineIndex}/priority", document.SourceLocations),
+                    projectId,
+                    [
+                        CreateSourceLocation(
+                            firstPromptRoute.DisplayPath,
+                            $"/lines/{firstPromptRoute.LineIndex}/priority",
+                            firstPromptRoute.SourceLocations)
+                    ],
+                    "Use a distinct priority or prompt text for one of the dialogue lines.",
+                    "WF-SEM-033",
+                    $"wf:sem:033:{promptRoute.LineId}:promptRoute"));
             }
         }
     }
@@ -2081,6 +2213,40 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static IEnumerable<DialoguePromptRoute> ReadDialoguePromptRoutes(RegistryDocument document)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            var topicId = GetString(line, "topicId");
+            var promptText = GetString(line, "promptText");
+            var priority = GetInteger(line, "priority");
+            if (lineId is null || topicId is null || promptText is null || priority is null)
+            {
+                continue;
+            }
+
+            yield return new DialoguePromptRoute(
+                document.DisplayPath,
+                document.SourceLocations,
+                lineIndex,
+                lineId,
+                topicId,
+                promptText,
+                priority.Value);
+        }
+    }
+
     private static IEnumerable<DialogueTopicLinkReference> ReadDialogueTopicLinkReferences(RegistryDocument document)
     {
         if (document.Root["lines"] is not JsonArray lines)
@@ -2104,7 +2270,8 @@ public sealed class ProjectValidationPipeline
 
             for (var linkIndex = 0; linkIndex < links.Count; linkIndex++)
             {
-                if (links[linkIndex] is not JsonObject link)
+                if (links[linkIndex] is not JsonObject link ||
+                    !StringComparer.Ordinal.Equals(GetString(link, "linkType"), "linkTo"))
                 {
                     continue;
                 }
@@ -2117,6 +2284,47 @@ public sealed class ProjectValidationPipeline
                 }
 
                 yield return new DialogueTopicLinkReference(lineIndex, linkIndex, lineId, linkId, targetTopicId);
+            }
+        }
+    }
+
+    private static IEnumerable<DialogueTopicLinkFromReference> ReadDialogueTopicLinkFromReferences(RegistryDocument document)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line ||
+                line["links"] is not JsonArray links)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            if (lineId is null)
+            {
+                continue;
+            }
+
+            for (var linkIndex = 0; linkIndex < links.Count; linkIndex++)
+            {
+                if (links[linkIndex] is not JsonObject link ||
+                    !StringComparer.Ordinal.Equals(GetString(link, "linkType"), "linkFrom"))
+                {
+                    continue;
+                }
+
+                var linkId = GetString(link, "id");
+                var sourceTopicId = GetString(link, "sourceTopicId");
+                if (linkId is null || sourceTopicId is null)
+                {
+                    continue;
+                }
+
+                yield return new DialogueTopicLinkFromReference(lineIndex, linkIndex, lineId, linkId, sourceTopicId);
             }
         }
     }
@@ -2358,6 +2566,76 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static IEnumerable<DialogueResultScriptVariableMutationReference> ReadDialogueResultScriptVariableMutationReferences(
+        RegistryDocument document,
+        IReadOnlyDictionary<string, QuestReferenceData> questDataById)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line ||
+                line["resultScripts"] is not JsonArray resultScripts)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            var questId = GetString(line, "questId");
+            if (lineId is null ||
+                questId is null ||
+                !questDataById.TryGetValue(questId, out var questData))
+            {
+                continue;
+            }
+
+            for (var resultScriptIndex = 0; resultScriptIndex < resultScripts.Count; resultScriptIndex++)
+            {
+                if (resultScripts[resultScriptIndex] is not JsonObject resultScript ||
+                    resultScript["mutations"] is not JsonArray mutations)
+                {
+                    continue;
+                }
+
+                var resultScriptId = GetString(resultScript, "id");
+                if (resultScriptId is null)
+                {
+                    continue;
+                }
+
+                for (var mutationIndex = 0; mutationIndex < mutations.Count; mutationIndex++)
+                {
+                    if (mutations[mutationIndex] is not JsonObject mutation ||
+                        !StringComparer.Ordinal.Equals(GetString(mutation, "mutationType"), "questVariableIncrement"))
+                    {
+                        continue;
+                    }
+
+                    var mutationId = GetString(mutation, "id");
+                    var variableId = GetString(mutation, "variableId");
+                    if (mutationId is null || variableId is null)
+                    {
+                        continue;
+                    }
+
+                    yield return new DialogueResultScriptVariableMutationReference(
+                        lineIndex,
+                        resultScriptIndex,
+                        mutationIndex,
+                        lineId,
+                        questId,
+                        resultScriptId,
+                        mutationId,
+                        variableId,
+                        questData);
+                }
+            }
+        }
+    }
+
     private static IEnumerable<DialogueVoiceWorkItem> ReadDialogueVoiceWorkItems(RegistryDocument document)
     {
         if (document.Root["lines"] is not JsonArray lines)
@@ -2431,6 +2709,27 @@ public sealed class ProjectValidationPipeline
             JsonValueKind.False => false,
             _ => null
         };
+    }
+
+    private static long? GetInteger(JsonObject? root, string propertyName)
+    {
+        if (root?[propertyName]?.GetValueKind() != JsonValueKind.Number)
+        {
+            return null;
+        }
+
+        try
+        {
+            return root[propertyName]?.GetValue<long>();
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     private static bool HasErrorSince(IReadOnlyList<DiagnosticIssue> issues, int issueStart)
@@ -2782,12 +3081,30 @@ public sealed class ProjectValidationPipeline
 
     private sealed record DialogueTopicReference(int LineIndex, string LineId, string TopicId);
 
+    private sealed record DialoguePromptRoute(
+        string DisplayPath,
+        IReadOnlyDictionary<string, SourcePosition> SourceLocations,
+        int LineIndex,
+        string LineId,
+        string TopicId,
+        string PromptText,
+        long Priority);
+
+    private sealed record DialoguePromptRouteKey(string TopicId, string PromptText, long Priority);
+
     private sealed record DialogueTopicLinkReference(
         int LineIndex,
         int LinkIndex,
         string LineId,
         string LinkId,
         string TargetTopicId);
+
+    private sealed record DialogueTopicLinkFromReference(
+        int LineIndex,
+        int LinkIndex,
+        string LineId,
+        string LinkId,
+        string SourceTopicId);
 
     private sealed record DialogueQuestGateReference(int GateIndex, string GateId, string QuestId);
 
@@ -2831,6 +3148,17 @@ public sealed class ProjectValidationPipeline
         string LineId,
         string QuestId,
         string ConditionId,
+        string VariableId,
+        QuestReferenceData QuestData);
+
+    private sealed record DialogueResultScriptVariableMutationReference(
+        int LineIndex,
+        int ResultScriptIndex,
+        int MutationIndex,
+        string LineId,
+        string QuestId,
+        string ResultScriptId,
+        string MutationId,
         string VariableId,
         QuestReferenceData QuestData);
 

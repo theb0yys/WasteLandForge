@@ -59,6 +59,9 @@ public sealed class ManifestSchemaTests
     [InlineData("dialogue", "0.3.0", WastelandForgeSchemaIds.Dialogue030, "dialogue")]
     [InlineData("dialogue", "0.4.0", WastelandForgeSchemaIds.Dialogue040, "dialogue")]
     [InlineData("dialogue", "0.5.0", WastelandForgeSchemaIds.Dialogue050, "dialogue")]
+    [InlineData("dialogue", "0.6.0", WastelandForgeSchemaIds.Dialogue060, "dialogue")]
+    [InlineData("dialogue", "0.7.0", WastelandForgeSchemaIds.Dialogue070, "dialogue")]
+    [InlineData("dialogue", "0.8.0", WastelandForgeSchemaIds.Dialogue080, "dialogue")]
     public void RegistrySchemaFilesParseAsJson(string directoryName, string version, string schemaId, string expectedKind)
     {
         var schemaPath = Path.Combine(RepositoryRoot(), "schemas", directoryName, version, "schema.json");
@@ -85,6 +88,9 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Dialogue030, "dialogue", "0.3.0", "schemas/dialogue/0.3.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Dialogue040, "dialogue", "0.4.0", "schemas/dialogue/0.4.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Dialogue050, "dialogue", "0.5.0", "schemas/dialogue/0.5.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue060, "dialogue", "0.6.0", "schemas/dialogue/0.6.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue070, "dialogue", "0.7.0", "schemas/dialogue/0.7.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue080, "dialogue", "0.8.0", "schemas/dialogue/0.8.0/schema.json")]
     public void BuiltInCatalogResolvesRegistrySchemas(string schemaId, string expectedKind, string expectedVersion, string expectedPath)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);
@@ -111,6 +117,9 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Dialogue030)]
     [InlineData(WastelandForgeSchemaIds.Dialogue040)]
     [InlineData(WastelandForgeSchemaIds.Dialogue050)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue060)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue070)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue080)]
     public void BuiltInCatalogReadsEmbeddedRegistrySchemas(string schemaId)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);
