@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "0.4.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingdialoguetopicreference.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.missingdialoguetopicreference.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingdialoguetopicreference.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingdialoguetopicreference.quest.intro",
+      "topicId": "io.github.theboyyss.missingdialoguetopicreference.topic.missing",
+      "responseText": "Synthetic dialogue line with a missing topic reference."
+    }
+  ]
+}

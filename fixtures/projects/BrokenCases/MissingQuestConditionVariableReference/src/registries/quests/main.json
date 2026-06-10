@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "0.6.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.missingquestconditionvariablereference.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.missingquestconditionvariablereference.quest.intro",
+      "title": "Synthetic Quest With Missing Condition Variable Reference",
+      "variables": [
+        {
+          "id": "io.github.theboyyss.missingquestconditionvariablereference.quest.intro.variable.dialoguephase",
+          "variableType": "integer",
+          "initialValue": 0
+        }
+      ],
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.missingquestconditionvariablereference.quest.intro.condition.missingvariable",
+          "conditionType": "variableEquals",
+          "variableId": "io.github.theboyyss.missingquestconditionvariablereference.quest.intro.variable.missing",
+          "equalsInteger": 1
+        }
+      ]
+    }
+  ]
+}

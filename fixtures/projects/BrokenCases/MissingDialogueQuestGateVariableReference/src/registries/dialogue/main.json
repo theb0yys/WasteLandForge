@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "0.5.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingdialoguequestgatevariablereference.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.missingdialoguequestgatevariablereference.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "questGates": [
+    {
+      "id": "io.github.theboyyss.missingdialoguequestgatevariablereference.dialogue.gate.intro.available",
+      "questId": "io.github.theboyyss.missingdialoguequestgatevariablereference.quest.intro",
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.missingdialoguequestgatevariablereference.dialogue.gate.intro.condition.missingvariable",
+          "conditionType": "questVariableEquals",
+          "variableId": "io.github.theboyyss.missingdialoguequestgatevariablereference.quest.intro.variable.missing",
+          "equalsInteger": 0
+        }
+      ]
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingdialoguequestgatevariablereference.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingdialoguequestgatevariablereference.quest.intro",
+      "topicId": "io.github.theboyyss.missingdialoguequestgatevariablereference.topic.greeting",
+      "responseText": "Synthetic dialogue line with a missing quest gate variable reference."
+    }
+  ]
+}

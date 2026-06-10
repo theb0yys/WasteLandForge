@@ -1,7 +1,39 @@
 {
-  "schemaVersion": "0.1.0",
+  "schemaVersion": "0.5.0",
   "kind": "dialogue",
   "id": "io.github.theboyyss.examplemod.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.examplemod.topic.greeting",
+      "title": "Synthetic Greeting"
+    },
+    {
+      "id": "io.github.theboyyss.examplemod.topic.followup",
+      "title": "Synthetic Follow Up"
+    }
+  ],
+  "questGates": [
+    {
+      "id": "io.github.theboyyss.examplemod.dialogue.gate.intro.available",
+      "questId": "io.github.theboyyss.examplemod.quest.intro",
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.gate.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+          "summary": "Synthetic quest-level dialogue gate over quest stage state."
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.gate.intro.condition.dialoguephasezero",
+          "conditionType": "questVariableEquals",
+          "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+          "equalsInteger": 0,
+          "summary": "Synthetic quest-level dialogue gate over quest variable state."
+        }
+      ],
+      "summary": "Synthetic quest-level dialogue gate declaration."
+    }
+  ],
   "lines": [
     {
       "id": "io.github.theboyyss.examplemod.dialogue.intro.hello",
@@ -9,6 +41,36 @@
       "topicId": "io.github.theboyyss.examplemod.topic.greeting",
       "speaker": "ExampleSpeaker",
       "responseText": "Synthetic hello line.",
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephasezero",
+          "conditionType": "questVariableEquals",
+          "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+          "equalsInteger": 0,
+          "summary": "Synthetic dialogue condition over quest variable state."
+        }
+      ],
+      "resultScripts": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.result.advance",
+          "scriptType": "dialogueResult",
+          "summary": "Synthetic dialogue result-script declaration."
+        }
+      ],
+      "links": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.link.followup",
+          "linkType": "linkTo",
+          "targetTopicId": "io.github.theboyyss.examplemod.topic.followup",
+          "summary": "Synthetic topic link declaration."
+        }
+      ],
       "voice": {
         "plugin": "ExampleMod.esm",
         "voiceType": "ExampleVoice",

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "0.6.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.invalidquestvariableregistry.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.invalidquestvariableregistry.quest.intro",
+      "title": "Synthetic Quest With Invalid Variable",
+      "variables": [
+        {
+          "id": "io.github.theboyyss.invalidquestvariableregistry.quest.intro.variable.missingtype"
+        }
+      ]
+    }
+  ]
+}

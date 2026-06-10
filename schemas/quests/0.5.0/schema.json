@@ -1,0 +1,337 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/quests/0.5.0/schema.json",
+  "title": "WastelandForge Quest Registry",
+  "description": "Quest registry for WastelandForge source-controlled quest declarations, stage skeletons, objective skeletons, transition skeletons, condition skeletons, and result-script skeletons.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "quests"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the quest registry contract.",
+      "const": "0.5.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "quest"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "quests": {
+      "description": "Source-controlled quest declarations.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/questEntry"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pluginName": {
+      "type": "string",
+      "pattern": "^[^/\\\\]+\\.(?:[Ee][Ss][Mm]|[Ee][Ss][Pp])$"
+    },
+    "questEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "stages": {
+          "description": "Minimal quest stage declarations. Gate 23 allows stage result-script declarations without modeling raw script bodies or execution semantics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/questStage"
+          },
+          "uniqueItems": true
+        },
+        "objectives": {
+          "description": "Minimal quest objective declarations. Stage references are checked by semantic validation.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/questObjective"
+          },
+          "uniqueItems": true
+        },
+        "transitions": {
+          "description": "Minimal quest stage transition declarations. Lockouts, fallback routes, and branch semantics remain later narrative contracts.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/questTransition"
+          },
+          "uniqueItems": true
+        },
+        "conditions": {
+          "description": "Minimal quest-local condition declarations. Gate 22 supports stage-done skeletons only; full condition language remains later work.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/questCondition"
+          },
+          "uniqueItems": true
+        },
+        "externalRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/externalRef"
+          },
+          "uniqueItems": true
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "questStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "stage"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "stage": {
+          "description": "Authored quest stage number used for stage-aware validation and later generation.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "resultScripts": {
+          "description": "Minimal stage result-script declarations. Raw script bodies, execution semantics, and generator output remain later contracts.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/questResultScript"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "questObjective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "text": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "startStageId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "completionStageId": {
+          "$ref": "#/$defs/logicalId"
+        }
+      }
+    },
+    "questTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "toStageId"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "fromStageId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "toStageId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "questCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "conditionType",
+        "stageId"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "conditionType": {
+          "description": "Gate 22 only models a stage-done condition skeleton aligned with GECK-style quest stage state.",
+          "const": "stageDone"
+        },
+        "stageId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "questResultScript": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "scriptType"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "scriptType": {
+          "description": "Gate 23 only models a stage result-script declaration skeleton.",
+          "const": "stageResult"
+        },
+        "conditionId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "externalRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "plugin"
+      ],
+      "properties": {
+        "provider": {
+          "enum": [
+            "geck",
+            "xedit"
+          ]
+        },
+        "plugin": {
+          "$ref": "#/$defs/pluginName"
+        },
+        "editorId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "formId": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f]{8}$"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.5.0",
+      "kind": "quest",
+      "id": "io.github.theboyyss.examplemod.quests",
+      "quests": [
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro",
+          "title": "Synthetic Intro Quest",
+          "summary": "Synthetic quest declaration used by fixtures.",
+          "stages": [
+            {
+              "id": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+              "stage": 10,
+              "title": "Started"
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.quest.intro.stage.complete",
+              "stage": 100,
+              "title": "Complete",
+              "resultScripts": [
+                {
+                  "id": "io.github.theboyyss.examplemod.quest.intro.result.complete",
+                  "scriptType": "stageResult",
+                  "conditionId": "io.github.theboyyss.examplemod.quest.intro.condition.started",
+                  "summary": "Synthetic stage result-script declaration."
+                }
+              ]
+            }
+          ],
+          "objectives": [
+            {
+              "id": "io.github.theboyyss.examplemod.quest.intro.objective.speak",
+              "text": "Speak to the synthetic greeter.",
+              "startStageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+              "completionStageId": "io.github.theboyyss.examplemod.quest.intro.stage.complete"
+            }
+          ],
+          "transitions": [
+            {
+              "id": "io.github.theboyyss.examplemod.quest.intro.transition.start.complete",
+              "fromStageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+              "toStageId": "io.github.theboyyss.examplemod.quest.intro.stage.complete",
+              "title": "Complete intro"
+            }
+          ],
+          "conditions": [
+            {
+              "id": "io.github.theboyyss.examplemod.quest.intro.condition.started",
+              "conditionType": "stageDone",
+              "stageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+              "title": "Intro started"
+            }
+          ],
+          "externalRefs": [
+            {
+              "provider": "geck",
+              "plugin": "ExampleMod.esm",
+              "editorId": "WFIntroQuest"
+            }
+          ],
+          "tags": [
+            "synthetic"
+          ]
+        }
+      ]
+    }
+  ]
+}

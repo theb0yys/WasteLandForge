@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "manifest",
+  "id": "io.github.theboyyss.missingdialogueconditionstagereference",
+  "name": "Missing Dialogue Condition Stage Reference",
+  "version": "0.1.0",
+  "game": "falloutnv",
+  "registries": {
+    "dependencies": "src/registries/dependencies/",
+    "capabilities": "src/registries/capabilities/",
+    "quests": "src/registries/quests/",
+    "dialogue": "src/registries/dialogue/"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueconditionregistry.dialogue",
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueconditionregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueconditionregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueconditionregistry.topic.greeting",
+      "responseText": "Synthetic invalid dialogue condition line.",
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueconditionregistry.dialogue.intro.condition.missingtype",
+          "stageId": "io.github.theboyyss.invaliddialogueconditionregistry.quest.intro.stage.start"
+        }
+      ]
+    }
+  ]
+}

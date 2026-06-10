@@ -64,3 +64,34 @@ Gate 22 adds quest registry schema `0.4.0` runtime validation and quest
 condition stage-reference semantic validation in `WastelandForge.Validation`,
 while preserving earlier quest registry schema versions in
 `WastelandForge.Schema`.
+
+Gate 23 adds quest registry schema `0.5.0` runtime validation and quest
+result-script condition-reference semantic validation in
+`WastelandForge.Validation`, while preserving earlier quest registry schema
+versions in `WastelandForge.Schema`.
+
+Gate 24 adds quest registry schema `0.6.0` runtime validation and quest
+condition variable-reference semantic validation in
+`WastelandForge.Validation`, while preserving earlier quest registry schema
+versions in `WastelandForge.Schema`.
+
+Gate 25 adds dialogue registry schema `0.2.0` runtime validation and dialogue
+condition quest-state reference semantic validation in
+`WastelandForge.Validation`, while preserving dialogue registry schema
+`0.1.0` in `WastelandForge.Schema`.
+
+Gate 26 adds dialogue registry schema `0.3.0` runtime validation for
+line-local dialogue result-script skeletons in `WastelandForge.Validation`,
+while preserving earlier dialogue registry schema versions in
+`WastelandForge.Schema`.
+
+Gate 27 adds dialogue registry schema `0.4.0` runtime validation for dialogue
+topic and `linkTo` skeletons in `WastelandForge.Validation`. It adds semantic
+topic-reference checks for line `topicId` values and link target topics while
+preserving earlier dialogue registry schema versions in `WastelandForge.Schema`.
+
+Gate 28 adds dialogue registry schema `0.5.0` runtime validation for
+quest-level dialogue gate skeletons in `WastelandForge.Validation`. It adds
+semantic checks for gate quest references plus gate condition stage and
+variable references while preserving earlier dialogue registry schema versions
+in `WastelandForge.Schema`.

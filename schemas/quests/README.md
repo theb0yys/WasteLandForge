@@ -25,3 +25,15 @@ adds minimal quest-local `stageDone` condition declarations with `stageId`
 references. Full GECK condition language, condition evaluation, result scripts,
 quest variables, lockouts, fallback paths, and branch semantics remain later
 narrative gates.
+
+Gate 23 adds `0.5.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal stage `resultScripts` declarations with `stageResult` type and an
+optional `conditionId` reference to quest-local conditions. Raw script bodies,
+side-effect language, result-script execution, quest variables, lockouts,
+fallback paths, and branch semantics remain later narrative gates.
+
+Gate 24 adds `0.6.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds minimal quest-local integer `variables` declarations and `variableEquals`
+condition skeletons. Variable mutation, non-integer variable typing, dialogue
+condition compilation, result-script side effects, lockouts, fallback paths,
+and branch semantics remain later narrative gates.

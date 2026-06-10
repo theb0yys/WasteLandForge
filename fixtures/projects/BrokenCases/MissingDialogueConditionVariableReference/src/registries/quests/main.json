@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "0.6.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.missingdialogueconditionvariablereference.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.missingdialogueconditionvariablereference.quest.intro",
+      "title": "Synthetic Quest For Missing Dialogue Variable Reference",
+      "variables": [
+        {
+          "id": "io.github.theboyyss.missingdialogueconditionvariablereference.quest.intro.variable.dialoguephase",
+          "variableType": "integer",
+          "initialValue": 0
+        }
+      ]
+    }
+  ]
+}

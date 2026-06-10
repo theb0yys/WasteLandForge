@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "0.3.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueresultscriptregistry.dialogue",
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueresultscriptregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueresultscriptregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueresultscriptregistry.topic.greeting",
+      "responseText": "Synthetic invalid dialogue result-script line.",
+      "resultScripts": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueresultscriptregistry.dialogue.intro.result.missingscripttype"
+        }
+      ]
+    }
+  ]
+}

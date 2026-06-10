@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "0.5.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingdialoguequestgatestagereference.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.missingdialoguequestgatestagereference.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "questGates": [
+    {
+      "id": "io.github.theboyyss.missingdialoguequestgatestagereference.dialogue.gate.intro.available",
+      "questId": "io.github.theboyyss.missingdialoguequestgatestagereference.quest.intro",
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.missingdialoguequestgatestagereference.dialogue.gate.intro.condition.missingstage",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.missingdialoguequestgatestagereference.quest.intro.stage.missing"
+        }
+      ]
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingdialoguequestgatestagereference.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingdialoguequestgatestagereference.quest.intro",
+      "topicId": "io.github.theboyyss.missingdialoguequestgatestagereference.topic.greeting",
+      "responseText": "Synthetic dialogue line with a missing quest gate stage reference."
+    }
+  ]
+}

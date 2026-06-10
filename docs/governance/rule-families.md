@@ -47,3 +47,19 @@ Gate 21 adds `WF-SEM-018` for quest transition stage references that are not
 declared in the same quest.
 Gate 22 adds `WF-SEM-019` for quest condition stage references that are not
 declared in the same quest.
+Gate 23 adds `WF-SEM-020` for quest result-script condition references that
+are not declared in the same quest.
+Gate 24 adds `WF-SEM-021` for quest condition variable references that are not
+declared in the same quest.
+Gate 25 adds `WF-SEM-022` for dialogue condition quest-stage references and
+`WF-SEM-023` for dialogue condition quest-variable references that are not
+declared inside the dialogue line's referenced quest.
+Gate 26 adds no new `WF-SEM-*` rule; invalid dialogue result-script shape is
+covered by `WF-SCHEMA-001`.
+Gate 27 adds `WF-SEM-024` for dialogue line topic references that are not
+declared in dialogue topics and `WF-SEM-025` for dialogue `linkTo` target
+topic references that are not declared in dialogue topics.
+Gate 28 adds `WF-SEM-026` for dialogue quest gates that reference undeclared
+quests, `WF-SEM-027` for dialogue quest gate stage references that are not
+declared inside the gate quest, and `WF-SEM-028` for dialogue quest gate
+variable references that are not declared inside the gate quest.

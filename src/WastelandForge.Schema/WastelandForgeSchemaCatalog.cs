@@ -45,10 +45,40 @@ public static class WastelandForgeSchemaCatalog
             "0.4.0",
             "schemas/quests/0.4.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.Quest050,
+            "quest",
+            "0.5.0",
+            "schemas/quests/0.5.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Quest060,
+            "quest",
+            "0.6.0",
+            "schemas/quests/0.6.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.Dialogue010,
             "dialogue",
             "0.1.0",
-            "schemas/dialogue/0.1.0/schema.json")
+            "schemas/dialogue/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue020,
+            "dialogue",
+            "0.2.0",
+            "schemas/dialogue/0.2.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue030,
+            "dialogue",
+            "0.3.0",
+            "schemas/dialogue/0.3.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue040,
+            "dialogue",
+            "0.4.0",
+            "schemas/dialogue/0.4.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue050,
+            "dialogue",
+            "0.5.0",
+            "schemas/dialogue/0.5.0/schema.json")
     ];
 
     public static IReadOnlyList<SchemaResource> BuiltIn => BuiltInSchemas;

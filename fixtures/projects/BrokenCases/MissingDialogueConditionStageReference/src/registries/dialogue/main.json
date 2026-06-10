@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingdialogueconditionstagereference.dialogue",
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingdialogueconditionstagereference.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingdialogueconditionstagereference.quest.intro",
+      "topicId": "io.github.theboyyss.missingdialogueconditionstagereference.topic.greeting",
+      "responseText": "Synthetic dialogue line with a missing stage condition reference.",
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.missingdialogueconditionstagereference.dialogue.intro.condition.missingstage",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.missingdialogueconditionstagereference.quest.intro.stage.missing"
+        }
+      ]
+    }
+  ]
+}

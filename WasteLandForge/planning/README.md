@@ -27,9 +27,15 @@ Gate status:
 - `gates/gate-020-quest-stages-objectives-skeleton.md` - Gate 20, quest stages and objectives skeleton.
 - `gates/gate-021-quest-stage-transition-skeleton.md` - Gate 21, quest stage transition skeleton.
 - `gates/gate-022-quest-condition-skeleton.md` - Gate 22, quest condition skeleton.
+- `gates/gate-023-quest-result-script-skeleton.md` - Gate 23, quest result-script skeleton.
+- `gates/gate-024-quest-variable-skeleton.md` - Gate 24, quest variable skeleton.
+- `gates/gate-025-dialogue-condition-skeleton.md` - Gate 25, dialogue condition skeleton.
+- `gates/gate-026-dialogue-result-script-skeleton.md` - Gate 26, dialogue result-script skeleton.
+- `gates/gate-027-dialogue-topic-link-skeleton.md` - Gate 27, dialogue topic link skeleton.
+- `gates/gate-028-dialogue-quest-level-gate-skeleton.md` - Gate 28, dialogue quest-level gate skeleton.
 
 Next gate:
 
-- Gate 23 - quest result-script skeleton.
+- Gate 29 - dialogue result-script variable mutation skeleton.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "0.4.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialoguetopicregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguetopicregistry.topic.greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguetopicregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialoguetopicregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialoguetopicregistry.topic.greeting",
+      "responseText": "Synthetic invalid dialogue topic line."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "0.6.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.missingdialogueconditionstagereference.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.missingdialogueconditionstagereference.quest.intro",
+      "title": "Synthetic Quest For Missing Dialogue Stage Reference",
+      "stages": [
+        {
+          "id": "io.github.theboyyss.missingdialogueconditionstagereference.quest.intro.stage.start",
+          "stage": 10
+        }
+      ]
+    }
+  ]
+}

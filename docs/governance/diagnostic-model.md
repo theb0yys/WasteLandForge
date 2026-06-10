@@ -96,5 +96,36 @@ Gate 22 adds quest registry schema `0.4.0` for condition skeletons and adds
 `WF-SEM-019` for quest condition stage references that do not resolve inside
 the declaring quest.
 
+Gate 23 adds quest registry schema `0.5.0` for stage result-script skeletons
+and adds `WF-SEM-020` for quest result-script condition references that do not
+resolve inside the declaring quest.
+
+Gate 24 adds quest registry schema `0.6.0` for quest variable skeletons and
+adds `WF-SEM-021` for quest condition variable references that do not resolve
+inside the declaring quest.
+
+Gate 25 adds dialogue registry schema `0.2.0` for line-local dialogue
+condition skeletons and adds `WF-SEM-022` and `WF-SEM-023` for dialogue
+condition quest-stage and quest-variable references that do not resolve inside
+the dialogue line's referenced quest.
+
+Gate 26 adds dialogue registry schema `0.3.0` for line-local dialogue
+result-script skeletons. It adds no new semantic rule because the Gate 26
+result-script fields do not reference other authored state; invalid
+result-script shape is reported through `WF-SCHEMA-001`.
+
+Gate 27 adds dialogue registry schema `0.4.0` for topic declarations and
+minimal `linkTo` topic link declarations. It adds `WF-SEM-024` for dialogue
+line topic references that do not resolve to declared topics, and
+`WF-SEM-025` for dialogue link target topic references that do not resolve to
+declared topics.
+
+Gate 28 adds dialogue registry schema `0.5.0` for quest-level dialogue gate
+declarations. It adds `WF-SEM-026` for dialogue quest gates whose `questId`
+does not resolve to a declared quest, `WF-SEM-027` for quest-level dialogue
+gate condition stage references that do not resolve inside the gate quest, and
+`WF-SEM-028` for quest-level dialogue gate condition variable references that
+do not resolve inside the gate quest.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

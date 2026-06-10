@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.missingdialoguequestgatereference.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.missingdialoguequestgatereference.quest.intro",
+      "title": "Synthetic Intro Quest"
+    }
+  ]
+}

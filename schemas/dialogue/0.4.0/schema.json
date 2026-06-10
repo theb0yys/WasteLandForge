@@ -1,0 +1,372 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/dialogue/0.4.0/schema.json",
+  "title": "WastelandForge Dialogue Registry",
+  "description": "Dialogue registry for WastelandForge source-controlled dialogue lines, voice worklist declarations, dialogue condition skeletons, dialogue result-script skeletons, and dialogue topic/link skeletons.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "lines"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the dialogue registry contract.",
+      "const": "0.4.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "dialogue"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "topics": {
+      "description": "Minimal source-controlled dialogue topic declarations.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dialogueTopic"
+      },
+      "uniqueItems": true
+    },
+    "lines": {
+      "description": "Source-controlled dialogue line declarations.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dialogueLine"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pluginName": {
+      "type": "string",
+      "pattern": "^[^/\\\\]+\\.(?:[Ee][Ss][Mm]|[Ee][Ss][Pp])$"
+    },
+    "pathSegment": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "[/\\\\]"
+      }
+    },
+    "fileStem": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "[/\\\\.]"
+      }
+    },
+    "dialogueTopic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "questId",
+        "topicId",
+        "responseText"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "questId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "topicId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "speaker": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "promptText": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "responseText": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "conditions": {
+          "description": "Minimal line-local dialogue condition declarations. Gate 25 supports quest stage and quest variable checks against the line quest only.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueCondition"
+          },
+          "uniqueItems": true
+        },
+        "resultScripts": {
+          "description": "Minimal dialogue result-script declarations. Raw script bodies, mutation semantics, and generator output remain later contracts.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueResultScript"
+          },
+          "uniqueItems": true
+        },
+        "links": {
+          "description": "Minimal topic link declarations. Gate 27 models Link To style topic targets only.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueLink"
+          },
+          "uniqueItems": true
+        },
+        "voice": {
+          "$ref": "#/$defs/voiceWorkItem"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "dialogueCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "conditionType"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "conditionType": {
+          "description": "Gate 25 only models line-local quest-stage and quest-variable condition skeletons.",
+          "enum": [
+            "questStageDone",
+            "questVariableEquals"
+          ]
+        },
+        "stageId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "variableId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "equalsInteger": {
+          "description": "Integer comparison value for quest-variable-equals dialogue condition skeletons.",
+          "type": "integer"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "conditionType": {
+                "const": "questStageDone"
+              }
+            },
+            "required": [
+              "conditionType"
+            ]
+          },
+          "then": {
+            "required": [
+              "stageId"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "variableId"
+                  ]
+                },
+                {
+                  "required": [
+                    "equalsInteger"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "conditionType": {
+                "const": "questVariableEquals"
+              }
+            },
+            "required": [
+              "conditionType"
+            ]
+          },
+          "then": {
+            "required": [
+              "variableId",
+              "equalsInteger"
+            ],
+            "not": {
+              "required": [
+                "stageId"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "dialogueResultScript": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "scriptType"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "scriptType": {
+          "description": "Gate 26 only models a dialogue result-script declaration skeleton.",
+          "const": "dialogueResult"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueLink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "linkType",
+        "targetTopicId"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "linkType": {
+          "description": "Gate 27 only models a Link To style topic target skeleton.",
+          "const": "linkTo"
+        },
+        "targetTopicId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "voiceWorkItem": {
+      "description": "Voice worklist mapping for a dialogue line. It points to sound/voice/<PluginName>/<VoiceType>/<FileStem> assets.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plugin",
+        "voiceType",
+        "fileStem"
+      ],
+      "properties": {
+        "plugin": {
+          "$ref": "#/$defs/pluginName"
+        },
+        "voiceType": {
+          "$ref": "#/$defs/pathSegment"
+        },
+        "fileStem": {
+          "$ref": "#/$defs/fileStem"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.4.0",
+      "kind": "dialogue",
+      "id": "io.github.theboyyss.examplemod.dialogue",
+      "topics": [
+        {
+          "id": "io.github.theboyyss.examplemod.topic.greeting",
+          "title": "Synthetic Greeting"
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.topic.followup",
+          "title": "Synthetic Follow Up"
+        }
+      ],
+      "lines": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.hello",
+          "questId": "io.github.theboyyss.examplemod.quest.intro",
+          "topicId": "io.github.theboyyss.examplemod.topic.greeting",
+          "speaker": "ExampleSpeaker",
+          "responseText": "Synthetic hello line.",
+          "conditions": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.started",
+              "conditionType": "questStageDone",
+              "stageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+              "summary": "Synthetic dialogue condition over quest stage state."
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephasezero",
+              "conditionType": "questVariableEquals",
+              "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+              "equalsInteger": 0,
+              "summary": "Synthetic dialogue condition over quest variable state."
+            }
+          ],
+          "resultScripts": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.result.advance",
+              "scriptType": "dialogueResult",
+              "summary": "Synthetic dialogue result-script declaration."
+            }
+          ],
+          "links": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.link.followup",
+              "linkType": "linkTo",
+              "targetTopicId": "io.github.theboyyss.examplemod.topic.followup",
+              "summary": "Synthetic topic link declaration."
+            }
+          ],
+          "voice": {
+            "plugin": "ExampleMod.esm",
+            "voiceType": "ExampleVoice",
+            "fileStem": "intro_hello"
+          },
+          "tags": [
+            "synthetic"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 22 establishes
-the first quest condition skeleton.
+The project is currently in gated v0.1 implementation. Gate 28 establishes
+the first dialogue quest-level gate skeleton.
 
 ## Architecture Spine
 
@@ -16,14 +16,22 @@ the first quest condition skeleton.
 
 ## Current Gate
 
-Gate 22 creates:
+Gate 28 creates:
 
 - optional `registries.quests` manifest wiring,
+- immutable Draft 2020-12 dialogue registry schemas for `0.1.0`, `0.2.0`,
+  `0.3.0`, `0.4.0`, and `0.5.0`,
 - immutable Draft 2020-12 quest registry schemas for `0.1.0`, `0.2.0`,
-  `0.3.0`, and `0.4.0`,
+  `0.3.0`, `0.4.0`, `0.5.0`, and `0.6.0`,
+- runtime dialogue registry schema validation,
 - runtime quest registry schema validation,
+- a valid synthetic `ExampleMod` dialogue registry with line-local
+  quest-stage and quest-variable condition declarations plus dialogue
+  result-script declarations, topic declarations, a `linkTo` topic link, and
+  a quest-level dialogue gate declaration,
 - a valid synthetic `ExampleMod` quest registry with stage and objective
-  declarations plus transition and condition declarations,
+  declarations plus transition, condition, and stage result-script
+  declarations plus quest variable declarations,
 - `WF-SEM-016` cross-registry validation from dialogue `questId` values to
   declared quest IDs,
 - `WF-SEM-017` semantic validation for quest objectives whose stage references
@@ -32,15 +40,47 @@ Gate 22 creates:
   do not resolve to stages declared in the same quest,
 - `WF-SEM-019` semantic validation for quest conditions whose stage references
   do not resolve to stages declared in the same quest,
+- `WF-SEM-020` semantic validation for quest stage result scripts whose
+  optional condition references do not resolve to conditions declared in the
+  same quest,
+- `WF-SEM-021` semantic validation for quest variable conditions whose
+  variable references do not resolve to variables declared in the same quest,
+- `WF-SEM-022` semantic validation for dialogue conditions whose quest stage
+  references do not resolve inside the dialogue line's referenced quest,
+- `WF-SEM-023` semantic validation for dialogue conditions whose quest
+  variable references do not resolve inside the dialogue line's referenced
+  quest,
+- `WF-SEM-024` semantic validation for dialogue lines whose `topicId`
+  references do not resolve to declared dialogue topics when topics are
+  declared,
+- `WF-SEM-025` semantic validation for dialogue `linkTo` target topic
+  references that do not resolve to declared dialogue topics when topics are
+  declared,
+- `WF-SEM-026` semantic validation for dialogue quest-level gates whose
+  `questId` references do not resolve to declared quest IDs,
+- `WF-SEM-027` semantic validation for dialogue quest-level gate conditions
+  whose quest stage references do not resolve inside the gate's referenced
+  quest,
+- `WF-SEM-028` semantic validation for dialogue quest-level gate conditions
+  whose quest variable references do not resolve inside the gate's referenced
+  quest,
 - deterministic fixtures for invalid quest registry shape, invalid
   stage/objective shape, missing dialogue quest references, and missing quest
   objective stage references, plus invalid transition shape and missing
   transition stage references, invalid condition shape, and missing condition
-  stage references.
+  stage references, invalid result-script shape, and missing result-script
+  condition references, invalid variable shape, and missing condition variable
+  references, invalid dialogue condition shape, missing dialogue condition
+  stage references, missing dialogue condition variable references, and invalid
+  dialogue result-script shape, invalid dialogue topic shape, missing dialogue
+  topic references, missing dialogue topic link references, invalid dialogue
+  quest gate shape, missing dialogue quest gate references, missing dialogue
+  quest gate stage references, and missing dialogue quest gate variable
+  references.
 
-Gate 22 preserves the earlier asset, voice, dialogue registry, dialogue
+Gate 28 preserves the earlier asset, voice, dialogue registry, dialogue
 voice worklist, and dialogue quest reference validation from Gates 14 through
-21.
+27.
 
 It intentionally does not create:
 
@@ -51,12 +91,18 @@ It intentionally does not create:
 - WAV/OGG sample-rate, bitrate, channel, or codec validation,
 - validation that voice filenames correspond to dialogue records in a master file,
 - GECK lip processing asset detection,
-- full GECK dialogue condition language,
+- full GECK dialogue condition language beyond quest stage and quest variable
+  equality skeletons,
 - full GECK condition language,
-- result scripts, variables, lockouts, or branch semantics,
+- dialogue quest gate execution, ordering, or compilation semantics,
+- raw result-script bodies, result-script mutation semantics, variable
+  mutation, lockouts, or branch semantics,
 - condition evaluation or result-script execution semantics,
-- external plugin record validation for quest references,
-- dialogue topic reference validation,
+- dialogue condition compilation into plugin records,
+- dialogue result-script compilation into plugin records,
+- external plugin record validation for quest or topic references,
+- full dialogue graph traversal, `Link From` modeling, cycle checks,
+  ordering, priority, and response routing,
 - plugin record compilation,
 - external tool-backed asset inspection,
 - provider/environment detection or capability scans,

@@ -79,6 +79,36 @@ Gate 22 adds quest registry schema `0.4.0` schema/catalog coverage in
 condition schema and condition stage-reference fixture coverage in
 `WastelandForge.SemanticTests`.
 
+Gate 23 adds quest registry schema `0.5.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+result-script schema and result-script condition-reference fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 24 adds quest registry schema `0.6.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+variable schema and condition variable-reference fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 25 adds dialogue registry schema `0.2.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+dialogue condition schema and quest-state reference fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 26 adds dialogue registry schema `0.3.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+dialogue result-script schema fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 27 adds dialogue registry schema `0.4.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+dialogue topic schema and topic/link reference fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 28 adds dialogue registry schema `0.5.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+dialogue quest gate schema and quest-state reference fixture coverage in
+`WastelandForge.SemanticTests`.
+
 Run the full local suite serially:
 
 ```text

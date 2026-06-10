@@ -104,3 +104,67 @@ synthetic stage-done condition declaration, and adds:
 - `projects/BrokenCases/MissingQuestConditionStageReference` - deterministic
   `WF-SEM-019` failure case for a condition stage reference that is not
   declared in the same quest.
+
+Gate 23 updates `projects/ExampleMod` to quest registry schema `0.5.0` with a
+synthetic stage result-script declaration, and adds:
+
+- `projects/BrokenCases/InvalidQuestResultScriptRegistry` - runtime quest
+  registry schema failure case for invalid result-script shape.
+- `projects/BrokenCases/MissingQuestResultScriptConditionReference` -
+  deterministic `WF-SEM-020` failure case for a result-script condition
+  reference that is not declared in the same quest.
+
+Gate 24 updates `projects/ExampleMod` to quest registry schema `0.6.0` with a
+synthetic integer quest variable declaration and variable-equals condition,
+and adds:
+
+- `projects/BrokenCases/InvalidQuestVariableRegistry` - runtime quest registry
+  schema failure case for invalid variable shape.
+- `projects/BrokenCases/MissingQuestConditionVariableReference` -
+  deterministic `WF-SEM-021` failure case for a condition variable reference
+  that is not declared in the same quest.
+
+Gate 25 updates `projects/ExampleMod` to dialogue registry schema `0.2.0` with
+synthetic line-local quest-stage and quest-variable conditions, and adds:
+
+- `projects/BrokenCases/InvalidDialogueConditionRegistry` - runtime dialogue
+  registry schema failure case for invalid condition shape.
+- `projects/BrokenCases/MissingDialogueConditionStageReference` -
+  deterministic `WF-SEM-022` failure case for a dialogue condition stage
+  reference that is not declared in the line's referenced quest.
+- `projects/BrokenCases/MissingDialogueConditionVariableReference` -
+  deterministic `WF-SEM-023` failure case for a dialogue condition variable
+  reference that is not declared in the line's referenced quest.
+
+Gate 26 updates `projects/ExampleMod` to dialogue registry schema `0.3.0` with
+a synthetic dialogue result-script declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialogueResultScriptRegistry` - runtime
+  dialogue registry schema failure case for invalid result-script shape.
+
+Gate 27 updates `projects/ExampleMod` to dialogue registry schema `0.4.0` with
+synthetic topic declarations and a minimal `linkTo` topic link, and adds:
+
+- `projects/BrokenCases/InvalidDialogueTopicRegistry` - runtime dialogue
+  registry schema failure case for invalid topic shape.
+- `projects/BrokenCases/MissingDialogueTopicReference` - deterministic
+  `WF-SEM-024` failure case for a dialogue line topic reference that is not
+  declared in dialogue topics.
+- `projects/BrokenCases/MissingDialogueTopicLinkReference` - deterministic
+  `WF-SEM-025` failure case for a dialogue `linkTo` target topic reference
+  that is not declared in dialogue topics.
+
+Gate 28 updates `projects/ExampleMod` to dialogue registry schema `0.5.0` with
+a synthetic quest-level dialogue gate, and adds:
+
+- `projects/BrokenCases/InvalidDialogueQuestGateRegistry` - runtime dialogue
+  registry schema failure case for invalid quest gate shape.
+- `projects/BrokenCases/MissingDialogueQuestGateReference` - deterministic
+  `WF-SEM-026` failure case for a dialogue quest gate `questId` that is not
+  declared in the quest registry.
+- `projects/BrokenCases/MissingDialogueQuestGateStageReference` -
+  deterministic `WF-SEM-027` failure case for a dialogue quest gate condition
+  stage reference that is not declared in the gate's referenced quest.
+- `projects/BrokenCases/MissingDialogueQuestGateVariableReference` -
+  deterministic `WF-SEM-028` failure case for a dialogue quest gate condition
+  variable reference that is not declared in the gate's referenced quest.

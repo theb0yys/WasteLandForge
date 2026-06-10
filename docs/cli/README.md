@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 22 quest condition baseline
+Status: Gate 28 dialogue quest-level gate baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -63,6 +63,28 @@ forge --version
 - `forge validate` emits `WF-SEM-015` when a dialogue voice work item does not
   have matching `.wav`, `.ogg`, and `.lip` assets declared in the asset
   registry.
+- `forge validate` supports dialogue registry schema `0.2.0` for line-local
+  quest-stage and quest-variable condition skeletons.
+- `forge validate` supports dialogue registry schema `0.3.0` for line-local
+  dialogue result-script skeleton declarations.
+- `forge validate` supports dialogue registry schema `0.4.0` for dialogue
+  topic declarations and minimal `linkTo` topic link declarations.
+- `forge validate` supports dialogue registry schema `0.5.0` for quest-level
+  dialogue gate declarations.
+- `forge validate` emits `WF-SEM-022` when a dialogue condition stage
+  reference does not resolve inside the dialogue line's referenced quest.
+- `forge validate` emits `WF-SEM-023` when a dialogue condition variable
+  reference does not resolve inside the dialogue line's referenced quest.
+- `forge validate` emits `WF-SEM-024` when a dialogue line `topicId` does not
+  resolve to a declared dialogue topic when topics are declared.
+- `forge validate` emits `WF-SEM-025` when a dialogue `linkTo` target topic
+  does not resolve to a declared dialogue topic when topics are declared.
+- `forge validate` emits `WF-SEM-026` when a dialogue quest gate `questId`
+  does not resolve to a declared quest.
+- `forge validate` emits `WF-SEM-027` when a dialogue quest gate condition
+  stage reference does not resolve inside the gate's referenced quest.
+- `forge validate` emits `WF-SEM-028` when a dialogue quest gate condition
+  variable reference does not resolve inside the gate's referenced quest.
 - `forge validate` evaluates embedded quest registry JSON Schemas at runtime
   when the manifest declares `registries.quests`.
 - `forge validate` emits `WF-SEM-016` when a dialogue `questId` references a
@@ -79,6 +101,14 @@ forge --version
   skeleton declarations.
 - `forge validate` emits `WF-SEM-019` when a quest condition stage reference
   does not resolve to a stage declared in the same quest.
+- `forge validate` supports quest registry schema `0.5.0` for stage
+  result-script skeleton declarations.
+- `forge validate` emits `WF-SEM-020` when a quest result-script condition
+  reference does not resolve to a condition declared in the same quest.
+- `forge validate` supports quest registry schema `0.6.0` for quest variable
+  skeleton declarations and variable-equals condition skeletons.
+- `forge validate` emits `WF-SEM-021` when a quest condition variable
+  reference does not resolve to a variable declared in the same quest.
 - `forge release verify` runs the Gate 9 release dry-run verifier and writes
   local evidence under project `dist/`.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.

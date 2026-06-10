@@ -30,7 +30,13 @@ Do not overwrite a released schema in place. Schema migrations are explicit tool
 - `quests/0.2.0/schema.json` - quest registry schema with stage and objective skeletons.
 - `quests/0.3.0/schema.json` - quest registry schema with transition skeletons.
 - `quests/0.4.0/schema.json` - quest registry schema with condition skeletons.
+- `quests/0.5.0/schema.json` - quest registry schema with result-script skeletons.
+- `quests/0.6.0/schema.json` - quest registry schema with variable skeletons.
 - `dialogue/0.1.0/schema.json` - dialogue registry schema.
+- `dialogue/0.2.0/schema.json` - dialogue registry schema with condition skeletons.
+- `dialogue/0.3.0/schema.json` - dialogue registry schema with result-script skeletons.
+- `dialogue/0.4.0/schema.json` - dialogue registry schema with topic/link skeletons.
+- `dialogue/0.5.0/schema.json` - dialogue registry schema with quest-level gate skeletons.
 
 Gate 12 evaluates the embedded manifest schema at runtime. Gate 13 evaluates
 embedded dependency and capability registry schemas at runtime. Gate 14
@@ -39,4 +45,12 @@ embedded dialogue registry schemas at runtime. Gate 19 evaluates embedded quest
 registry schemas at runtime. Gate 20 adds quest registry schema `0.2.0` while
 preserving quest registry schema `0.1.0`. Gate 21 adds quest registry schema
 `0.3.0` while preserving earlier quest registry schemas. Gate 22 adds quest
-registry schema `0.4.0` while preserving earlier quest registry schemas.
+registry schema `0.4.0` while preserving earlier quest registry schemas. Gate
+23 adds quest registry schema `0.5.0` while preserving earlier quest registry
+schemas. Gate 24 adds quest registry schema `0.6.0` while preserving earlier
+quest registry schemas. Gate 25 adds dialogue registry schema `0.2.0` while
+preserving dialogue registry schema `0.1.0`. Gate 26 adds dialogue registry
+schema `0.3.0` while preserving earlier dialogue registry schemas. Gate 27
+adds dialogue registry schema `0.4.0` while preserving earlier dialogue
+registry schemas. Gate 28 adds dialogue registry schema `0.5.0` while
+preserving earlier dialogue registry schemas.

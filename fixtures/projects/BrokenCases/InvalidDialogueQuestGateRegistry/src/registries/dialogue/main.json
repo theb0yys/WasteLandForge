@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "0.5.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialoguequestgateregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguequestgateregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "questGates": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguequestgateregistry.dialogue.gate.intro.available",
+      "questId": "io.github.theboyyss.invaliddialoguequestgateregistry.quest.intro"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguequestgateregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialoguequestgateregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialoguequestgateregistry.topic.greeting",
+      "responseText": "Synthetic invalid dialogue quest gate line."
+    }
+  ]
+}

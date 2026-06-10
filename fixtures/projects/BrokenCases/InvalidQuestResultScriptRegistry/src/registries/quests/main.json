@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "0.5.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.invalidquestresultscriptregistry.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.invalidquestresultscriptregistry.quest.intro",
+      "title": "Synthetic Quest With Invalid Result Script",
+      "stages": [
+        {
+          "id": "io.github.theboyyss.invalidquestresultscriptregistry.quest.intro.stage.start",
+          "stage": 10,
+          "resultScripts": [
+            {
+              "id": "io.github.theboyyss.invalidquestresultscriptregistry.quest.intro.result.missingscripttype"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

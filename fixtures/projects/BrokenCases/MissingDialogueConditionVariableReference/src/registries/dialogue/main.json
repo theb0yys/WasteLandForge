@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingdialogueconditionvariablereference.dialogue",
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingdialogueconditionvariablereference.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingdialogueconditionvariablereference.quest.intro",
+      "topicId": "io.github.theboyyss.missingdialogueconditionvariablereference.topic.greeting",
+      "responseText": "Synthetic dialogue line with a missing variable condition reference.",
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.missingdialogueconditionvariablereference.dialogue.intro.condition.missingvariable",
+          "conditionType": "questVariableEquals",
+          "variableId": "io.github.theboyyss.missingdialogueconditionvariablereference.quest.intro.variable.missing",
+          "equalsInteger": 1
+        }
+      ]
+    }
+  ]
+}

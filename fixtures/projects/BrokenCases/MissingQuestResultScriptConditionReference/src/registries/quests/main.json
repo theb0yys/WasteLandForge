@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "0.5.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.missingquestresultscriptconditionreference.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.missingquestresultscriptconditionreference.quest.intro",
+      "title": "Synthetic Quest With Missing Result Script Condition Reference",
+      "stages": [
+        {
+          "id": "io.github.theboyyss.missingquestresultscriptconditionreference.quest.intro.stage.start",
+          "stage": 10,
+          "resultScripts": [
+            {
+              "id": "io.github.theboyyss.missingquestresultscriptconditionreference.quest.intro.result.missingcondition",
+              "scriptType": "stageResult",
+              "conditionId": "io.github.theboyyss.missingquestresultscriptconditionreference.quest.intro.condition.missing"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.missingquestresultscriptconditionreference.quest.intro.condition.started",
+          "conditionType": "stageDone",
+          "stageId": "io.github.theboyyss.missingquestresultscriptconditionreference.quest.intro.stage.start"
+        }
+      ]
+    }
+  ]
+}

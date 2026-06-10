@@ -114,6 +114,66 @@ public sealed class ValidationPipelineFixtureTests
     }
 
     [Fact]
+    public void InvalidDialogueConditionRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueConditionRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/conditions/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("conditionType", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueResultScriptRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueResultScriptRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/resultScripts/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("scriptType", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueTopicRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueTopicRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/topics/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("title", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidDialogueQuestGateRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueQuestGateRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/questGates/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("conditions", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void InvalidQuestRegistryUsesRuntimeSchemaDiagnostics()
     {
         var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidQuestRegistry"));
@@ -171,6 +231,36 @@ public sealed class ValidationPipelineFixtureTests
         Assert.Equal("src/registries/quests/main.json", issue.PrimaryLocation.File);
         Assert.Equal("/quests/0/conditions/0", issue.PrimaryLocation.Pointer?.ToString());
         Assert.Contains("stageId", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidQuestResultScriptRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidQuestResultScriptRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/quests/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/quests/0/stages/0/resultScripts/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("scriptType", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidQuestVariableRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidQuestVariableRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/quests/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/quests/0/variables/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("variableType", issue.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -289,6 +379,150 @@ public sealed class ValidationPipelineFixtureTests
         Assert.Equal("/quests/0/conditions/0/stageId", issue.PrimaryLocation.Pointer?.ToString());
         Assert.Equal("wf:sem:019:io.github.theboyyss.missingquestconditionstagereference.quest.intro.condition.missingstage:stageId", issue.Fingerprint);
         Assert.Contains("stage.missing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingQuestResultScriptConditionReferenceEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingQuestResultScriptConditionReference"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-020", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/quests/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/quests/0/stages/0/resultScripts/0/conditionId", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:020:io.github.theboyyss.missingquestresultscriptconditionreference.quest.intro.result.missingcondition:conditionId", issue.Fingerprint);
+        Assert.Contains("condition.missing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingQuestConditionVariableReferenceEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingQuestConditionVariableReference"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-021", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/quests/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/quests/0/conditions/0/variableId", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:021:io.github.theboyyss.missingquestconditionvariablereference.quest.intro.condition.missingvariable:variableId", issue.Fingerprint);
+        Assert.Contains("variable.missing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingDialogueConditionStageReferenceEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingDialogueConditionStageReference"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-022", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/conditions/0/stageId", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:022:io.github.theboyyss.missingdialogueconditionstagereference.dialogue.intro.hello:io.github.theboyyss.missingdialogueconditionstagereference.dialogue.intro.condition.missingstage:stageId", issue.Fingerprint);
+        Assert.Contains("stage.missing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingDialogueConditionVariableReferenceEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingDialogueConditionVariableReference"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-023", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/conditions/0/variableId", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:023:io.github.theboyyss.missingdialogueconditionvariablereference.dialogue.intro.hello:io.github.theboyyss.missingdialogueconditionvariablereference.dialogue.intro.condition.missingvariable:variableId", issue.Fingerprint);
+        Assert.Contains("variable.missing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingDialogueTopicReferenceEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingDialogueTopicReference"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-024", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/topicId", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:024:io.github.theboyyss.missingdialoguetopicreference.dialogue.intro.hello:topicId", issue.Fingerprint);
+        Assert.Contains("topic.missing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingDialogueTopicLinkReferenceEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingDialogueTopicLinkReference"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-025", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/links/0/targetTopicId", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:025:io.github.theboyyss.missingdialoguetopiclinkreference.dialogue.intro.hello:io.github.theboyyss.missingdialoguetopiclinkreference.dialogue.intro.link.missingtopic:targetTopicId", issue.Fingerprint);
+        Assert.Contains("topic.missing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingDialogueQuestGateReferenceEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingDialogueQuestGateReference"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-026", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/questGates/0/questId", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:026:io.github.theboyyss.missingdialoguequestgatereference.dialogue.gate.intro.available:questId", issue.Fingerprint);
+        Assert.Contains("quest.missing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingDialogueQuestGateStageReferenceEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingDialogueQuestGateStageReference"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-027", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/questGates/0/conditions/0/stageId", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:027:io.github.theboyyss.missingdialoguequestgatestagereference.dialogue.gate.intro.available:io.github.theboyyss.missingdialoguequestgatestagereference.dialogue.gate.intro.condition.missingstage:stageId", issue.Fingerprint);
+        Assert.Contains("stage.missing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingDialogueQuestGateVariableReferenceEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingDialogueQuestGateVariableReference"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-028", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/questGates/0/conditions/0/variableId", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:028:io.github.theboyyss.missingdialoguequestgatevariablereference.dialogue.gate.intro.available:io.github.theboyyss.missingdialoguequestgatevariablereference.dialogue.gate.intro.condition.missingvariable:variableId", issue.Fingerprint);
+        Assert.Contains("variable.missing", issue.Message, StringComparison.Ordinal);
     }
 
     [Fact]

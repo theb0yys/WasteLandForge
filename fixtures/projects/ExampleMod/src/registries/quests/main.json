@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.4.0",
+  "schemaVersion": "0.6.0",
   "kind": "quest",
   "id": "io.github.theboyyss.examplemod.quests",
   "quests": [
@@ -7,6 +7,15 @@
       "id": "io.github.theboyyss.examplemod.quest.intro",
       "title": "Synthetic Intro Quest",
       "summary": "Synthetic quest declaration used by the dialogue fixture.",
+      "variables": [
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+          "variableType": "integer",
+          "initialValue": 0,
+          "title": "Dialogue phase",
+          "summary": "Synthetic quest variable declaration."
+        }
+      ],
       "stages": [
         {
           "id": "io.github.theboyyss.examplemod.quest.intro.stage.start",
@@ -18,7 +27,15 @@
           "id": "io.github.theboyyss.examplemod.quest.intro.stage.complete",
           "stage": 100,
           "title": "Complete",
-          "summary": "Synthetic completion stage."
+          "summary": "Synthetic completion stage.",
+          "resultScripts": [
+            {
+              "id": "io.github.theboyyss.examplemod.quest.intro.result.complete",
+              "scriptType": "stageResult",
+              "conditionId": "io.github.theboyyss.examplemod.quest.intro.condition.started",
+              "summary": "Synthetic stage result-script declaration."
+            }
+          ]
         }
       ],
       "objectives": [
@@ -45,6 +62,14 @@
           "stageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
           "title": "Intro started",
           "summary": "Synthetic condition for stage reference validation."
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro.condition.dialoguephasezero",
+          "conditionType": "variableEquals",
+          "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+          "equalsInteger": 0,
+          "title": "Dialogue phase zero",
+          "summary": "Synthetic condition for quest variable reference validation."
         }
       ],
       "externalRefs": [

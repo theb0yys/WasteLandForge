@@ -61,9 +61,27 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> QuestRegistrySchema040 = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Quest040,
         "Quest registry schema 0.4.0"));
+    private static readonly Lazy<JsonSchema> QuestRegistrySchema050 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Quest050,
+        "Quest registry schema 0.5.0"));
+    private static readonly Lazy<JsonSchema> QuestRegistrySchema060 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Quest060,
+        "Quest registry schema 0.6.0"));
     private static readonly Lazy<JsonSchema> DialogueRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Dialogue010,
         "Dialogue registry schema 0.1.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema020 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue020,
+        "Dialogue registry schema 0.2.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema030 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue030,
+        "Dialogue registry schema 0.3.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema040 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue040,
+        "Dialogue registry schema 0.4.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema050 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue050,
+        "Dialogue registry schema 0.5.0"));
 
     private static JsonSchema LoadBuiltInSchema(string schemaId, string label)
     {
@@ -562,10 +580,16 @@ public sealed class ProjectValidationPipeline
             "dependency" => DependencyRegistrySchema.Value,
             "capability" => CapabilityRegistrySchema.Value,
             "asset" => AssetRegistrySchema.Value,
+            "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.6.0") => QuestRegistrySchema060.Value,
+            "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.5.0") => QuestRegistrySchema050.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.4.0") => QuestRegistrySchema040.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.3.0") => QuestRegistrySchema030.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => QuestRegistrySchema020.Value,
             "quest" => QuestRegistrySchema.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.5.0") => DialogueRegistrySchema050.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.4.0") => DialogueRegistrySchema040.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.3.0") => DialogueRegistrySchema030.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => DialogueRegistrySchema020.Value,
             "dialogue" => DialogueRegistrySchema.Value,
             _ => throw new InvalidOperationException($"No built-in registry schema is registered for kind '{expectedKind}'.")
         };
@@ -868,17 +892,130 @@ public sealed class ProjectValidationPipeline
             }
         }
 
+        var dialogueTopicIds = dialogueDocuments
+            .SelectMany(ReadDialogueTopicIds)
+            .ToHashSet(StringComparer.Ordinal);
+        if (dialogueTopicIds.Count > 0)
+        {
+            foreach (var document in dialogueDocuments)
+            {
+                foreach (var topicReference in ReadDialogueTopicReferences(document))
+                {
+                    if (dialogueTopicIds.Contains(topicReference.TopicId))
+                    {
+                        continue;
+                    }
+
+                    issues.Add(CreateIssue(
+                        "WF-SEM-024",
+                        DiagnosticSeverity.Error,
+                        "semantic",
+                        "Dialogue line references unknown topic",
+                        $"Dialogue line '{topicReference.LineId}' references topic '{topicReference.TopicId}' but that topic is not declared.",
+                        CreateSourceLocation(document.DisplayPath, $"/lines/{topicReference.LineIndex}/topicId", document.SourceLocations),
+                        projectId,
+                        dialogueDocuments.Select(ToDialogueRelatedLocation).ToArray(),
+                        "Declare the topic in the dialogue registry or update the line topicId.",
+                        "WF-SEM-024",
+                        $"wf:sem:024:{topicReference.LineId}:topicId"));
+                }
+
+                foreach (var linkReference in ReadDialogueTopicLinkReferences(document))
+                {
+                    if (dialogueTopicIds.Contains(linkReference.TargetTopicId))
+                    {
+                        continue;
+                    }
+
+                    issues.Add(CreateIssue(
+                        "WF-SEM-025",
+                        DiagnosticSeverity.Error,
+                        "semantic",
+                        "Dialogue link references unknown topic",
+                        $"Dialogue link '{linkReference.LinkId}' on line '{linkReference.LineId}' references topic '{linkReference.TargetTopicId}' but that topic is not declared.",
+                        CreateSourceLocation(document.DisplayPath, $"/lines/{linkReference.LineIndex}/links/{linkReference.LinkIndex}/targetTopicId", document.SourceLocations),
+                        projectId,
+                        dialogueDocuments.Select(ToDialogueRelatedLocation).ToArray(),
+                        "Declare the target topic in the dialogue registry or update the dialogue link target.",
+                        "WF-SEM-025",
+                        $"wf:sem:025:{linkReference.LineId}:{linkReference.LinkId}:targetTopicId"));
+                }
+            }
+        }
+
         if (questDocuments.Count == 0)
         {
             return;
         }
 
-        var questIds = questDocuments
-            .SelectMany(ReadQuestIds)
-            .ToHashSet(StringComparer.Ordinal);
+        var questDataById = ReadQuestReferenceDataById(questDocuments);
+        var questIds = questDataById.Keys.ToHashSet(StringComparer.Ordinal);
 
         foreach (var document in dialogueDocuments)
         {
+            foreach (var gateReference in ReadDialogueQuestGateReferences(document))
+            {
+                if (questIds.Contains(gateReference.QuestId))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-026",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue quest gate references unknown quest",
+                    $"Dialogue quest gate '{gateReference.GateId}' references quest '{gateReference.QuestId}' which is not declared.",
+                    CreateSourceLocation(document.DisplayPath, $"/questGates/{gateReference.GateIndex}/questId", document.SourceLocations),
+                    projectId,
+                    questDocuments.Select(ToQuestRelatedLocation).ToArray(),
+                    "Declare the quest in the quest registry or update the dialogue quest gate questId.",
+                    "WF-SEM-026",
+                    $"wf:sem:026:{gateReference.GateId}:questId"));
+            }
+
+            foreach (var stageReference in ReadDialogueQuestGateStageReferences(document, questDataById))
+            {
+                if (stageReference.QuestData.StageIds.Contains(stageReference.StageId))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-027",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue quest gate references unknown quest stage",
+                    $"Dialogue quest gate condition '{stageReference.ConditionId}' in gate '{stageReference.GateId}' references stage '{stageReference.StageId}' but that stage is not declared in quest '{stageReference.QuestId}'.",
+                    CreateSourceLocation(document.DisplayPath, $"/questGates/{stageReference.GateIndex}/conditions/{stageReference.ConditionIndex}/stageId", document.SourceLocations),
+                    projectId,
+                    [CreateSourceLocation(stageReference.QuestData.Document.DisplayPath, $"/quests/{stageReference.QuestData.QuestIndex}/stages", stageReference.QuestData.Document.SourceLocations)],
+                    "Declare the stage in the referenced quest or update the dialogue quest gate condition stage reference.",
+                    "WF-SEM-027",
+                    $"wf:sem:027:{stageReference.GateId}:{stageReference.ConditionId}:stageId"));
+            }
+
+            foreach (var variableReference in ReadDialogueQuestGateVariableReferences(document, questDataById))
+            {
+                if (variableReference.QuestData.VariableIds.Contains(variableReference.VariableId))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-028",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue quest gate references unknown quest variable",
+                    $"Dialogue quest gate condition '{variableReference.ConditionId}' in gate '{variableReference.GateId}' references variable '{variableReference.VariableId}' but that variable is not declared in quest '{variableReference.QuestId}'.",
+                    CreateSourceLocation(document.DisplayPath, $"/questGates/{variableReference.GateIndex}/conditions/{variableReference.ConditionIndex}/variableId", document.SourceLocations),
+                    projectId,
+                    [CreateSourceLocation(variableReference.QuestData.Document.DisplayPath, $"/quests/{variableReference.QuestData.QuestIndex}/variables", variableReference.QuestData.Document.SourceLocations)],
+                    "Declare the variable in the referenced quest or update the dialogue quest gate condition variable reference.",
+                    "WF-SEM-028",
+                    $"wf:sem:028:{variableReference.GateId}:{variableReference.ConditionId}:variableId"));
+            }
+
             foreach (var questReference in ReadDialogueQuestReferences(document))
             {
                 if (questIds.Contains(questReference.QuestId))
@@ -898,6 +1035,48 @@ public sealed class ProjectValidationPipeline
                     "Declare the quest in the quest registry or update the dialogue questId.",
                     "WF-SEM-016",
                     $"wf:sem:016:{questReference.LineId}"));
+            }
+
+            foreach (var stageReference in ReadDialogueConditionStageReferences(document, questDataById))
+            {
+                if (stageReference.QuestData.StageIds.Contains(stageReference.StageId))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-022",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue condition references unknown quest stage",
+                    $"Dialogue condition '{stageReference.ConditionId}' on line '{stageReference.LineId}' references stage '{stageReference.StageId}' but that stage is not declared in quest '{stageReference.QuestId}'.",
+                    CreateSourceLocation(document.DisplayPath, $"/lines/{stageReference.LineIndex}/conditions/{stageReference.ConditionIndex}/stageId", document.SourceLocations),
+                    projectId,
+                    [CreateSourceLocation(stageReference.QuestData.Document.DisplayPath, $"/quests/{stageReference.QuestData.QuestIndex}/stages", stageReference.QuestData.Document.SourceLocations)],
+                    "Declare the stage in the referenced quest or update the dialogue condition stage reference.",
+                    "WF-SEM-022",
+                    $"wf:sem:022:{stageReference.LineId}:{stageReference.ConditionId}:stageId"));
+            }
+
+            foreach (var variableReference in ReadDialogueConditionVariableReferences(document, questDataById))
+            {
+                if (variableReference.QuestData.VariableIds.Contains(variableReference.VariableId))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-023",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue condition references unknown quest variable",
+                    $"Dialogue condition '{variableReference.ConditionId}' on line '{variableReference.LineId}' references variable '{variableReference.VariableId}' but that variable is not declared in quest '{variableReference.QuestId}'.",
+                    CreateSourceLocation(document.DisplayPath, $"/lines/{variableReference.LineIndex}/conditions/{variableReference.ConditionIndex}/variableId", document.SourceLocations),
+                    projectId,
+                    [CreateSourceLocation(variableReference.QuestData.Document.DisplayPath, $"/quests/{variableReference.QuestData.QuestIndex}/variables", variableReference.QuestData.Document.SourceLocations)],
+                    "Declare the variable in the referenced quest or update the dialogue condition variable reference.",
+                    "WF-SEM-023",
+                    $"wf:sem:023:{variableReference.LineId}:{variableReference.ConditionId}:variableId"));
             }
         }
     }
@@ -970,6 +1149,48 @@ public sealed class ProjectValidationPipeline
                     "Declare the stage in the same quest or update the condition stage reference.",
                     "WF-SEM-019",
                     $"wf:sem:019:{stageReference.ConditionId}:stageId"));
+            }
+
+            foreach (var conditionReference in ReadQuestResultScriptConditionReferences(document))
+            {
+                if (conditionReference.ConditionIds.Contains(conditionReference.ConditionId))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-020",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Quest result script references unknown condition",
+                    $"Quest result script '{conditionReference.ResultScriptId}' references condition '{conditionReference.ConditionId}' but that condition is not declared in quest '{conditionReference.QuestId}'.",
+                    CreateSourceLocation(document.DisplayPath, $"/quests/{conditionReference.QuestIndex}/stages/{conditionReference.StageIndex}/resultScripts/{conditionReference.ResultScriptIndex}/conditionId", document.SourceLocations),
+                    projectId,
+                    [CreateSourceLocation(document.DisplayPath, $"/quests/{conditionReference.QuestIndex}/conditions", document.SourceLocations)],
+                    "Declare the condition in the same quest or update the result-script condition reference.",
+                    "WF-SEM-020",
+                    $"wf:sem:020:{conditionReference.ResultScriptId}:conditionId"));
+            }
+
+            foreach (var variableReference in ReadQuestConditionVariableReferences(document))
+            {
+                if (variableReference.VariableIds.Contains(variableReference.VariableId))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-021",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Quest condition references unknown variable",
+                    $"Quest condition '{variableReference.ConditionId}' references variable '{variableReference.VariableId}' but that variable is not declared in quest '{variableReference.QuestId}'.",
+                    CreateSourceLocation(document.DisplayPath, $"/quests/{variableReference.QuestIndex}/conditions/{variableReference.ConditionIndex}/variableId", document.SourceLocations),
+                    projectId,
+                    [CreateSourceLocation(document.DisplayPath, $"/quests/{variableReference.QuestIndex}/variables", document.SourceLocations)],
+                    "Declare the variable in the same quest or update the condition variable reference.",
+                    "WF-SEM-021",
+                    $"wf:sem:021:{variableReference.ConditionId}:variableId"));
             }
         }
     }
@@ -1402,6 +1623,42 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static Dictionary<string, QuestReferenceData> ReadQuestReferenceDataById(IReadOnlyList<RegistryDocument> questDocuments)
+    {
+        var dataById = new Dictionary<string, QuestReferenceData>(StringComparer.Ordinal);
+
+        foreach (var document in questDocuments)
+        {
+            if (document.Root["quests"] is not JsonArray quests)
+            {
+                continue;
+            }
+
+            for (var questIndex = 0; questIndex < quests.Count; questIndex++)
+            {
+                if (quests[questIndex] is not JsonObject quest)
+                {
+                    continue;
+                }
+
+                var questId = GetString(quest, "id");
+                if (questId is null)
+                {
+                    continue;
+                }
+
+                dataById[questId] = new QuestReferenceData(
+                    document,
+                    questIndex,
+                    questId,
+                    ReadQuestStageIds(quest),
+                    ReadQuestVariableIds(quest));
+            }
+        }
+
+        return dataById;
+    }
+
     private static IEnumerable<QuestObjectiveStageReference> ReadQuestObjectiveStageReferences(RegistryDocument document)
     {
         if (document.Root["quests"] is not JsonArray quests)
@@ -1576,12 +1833,149 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static IEnumerable<QuestResultScriptConditionReference> ReadQuestResultScriptConditionReferences(RegistryDocument document)
+    {
+        if (document.Root["quests"] is not JsonArray quests)
+        {
+            yield break;
+        }
+
+        for (var questIndex = 0; questIndex < quests.Count; questIndex++)
+        {
+            if (quests[questIndex] is not JsonObject quest)
+            {
+                continue;
+            }
+
+            var questId = GetString(quest, "id");
+            if (questId is null)
+            {
+                continue;
+            }
+
+            var conditionIds = ReadQuestConditionIds(quest);
+
+            if (quest["stages"] is not JsonArray stages)
+            {
+                continue;
+            }
+
+            for (var stageIndex = 0; stageIndex < stages.Count; stageIndex++)
+            {
+                if (stages[stageIndex] is not JsonObject stage ||
+                    stage["resultScripts"] is not JsonArray resultScripts)
+                {
+                    continue;
+                }
+
+                for (var resultScriptIndex = 0; resultScriptIndex < resultScripts.Count; resultScriptIndex++)
+                {
+                    if (resultScripts[resultScriptIndex] is not JsonObject resultScript)
+                    {
+                        continue;
+                    }
+
+                    var resultScriptId = GetString(resultScript, "id");
+                    var conditionId = GetString(resultScript, "conditionId");
+                    if (resultScriptId is null || conditionId is null)
+                    {
+                        continue;
+                    }
+
+                    yield return new QuestResultScriptConditionReference(
+                        questIndex,
+                        stageIndex,
+                        resultScriptIndex,
+                        questId,
+                        resultScriptId,
+                        conditionId,
+                        conditionIds);
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<QuestConditionVariableReference> ReadQuestConditionVariableReferences(RegistryDocument document)
+    {
+        if (document.Root["quests"] is not JsonArray quests)
+        {
+            yield break;
+        }
+
+        for (var questIndex = 0; questIndex < quests.Count; questIndex++)
+        {
+            if (quests[questIndex] is not JsonObject quest)
+            {
+                continue;
+            }
+
+            var questId = GetString(quest, "id");
+            if (questId is null)
+            {
+                continue;
+            }
+
+            var variableIds = ReadQuestVariableIds(quest);
+
+            if (quest["conditions"] is not JsonArray conditions)
+            {
+                continue;
+            }
+
+            for (var conditionIndex = 0; conditionIndex < conditions.Count; conditionIndex++)
+            {
+                if (conditions[conditionIndex] is not JsonObject condition ||
+                    !StringComparer.Ordinal.Equals(GetString(condition, "conditionType"), "variableEquals"))
+                {
+                    continue;
+                }
+
+                var conditionId = GetString(condition, "id");
+                var variableId = GetString(condition, "variableId");
+                if (conditionId is null || variableId is null)
+                {
+                    continue;
+                }
+
+                yield return new QuestConditionVariableReference(
+                    questIndex,
+                    conditionIndex,
+                    questId,
+                    conditionId,
+                    variableId,
+                    variableIds);
+            }
+        }
+    }
+
     private static HashSet<string> ReadQuestStageIds(JsonObject quest)
     {
         return quest["stages"] is JsonArray stages
             ? stages
                 .OfType<JsonObject>()
                 .Select(stage => GetString(stage, "id"))
+                .OfType<string>()
+                .ToHashSet(StringComparer.Ordinal)
+            : new HashSet<string>(StringComparer.Ordinal);
+    }
+
+    private static HashSet<string> ReadQuestConditionIds(JsonObject quest)
+    {
+        return quest["conditions"] is JsonArray conditions
+            ? conditions
+                .OfType<JsonObject>()
+                .Select(condition => GetString(condition, "id"))
+                .OfType<string>()
+                .ToHashSet(StringComparer.Ordinal)
+            : new HashSet<string>(StringComparer.Ordinal);
+    }
+
+    private static HashSet<string> ReadQuestVariableIds(JsonObject quest)
+    {
+        return quest["variables"] is JsonArray variables
+            ? variables
+                .OfType<JsonObject>()
+                .Select(variable => GetString(variable, "id"))
                 .OfType<string>()
                 .ToHashSet(StringComparer.Ordinal)
             : new HashSet<string>(StringComparer.Ordinal);
@@ -1645,6 +2039,325 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static IEnumerable<string> ReadDialogueTopicIds(RegistryDocument document)
+    {
+        if (document.Root["topics"] is not JsonArray topics)
+        {
+            yield break;
+        }
+
+        foreach (var topic in topics.OfType<JsonObject>())
+        {
+            var id = GetString(topic, "id");
+            if (id is not null)
+            {
+                yield return id;
+            }
+        }
+    }
+
+    private static IEnumerable<DialogueTopicReference> ReadDialogueTopicReferences(RegistryDocument document)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            var topicId = GetString(line, "topicId");
+            if (lineId is null || topicId is null)
+            {
+                continue;
+            }
+
+            yield return new DialogueTopicReference(lineIndex, lineId, topicId);
+        }
+    }
+
+    private static IEnumerable<DialogueTopicLinkReference> ReadDialogueTopicLinkReferences(RegistryDocument document)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line ||
+                line["links"] is not JsonArray links)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            if (lineId is null)
+            {
+                continue;
+            }
+
+            for (var linkIndex = 0; linkIndex < links.Count; linkIndex++)
+            {
+                if (links[linkIndex] is not JsonObject link)
+                {
+                    continue;
+                }
+
+                var linkId = GetString(link, "id");
+                var targetTopicId = GetString(link, "targetTopicId");
+                if (linkId is null || targetTopicId is null)
+                {
+                    continue;
+                }
+
+                yield return new DialogueTopicLinkReference(lineIndex, linkIndex, lineId, linkId, targetTopicId);
+            }
+        }
+    }
+
+    private static IEnumerable<DialogueQuestGateReference> ReadDialogueQuestGateReferences(RegistryDocument document)
+    {
+        if (document.Root["questGates"] is not JsonArray questGates)
+        {
+            yield break;
+        }
+
+        for (var gateIndex = 0; gateIndex < questGates.Count; gateIndex++)
+        {
+            if (questGates[gateIndex] is not JsonObject gate)
+            {
+                continue;
+            }
+
+            var gateId = GetString(gate, "id");
+            var questId = GetString(gate, "questId");
+            if (gateId is null || questId is null)
+            {
+                continue;
+            }
+
+            yield return new DialogueQuestGateReference(gateIndex, gateId, questId);
+        }
+    }
+
+    private static IEnumerable<DialogueQuestGateStageReference> ReadDialogueQuestGateStageReferences(
+        RegistryDocument document,
+        IReadOnlyDictionary<string, QuestReferenceData> questDataById)
+    {
+        if (document.Root["questGates"] is not JsonArray questGates)
+        {
+            yield break;
+        }
+
+        for (var gateIndex = 0; gateIndex < questGates.Count; gateIndex++)
+        {
+            if (questGates[gateIndex] is not JsonObject gate ||
+                gate["conditions"] is not JsonArray conditions)
+            {
+                continue;
+            }
+
+            var gateId = GetString(gate, "id");
+            var questId = GetString(gate, "questId");
+            if (gateId is null ||
+                questId is null ||
+                !questDataById.TryGetValue(questId, out var questData))
+            {
+                continue;
+            }
+
+            for (var conditionIndex = 0; conditionIndex < conditions.Count; conditionIndex++)
+            {
+                if (conditions[conditionIndex] is not JsonObject condition ||
+                    !StringComparer.Ordinal.Equals(GetString(condition, "conditionType"), "questStageDone"))
+                {
+                    continue;
+                }
+
+                var conditionId = GetString(condition, "id");
+                var stageId = GetString(condition, "stageId");
+                if (conditionId is null || stageId is null)
+                {
+                    continue;
+                }
+
+                yield return new DialogueQuestGateStageReference(
+                    gateIndex,
+                    conditionIndex,
+                    gateId,
+                    questId,
+                    conditionId,
+                    stageId,
+                    questData);
+            }
+        }
+    }
+
+    private static IEnumerable<DialogueQuestGateVariableReference> ReadDialogueQuestGateVariableReferences(
+        RegistryDocument document,
+        IReadOnlyDictionary<string, QuestReferenceData> questDataById)
+    {
+        if (document.Root["questGates"] is not JsonArray questGates)
+        {
+            yield break;
+        }
+
+        for (var gateIndex = 0; gateIndex < questGates.Count; gateIndex++)
+        {
+            if (questGates[gateIndex] is not JsonObject gate ||
+                gate["conditions"] is not JsonArray conditions)
+            {
+                continue;
+            }
+
+            var gateId = GetString(gate, "id");
+            var questId = GetString(gate, "questId");
+            if (gateId is null ||
+                questId is null ||
+                !questDataById.TryGetValue(questId, out var questData))
+            {
+                continue;
+            }
+
+            for (var conditionIndex = 0; conditionIndex < conditions.Count; conditionIndex++)
+            {
+                if (conditions[conditionIndex] is not JsonObject condition ||
+                    !StringComparer.Ordinal.Equals(GetString(condition, "conditionType"), "questVariableEquals"))
+                {
+                    continue;
+                }
+
+                var conditionId = GetString(condition, "id");
+                var variableId = GetString(condition, "variableId");
+                if (conditionId is null || variableId is null)
+                {
+                    continue;
+                }
+
+                yield return new DialogueQuestGateVariableReference(
+                    gateIndex,
+                    conditionIndex,
+                    gateId,
+                    questId,
+                    conditionId,
+                    variableId,
+                    questData);
+            }
+        }
+    }
+
+    private static IEnumerable<DialogueConditionStageReference> ReadDialogueConditionStageReferences(
+        RegistryDocument document,
+        IReadOnlyDictionary<string, QuestReferenceData> questDataById)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line ||
+                line["conditions"] is not JsonArray conditions)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            var questId = GetString(line, "questId");
+            if (lineId is null ||
+                questId is null ||
+                !questDataById.TryGetValue(questId, out var questData))
+            {
+                continue;
+            }
+
+            for (var conditionIndex = 0; conditionIndex < conditions.Count; conditionIndex++)
+            {
+                if (conditions[conditionIndex] is not JsonObject condition ||
+                    !StringComparer.Ordinal.Equals(GetString(condition, "conditionType"), "questStageDone"))
+                {
+                    continue;
+                }
+
+                var conditionId = GetString(condition, "id");
+                var stageId = GetString(condition, "stageId");
+                if (conditionId is null || stageId is null)
+                {
+                    continue;
+                }
+
+                yield return new DialogueConditionStageReference(
+                    lineIndex,
+                    conditionIndex,
+                    lineId,
+                    questId,
+                    conditionId,
+                    stageId,
+                    questData);
+            }
+        }
+    }
+
+    private static IEnumerable<DialogueConditionVariableReference> ReadDialogueConditionVariableReferences(
+        RegistryDocument document,
+        IReadOnlyDictionary<string, QuestReferenceData> questDataById)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line ||
+                line["conditions"] is not JsonArray conditions)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            var questId = GetString(line, "questId");
+            if (lineId is null ||
+                questId is null ||
+                !questDataById.TryGetValue(questId, out var questData))
+            {
+                continue;
+            }
+
+            for (var conditionIndex = 0; conditionIndex < conditions.Count; conditionIndex++)
+            {
+                if (conditions[conditionIndex] is not JsonObject condition ||
+                    !StringComparer.Ordinal.Equals(GetString(condition, "conditionType"), "questVariableEquals"))
+                {
+                    continue;
+                }
+
+                var conditionId = GetString(condition, "id");
+                var variableId = GetString(condition, "variableId");
+                if (conditionId is null || variableId is null)
+                {
+                    continue;
+                }
+
+                yield return new DialogueConditionVariableReference(
+                    lineIndex,
+                    conditionIndex,
+                    lineId,
+                    questId,
+                    conditionId,
+                    variableId,
+                    questData);
+            }
+        }
+    }
+
     private static IEnumerable<DialogueVoiceWorkItem> ReadDialogueVoiceWorkItems(RegistryDocument document)
     {
         if (document.Root["lines"] is not JsonArray lines)
@@ -1688,6 +2401,15 @@ public sealed class ProjectValidationPipeline
     private static SourceLocation ToQuestRelatedLocation(RegistryDocument document)
     {
         return CreateSourceLocation(document.DisplayPath, "/quests", document.SourceLocations);
+    }
+
+    private static SourceLocation ToDialogueRelatedLocation(RegistryDocument document)
+    {
+        var pointer = document.Root["topics"] is JsonArray
+            ? "/topics"
+            : "/id";
+
+        return CreateSourceLocation(document.DisplayPath, pointer, document.SourceLocations);
     }
 
     private static string? GetString(JsonObject? root, string propertyName)
@@ -2058,6 +2780,60 @@ public sealed class ProjectValidationPipeline
 
     private sealed record DialogueQuestReference(int Index, string LineId, string QuestId);
 
+    private sealed record DialogueTopicReference(int LineIndex, string LineId, string TopicId);
+
+    private sealed record DialogueTopicLinkReference(
+        int LineIndex,
+        int LinkIndex,
+        string LineId,
+        string LinkId,
+        string TargetTopicId);
+
+    private sealed record DialogueQuestGateReference(int GateIndex, string GateId, string QuestId);
+
+    private sealed record DialogueQuestGateStageReference(
+        int GateIndex,
+        int ConditionIndex,
+        string GateId,
+        string QuestId,
+        string ConditionId,
+        string StageId,
+        QuestReferenceData QuestData);
+
+    private sealed record DialogueQuestGateVariableReference(
+        int GateIndex,
+        int ConditionIndex,
+        string GateId,
+        string QuestId,
+        string ConditionId,
+        string VariableId,
+        QuestReferenceData QuestData);
+
+    private sealed record QuestReferenceData(
+        RegistryDocument Document,
+        int QuestIndex,
+        string QuestId,
+        IReadOnlySet<string> StageIds,
+        IReadOnlySet<string> VariableIds);
+
+    private sealed record DialogueConditionStageReference(
+        int LineIndex,
+        int ConditionIndex,
+        string LineId,
+        string QuestId,
+        string ConditionId,
+        string StageId,
+        QuestReferenceData QuestData);
+
+    private sealed record DialogueConditionVariableReference(
+        int LineIndex,
+        int ConditionIndex,
+        string LineId,
+        string QuestId,
+        string ConditionId,
+        string VariableId,
+        QuestReferenceData QuestData);
+
     private sealed record QuestObjectiveStageReference(
         int QuestIndex,
         int ObjectiveIndex,
@@ -2083,6 +2859,23 @@ public sealed class ProjectValidationPipeline
         string ConditionId,
         string StageId,
         IReadOnlySet<string> StageIds);
+
+    private sealed record QuestResultScriptConditionReference(
+        int QuestIndex,
+        int StageIndex,
+        int ResultScriptIndex,
+        string QuestId,
+        string ResultScriptId,
+        string ConditionId,
+        IReadOnlySet<string> ConditionIds);
+
+    private sealed record QuestConditionVariableReference(
+        int QuestIndex,
+        int ConditionIndex,
+        string QuestId,
+        string ConditionId,
+        string VariableId,
+        IReadOnlySet<string> VariableIds);
 
     private sealed record DialogueVoiceWorkItem(
         int Index,

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "0.6.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.missingdialoguequestgatestagereference.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.missingdialoguequestgatestagereference.quest.intro",
+      "title": "Synthetic Intro Quest",
+      "stages": [
+        {
+          "id": "io.github.theboyyss.missingdialoguequestgatestagereference.quest.intro.stage.start",
+          "stage": 10
+        }
+      ]
+    }
+  ]
+}
