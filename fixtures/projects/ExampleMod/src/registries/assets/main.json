@@ -12,6 +12,36 @@
       "tags": [
         "synthetic"
       ]
+    },
+    {
+      "id": "io.github.theboyyss.examplemod.assets.voice.intro.hello.wav",
+      "assetType": "voice",
+      "source": "src/assets/voice/intro_hello.wav",
+      "target": "sound/voice/ExampleMod.esm/ExampleVoice/intro_hello.wav",
+      "required": true,
+      "tags": [
+        "synthetic"
+      ]
+    },
+    {
+      "id": "io.github.theboyyss.examplemod.assets.voice.intro.hello.ogg",
+      "assetType": "voice",
+      "source": "src/assets/voice/intro_hello.ogg",
+      "target": "sound/voice/ExampleMod.esm/ExampleVoice/intro_hello.ogg",
+      "required": true,
+      "tags": [
+        "synthetic"
+      ]
+    },
+    {
+      "id": "io.github.theboyyss.examplemod.assets.lip.intro.hello",
+      "assetType": "lip",
+      "source": "src/assets/voice/intro_hello.lip",
+      "target": "sound/voice/ExampleMod.esm/ExampleVoice/intro_hello.lip",
+      "required": true,
+      "tags": [
+        "synthetic"
+      ]
     }
   ]
 }

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.examplemod.dialogue",
+  "lines": [
+    {
+      "id": "io.github.theboyyss.examplemod.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.examplemod.quest.intro",
+      "topicId": "io.github.theboyyss.examplemod.topic.greeting",
+      "speaker": "ExampleSpeaker",
+      "responseText": "Synthetic hello line.",
+      "voice": {
+        "plugin": "ExampleMod.esm",
+        "voiceType": "ExampleVoice",
+        "fileStem": "intro_hello"
+      },
+      "tags": [
+        "synthetic"
+      ]
+    }
+  ]
+}

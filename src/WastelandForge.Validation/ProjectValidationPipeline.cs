@@ -49,6 +49,9 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> AssetRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Asset010,
         "Asset registry schema 0.1.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue010,
+        "Dialogue registry schema 0.1.0"));
 
     private static JsonSchema LoadBuiltInSchema(string schemaId, string label)
     {
@@ -524,6 +527,7 @@ public sealed class ProjectValidationPipeline
             "dependency" => DependencyRegistrySchema.Value,
             "capability" => CapabilityRegistrySchema.Value,
             "asset" => AssetRegistrySchema.Value,
+            "dialogue" => DialogueRegistrySchema.Value,
             _ => throw new InvalidOperationException($"No built-in registry schema is registered for kind '{expectedKind}'.")
         };
         var label = expectedKind switch
@@ -531,6 +535,7 @@ public sealed class ProjectValidationPipeline
             "dependency" => "Dependency registry",
             "capability" => "Capability registry",
             "asset" => "Asset registry",
+            "dialogue" => "Dialogue registry",
             _ => "Registry"
         };
 
@@ -659,6 +664,7 @@ public sealed class ProjectValidationPipeline
         var dependencyPath = GetString(registries, "dependencies");
         var capabilityPath = GetString(registries, "capabilities");
         var assetPath = GetString(registries, "assets");
+        var dialoguePath = GetString(registries, "dialogue");
         if (dependencyPath is null || capabilityPath is null)
         {
             return;
@@ -690,6 +696,17 @@ public sealed class ProjectValidationPipeline
                 issues,
                 projectId);
         }
+        IReadOnlyList<RegistryDocument> dialogueDocuments = [];
+        if (dialoguePath is not null)
+        {
+            dialogueDocuments = LoadRegistryDocuments(
+                manifestLoad.ProjectRoot,
+                dialoguePath,
+                "dialogue",
+                "dialogue",
+                issues,
+                projectId);
+        }
 
         if (HasErrorSince(issues, registryIssueStart))
         {
@@ -701,7 +718,9 @@ public sealed class ProjectValidationPipeline
             return;
         }
 
-        RunAssetSemanticValidation(manifestLoad.ProjectRoot, assetDocuments, issues, projectId);
+        var assetRecords = ReadAssetRecords(assetDocuments);
+        RunAssetSemanticValidation(manifestLoad.ProjectRoot, assetRecords, issues, projectId);
+        RunDialogueSemanticValidation(dialogueDocuments, assetRecords, issues, projectId);
 
         var capabilityIds = capabilityDocuments
             .SelectMany(document => ReadCapabilityIds(document.Root))
@@ -735,19 +754,81 @@ public sealed class ProjectValidationPipeline
 
     private static void RunAssetSemanticValidation(
         string projectRoot,
-        IReadOnlyList<RegistryDocument> assetDocuments,
+        IReadOnlyList<AssetRecord> assets,
         List<DiagnosticIssue> issues,
         LogicalId? projectId)
     {
-        foreach (var document in assetDocuments)
+        foreach (var assetRecord in assets)
         {
-            foreach (var asset in ReadAssetEntries(document))
+            ValidateAssetSourcePath(projectRoot, assetRecord.Document, assetRecord.Asset, issues, projectId);
+            ValidateAssetTargetPath(assetRecord.Document, assetRecord.Asset, issues, projectId);
+            ValidateAssetTargetExtension(assetRecord.Document, assetRecord.Asset, issues, projectId);
+            ValidateAssetSourceSignature(projectRoot, assetRecord.Document, assetRecord.Asset, issues, projectId);
+            ValidateAssetTargetRoot(assetRecord.Document, assetRecord.Asset, issues, projectId);
+            ValidateVoiceTargetShape(assetRecord.Document, assetRecord.Asset, issues, projectId);
+        }
+
+        ValidateVoiceAssetPairs(assets, issues, projectId);
+    }
+
+    private static void RunDialogueSemanticValidation(
+        IReadOnlyList<RegistryDocument> dialogueDocuments,
+        IReadOnlyList<AssetRecord> assetRecords,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        if (dialogueDocuments.Count == 0)
+        {
+            return;
+        }
+
+        var voiceExtensionsByStem = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var assetRecord in assetRecords)
+        {
+            if (!TryReadVoiceTarget(assetRecord, out var voiceTarget))
             {
-                ValidateAssetSourcePath(projectRoot, document, asset, issues, projectId);
-                ValidateAssetTargetPath(document, asset, issues, projectId);
-                ValidateAssetTargetExtension(document, asset, issues, projectId);
-                ValidateAssetSourceSignature(projectRoot, document, asset, issues, projectId);
-                ValidateAssetTargetRoot(document, asset, issues, projectId);
+                continue;
+            }
+
+            if (!voiceExtensionsByStem.TryGetValue(voiceTarget.Stem, out var extensions))
+            {
+                extensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                voiceExtensionsByStem[voiceTarget.Stem] = extensions;
+            }
+
+            extensions.Add(voiceTarget.Extension);
+        }
+
+        foreach (var document in dialogueDocuments)
+        {
+            foreach (var voiceWorkItem in ReadDialogueVoiceWorkItems(document))
+            {
+                var expectedStem = BuildVoiceTargetStem(
+                    voiceWorkItem.Plugin,
+                    voiceWorkItem.VoiceType,
+                    voiceWorkItem.FileStem);
+                voiceExtensionsByStem.TryGetValue(expectedStem, out var declaredExtensions);
+                declaredExtensions ??= [];
+
+                var missingExtensions = new[] { ".wav", ".ogg", ".lip" }
+                    .Where(extension => !declaredExtensions.Contains(extension))
+                    .ToArray();
+                if (missingExtensions.Length == 0)
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-015",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue voice worklist assets are missing",
+                    $"Dialogue line '{voiceWorkItem.LineId}' expects voice target '{expectedStem}' but is missing {FormatAllowedExtensions(missingExtensions)}.",
+                    CreateSourceLocation(document.DisplayPath, $"/lines/{voiceWorkItem.Index}/voice", document.SourceLocations),
+                    projectId,
+                    suggestedFix: "Declare matching voice .wav, voice .ogg, and .lip assets for the dialogue voice work item.",
+                    docsRule: "WF-SEM-015",
+                    fingerprint: $"wf:sem:015:{voiceWorkItem.LineId}"));
             }
         }
     }
@@ -915,6 +996,108 @@ public sealed class ProjectValidationPipeline
             fingerprint: $"wf:asset:006:{asset.Id}"));
     }
 
+    private static void ValidateVoiceTargetShape(
+        RegistryDocument document,
+        AssetEntry asset,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        if (!IsVoiceOrLipAsset(asset) ||
+            !IsSafeRelativeAssetPath(asset.Target) ||
+            !NormalizeAssetPath(asset.Target).StartsWith("sound/voice/", StringComparison.OrdinalIgnoreCase) ||
+            HasVoiceTargetShape(asset.Target))
+        {
+            return;
+        }
+
+        issues.Add(CreateIssue(
+            "WF-ASSET-007",
+            DiagnosticSeverity.Error,
+            "asset",
+            "Voice target path is missing plugin or voice type",
+            $"Asset '{asset.Id}' target must use sound/voice/<PluginName>/<VoiceType>/<FileName>.",
+            CreateSourceLocation(document.DisplayPath, $"/assets/{asset.Index}/target", document.SourceLocations),
+            projectId,
+            suggestedFix: "Place voice and lip targets under sound/voice/<PluginName>/<VoiceType>/ with a dialogue-line file name.",
+            docsRule: "WF-ASSET-007",
+            fingerprint: $"wf:asset:007:{asset.Id}"));
+    }
+
+    private static void ValidateVoiceAssetPairs(
+        IReadOnlyList<AssetRecord> assets,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        var voiceTargets = assets
+            .Select(assetRecord => TryReadVoiceTarget(assetRecord, out var voiceTarget) ? voiceTarget : null)
+            .OfType<VoiceTarget>()
+            .ToArray();
+
+        var voiceExtensionsByStem = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        var lipStems = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var voiceTarget in voiceTargets)
+        {
+            if (voiceTarget.Extension.Equals(".lip", StringComparison.OrdinalIgnoreCase))
+            {
+                lipStems.Add(voiceTarget.Stem);
+                continue;
+            }
+
+            if (!voiceExtensionsByStem.TryGetValue(voiceTarget.Stem, out var extensions))
+            {
+                extensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                voiceExtensionsByStem[voiceTarget.Stem] = extensions;
+            }
+
+            extensions.Add(voiceTarget.Extension);
+        }
+
+        var reportedVoicePairs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var reportedLipPairs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var voiceTarget in voiceTargets)
+        {
+            if (!voiceTarget.Record.Asset.Required ||
+                !voiceTarget.Extension.Equals(".wav", StringComparison.OrdinalIgnoreCase) &&
+                !voiceTarget.Extension.Equals(".ogg", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var voiceExtensions = voiceExtensionsByStem[voiceTarget.Stem];
+            if ((!voiceExtensions.Contains(".wav") || !voiceExtensions.Contains(".ogg")) &&
+                reportedVoicePairs.Add(voiceTarget.Stem))
+            {
+                issues.Add(CreateIssue(
+                    "WF-ASSET-008",
+                    DiagnosticSeverity.Error,
+                    "asset",
+                    "Voice WAV/OGG pair is incomplete",
+                    $"Voice asset target '{voiceTarget.Stem}' must declare both .wav and .ogg assets.",
+                    CreateSourceLocation(voiceTarget.Record.Document.DisplayPath, $"/assets/{voiceTarget.Record.Asset.Index}/target", voiceTarget.Record.Document.SourceLocations),
+                    projectId,
+                    suggestedFix: "Declare the missing WAV or OGG voice asset with the same sound/voice plugin, voice type, and file stem.",
+                    docsRule: "WF-ASSET-008",
+                    fingerprint: $"wf:asset:008:{voiceTarget.Record.Asset.Id}"));
+            }
+
+            if (!lipStems.Contains(voiceTarget.Stem) &&
+                reportedLipPairs.Add(voiceTarget.Stem))
+            {
+                issues.Add(CreateIssue(
+                    "WF-ASSET-009",
+                    DiagnosticSeverity.Error,
+                    "asset",
+                    "Voice LIP pair is missing",
+                    $"Voice asset target '{voiceTarget.Stem}' must declare a matching .lip asset.",
+                    CreateSourceLocation(voiceTarget.Record.Document.DisplayPath, $"/assets/{voiceTarget.Record.Asset.Index}/target", voiceTarget.Record.Document.SourceLocations),
+                    projectId,
+                    suggestedFix: "Declare the matching LIP asset under the same sound/voice plugin and voice type path.",
+                    docsRule: "WF-ASSET-009",
+                    fingerprint: $"wf:asset:009:{voiceTarget.Record.Asset.Id}"));
+            }
+        }
+    }
+
     private static void RunCapabilityPlaceholder()
     {
         // Environment/provider probing starts after the deterministic source pipeline exists.
@@ -1054,6 +1237,13 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static IReadOnlyList<AssetRecord> ReadAssetRecords(IReadOnlyList<RegistryDocument> assetDocuments)
+    {
+        return assetDocuments
+            .SelectMany(document => ReadAssetEntries(document).Select(asset => new AssetRecord(document, asset)))
+            .ToArray();
+    }
+
     private static IEnumerable<AssetEntry> ReadAssetEntries(RegistryDocument document)
     {
         if (document.Root["assets"] is not JsonArray assets)
@@ -1084,6 +1274,37 @@ public sealed class ProjectValidationPipeline
                 source,
                 target,
                 GetBoolean(asset, "required") is not false);
+        }
+    }
+
+    private static IEnumerable<DialogueVoiceWorkItem> ReadDialogueVoiceWorkItems(RegistryDocument document)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var index = 0; index < lines.Count; index++)
+        {
+            if (lines[index] is not JsonObject line ||
+                line["voice"] is not JsonObject voice)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            var plugin = GetString(voice, "plugin");
+            var voiceType = GetString(voice, "voiceType");
+            var fileStem = GetString(voice, "fileStem");
+            if (lineId is null ||
+                plugin is null ||
+                voiceType is null ||
+                fileStem is null)
+            {
+                continue;
+            }
+
+            yield return new DialogueVoiceWorkItem(index, lineId, plugin, voiceType, fileStem);
         }
     }
 
@@ -1254,6 +1475,57 @@ public sealed class ProjectValidationPipeline
         return path.Replace('\\', '/').TrimStart('/');
     }
 
+    private static bool IsVoiceOrLipAsset(AssetEntry asset)
+    {
+        return asset.AssetType.Equals("voice", StringComparison.Ordinal) ||
+            asset.AssetType.Equals("lip", StringComparison.Ordinal);
+    }
+
+    private static bool HasVoiceTargetShape(string target)
+    {
+        var normalizedTarget = NormalizeAssetPath(target);
+        var segments = normalizedTarget.Split('/');
+        return segments.Length == 5 &&
+            segments[0].Equals("sound", StringComparison.OrdinalIgnoreCase) &&
+            segments[1].Equals("voice", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(segments[2]) &&
+            !string.IsNullOrWhiteSpace(segments[3]) &&
+            !string.IsNullOrWhiteSpace(Path.GetFileNameWithoutExtension(segments[4]));
+    }
+
+    private static bool TryReadVoiceTarget(AssetRecord record, out VoiceTarget voiceTarget)
+    {
+        voiceTarget = default!;
+        if (!IsVoiceOrLipAsset(record.Asset) ||
+            !IsSafeRelativeAssetPath(record.Asset.Target) ||
+            !HasVoiceTargetShape(record.Asset.Target))
+        {
+            return false;
+        }
+
+        var extension = Path.GetExtension(record.Asset.Target).ToLowerInvariant();
+        if (record.Asset.AssetType.Equals("voice", StringComparison.Ordinal) &&
+            !extension.Equals(".wav", StringComparison.Ordinal) &&
+            !extension.Equals(".ogg", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (record.Asset.AssetType.Equals("lip", StringComparison.Ordinal) &&
+            !extension.Equals(".lip", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        voiceTarget = new VoiceTarget(record, NormalizeAssetPath(record.Asset.Target)[..^extension.Length], extension);
+        return true;
+    }
+
+    private static string BuildVoiceTargetStem(string plugin, string voiceType, string fileStem)
+    {
+        return NormalizeAssetPath($"sound/voice/{plugin}/{voiceType}/{fileStem}");
+    }
+
     private static string FormatAllowedExtensions(IReadOnlyList<string> extensions)
     {
         return extensions.Count switch
@@ -1406,6 +1678,17 @@ public sealed class ProjectValidationPipeline
         IReadOnlyDictionary<string, SourcePosition> SourceLocations);
 
     private sealed record RequiredCapability(int Index, string Id);
+
+    private sealed record AssetRecord(RegistryDocument Document, AssetEntry Asset);
+
+    private sealed record VoiceTarget(AssetRecord Record, string Stem, string Extension);
+
+    private sealed record DialogueVoiceWorkItem(
+        int Index,
+        string LineId,
+        string Plugin,
+        string VoiceType,
+        string FileStem);
 
     private sealed record AssetEntry(
         int Index,

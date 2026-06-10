@@ -38,3 +38,11 @@ Gate 16 adds asset type-specific semantic validation in
 `WastelandForge.Validation`, including minimal source signature checks for DDS,
 WAV, OGG, NIF, and KF targets plus target-root convention checks by declared
 asset type.
+
+Gate 17 adds voice and dialogue asset validation in
+`WastelandForge.Validation`, including voice/lip target shape checks plus
+WAV/OGG/LIP pair checks by game-relative voice target stem.
+
+Gate 18 adds dialogue registry runtime schema validation and dialogue voice
+worklist semantic validation in `WastelandForge.Validation`, backed by the
+embedded dialogue schema in `WastelandForge.Schema`.

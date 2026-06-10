@@ -26,7 +26,9 @@ Do not overwrite a released schema in place. Schema migrations are explicit tool
 - `dependencies/0.1.0/schema.json` - dependency registry schema.
 - `capabilities/0.1.0/schema.json` - capability registry schema.
 - `assets/0.1.0/schema.json` - asset registry schema.
+- `dialogue/0.1.0/schema.json` - dialogue registry schema.
 
 Gate 12 evaluates the embedded manifest schema at runtime. Gate 13 evaluates
 embedded dependency and capability registry schemas at runtime. Gate 14
-evaluates embedded asset registry schemas at runtime.
+evaluates embedded asset registry schemas at runtime. Gate 18 evaluates
+embedded dialogue registry schemas at runtime.

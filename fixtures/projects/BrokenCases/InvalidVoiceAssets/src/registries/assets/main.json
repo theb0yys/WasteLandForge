@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "asset",
+  "id": "io.github.theboyyss.invalidvoiceassets.assets",
+  "assets": [
+    {
+      "id": "io.github.theboyyss.invalidvoiceassets.assets.voice.badshape",
+      "assetType": "voice",
+      "source": "src/assets/voice/badshape.wav",
+      "target": "sound/voice/InvalidVoiceAssets.esm/badshape.wav",
+      "required": true
+    },
+    {
+      "id": "io.github.theboyyss.invalidvoiceassets.assets.voice.missingogg",
+      "assetType": "voice",
+      "source": "src/assets/voice/missingogg.wav",
+      "target": "sound/voice/InvalidVoiceAssets.esm/ActorVoice/missingogg.wav",
+      "required": true
+    },
+    {
+      "id": "io.github.theboyyss.invalidvoiceassets.assets.lip.missingogg",
+      "assetType": "lip",
+      "source": "src/assets/voice/missingogg.lip",
+      "target": "sound/voice/InvalidVoiceAssets.esm/ActorVoice/missingogg.lip",
+      "required": true
+    },
+    {
+      "id": "io.github.theboyyss.invalidvoiceassets.assets.voice.missinglip.wav",
+      "assetType": "voice",
+      "source": "src/assets/voice/missinglip.wav",
+      "target": "sound/voice/InvalidVoiceAssets.esm/ActorVoice/missinglip.wav",
+      "required": true
+    },
+    {
+      "id": "io.github.theboyyss.invalidvoiceassets.assets.voice.missinglip.ogg",
+      "assetType": "voice",
+      "source": "src/assets/voice/missinglip.ogg",
+      "target": "sound/voice/InvalidVoiceAssets.esm/ActorVoice/missinglip.ogg",
+      "required": true
+    }
+  ]
+}

@@ -14,3 +14,8 @@ belong to validation rules.
 Gate 16 adds type-specific semantic validation for minimal source signatures
 and target root conventions. The schema remains contract-shape only; content
 inspection and game-data placement rules stay in validation code.
+
+Gate 17 adds voice and dialogue asset semantic validation for target shape and
+WAV/OGG/LIP pairing. The schema remains contract-shape only; dialogue record
+linkage and audio encoding checks require later contracts or tool-backed
+validation.

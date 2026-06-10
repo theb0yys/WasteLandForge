@@ -50,6 +50,15 @@ Gate 16 adds asset type-specific semantic fixture coverage in
 `WastelandForge.SemanticTests` for source signatures and target root
 conventions.
 
+Gate 17 adds voice and dialogue asset fixture coverage in
+`WastelandForge.SemanticTests` for voice target shape and WAV/OGG/LIP pair
+diagnostics.
+
+Gate 18 adds dialogue registry schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+dialogue registry and voice worklist fixture coverage in
+`WastelandForge.SemanticTests`.
+
 Run the full local suite serially:
 
 ```text

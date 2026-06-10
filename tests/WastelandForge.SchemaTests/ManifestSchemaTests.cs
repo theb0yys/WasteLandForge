@@ -48,6 +48,7 @@ public sealed class ManifestSchemaTests
     [InlineData("dependencies", WastelandForgeSchemaIds.Dependency010, "dependency")]
     [InlineData("capabilities", WastelandForgeSchemaIds.Capability010, "capability")]
     [InlineData("assets", WastelandForgeSchemaIds.Asset010, "asset")]
+    [InlineData("dialogue", WastelandForgeSchemaIds.Dialogue010, "dialogue")]
     public void RegistrySchemaFilesParseAsJson(string directoryName, string schemaId, string expectedKind)
     {
         var schemaPath = Path.Combine(RepositoryRoot(), "schemas", directoryName, "0.1.0", "schema.json");
@@ -63,6 +64,7 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Dependency010, "dependency", "schemas/dependencies/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Capability010, "capability", "schemas/capabilities/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Asset010, "asset", "schemas/assets/0.1.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue010, "dialogue", "schemas/dialogue/0.1.0/schema.json")]
     public void BuiltInCatalogResolvesRegistrySchemas(string schemaId, string expectedKind, string expectedPath)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);
@@ -78,6 +80,7 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Dependency010)]
     [InlineData(WastelandForgeSchemaIds.Capability010)]
     [InlineData(WastelandForgeSchemaIds.Asset010)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue010)]
     public void BuiltInCatalogReadsEmbeddedRegistrySchemas(string schemaId)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);

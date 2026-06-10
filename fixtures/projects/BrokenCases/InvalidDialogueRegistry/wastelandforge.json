@@ -1,14 +1,13 @@
 {
   "schemaVersion": "0.1.0",
   "kind": "manifest",
-  "id": "io.github.theboyyss.examplemod",
-  "name": "Example Mod",
+  "id": "io.github.theboyyss.invaliddialogueregistry",
+  "name": "Invalid Dialogue Registry",
   "version": "0.1.0",
   "game": "falloutnv",
   "registries": {
     "dependencies": "src/registries/dependencies/",
     "capabilities": "src/registries/capabilities/",
-    "assets": "src/registries/assets/",
     "dialogue": "src/registries/dialogue/"
   }
 }

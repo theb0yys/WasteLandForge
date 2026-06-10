@@ -23,7 +23,12 @@ public static class WastelandForgeSchemaCatalog
             WastelandForgeSchemaIds.Asset010,
             "asset",
             "0.1.0",
-            "schemas/assets/0.1.0/schema.json")
+            "schemas/assets/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue010,
+            "dialogue",
+            "0.1.0",
+            "schemas/dialogue/0.1.0/schema.json")
     ];
 
     public static IReadOnlyList<SchemaResource> BuiltIn => BuiltInSchemas;

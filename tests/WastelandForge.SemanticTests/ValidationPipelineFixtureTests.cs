@@ -99,6 +99,21 @@ public sealed class ValidationPipelineFixtureTests
     }
 
     [Fact]
+    public void InvalidDialogueRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("responseText", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void InvalidAssetPathsEmitAssetDiagnostics()
     {
         var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidAssetPaths"));
@@ -120,6 +135,36 @@ public sealed class ValidationPipelineFixtureTests
         Assert.Equal(2, report.Issues.Count);
         AssertAssetIssue(report, "WF-ASSET-005", "/assets/0/source");
         AssertAssetIssue(report, "WF-ASSET-006", "/assets/1/target");
+    }
+
+    [Fact]
+    public void InvalidVoiceAssetsEmitVoiceAssetDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidVoiceAssets"));
+
+        Assert.True(report.HasErrors);
+        Assert.Equal(3, report.Issues.Count);
+        AssertAssetIssue(report, "WF-ASSET-007", "/assets/0/target");
+        AssertAssetIssue(report, "WF-ASSET-008", "/assets/1/target");
+        AssertAssetIssue(report, "WF-ASSET-009", "/assets/3/target");
+    }
+
+    [Fact]
+    public void MissingDialogueVoiceAssetsEmitSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingDialogueVoiceAssets"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-015", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/dialogue/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/lines/0/voice", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:015:io.github.theboyyss.missingdialoguevoiceassets.dialogue.intro.hello", issue.Fingerprint);
+        Assert.Contains(".wav", issue.Message, StringComparison.Ordinal);
+        Assert.Contains(".ogg", issue.Message, StringComparison.Ordinal);
+        Assert.Contains(".lip", issue.Message, StringComparison.Ordinal);
     }
 
     [Fact]

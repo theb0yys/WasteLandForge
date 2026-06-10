@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/dialogue/0.1.0/schema.json",
+  "title": "WastelandForge Dialogue Registry",
+  "description": "Dialogue registry for WastelandForge source-controlled dialogue lines and voice worklist declarations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "lines"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the dialogue registry contract.",
+      "const": "0.1.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "dialogue"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "lines": {
+      "description": "Source-controlled dialogue line declarations.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dialogueLine"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pluginName": {
+      "type": "string",
+      "pattern": "^[^/\\\\]+\\.(?:[Ee][Ss][Mm]|[Ee][Ss][Pp])$"
+    },
+    "pathSegment": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "[/\\\\]"
+      }
+    },
+    "fileStem": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "[/\\\\.]"
+      }
+    },
+    "dialogueLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "questId",
+        "topicId",
+        "responseText"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "questId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "topicId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "speaker": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "promptText": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "responseText": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "voice": {
+          "$ref": "#/$defs/voiceWorkItem"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "voiceWorkItem": {
+      "description": "Voice worklist mapping for a dialogue line. It points to sound/voice/<PluginName>/<VoiceType>/<FileStem> assets.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plugin",
+        "voiceType",
+        "fileStem"
+      ],
+      "properties": {
+        "plugin": {
+          "$ref": "#/$defs/pluginName"
+        },
+        "voiceType": {
+          "$ref": "#/$defs/pathSegment"
+        },
+        "fileStem": {
+          "$ref": "#/$defs/fileStem"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.1.0",
+      "kind": "dialogue",
+      "id": "io.github.theboyyss.examplemod.dialogue",
+      "lines": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.hello",
+          "questId": "io.github.theboyyss.examplemod.quest.intro",
+          "topicId": "io.github.theboyyss.examplemod.topic.greeting",
+          "speaker": "ExampleSpeaker",
+          "responseText": "Synthetic hello line.",
+          "voice": {
+            "plugin": "ExampleMod.esm",
+            "voiceType": "ExampleVoice",
+            "fileStem": "intro_hello"
+          },
+          "tags": [
+            "synthetic"
+          ]
+        }
+      ]
+    }
+  ]
+}

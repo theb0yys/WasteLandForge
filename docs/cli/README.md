@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 16 asset type-specific validation baseline
+Status: Gate 18 dialogue registry and voice worklist baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -52,6 +52,17 @@ forge --version
   extension does not match the minimal expected file signature.
 - `forge validate` emits `WF-ASSET-006` when a game-relative target path does
   not use the expected root folder for the declared asset type.
+- `forge validate` emits `WF-ASSET-007` when a voice or lip target under
+  `sound/voice/` does not include plugin and voice type folders.
+- `forge validate` emits `WF-ASSET-008` when a required voice asset target stem
+  does not declare both `.wav` and `.ogg` assets.
+- `forge validate` emits `WF-ASSET-009` when a required voice asset target stem
+  does not declare a matching `.lip` asset.
+- `forge validate` evaluates embedded dialogue registry JSON Schemas at runtime
+  when the manifest declares `registries.dialogue`.
+- `forge validate` emits `WF-SEM-015` when a dialogue voice work item does not
+  have matching `.wav`, `.ogg`, and `.lip` assets declared in the asset
+  registry.
 - `forge release verify` runs the Gate 9 release dry-run verifier and writes
   local evidence under project `dist/`.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.

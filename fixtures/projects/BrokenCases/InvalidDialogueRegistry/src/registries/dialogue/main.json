@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueregistry.dialogue",
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueregistry.dialogue.missingtext",
+      "questId": "io.github.theboyyss.invaliddialogueregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueregistry.topic.greeting"
+    }
+  ]
+}

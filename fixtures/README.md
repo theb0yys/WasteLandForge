@@ -54,3 +54,18 @@ Gate 16 adds:
 - `projects/BrokenCases/InvalidAssetTypes` - deterministic `WF-ASSET-005`
   and `WF-ASSET-006` failure cases for source signature mismatch and target
   root mismatch.
+
+Gate 17 adds:
+
+- `projects/BrokenCases/InvalidVoiceAssets` - deterministic `WF-ASSET-007`
+  through `WF-ASSET-009` failure cases for voice target shape, WAV/OGG pair,
+  and LIP pair validation.
+
+Gate 18 updates `projects/ExampleMod` with a synthetic dialogue registry and
+matching voice/lip assets, and adds:
+
+- `projects/BrokenCases/InvalidDialogueRegistry` - runtime dialogue registry
+  schema failure case.
+- `projects/BrokenCases/MissingDialogueVoiceAssets` - deterministic
+  `WF-SEM-015` failure case for a dialogue voice work item whose declared
+  voice/lip assets are absent.

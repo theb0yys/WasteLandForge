@@ -35,3 +35,7 @@ source files, `WF-ASSET-003` for non-game-relative target paths, and
 `WF-ASSET-004` for target extension mismatch.
 Gate 16 adds `WF-ASSET-005` for source signature mismatch and `WF-ASSET-006`
 for target root mismatch.
+Gate 17 adds `WF-ASSET-007` for invalid voice target shape, `WF-ASSET-008`
+for incomplete WAV/OGG voice pairs, and `WF-ASSET-009` for missing LIP pairs.
+Gate 18 adds `WF-SEM-015` for dialogue voice worklist entries missing declared
+voice/lip assets.

@@ -92,6 +92,9 @@
         },
         "assets": {
           "$ref": "#/$defs/relativePath"
+        },
+        "dialogue": {
+          "$ref": "#/$defs/relativePath"
         }
       }
     },
@@ -152,7 +155,8 @@
       "registries": {
         "dependencies": "src/registries/dependencies/",
         "capabilities": "src/registries/capabilities/",
-        "assets": "src/registries/assets/"
+        "assets": "src/registries/assets/",
+        "dialogue": "src/registries/dialogue/"
       },
       "outputs": {
         "plugin": {

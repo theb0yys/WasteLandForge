@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 16 establishes
-asset type-specific semantic validation.
+The project is currently in gated v0.1 implementation. Gate 18 establishes
+the first dialogue registry and voice worklist skeleton.
 
 ## Architecture Spine
 
@@ -16,7 +16,7 @@ asset type-specific semantic validation.
 
 ## Current Gate
 
-Gate 16 creates:
+Gate 18 creates:
 
 - deterministic `WF-ASSET-*` diagnostics for asset path and type semantics,
 - source-path project-root containment checks,
@@ -25,7 +25,16 @@ Gate 16 creates:
 - basic target extension checks by asset type,
 - minimal source signature checks for DDS, WAV, OGG, NIF, and KF targets,
 - target root convention checks by asset type,
-- deterministic fixtures for invalid asset paths and invalid asset types.
+- voice/lip target shape checks for `sound/voice/<PluginName>/<VoiceType>/<FileName>`,
+- voice WAV/OGG pair checks by game-relative target stem,
+- matching LIP asset checks by game-relative target stem,
+- a Draft 2020-12 dialogue registry schema,
+- optional `registries.dialogue` manifest wiring,
+- dialogue voice worklist declarations,
+- `WF-SEM-015` cross-registry validation from dialogue voice work items to
+  declared voice/lip assets,
+- deterministic fixtures for invalid asset paths, invalid asset types, and
+  invalid voice assets, plus dialogue registry and voice worklist failures.
 
 It intentionally does not create:
 
@@ -33,7 +42,12 @@ It intentionally does not create:
 - release publishing,
 - ZIP/FOMOD package creation,
 - deep NIF, DDS, WAV, OGG, LIP, KF, RDT, or BSA validation,
-- voice/dialogue asset pairing,
+- WAV/OGG sample-rate, bitrate, channel, or codec validation,
+- validation that voice filenames correspond to dialogue records in a master file,
+- GECK lip processing asset detection,
+- full GECK dialogue condition language,
+- quest registry validation,
+- plugin record compilation,
 - external tool-backed asset inspection,
 - provider/environment detection or capability scans,
 - generation, packaging, release, or capability scan implementations.
