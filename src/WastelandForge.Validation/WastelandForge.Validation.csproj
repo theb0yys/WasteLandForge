@@ -2,7 +2,7 @@
 
   <ItemGroup>
     <PackageReference Include="JsonSchema.Net" Version="9.2.1" />
-    <PackageReference Include="YamlDotNet" Version="18.0.0" />
+    <PackageReference Include="YamlDotNet" Version="18.1.0" />
     <ProjectReference Include="..\WastelandForge.Core\WastelandForge.Core.csproj" />
     <ProjectReference Include="..\WastelandForge.Schema\WastelandForge.Schema.csproj" />
     <ProjectReference Include="..\WastelandForge.Registry\WastelandForge.Registry.csproj" />
