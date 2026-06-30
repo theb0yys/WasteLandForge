@@ -29,6 +29,68 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void ValidateAcceptsSyntheticGeckDialogueExport()
+    {
+        var result = RunCli(
+            "validate",
+            Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod"),
+            "--geck-dialogue-export",
+            Path.Combine(RepositoryRoot(), "fixtures", "geck", "dialogue", "synthetic-quest-dialogue-export.txt"),
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Validation JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(0, (int?)json["summary"]?["errors"]);
+        Assert.Empty(json["issues"]?.AsArray() ?? throw new InvalidOperationException("Issues array missing."));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ValidateReportsMissingGeckDialogueExport()
+    {
+        var exportPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "missing-dialogue-export.txt");
+
+        var result = RunCli(
+            "validate",
+            Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod"),
+            "--geck-dialogue-export",
+            exportPath,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Validation JSON did not parse.");
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Equal(1, (int?)json["summary"]?["errors"]);
+        Assert.Equal("WF-LOAD-009", (string?)json["issues"]?[0]?["ruleId"]);
+        Assert.Equal(exportPath, (string?)json["issues"]?[0]?["primaryLocation"]?["file"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ValidateReportsEmptyGeckDialogueExport()
+    {
+        var exportPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "empty-dialogue-export.txt");
+        Directory.CreateDirectory(Path.GetDirectoryName(exportPath) ?? Path.GetTempPath());
+        File.WriteAllText(exportPath, string.Empty);
+
+        var result = RunCli(
+            "validate",
+            Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod"),
+            "--geck-dialogue-export",
+            exportPath,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Validation JSON did not parse.");
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Equal(1, (int?)json["summary"]?["errors"]);
+        Assert.Equal("WF-LOAD-011", (string?)json["issues"]?[0]?["ruleId"]);
+        Assert.Equal(exportPath, (string?)json["issues"]?[0]?["primaryLocation"]?["file"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void ValidateSarifMapsDiagnosticsForCi()
     {
         var result = RunCli(
@@ -139,17 +201,381 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
-    public void ReservedCommandJsonHasStableStatusShape()
+    public void CapabilitiesExplainCapabilityJsonIncludesScanEvidence()
     {
-        var result = RunCli("capabilities", "scan", "--format", "json");
-        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Status JSON did not parse.");
+        var layout = CreateSyntheticCapabilityLayout();
+
+        var result = RunCli(
+            "capabilities",
+            "explain",
+            "runtime.ui.mcm_json",
+            "--game-root",
+            layout.GameRoot,
+            "--tool-path",
+            layout.XEditPath,
+            "--tool-path",
+            layout.Mo2Path,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability explanation JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("1.0", (string?)json["formatVersion"]);
+        Assert.Equal("capabilities explain", (string?)json["command"]);
+        Assert.Equal("capability", (string?)json["target"]?["kind"]);
+        Assert.Equal("runtime.ui.mcm_json", (string?)json["target"]?["id"]);
+        Assert.Equal("probable", (string?)json["target"]?["status"]);
+        Assert.Equal("provider.runtime.mcm_extender", (string?)json["providers"]?[0]?["id"]);
+        Assert.Equal("probable", (string?)json["providers"]?[0]?["status"]);
+        Assert.Equal("probable", (string?)json["providers"]?[0]?["evidence"]?[0]?["status"]);
+        Assert.Equal("runtime.ui.mcm_json", (string?)json["capabilities"]?[0]?["id"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesExplainProviderJsonIncludesProvidedCapabilities()
+    {
+        var layout = CreateSyntheticCapabilityLayout();
+
+        var result = RunCli(
+            "capabilities",
+            "explain",
+            "provider.runtime.xnvse",
+            "--game-root",
+            layout.GameRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability explanation JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("provider", (string?)json["target"]?["kind"]);
+        Assert.Equal("provider.runtime.xnvse", (string?)json["target"]?["id"]);
+        Assert.Equal("probable", (string?)json["target"]?["status"]);
+        Assert.Equal("provider.runtime.xnvse", (string?)json["providers"]?[0]?["id"]);
+        Assert.Equal("runtime.scripting.xnvse", (string?)json["capabilities"]?[0]?["id"]);
+        Assert.Equal("probable", (string?)json["capabilities"]?[0]?["status"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesExplainUnknownIdReturnsUsageJson()
+    {
+        var result = RunCli("capabilities", "explain", "runtime.fake.missing", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Usage JSON did not parse.");
 
         Assert.Equal(2, result.ExitCode);
+        Assert.Equal("capabilities explain", (string?)json["command"]);
+        Assert.Equal("usage-error", (string?)json["status"]);
+        Assert.Contains("Unknown capability or provider id 'runtime.fake.missing'.", (string?)json["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesExplainCanWriteToOutputFile()
+    {
+        var outputPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "capability-explain.json");
+
+        var result = RunCli("capabilities", "explain", "tool.mo2", "--format", "json", "--output", outputPath);
+        var json = JsonNode.Parse(File.ReadAllText(outputPath)) ?? throw new InvalidOperationException("Capability explanation JSON file did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Equal("capabilities explain", (string?)json["command"]);
+        Assert.Equal("tool.mo2", (string?)json["target"]?["id"]);
+        Assert.Equal("unknown", (string?)json["target"]?["status"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanWithoutRootsReportsUnknownProviders()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
         Assert.Equal("1.0", (string?)json["formatVersion"]);
-        Assert.Equal("WastelandForge", (string?)json["tool"]?["name"]);
         Assert.Equal("capabilities scan", (string?)json["command"]);
-        Assert.Equal("reserved", (string?)json["status"]);
-        Assert.Equal(1, (int?)json["summary"]?["errors"]);
+        Assert.Equal(15, (int?)json["summary"]?["unknownProviders"]);
+        Assert.Equal(0, (int?)json["summary"]?["probableProviders"]);
+        Assert.Equal(0, (int?)json["summary"]?["missingProviders"]);
+        Assert.Equal(false, (bool?)json["inputs"]?["runtimeProbesEnabled"]);
+        Assert.Equal(false, (bool?)json["inputs"]?["mo2VfsEnabled"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanJsonReportsPathEvidence()
+    {
+        var layout = CreateSyntheticCapabilityLayout();
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--game-root",
+            layout.GameRoot,
+            "--tool-path",
+            layout.XEditPath,
+            "--tool-path",
+            layout.Mo2Path,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var providers = json["providers"]?.AsArray() ?? throw new InvalidOperationException("Providers array missing.");
+        var capabilities = json["capabilities"]?.AsArray() ?? throw new InvalidOperationException("Capabilities array missing.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(13, (int?)json["summary"]?["probableProviders"]);
+        Assert.Equal(0, (int?)json["summary"]?["missingProviders"]);
+        Assert.Equal(2, (int?)json["summary"]?["unknownProviders"]);
+        Assert.Equal("probable", ProviderStatus(providers, "provider.runtime.xnvse"));
+        Assert.Equal("probable", ProviderStatus(providers, "provider.runtime.mcm_extender"));
+        Assert.Equal("probable", ProviderStatus(providers, "provider.tool.xedit"));
+        Assert.Equal("probable", ProviderStatus(providers, "provider.tool.mo2"));
+        Assert.Equal("unknown", ProviderStatus(providers, "provider.runtime.jip_pp_ln"));
+        Assert.Equal("unknown", ProviderStatus(providers, "provider.editor.geck_extender"));
+        Assert.Equal("probable", CapabilityStatus(capabilities, "runtime.ui.mcm_json"));
+        Assert.Equal("probable", CapabilityStatus(capabilities, "tool.mo2.vfs_launch"));
+        Assert.Equal("unknown", CapabilityStatus(capabilities, "runtime.scripting.jip_pp_ln"));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectJsonReportsSatisfiedRequirement()
+    {
+        var layout = CreateSyntheticCapabilityLayout();
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--game-root",
+            layout.GameRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var requirement = Requirement(json, "runtime.scripting.xnvse");
+        var mcmRequirement = Requirement(json, "runtime.ui.mcm_json");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("io.github.theboyyss.examplemod", (string?)json["requirements"]?["project"]?["id"]);
+        Assert.Equal(2, (int?)json["requirements"]?["summary"]?["requirements"]);
+        Assert.Equal(2, (int?)json["requirements"]?["summary"]?["satisfied"]);
+        Assert.Equal(0, (int?)json["requirements"]?["summary"]?["requiredUnavailable"]);
+        Assert.Equal("satisfied", (string?)requirement["status"]);
+        Assert.Equal("probable", (string?)requirement["capabilityStatus"]);
+        Assert.Equal("src/registries/dependencies/main.json", (string?)requirement["source"]?["file"]);
+        Assert.Equal("/requires/capabilities/0", (string?)requirement["source"]?["pointer"]);
+        Assert.Equal("provider.runtime.xnvse:probable", (string?)requirement["providerStatuses"]?[0]);
+        Assert.Equal("satisfied", (string?)mcmRequirement["status"]);
+        Assert.Equal("provider.runtime.mcm_extender:probable", (string?)mcmRequirement["providerStatuses"]?[0]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectJsonReturnsCapabilityExitCodeForUnknownRequiredRequirement()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var requirement = Requirement(json, "runtime.scripting.xnvse");
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Equal(2, (int?)json["requirements"]?["summary"]?["requirements"]);
+        Assert.Equal(2, (int?)json["requirements"]?["summary"]?["unknown"]);
+        Assert.Equal(2, (int?)json["requirements"]?["summary"]?["requiredUnavailable"]);
+        Assert.Equal("unknown", (string?)requirement["status"]);
+        Assert.Equal("unknown", (string?)requirement["capabilityStatus"]);
+        Assert.Contains("not have enough evidence", (string?)requirement["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanCanWriteToOutputFile()
+    {
+        var outputPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "capability-scan.json");
+
+        var result = RunCli("capabilities", "scan", "--format", "json", "--output", outputPath);
+        var json = JsonNode.Parse(File.ReadAllText(outputPath)) ?? throw new InvalidOperationException("Capability scan JSON file did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Equal("capabilities scan", (string?)json["command"]);
+        Assert.Equal(15, (int?)json["summary"]?["unknownProviders"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesListJsonReturnsBuiltInCatalog()
+    {
+        var result = RunCli("capabilities", "list", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability catalog JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("1.0", (string?)json["formatVersion"]);
+        Assert.Equal("capabilities list", (string?)json["command"]);
+        Assert.Equal("wastelandforge.fnv.builtin", (string?)json["catalog"]?["id"]);
+        Assert.Equal(19, (int?)json["summary"]?["capabilities"]);
+        Assert.Equal(15, (int?)json["summary"]?["providers"]);
+        Assert.Contains(json["capabilities"]?.AsArray() ?? throw new InvalidOperationException("Capabilities array missing."), item =>
+            StringComparer.Ordinal.Equals("runtime.ui.mcm_json", (string?)item?["id"]));
+        Assert.Contains(json["providers"]?.AsArray() ?? throw new InvalidOperationException("Providers array missing."), item =>
+            StringComparer.Ordinal.Equals("provider.runtime.mcm_extender", (string?)item?["id"]));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesListCanFilterProviders()
+    {
+        var result = RunCli("capabilities", "list", "--kind", "providers", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability catalog JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Null(json["capabilities"]);
+        Assert.Equal(15, json["providers"]?.AsArray().Count);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesListCanWriteToOutputFile()
+    {
+        var outputPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "capabilities.json");
+
+        var result = RunCli("capabilities", "list", "--format", "json", "--output", outputPath);
+        var json = JsonNode.Parse(File.ReadAllText(outputPath)) ?? throw new InvalidOperationException("Capability catalog JSON file did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Equal("capabilities list", (string?)json["command"]);
+        Assert.Equal("wastelandforge.fnv.builtin", (string?)json["catalog"]?["id"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void GenerateJsonWritesMetadataReports()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli("generate", projectRoot, "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Generate JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("generate", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("reports", (string?)json["target"]);
+        Assert.Equal("generated/reports", (string?)json["outputs"]?["root"]);
+        Assert.Equal("generated/reports/generation-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.True(File.Exists(Path.Combine(projectRoot, "generated", "reports", "dependency-report.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "generated", "reports", "capability-report.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "generated", "reports", "generation-manifest.json")));
+    }
+
+    [Fact]
+    public void BuildJsonWritesBuildManifestAndChecksums()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli("build", projectRoot, "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Build JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("build", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("dist/build", (string?)json["outputs"]?["root"]);
+        Assert.Equal("dist/build/build-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal("dist/build/checksums.sha256", (string?)json["outputs"]?["checksums"]);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "build", "build-manifest.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "build", "checksums.sha256")));
+    }
+
+    [Fact]
+    public void GenerateMcmJsonWritesRuntimeOutput()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli("generate", projectRoot, "--target", "mcm-json", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Generate MCM JSON did not parse.");
+        var menuPath = (string?)json["outputs"]?["menus"]?[0]
+            ?? throw new InvalidOperationException("MCM menu output missing.");
+        var translationPath = (string?)json["outputs"]?["translations"]?[0]
+            ?? throw new InvalidOperationException("MCM translation output missing.");
+        var assetPath = (string?)json["outputs"]?["assets"]?[0]
+            ?? throw new InvalidOperationException("MCM staged asset output missing.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("generate", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("mcm-json", (string?)json["target"]);
+        Assert.Equal("generated/mcm-json", (string?)json["outputs"]?["root"]);
+        Assert.EndsWith("MCM/ExampleMod.json", menuPath, StringComparison.Ordinal);
+        Assert.EndsWith("MCM/Translations/io.github.theboyyss.examplemod.mcm.main.ini", translationPath, StringComparison.Ordinal);
+        Assert.Equal("generated/mcm-json/textures/interface/ExampleMod/Logo.dds", assetPath);
+        Assert.Equal("generated/mcm-json/package-manifest.json", (string?)json["outputs"]?["packageManifest"]);
+        Assert.Null(json["outputs"]?["packageArchive"]);
+        Assert.Equal("generated/mcm-json/generation-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal(string.Empty, result.Stderr);
+
+        var generated = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, menuPath)))
+            ?? throw new InvalidOperationException("Generated MCM JSON did not parse.");
+        Assert.Equal("io.github.theboyyss.examplemod.mcm.main", (string?)generated["modName"]);
+        Assert.Equal("$ExampleModName", (string?)generated["displayName"]);
+        Assert.Equal("ExampleMod.ini", (string?)generated["saveFile"]);
+        Assert.Equal("file", (string?)generated["requirements"]?[0]?["type"]);
+        Assert.Equal(4, (int?)generated["submenus"]?["0"]?["options"]?["1"]?["type"]);
+        Assert.Equal(5, (int?)generated["submenus"]?["0"]?["options"]?["3"]?["type"]);
+        Assert.Equal(6, (int?)generated["submenus"]?["0"]?["options"]?["4"]?["type"]);
+        Assert.Equal("$HudModeCompact", (string?)generated["submenus"]?["0"]?["options"]?["4"]?["textOn"]);
+        Assert.Equal("$HudModeFull", (string?)generated["submenus"]?["0"]?["options"]?["4"]?["textOff"]);
+        Assert.Equal(3, (int?)generated["submenus"]?["0"]?["options"]?["5"]?["type"]);
+        Assert.Equal(33, (int?)generated["submenus"]?["0"]?["options"]?["5"]?["vars"]?[0]?["default"]);
+        Assert.Equal(0, (int?)generated["submenus"]?["0"]?["options"]?["6"]?["type"]);
+        Assert.Equal("$ExampleHeader", (string?)generated["submenus"]?["0"]?["options"]?["6"]?["title"]);
+        Assert.Equal(0, (int?)generated["submenus"]?["0"]?["options"]?["7"]?["type"]);
+        Assert.Equal("$ExampleLogo", (string?)generated["submenus"]?["0"]?["options"]?["7"]?["title"]);
+        Assert.Equal("textures/interface/ExampleMod/Logo.dds", (string?)generated["submenus"]?["0"]?["options"]?["7"]?["image"]?["filename"]);
+        Assert.Equal(256, (int?)generated["submenus"]?["0"]?["options"]?["7"]?["image"]?["width"]);
+        Assert.Equal(64, (int?)generated["submenus"]?["0"]?["options"]?["7"]?["image"]?["height"]);
+        Assert.Equal(0, (int?)generated["submenus"]?["0"]?["options"]?["7"]?["image"]?["systemcolor"]);
+        Assert.True(File.Exists(Path.Combine(projectRoot, translationPath)));
+        Assert.True(File.Exists(Path.Combine(projectRoot, assetPath)));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "generated", "mcm-json", "package-manifest.json")));
+    }
+
+    [Fact]
+    public void BuildMcmJsonWritesManifestAndChecksums()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli("build", projectRoot, "--target", "mcm-json", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Build MCM JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("build", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("mcm-json", (string?)json["target"]);
+        Assert.Equal("dist/mcm-json", (string?)json["outputs"]?["root"]);
+        Assert.Equal("dist/mcm-json/MCM/Translations/io.github.theboyyss.examplemod.mcm.main.ini", (string?)json["outputs"]?["translations"]?[0]);
+        Assert.Equal("dist/mcm-json/textures/interface/ExampleMod/Logo.dds", (string?)json["outputs"]?["assets"]?[0]);
+        Assert.Equal("dist/mcm-json/package-manifest.json", (string?)json["outputs"]?["packageManifest"]);
+        Assert.Equal("dist/mcm-json/package.zip", (string?)json["outputs"]?["packageArchive"]);
+        Assert.Equal("dist/mcm-json/build-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal("dist/mcm-json/checksums.sha256", (string?)json["outputs"]?["checksums"]);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "package-manifest.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "package.zip")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "build-manifest.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "checksums.sha256")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "textures", "interface", "ExampleMod", "Logo.dds")));
     }
 
     [Fact]
@@ -263,6 +689,50 @@ public sealed class CliGoldenTests
         return target;
     }
 
+    private static SyntheticCapabilityLayout CreateSyntheticCapabilityLayout()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "fnv");
+        var data = Path.Combine(root, "Data");
+        var toolRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "tools");
+        var xeditPath = Path.Combine(toolRoot, "FNVEdit.exe");
+        var mo2Path = Path.Combine(toolRoot, "ModOrganizer.exe");
+
+        Touch(Path.Combine(root, "FalloutNV.exe"));
+        Touch(Path.Combine(root, "nvse_loader.exe"));
+        Touch(Path.Combine(root, "GECK.exe"));
+        Touch(Path.Combine(data, "NVSE", "Plugins", "jip_nvse.dll"));
+        Touch(Path.Combine(data, "NVSE", "Plugins", "JohnnyGuitarNVSE.dll"));
+        Touch(Path.Combine(data, "NVSE", "Plugins", "ShowOffNVSE.dll"));
+        Touch(Path.Combine(data, "NVSE", "Plugins", "kNVSE.dll"));
+        Touch(Path.Combine(data, "NVSE", "Plugins", "hot_reload.dll"));
+        Directory.CreateDirectory(Path.Combine(data, "UIO", "Public"));
+        Directory.CreateDirectory(Path.Combine(data, "Menus", "Prefabs", "MCM"));
+        Directory.CreateDirectory(Path.Combine(data, "Menus", "Prefabs", "MCMExtender"));
+        Touch(xeditPath);
+        Touch(mo2Path);
+
+        return new SyntheticCapabilityLayout(root, xeditPath, mo2Path);
+    }
+
+    private static void Touch(string path)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? Path.GetTempPath());
+        File.WriteAllText(path, string.Empty);
+    }
+
+    private static string ProviderStatus(JsonArray providers, string providerId) =>
+        (string?)providers.Single(provider => StringComparer.Ordinal.Equals(providerId, (string?)provider?["id"]))?["status"] ??
+        throw new InvalidOperationException($"Provider {providerId} did not include a status.");
+
+    private static string CapabilityStatus(JsonArray capabilities, string capabilityId) =>
+        (string?)capabilities.Single(capability => StringComparer.Ordinal.Equals(capabilityId, (string?)capability?["id"]))?["status"] ??
+        throw new InvalidOperationException($"Capability {capabilityId} did not include a status.");
+
+    private static JsonNode Requirement(JsonNode json, string capabilityId) =>
+        json["requirements"]?["items"]?.AsArray()
+            .Single(requirement => StringComparer.Ordinal.Equals(capabilityId, (string?)requirement?["id"])) ??
+        throw new InvalidOperationException($"Requirement {capabilityId} was not found.");
+
     private static void CopyDirectory(string source, string target)
     {
         Directory.CreateDirectory(target);
@@ -280,4 +750,6 @@ public sealed class CliGoldenTests
     }
 
     private sealed record CliResult(int ExitCode, string Stdout, string Stderr);
+
+    private sealed record SyntheticCapabilityLayout(string GameRoot, string XEditPath, string Mo2Path);
 }

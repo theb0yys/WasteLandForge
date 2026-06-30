@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.18.0",
+  "schemaVersion": "0.23.0",
   "kind": "dialogue",
   "id": "io.github.theboyyss.examplemod.dialogue",
   "topics": [
@@ -131,14 +131,37 @@
           "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
           "equalsInteger": 0,
           "summary": "Synthetic dialogue condition over quest variable state."
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephaseone",
+          "conditionType": "questVariableEquals",
+          "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+          "equalsInteger": 1,
+          "summary": "Synthetic dialogue condition used by a negated condition reference."
         }
       ],
       "conditionLogic": {
         "id": "io.github.theboyyss.examplemod.dialogue.intro.conditionlogic.all",
         "operator": "all",
+        "precedence": 0,
+        "shortCircuit": true,
         "conditionIds": [
-          "io.github.theboyyss.examplemod.dialogue.intro.condition.started",
           "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephasezero"
+        ],
+        "negatedConditionIds": [
+          "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephaseone"
+        ],
+        "groups": [
+          {
+            "id": "io.github.theboyyss.examplemod.dialogue.intro.conditionlogic.group.quest",
+            "operator": "all",
+            "precedence": 10,
+            "shortCircuit": true,
+            "conditionIds": [
+              "io.github.theboyyss.examplemod.dialogue.intro.condition.started"
+            ],
+            "summary": "Synthetic nested condition group declaration."
+          }
         ],
         "summary": "Synthetic line-local condition boolean composition declaration."
       },
@@ -164,6 +187,14 @@
           "linkType": "linkTo",
           "targetTopicId": "io.github.theboyyss.examplemod.topic.followup",
           "summary": "Synthetic topic link declaration."
+        }
+      ],
+      "responseRoutes": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.responseroute.default",
+          "routeKey": "default",
+          "targetTopicId": "io.github.theboyyss.examplemod.topic.followup",
+          "summary": "Synthetic response route declaration."
         }
       ],
       "voice": {

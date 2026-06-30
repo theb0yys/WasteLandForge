@@ -1,11 +1,18 @@
 {
-  "schemaVersion": "0.1.0",
+  "schemaVersion": "0.2.0",
   "kind": "dependency",
   "id": "io.github.theboyyss.examplemod.dependencies",
   "requires": {
     "capabilities": [
       {
         "id": "runtime.scripting.xnvse"
+      },
+      {
+        "id": "runtime.ui.mcm_json",
+        "phase": [
+          "generation"
+        ],
+        "reason": "Generate deterministic MCM Extender JSON output."
       }
     ]
   }

@@ -1,9 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" Version="9.2.1" />
     <ProjectReference Include="..\WastelandForge.Core\WastelandForge.Core.csproj" />
+    <ProjectReference Include="..\WastelandForge.Schema\WastelandForge.Schema.csproj" />
     <ProjectReference Include="..\WastelandForge.Registry\WastelandForge.Registry.csproj" />
     <ProjectReference Include="..\WastelandForge.Provenance\WastelandForge.Provenance.csproj" />
+    <ProjectReference Include="..\WastelandForge.Validation\WastelandForge.Validation.csproj" />
   </ItemGroup>
 
 </Project>

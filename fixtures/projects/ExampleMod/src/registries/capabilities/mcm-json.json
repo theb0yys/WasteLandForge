@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "capability",
+  "id": "runtime.ui.mcm_json",
+  "title": "MCM Extender JSON authoring",
+  "satisfiedBy": [
+    {
+      "id": "provider.runtime.mcm_extender",
+      "providerType": "runtime-ui"
+    }
+  ],
+  "requires": {
+    "capabilities": [
+      {
+        "id": "runtime.ui.mcm"
+      },
+      {
+        "id": "runtime.scripting.xnvse"
+      },
+      {
+        "id": "runtime.scripting.jip_ln"
+      },
+      {
+        "id": "runtime.scripting.johnnyguitar"
+      },
+      {
+        "id": "runtime.scripting.showoff"
+      },
+      {
+        "id": "runtime.ui.uio"
+      }
+    ]
+  },
+  "scope": "data-managed",
+  "stability": "community-standard",
+  "features": [
+    "json-menu-authoring",
+    "ini-persistence",
+    "script-free-menu-definition"
+  ]
+}

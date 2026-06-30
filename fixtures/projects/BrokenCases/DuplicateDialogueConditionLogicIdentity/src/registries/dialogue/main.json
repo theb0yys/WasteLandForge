@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "0.22.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.duplicatedialogueconditionlogicidentity.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.duplicatedialogueconditionlogicidentity.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.duplicatedialogueconditionlogicidentity.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.duplicatedialogueconditionlogicidentity.quest.intro",
+      "topicId": "io.github.theboyyss.duplicatedialogueconditionlogicidentity.topic.greeting",
+      "promptText": "Synthetic duplicate condition logic identity prompt.",
+      "priority": 10,
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.duplicatedialogueconditionlogicidentity.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.duplicatedialogueconditionlogicidentity.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.duplicatedialogueconditionlogicidentity.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "precedence": 0,
+        "shortCircuit": true,
+        "conditionIds": [
+          "io.github.theboyyss.duplicatedialogueconditionlogicidentity.dialogue.intro.condition.started"
+        ],
+        "negatedConditionIds": [
+          "io.github.theboyyss.duplicatedialogueconditionlogicidentity.dialogue.intro.condition.started"
+        ],
+        "groups": [
+          {
+            "id": "io.github.theboyyss.duplicatedialogueconditionlogicidentity.dialogue.intro.conditionlogic.all",
+            "operator": "all",
+            "precedence": 10,
+            "shortCircuit": true,
+            "conditionIds": [
+              "io.github.theboyyss.duplicatedialogueconditionlogicidentity.dialogue.intro.condition.started"
+            ],
+            "summary": "Synthetic child group with a duplicate condition logic ID."
+          }
+        ],
+        "summary": "Synthetic line-local condition logic with duplicate identity."
+      },
+      "responseText": "Synthetic dialogue line with duplicate condition logic identity."
+    }
+  ]
+}

@@ -3,6 +3,7 @@ using WastelandForge.Provenance;
 
 namespace WastelandForge.UnitTests;
 
+[Collection(EnvironmentVariableCollection.Name)]
 public sealed class ReleaseDryRunVerifierTests
 {
     [Fact]

@@ -174,6 +174,130 @@ Gate 43 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
 dialogue condition logic references that do not resolve to authored
 line-local conditions.
 
+Gate 44 adds dialogue registry schema `0.19.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus nested
+condition group schema and nested condition logic reference fixture coverage
+in `WastelandForge.SemanticTests`.
+
+Gate 45 adds `WastelandForge.GoldenTests` CLI coverage for
+`forge validate --geck-dialogue-export <path>` success, missing export, and
+empty export diagnostics.
+
+Gate 46 adds dialogue registry schema `0.20.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+condition negation schema and negated condition logic reference fixture
+coverage in `WastelandForge.SemanticTests`.
+
+Gate 47 adds dialogue registry schema `0.21.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+condition precedence schema fixture coverage in `WastelandForge.SemanticTests`.
+
+Gate 48 adds dialogue registry schema `0.22.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+condition short-circuit schema fixture coverage in
+`WastelandForge.SemanticTests`.
+
+Gate 49 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
+duplicate root or nested dialogue condition logic IDs inside one line-local
+condition logic tree.
+
+Gate 50 adds dialogue registry schema `0.23.0` schema/catalog coverage in
+`WastelandForge.SchemaTests` and `WastelandForge.BackCompatTests`, plus
+response route schema fixture coverage in `WastelandForge.SemanticTests`.
+
+Gate 51 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
+dialogue response route `targetTopicId` values that do not resolve to declared
+dialogue topics.
+
+Gate 52 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
+declared dialogue response route target topics that have no authored dialogue
+line endpoint.
+
+Gate 53 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
+duplicate response route IDs authored on the same dialogue line.
+
+Gate 54 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
+duplicate response route keys authored on the same dialogue line.
+
+Gate 55 adds no test project, fixture, or assertion. It is verified by the
+existing build, semantic fixture suite, full test suite, CLI fixture checks,
+and whitespace check while preserving Gate 54 behavior.
+
+Gate 56 adds no test project, fixture, or assertion. It is a docs-only
+evidence pack skeleton and is verified by the existing build, semantic fixture
+suite, full test suite, CLI fixture checks, and whitespace check.
+
+Gate 57 adds `WastelandForge.GoldenTests` coverage for
+`forge capabilities list --format json` and
+`forge capabilities list --kind providers --format json`. It preserves the
+reserved JSON status contract for `forge capabilities scan`.
+
+Gate 58 updates `WastelandForge.GoldenTests` so
+`forge capabilities scan --format json` is implemented. It adds temp-only
+synthetic path layout coverage for probable root-file, data-file, and
+executable-tool evidence, no-input unknown evidence, scan output-file writing,
+and the reserved JSON status contract for `forge capabilities explain`.
+
+Gate 59 updates `WastelandForge.GoldenTests` so
+`forge capabilities explain --format json` is implemented. It adds temp-only
+synthetic path layout coverage for capability explanations, provider
+explanations, unknown capability/provider usage JSON, and explanation
+output-file writing.
+
+Gate 60 updates `WastelandForge.GoldenTests` so
+`forge capabilities scan --project --format json` reports project requirement
+resolution. It covers a satisfied requirement against temp-only xNVSE scan
+evidence and a required-but-unknown requirement that returns exit code `4`.
+
+Gate 61 updates `WastelandForge.UnitTests` for the metadata report generator
+and `WastelandForge.GoldenTests` for CLI JSON output. It covers
+`forge generate --target reports`, `forge build --target reports`, generation
+manifest output, build manifest output, checksums, and refusal of generate
+outputs outside project `generated/`.
+
+Gate 62 updates schema and back-compat tests for manifest `0.2.0`,
+dependency `0.2.0`, capability `0.2.0`, and MCM `0.1.0` schemas. It updates
+unit and golden CLI tests for `forge generate --target mcm-json`,
+`forge build --target mcm-json`, MCM runtime output, manifests, checksums,
+and refusal when `runtime.ui.mcm_json` is not declared as a generation
+dependency.
+
+Gate 63 updates schema and back-compat tests for
+`mcm-extender-output/0.1.0`, and updates unit and golden CLI tests to assert
+runtime-shaped MCM Extender JSON output, output validation manifest evidence,
+and `MCM/<menu>.json` output paths.
+
+Gate 64 updates unit and golden CLI tests to assert MCM Extender runtime
+requirements pass-through, translation INI output, manifest/checksum evidence
+for translation files, and `WF-GEN-006` duplicate translation-output refusal.
+
+Gate 65 updates unit and golden CLI tests to assert generated MCM Extender
+checkbox option type `5`, string-toggle option type `6`, string-toggle
+`textOn`/`textOff` labels, and synthetic translation coverage for the new
+fixture settings.
+
+Gate 66 updates unit and golden CLI tests to assert generated MCM Extender
+keybind option type `3`, INI-backed keybind default output, and synthetic
+translation coverage for the new fixture setting.
+
+Gate 67 updates unit and golden CLI tests to assert generated MCM Extender
+header option type `0`, no `vars` on header output, and synthetic translation
+coverage for the new fixture setting.
+
+Gate 68 updates unit and golden CLI tests to assert generated MCM Extender
+image option type `0`, image map field pass-through, no `vars` on image
+output, and synthetic translation coverage for the new fixture setting.
+
+Gate 69 updates semantic fixture tests to assert `WF-ASSET-010` and
+`WF-ASSET-011` for invalid MCM image filenames and unresolved required
+texture asset targets.
+
+Gate 70 updates unit and golden CLI tests to assert staged MCM texture asset
+outputs, manifest asset evidence, output digests, and build checksums.
+
+Gate 71 updates unit and golden CLI tests to assert `package-manifest.json`,
+loose-file package entries, payload digests, and build checksum coverage.
+
 Run the full local suite serially:
 
 ```text

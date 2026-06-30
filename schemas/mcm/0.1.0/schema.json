@@ -1,0 +1,566 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/mcm/0.1.0/schema.json",
+  "title": "WastelandForge MCM Registry",
+  "description": "Source-controlled MCM menu intent for deterministic MCM Extender JSON generation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "menus"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the MCM registry contract.",
+      "const": "0.1.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "mcm"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "menus": {
+      "description": "MCM menu declarations to generate as deterministic MCM Extender JSON outputs.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/menu"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "^(?:[a-zA-Z]:|/|\\\\\\\\)"
+      }
+    },
+    "jsonFileName": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+\\.json$"
+    },
+    "menu": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "outputFile",
+        "minMCMVersion",
+        "pages"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "outputFile": {
+          "$ref": "#/$defs/jsonFileName"
+        },
+        "minMCMVersion": {
+          "description": "Minimum required MCM Extender runtime version to write into generated output.",
+          "type": "number",
+          "minimum": 0
+        },
+        "requires": {
+          "$ref": "#/$defs/requires"
+        },
+        "requirements": {
+          "$ref": "#/$defs/runtimeRequirements"
+        },
+        "translations": {
+          "$ref": "#/$defs/translations"
+        },
+        "pages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/page"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "settings"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "requirements": {
+          "$ref": "#/$defs/runtimeRequirements"
+        },
+        "settings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/setting"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "setting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "settingType"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "label": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "settingType": {
+          "enum": [
+            "header",
+            "image",
+            "toggle",
+            "keybind",
+            "checkbox",
+            "stringToggle",
+            "slider",
+            "choice",
+            "text"
+          ]
+        },
+        "default": {
+          "type": [
+            "boolean",
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "ini": {
+          "$ref": "#/$defs/iniBinding"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "uniqueItems": true
+        },
+        "scale": {
+          "$ref": "#/$defs/scale"
+        },
+        "textOn": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "textOff": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "image": {
+          "$ref": "#/$defs/image"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "settingType": {
+                "const": "image"
+              }
+            },
+            "required": [
+              "settingType"
+            ]
+          },
+          "then": {
+            "required": [
+              "image"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "settingType": {
+                "const": "slider"
+              }
+            },
+            "required": [
+              "settingType"
+            ]
+          },
+          "then": {
+            "required": [
+              "default",
+              "ini",
+              "scale"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "settingType": {
+                "enum": [
+                  "toggle",
+                  "keybind",
+                  "checkbox",
+                  "stringToggle",
+                  "choice"
+                ]
+              }
+            },
+            "required": [
+              "settingType"
+            ]
+          },
+          "then": {
+            "required": [
+              "default",
+              "ini"
+            ]
+          }
+        }
+      ]
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filename",
+        "width",
+        "height",
+        "systemcolor"
+      ],
+      "properties": {
+        "filename": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "systemcolor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "offsetX": {
+          "type": "integer"
+        },
+        "offsetY": {
+          "type": "integer"
+        }
+      }
+    },
+    "scale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "valueMin",
+        "valueMax",
+        "valueIncrement",
+        "valueDecimal"
+      ],
+      "properties": {
+        "valueMin": {
+          "type": "number"
+        },
+        "valueMax": {
+          "type": "number"
+        },
+        "valueIncrement": {
+          "type": "number"
+        },
+        "valueDecimal": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "iniBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "section",
+        "key"
+      ],
+      "properties": {
+        "file": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "section": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "key": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "requires": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capabilityReference"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "runtimeRequirements": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/runtimeRequirement"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/runtimeRequirement"
+            },
+            "minItems": 1
+          }
+        ]
+      }
+    },
+    "runtimeRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "plugin",
+            "file",
+            "folder",
+            "dll",
+            "nvse"
+          ]
+        },
+        "file": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "version": {
+          "type": "number"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "plugin",
+                  "file",
+                  "folder",
+                  "dll"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "file"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "dll",
+                  "nvse"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "version"
+            ]
+          }
+        }
+      ]
+    },
+    "translations": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "patternProperties": {
+        "^\\$[A-Za-z0-9_.-]+$": {
+          "$ref": "#/$defs/translationText"
+        }
+      }
+    },
+    "translationText": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\r\\n]+$"
+    },
+    "capabilityReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.1.0",
+      "kind": "mcm",
+      "id": "io.github.theboyyss.examplemod.mcm",
+      "menus": [
+        {
+          "id": "io.github.theboyyss.examplemod.mcm.main",
+          "title": "$ExampleModName",
+          "outputFile": "ExampleMod.json",
+          "minMCMVersion": 1.0,
+          "requires": {
+            "capabilities": [
+              {
+                "id": "runtime.ui.mcm_json"
+              }
+            ]
+          },
+          "requirements": [
+            {
+              "type": "file",
+              "file": "Config/ExampleMod.ini"
+            }
+          ],
+          "translations": {
+            "$EnableExampleFeature": "Enable Example Feature",
+            "$ExampleHeader": "Example Settings",
+            "$ExampleLogo": "Example Logo",
+            "$ExampleModName": "Example Mod",
+            "$GeneralPage": "General",
+            "$HudMode": "HUD Mode",
+            "$HudModeCompact": "Compact",
+            "$HudModeFull": "Full",
+            "$QuickMenuKey": "Quick Menu Key",
+            "$ShowHints": "Show Hints"
+          },
+          "pages": [
+            {
+              "id": "io.github.theboyyss.examplemod.mcm.general",
+              "title": "$GeneralPage",
+              "settings": [
+                {
+                  "id": "io.github.theboyyss.examplemod.mcm.general.header",
+                  "label": "$ExampleHeader",
+                  "settingType": "header"
+                },
+                {
+                  "id": "io.github.theboyyss.examplemod.mcm.general.logo",
+                  "label": "$ExampleLogo",
+                  "settingType": "image",
+                  "image": {
+                    "filename": "textures/interface/ExampleMod/Logo.dds",
+                    "width": 256,
+                    "height": 64,
+                    "systemcolor": 0,
+                    "offsetX": 0,
+                    "offsetY": 0
+                  }
+                },
+                {
+                  "id": "io.github.theboyyss.examplemod.mcm.general.enabled",
+                  "label": "$EnableExampleFeature",
+                  "settingType": "toggle",
+                  "default": true,
+                  "ini": {
+                    "file": "Config/ExampleMod.ini",
+                    "section": "General",
+                    "key": "bEnableExampleFeature"
+                  }
+                },
+                {
+                  "id": "io.github.theboyyss.examplemod.mcm.general.show_hints",
+                  "label": "$ShowHints",
+                  "settingType": "checkbox",
+                  "default": true,
+                  "ini": {
+                    "file": "Config/ExampleMod.ini",
+                    "section": "General",
+                    "key": "bShowHints"
+                  }
+                },
+                {
+                  "id": "io.github.theboyyss.examplemod.mcm.general.hud_mode",
+                  "label": "$HudMode",
+                  "settingType": "stringToggle",
+                  "default": false,
+                  "textOn": "$HudModeCompact",
+                  "textOff": "$HudModeFull",
+                  "ini": {
+                    "file": "Config/ExampleMod.ini",
+                    "section": "General",
+                    "key": "bCompactHud"
+                  }
+                },
+                {
+                  "id": "io.github.theboyyss.examplemod.mcm.general.quick_menu_key",
+                  "label": "$QuickMenuKey",
+                  "settingType": "keybind",
+                  "default": 33,
+                  "ini": {
+                    "file": "Config/ExampleMod.ini",
+                    "section": "General",
+                    "key": "iQuickMenuKey"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

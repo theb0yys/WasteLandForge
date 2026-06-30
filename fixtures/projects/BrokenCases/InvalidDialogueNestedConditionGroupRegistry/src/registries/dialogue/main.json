@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "0.19.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.topic.greeting",
+      "promptText": "Synthetic nested condition group prompt.",
+      "priority": 10,
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "conditionIds": [
+          "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.dialogue.intro.condition.started"
+        ],
+        "groups": [
+          {
+            "id": "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.dialogue.intro.conditionlogic.group.invalid",
+            "operator": "xor",
+            "conditionIds": [
+              "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.dialogue.intro.condition.started"
+            ],
+            "groups": [
+              {
+                "id": "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.dialogue.intro.conditionlogic.group.validchild",
+                "operator": "all",
+                "conditionIds": [
+                  "io.github.theboyyss.invaliddialoguenestedconditiongroupregistry.dialogue.intro.condition.started"
+                ],
+                "summary": "Synthetic valid child group below the invalid group."
+              }
+            ],
+            "summary": "Synthetic invalid nested condition group declaration with an unsupported operator."
+          }
+        ],
+        "summary": "Synthetic line-local condition boolean composition declaration with an invalid nested group."
+      },
+      "responseText": "Synthetic dialogue line with invalid nested condition group shape."
+    }
+  ]
+}

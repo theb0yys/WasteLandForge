@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Schema;
 using WastelandForge.Core;
+using WastelandForge.Registry;
 using WastelandForge.Schema;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
@@ -40,15 +41,27 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> ManifestSchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Manifest010,
         "Manifest schema 0.1.0"));
+    private static readonly Lazy<JsonSchema> ManifestSchema020 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Manifest020,
+        "Manifest schema 0.2.0"));
     private static readonly Lazy<JsonSchema> DependencyRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Dependency010,
         "Dependency registry schema 0.1.0"));
+    private static readonly Lazy<JsonSchema> DependencyRegistrySchema020 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dependency020,
+        "Dependency registry schema 0.2.0"));
     private static readonly Lazy<JsonSchema> CapabilityRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Capability010,
         "Capability registry schema 0.1.0"));
+    private static readonly Lazy<JsonSchema> CapabilityRegistrySchema020 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Capability020,
+        "Capability registry schema 0.2.0"));
     private static readonly Lazy<JsonSchema> AssetRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Asset010,
         "Asset registry schema 0.1.0"));
+    private static readonly Lazy<JsonSchema> McmRegistrySchema = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Mcm010,
+        "MCM registry schema 0.1.0"));
     private static readonly Lazy<JsonSchema> QuestRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Quest010,
         "Quest registry schema 0.1.0"));
@@ -121,6 +134,21 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> DialogueRegistrySchema0180 = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Dialogue0180,
         "Dialogue registry schema 0.18.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0190 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0190,
+        "Dialogue registry schema 0.19.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0200 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0200,
+        "Dialogue registry schema 0.20.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0210 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0210,
+        "Dialogue registry schema 0.21.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0220 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0220,
+        "Dialogue registry schema 0.22.0"));
+    private static readonly Lazy<JsonSchema> DialogueRegistrySchema0230 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Dialogue0230,
+        "Dialogue registry schema 0.23.0"));
 
     private static JsonSchema LoadBuiltInSchema(string schemaId, string label)
     {
@@ -155,6 +183,138 @@ public sealed class ProjectValidationPipeline
         }
 
         return new DiagnosticReport(projectId, issues);
+    }
+
+    public ProjectCapabilityRequirementReadResult ReadCapabilityRequirements(string projectPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectPath);
+
+        var projectRoot = Path.GetFullPath(projectPath);
+        var issues = new List<DiagnosticIssue>();
+        var requirements = new List<CapabilityRequirementDefinition>();
+        var manifestLoad = LoadManifest(projectRoot, issues);
+        LogicalId? projectId = null;
+
+        if (manifestLoad is not null)
+        {
+            projectId = ReadProjectId(manifestLoad.Manifest);
+            var issueCountBeforeSchemaValidation = issues.Count;
+            ValidateManifestSchema(manifestLoad, issues, projectId);
+            if (!HasErrorSince(issues, issueCountBeforeSchemaValidation))
+            {
+                var registries = manifestLoad.Manifest["registries"] as JsonObject;
+                var dependencyPath = GetString(registries, "dependencies");
+                if (dependencyPath is not null)
+                {
+                    var registryIssueStart = issues.Count;
+                    var dependencyDocuments = LoadRegistryDocuments(
+                        manifestLoad.ProjectRoot,
+                        dependencyPath,
+                        "dependency",
+                        "dependencies",
+                        issues,
+                        projectId);
+                    if (!HasErrorSince(issues, registryIssueStart))
+                    {
+                        requirements.AddRange(dependencyDocuments.SelectMany(ReadCapabilityRequirements));
+                    }
+                }
+            }
+        }
+
+        return new ProjectCapabilityRequirementReadResult(
+            projectRoot,
+            projectId,
+            new DiagnosticReport(projectId, issues),
+            requirements);
+    }
+
+    public ProjectMcmMenuReadResult ReadMcmMenus(string projectPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectPath);
+
+        var projectRoot = Path.GetFullPath(projectPath);
+        var issues = new List<DiagnosticIssue>();
+        var menus = new List<McmMenuDefinition>();
+        var manifestLoad = LoadManifest(projectRoot, issues);
+        LogicalId? projectId = null;
+
+        if (manifestLoad is not null)
+        {
+            projectId = ReadProjectId(manifestLoad.Manifest);
+            var issueCountBeforeSchemaValidation = issues.Count;
+            ValidateManifestSchema(manifestLoad, issues, projectId);
+            if (!HasErrorSince(issues, issueCountBeforeSchemaValidation))
+            {
+                var registries = manifestLoad.Manifest["registries"] as JsonObject;
+                var mcmPath = GetString(registries, "mcm");
+                if (mcmPath is not null)
+                {
+                    var registryIssueStart = issues.Count;
+                    var mcmDocuments = LoadRegistryDocuments(
+                        manifestLoad.ProjectRoot,
+                        mcmPath,
+                        "mcm",
+                        "mcm",
+                        issues,
+                        projectId);
+                    if (!HasErrorSince(issues, registryIssueStart))
+                    {
+                        menus.AddRange(mcmDocuments.SelectMany(ReadMcmMenus));
+                    }
+                }
+            }
+        }
+
+        return new ProjectMcmMenuReadResult(
+            projectRoot,
+            projectId,
+            new DiagnosticReport(projectId, issues),
+            menus);
+    }
+
+    public ProjectAssetReadResult ReadAssets(string projectPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectPath);
+
+        var projectRoot = Path.GetFullPath(projectPath);
+        var issues = new List<DiagnosticIssue>();
+        var assets = new List<AssetDefinition>();
+        var manifestLoad = LoadManifest(projectRoot, issues);
+        LogicalId? projectId = null;
+
+        if (manifestLoad is not null)
+        {
+            projectId = ReadProjectId(manifestLoad.Manifest);
+            var issueCountBeforeSchemaValidation = issues.Count;
+            ValidateManifestSchema(manifestLoad, issues, projectId);
+            if (!HasErrorSince(issues, issueCountBeforeSchemaValidation))
+            {
+                var registries = manifestLoad.Manifest["registries"] as JsonObject;
+                var assetPath = GetString(registries, "assets");
+                if (assetPath is not null)
+                {
+                    var registryIssueStart = issues.Count;
+                    var assetDocuments = LoadRegistryDocuments(
+                        manifestLoad.ProjectRoot,
+                        assetPath,
+                        "asset",
+                        "assets",
+                        issues,
+                        projectId);
+                    if (!HasErrorSince(issues, registryIssueStart))
+                    {
+                        assets.AddRange(assetDocuments.SelectMany(ReadAssetDefinitions));
+                    }
+                }
+            }
+        }
+
+        return new ProjectAssetReadResult(
+            projectRoot,
+            projectId,
+            new DiagnosticReport(projectId, issues),
+            assets);
     }
 
     private static LoadedManifest? LoadManifest(string projectRoot, List<DiagnosticIssue> issues)
@@ -579,12 +739,16 @@ public sealed class ProjectValidationPipeline
 
     private static void ValidateManifestSchema(LoadedManifest manifestLoad, List<DiagnosticIssue> issues, LogicalId? projectId)
     {
+        var schema = StringComparer.Ordinal.Equals(GetString(manifestLoad.Manifest, "schemaVersion"), "0.2.0")
+            ? ManifestSchema020.Value
+            : ManifestSchema.Value;
+
         ValidateSourceSchema(
             "Manifest",
             manifestLoad.DisplayPath,
             manifestLoad.Manifest,
             manifestLoad.SourceLocations,
-            ManifestSchema.Value,
+            schema,
             issues,
             projectId);
     }
@@ -597,6 +761,7 @@ public sealed class ProjectValidationPipeline
             "dependency" => "Dependency registry",
             "capability" => "Capability registry",
             "asset" => "Asset registry",
+            "mcm" => "MCM registry",
             "quest" => "Quest registry",
             "dialogue" => "Dialogue registry",
             _ => "Registry"
@@ -616,15 +781,23 @@ public sealed class ProjectValidationPipeline
     {
         return expectedKind switch
         {
+            "dependency" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => DependencyRegistrySchema020.Value,
             "dependency" => DependencyRegistrySchema.Value,
+            "capability" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => CapabilityRegistrySchema020.Value,
             "capability" => CapabilityRegistrySchema.Value,
             "asset" => AssetRegistrySchema.Value,
+            "mcm" => McmRegistrySchema.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.6.0") => QuestRegistrySchema060.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.5.0") => QuestRegistrySchema050.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.4.0") => QuestRegistrySchema040.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.3.0") => QuestRegistrySchema030.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => QuestRegistrySchema020.Value,
             "quest" => QuestRegistrySchema.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.23.0") => DialogueRegistrySchema0230.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.22.0") => DialogueRegistrySchema0220.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.21.0") => DialogueRegistrySchema0210.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.20.0") => DialogueRegistrySchema0200.Value,
+            "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.19.0") => DialogueRegistrySchema0190.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.18.0") => DialogueRegistrySchema0180.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.17.0") => DialogueRegistrySchema0170.Value,
             "dialogue" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.16.0") => DialogueRegistrySchema0160.Value,
@@ -764,6 +937,7 @@ public sealed class ProjectValidationPipeline
         var assetPath = GetString(registries, "assets");
         var questPath = GetString(registries, "quests");
         var dialoguePath = GetString(registries, "dialogue");
+        var mcmPath = GetString(registries, "mcm");
         if (dependencyPath is null || capabilityPath is null)
         {
             return;
@@ -817,6 +991,17 @@ public sealed class ProjectValidationPipeline
                 issues,
                 projectId);
         }
+        IReadOnlyList<RegistryDocument> mcmDocuments = [];
+        if (mcmPath is not null)
+        {
+            mcmDocuments = LoadRegistryDocuments(
+                manifestLoad.ProjectRoot,
+                mcmPath,
+                "mcm",
+                "mcm",
+                issues,
+                projectId);
+        }
 
         if (HasErrorSince(issues, registryIssueStart))
         {
@@ -830,6 +1015,7 @@ public sealed class ProjectValidationPipeline
 
         var assetRecords = ReadAssetRecords(assetDocuments);
         RunAssetSemanticValidation(manifestLoad.ProjectRoot, assetRecords, issues, projectId);
+        RunMcmAssetSemanticValidation(mcmDocuments, assetRecords, issues, projectId);
         RunQuestSemanticValidation(questDocuments, issues, projectId);
         RunDialogueSemanticValidation(dialogueDocuments, questDocuments, assetRecords, issues, projectId);
 
@@ -880,6 +1066,71 @@ public sealed class ProjectValidationPipeline
         }
 
         ValidateVoiceAssetPairs(assets, issues, projectId);
+    }
+
+    private static void RunMcmAssetSemanticValidation(
+        IReadOnlyList<RegistryDocument> mcmDocuments,
+        IReadOnlyList<AssetRecord> assetRecords,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        if (mcmDocuments.Count == 0)
+        {
+            return;
+        }
+
+        var requiredTextureTargets = assetRecords
+            .Where(record =>
+                record.Asset.Required &&
+                record.Asset.AssetType.Equals("texture", StringComparison.Ordinal) &&
+                IsSafeRelativeAssetPath(record.Asset.Target))
+            .Select(record => NormalizeAssetPath(record.Asset.Target))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var document in mcmDocuments)
+        {
+            foreach (var reference in ReadMcmImageAssetReferences(document))
+            {
+                if (!IsSafeRelativeAssetPath(reference.Filename) ||
+                    !Path.GetExtension(reference.Filename).Equals(".dds", StringComparison.OrdinalIgnoreCase))
+                {
+                    issues.Add(CreateIssue(
+                        "WF-ASSET-010",
+                        DiagnosticSeverity.Error,
+                        "asset",
+                        "MCM image filename is not a game-relative DDS path",
+                        $"MCM image setting '{reference.SettingId}' filename must be a game-relative .dds path without traversal segments.",
+                        CreateSourceLocation(reference.DisplayPath, reference.Pointer, reference.SourceLocations),
+                        projectId,
+                        suggestedFix: "Use a Data-relative DDS path such as textures/interface/ExampleMod/Logo.dds.",
+                        docsRule: "WF-ASSET-010",
+                        fingerprint: $"wf:asset:010:{reference.SettingId}"));
+                    continue;
+                }
+
+                var normalizedFilename = NormalizeAssetPath(reference.Filename);
+                if (requiredTextureTargets.Contains(normalizedFilename))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-ASSET-011",
+                    DiagnosticSeverity.Error,
+                    "asset",
+                    "MCM image filename does not resolve to a required texture asset",
+                    $"MCM image setting '{reference.SettingId}' filename '{reference.Filename}' must match a required texture asset target.",
+                    CreateSourceLocation(reference.DisplayPath, reference.Pointer, reference.SourceLocations),
+                    projectId,
+                    assetRecords
+                        .Where(record => record.Asset.AssetType.Equals("texture", StringComparison.Ordinal))
+                        .Select(record => CreateSourceLocation(record.Document.DisplayPath, $"/assets/{record.Asset.Index}/target", record.Document.SourceLocations))
+                        .ToArray(),
+                    "Declare a required texture asset whose target matches the MCM image filename.",
+                    "WF-ASSET-011",
+                    $"wf:asset:011:{reference.SettingId}"));
+            }
+        }
     }
 
     private static void RunDialogueSemanticValidation(
@@ -1051,11 +1302,52 @@ public sealed class ProjectValidationPipeline
                         "WF-SEM-032",
                         $"wf:sem:032:{linkReference.LineId}:{linkReference.LinkId}:sourceTopicLine"));
                 }
+
+                foreach (var routeReference in ReadDialogueResponseRouteReferences(document))
+                {
+                    if (!dialogueTopicIds.Contains(routeReference.TargetTopicId))
+                    {
+                        issues.Add(CreateIssue(
+                            "WF-SEM-036",
+                            DiagnosticSeverity.Error,
+                            "semantic",
+                            "Dialogue response route references unknown topic",
+                            $"Dialogue response route '{routeReference.RouteId}' on line '{routeReference.LineId}' references topic '{routeReference.TargetTopicId}' but that topic is not declared.",
+                            CreateSourceLocation(document.DisplayPath, $"/lines/{routeReference.LineIndex}/responseRoutes/{routeReference.RouteIndex}/targetTopicId", document.SourceLocations),
+                            projectId,
+                            dialogueDocuments.Select(ToDialogueRelatedLocation).ToArray(),
+                            "Declare the target topic in the dialogue registry or update the response route target.",
+                            "WF-SEM-036",
+                            $"wf:sem:036:{routeReference.LineId}:{routeReference.RouteId}:targetTopicId"));
+                        continue;
+                    }
+
+                    if (dialogueLineTopicIds.Contains(routeReference.TargetTopicId))
+                    {
+                        continue;
+                    }
+
+                    issues.Add(CreateIssue(
+                        "WF-SEM-037",
+                        DiagnosticSeverity.Error,
+                        "semantic",
+                        "Dialogue response route target has no authored line",
+                        $"Dialogue response route '{routeReference.RouteId}' on line '{routeReference.LineId}' targets topic '{routeReference.TargetTopicId}' but no dialogue line uses that topic.",
+                        CreateSourceLocation(document.DisplayPath, $"/lines/{routeReference.LineIndex}/responseRoutes/{routeReference.RouteIndex}/targetTopicId", document.SourceLocations),
+                        projectId,
+                        dialogueDocuments.Select(ToDialogueRelatedLocation).ToArray(),
+                        "Add at least one dialogue line with the target topicId or update the response route target.",
+                        "WF-SEM-037",
+                        $"wf:sem:037:{routeReference.LineId}:{routeReference.RouteId}:targetTopicLine"));
+                }
             }
         }
 
         ValidateDialoguePromptRoutes(dialogueDocuments, issues, projectId);
+        ValidateDialogueConditionLogicIdentities(dialogueDocuments, issues, projectId);
         ValidateDialogueConditionLogicReferences(dialogueDocuments, issues, projectId);
+        ValidateDialogueResponseRouteIdentities(dialogueDocuments, issues, projectId);
+        ValidateDialogueResponseRouteKeys(dialogueDocuments, issues, projectId);
 
         if (questDocuments.Count == 0)
         {
@@ -1633,6 +1925,36 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static void ValidateDialogueConditionLogicIdentities(
+        IReadOnlyCollection<RegistryDocument> dialogueDocuments,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        foreach (var document in dialogueDocuments)
+        {
+            foreach (var duplicate in ReadDuplicateDialogueConditionLogicIdentities(document))
+            {
+                issues.Add(CreateIssue(
+                    "WF-SEM-035",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue condition logic ID is ambiguous",
+                    $"Dialogue condition logic '{duplicate.LogicId}' is declared more than once on line '{duplicate.LineId}'.",
+                    CreateSourceLocation(document.DisplayPath, duplicate.LogicIdPointer, document.SourceLocations),
+                    projectId,
+                    [
+                        CreateSourceLocation(
+                            document.DisplayPath,
+                            duplicate.FirstLogicIdPointer,
+                            document.SourceLocations)
+                    ],
+                    "Use a distinct id for each root or nested condition logic node on the dialogue line.",
+                    "WF-SEM-035",
+                    $"wf:sem:035:{duplicate.LineId}:{duplicate.LogicId}"));
+            }
+        }
+    }
+
     private static void ValidateDialogueConditionLogicReferences(
         IReadOnlyCollection<RegistryDocument> dialogueDocuments,
         List<DiagnosticIssue> issues,
@@ -1653,7 +1975,7 @@ public sealed class ProjectValidationPipeline
                     "semantic",
                     "Dialogue condition logic references unknown condition",
                     $"Dialogue condition logic '{reference.LogicId}' on line '{reference.LineId}' references condition '{reference.ConditionId}' but that condition is not authored on the same line.",
-                    CreateSourceLocation(document.DisplayPath, $"/lines/{reference.LineIndex}/conditionLogic/conditionIds/{reference.ConditionIdIndex}", document.SourceLocations),
+                    CreateSourceLocation(document.DisplayPath, reference.ConditionIdPointer, document.SourceLocations),
                     projectId,
                     [
                         CreateSourceLocation(
@@ -1661,9 +1983,69 @@ public sealed class ProjectValidationPipeline
                             $"/lines/{reference.LineIndex}/conditions",
                             document.SourceLocations)
                     ],
-                    "Add the referenced condition to the line conditions or update conditionLogic.conditionIds.",
+                    "Add the referenced condition to the line conditions or update the condition logic conditionIds or negatedConditionIds.",
                     "WF-SEM-034",
                     $"wf:sem:034:{reference.LineId}:{reference.LogicId}:{reference.ConditionId}"));
+            }
+        }
+    }
+
+    private static void ValidateDialogueResponseRouteIdentities(
+        IReadOnlyCollection<RegistryDocument> dialogueDocuments,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        foreach (var document in dialogueDocuments)
+        {
+            foreach (var duplicate in ReadDuplicateDialogueResponseRouteIdentities(document))
+            {
+                issues.Add(CreateIssue(
+                    "WF-SEM-038",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue response route ID is ambiguous",
+                    $"Dialogue response route '{duplicate.RouteId}' is declared more than once on line '{duplicate.LineId}'.",
+                    CreateSourceLocation(document.DisplayPath, duplicate.RouteIdPointer, document.SourceLocations),
+                    projectId,
+                    [
+                        CreateSourceLocation(
+                            document.DisplayPath,
+                            duplicate.FirstRouteIdPointer,
+                            document.SourceLocations)
+                    ],
+                    "Use a distinct id for each response route on the dialogue line.",
+                    "WF-SEM-038",
+                    $"wf:sem:038:{duplicate.LineId}:{duplicate.RouteId}"));
+            }
+        }
+    }
+
+    private static void ValidateDialogueResponseRouteKeys(
+        IReadOnlyCollection<RegistryDocument> dialogueDocuments,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        foreach (var document in dialogueDocuments)
+        {
+            foreach (var duplicate in ReadDuplicateDialogueResponseRouteKeys(document))
+            {
+                issues.Add(CreateIssue(
+                    "WF-SEM-039",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Dialogue response route key is ambiguous",
+                    $"Dialogue response route '{duplicate.RouteId}' on line '{duplicate.LineId}' reuses route key '{duplicate.RouteKey}' already used by route '{duplicate.FirstRouteId}'.",
+                    CreateSourceLocation(document.DisplayPath, duplicate.RouteKeyPointer, document.SourceLocations),
+                    projectId,
+                    [
+                        CreateSourceLocation(
+                            document.DisplayPath,
+                            duplicate.FirstRouteKeyPointer,
+                            document.SourceLocations)
+                    ],
+                    "Use a distinct routeKey or remove the duplicate response route.",
+                    "WF-SEM-039",
+                    $"wf:sem:039:{duplicate.LineId}:{duplicate.RouteId}:routeKey"));
             }
         }
     }
@@ -1807,11 +2189,297 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static IEnumerable<CapabilityRequirementDefinition> ReadCapabilityRequirements(RegistryDocument document)
+    {
+        if (document.Root["requires"] is not JsonObject requires ||
+            requires["capabilities"] is not JsonArray capabilities)
+        {
+            yield break;
+        }
+
+        for (var index = 0; index < capabilities.Count; index++)
+        {
+            if (capabilities[index] is not JsonObject capability)
+            {
+                continue;
+            }
+
+            var id = GetString(capability, "id");
+            if (id is null)
+            {
+                continue;
+            }
+
+            var versionScheme = capability["version"] is JsonObject version
+                ? GetString(version, "scheme")
+                : null;
+            yield return new CapabilityRequirementDefinition(
+                id,
+                GetBoolean(capability, "optional") ?? false,
+                ReadStringArray(capability, "phase"),
+                versionScheme,
+                GetString(capability, "reason"),
+                new CapabilityRequirementSource(
+                    document.DisplayPath,
+                    $"/requires/capabilities/{index}"));
+        }
+    }
+
+    private static IEnumerable<McmMenuDefinition> ReadMcmMenus(RegistryDocument document)
+    {
+        if (document.Root["menus"] is not JsonArray menus)
+        {
+            yield break;
+        }
+
+        for (var index = 0; index < menus.Count; index++)
+        {
+            if (menus[index] is not JsonObject menu)
+            {
+                continue;
+            }
+
+            var id = GetString(menu, "id");
+            var title = GetString(menu, "title");
+            var outputFile = GetString(menu, "outputFile");
+            var minMcmVersion = GetNumber(menu, "minMCMVersion");
+            if (id is null || title is null || outputFile is null || minMcmVersion is null)
+            {
+                continue;
+            }
+
+            yield return new McmMenuDefinition(
+                id,
+                title,
+                outputFile,
+                minMcmVersion.Value,
+                ReadRequiredCapabilities(menu),
+                ReadMcmRuntimeRequirements(menu),
+                ReadMcmTranslations(menu),
+                ReadMcmPages(menu),
+                CreateSourceLocation(document.DisplayPath, $"/menus/{index}", document.SourceLocations));
+        }
+    }
+
+    private static IReadOnlyList<string> ReadRequiredCapabilities(JsonObject source)
+    {
+        if (source["requires"] is not JsonObject requires ||
+            requires["capabilities"] is not JsonArray capabilities)
+        {
+            return [];
+        }
+
+        return capabilities
+            .OfType<JsonObject>()
+            .Select(capability => GetString(capability, "id"))
+            .Where(id => id is not null)
+            .Select(id => id!)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<McmPageDefinition> ReadMcmPages(JsonObject menu)
+    {
+        if (menu["pages"] is not JsonArray pages)
+        {
+            return [];
+        }
+
+        return pages
+            .OfType<JsonObject>()
+            .Select(page => new McmPageDefinition(
+                GetString(page, "id") ?? string.Empty,
+                GetString(page, "title") ?? string.Empty,
+                ReadMcmRuntimeRequirements(page),
+                ReadMcmSettings(page)))
+            .ToArray();
+    }
+
+    private static JsonArray? ReadMcmRuntimeRequirements(JsonObject source) =>
+        source["requirements"] is JsonArray requirements
+            ? requirements.DeepClone() as JsonArray
+            : null;
+
+    private static IReadOnlyDictionary<string, string> ReadMcmTranslations(JsonObject menu)
+    {
+        if (menu["translations"] is not JsonObject translations)
+        {
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        var values = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (key, value) in translations)
+        {
+            if (value is null || value.GetValueKind() != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            values[key] = value.GetValue<string>();
+        }
+
+        return values;
+    }
+
+    private static IReadOnlyList<McmSettingDefinition> ReadMcmSettings(JsonObject page)
+    {
+        if (page["settings"] is not JsonArray settings)
+        {
+            return [];
+        }
+
+        return settings
+            .OfType<JsonObject>()
+            .Select(setting => new McmSettingDefinition(
+                GetString(setting, "id") ?? string.Empty,
+                GetString(setting, "label") ?? string.Empty,
+                GetString(setting, "settingType") ?? string.Empty,
+                setting["default"]?.DeepClone(),
+                ReadMcmIniBinding(setting),
+                ReadStringArray(setting, "choices"),
+                ReadMcmSettingScale(setting),
+                GetString(setting, "textOn"),
+                GetString(setting, "textOff"),
+                ReadMcmImage(setting)))
+            .ToArray();
+    }
+
+    private static McmImageDefinition? ReadMcmImage(JsonObject setting)
+    {
+        if (setting["image"] is not JsonObject image)
+        {
+            return null;
+        }
+
+        var filename = GetString(image, "filename");
+        var width = GetInteger(image, "width");
+        var height = GetInteger(image, "height");
+        var systemColor = GetInteger(image, "systemcolor");
+        var offsetX = GetInteger(image, "offsetX");
+        var offsetY = GetInteger(image, "offsetY");
+        return filename is null || width is null || height is null || systemColor is null
+            ? null
+            : new McmImageDefinition(filename, width.Value, height.Value, systemColor.Value, offsetX, offsetY);
+    }
+
+    private static McmSettingScale? ReadMcmSettingScale(JsonObject setting)
+    {
+        if (setting["scale"] is not JsonObject scale)
+        {
+            return null;
+        }
+
+        var valueMin = GetNumber(scale, "valueMin");
+        var valueMax = GetNumber(scale, "valueMax");
+        var valueIncrement = GetNumber(scale, "valueIncrement");
+        var valueDecimal = GetInteger(scale, "valueDecimal");
+        return valueMin is null || valueMax is null || valueIncrement is null || valueDecimal is null
+            ? null
+            : new McmSettingScale(valueMin.Value, valueMax.Value, valueIncrement.Value, valueDecimal.Value);
+    }
+
+    private static McmIniBinding? ReadMcmIniBinding(JsonObject setting)
+    {
+        if (setting["ini"] is not JsonObject ini)
+        {
+            return null;
+        }
+
+        var file = GetString(ini, "file");
+        var section = GetString(ini, "section");
+        var key = GetString(ini, "key");
+        return file is null || section is null || key is null
+            ? null
+            : new McmIniBinding(file, section, key);
+    }
+
     private static IReadOnlyList<AssetRecord> ReadAssetRecords(IReadOnlyList<RegistryDocument> assetDocuments)
     {
         return assetDocuments
             .SelectMany(document => ReadAssetEntries(document).Select(asset => new AssetRecord(document, asset)))
             .ToArray();
+    }
+
+    private static IEnumerable<AssetDefinition> ReadAssetDefinitions(RegistryDocument document)
+    {
+        if (document.Root["assets"] is not JsonArray assets)
+        {
+            yield break;
+        }
+
+        for (var index = 0; index < assets.Count; index++)
+        {
+            if (assets[index] is not JsonObject asset)
+            {
+                continue;
+            }
+
+            var id = GetString(asset, "id");
+            var assetType = GetString(asset, "assetType");
+            var source = GetString(asset, "source");
+            var target = GetString(asset, "target");
+            if (id is null || assetType is null || source is null || target is null)
+            {
+                continue;
+            }
+
+            yield return new AssetDefinition(
+                id,
+                assetType,
+                source,
+                target,
+                GetBoolean(asset, "required") is not false,
+                CreateSourceLocation(document.DisplayPath, $"/assets/{index}", document.SourceLocations));
+        }
+    }
+
+    private static IEnumerable<McmImageAssetReference> ReadMcmImageAssetReferences(RegistryDocument document)
+    {
+        if (document.Root["menus"] is not JsonArray menus)
+        {
+            yield break;
+        }
+
+        for (var menuIndex = 0; menuIndex < menus.Count; menuIndex++)
+        {
+            if (menus[menuIndex] is not JsonObject menu ||
+                menu["pages"] is not JsonArray pages)
+            {
+                continue;
+            }
+
+            for (var pageIndex = 0; pageIndex < pages.Count; pageIndex++)
+            {
+                if (pages[pageIndex] is not JsonObject page ||
+                    page["settings"] is not JsonArray settings)
+                {
+                    continue;
+                }
+
+                for (var settingIndex = 0; settingIndex < settings.Count; settingIndex++)
+                {
+                    if (settings[settingIndex] is not JsonObject setting ||
+                        !StringComparer.Ordinal.Equals(GetString(setting, "settingType"), "image") ||
+                        setting["image"] is not JsonObject image)
+                    {
+                        continue;
+                    }
+
+                    var filename = GetString(image, "filename");
+                    if (filename is null)
+                    {
+                        continue;
+                    }
+
+                    var settingId = GetString(setting, "id") ?? $"menus/{menuIndex}/pages/{pageIndex}/settings/{settingIndex}";
+                    yield return new McmImageAssetReference(
+                        document.DisplayPath,
+                        document.SourceLocations,
+                        settingId,
+                        filename,
+                        $"/menus/{menuIndex}/pages/{pageIndex}/settings/{settingIndex}/image/filename");
+                }
+            }
+        }
     }
 
     private static IEnumerable<string> ReadQuestIds(RegistryDocument document)
@@ -2405,6 +3073,160 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static IEnumerable<DialogueResponseRouteReference> ReadDialogueResponseRouteReferences(RegistryDocument document)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line ||
+                line["responseRoutes"] is not JsonArray responseRoutes)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            if (lineId is null)
+            {
+                continue;
+            }
+
+            for (var routeIndex = 0; routeIndex < responseRoutes.Count; routeIndex++)
+            {
+                if (responseRoutes[routeIndex] is not JsonObject responseRoute)
+                {
+                    continue;
+                }
+
+                var routeId = GetString(responseRoute, "id");
+                var targetTopicId = GetString(responseRoute, "targetTopicId");
+                if (routeId is null || targetTopicId is null)
+                {
+                    continue;
+                }
+
+                yield return new DialogueResponseRouteReference(
+                    lineIndex,
+                    routeIndex,
+                    lineId,
+                    routeId,
+                    targetTopicId);
+            }
+        }
+    }
+
+    private static IEnumerable<DuplicateDialogueResponseRouteIdentity> ReadDuplicateDialogueResponseRouteIdentities(RegistryDocument document)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line ||
+                line["responseRoutes"] is not JsonArray responseRoutes)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            if (lineId is null)
+            {
+                continue;
+            }
+
+            var firstRouteIdPointersById = new Dictionary<string, string>(StringComparer.Ordinal);
+            for (var routeIndex = 0; routeIndex < responseRoutes.Count; routeIndex++)
+            {
+                if (responseRoutes[routeIndex] is not JsonObject responseRoute)
+                {
+                    continue;
+                }
+
+                var routeId = GetString(responseRoute, "id");
+                if (routeId is null)
+                {
+                    continue;
+                }
+
+                var routeIdPointer = $"/lines/{lineIndex}/responseRoutes/{routeIndex}/id";
+                if (!firstRouteIdPointersById.TryGetValue(routeId, out var firstRouteIdPointer))
+                {
+                    firstRouteIdPointersById[routeId] = routeIdPointer;
+                    continue;
+                }
+
+                yield return new DuplicateDialogueResponseRouteIdentity(
+                    lineIndex,
+                    routeIdPointer,
+                    firstRouteIdPointer,
+                    lineId,
+                    routeId);
+            }
+        }
+    }
+
+    private static IEnumerable<DuplicateDialogueResponseRouteKey> ReadDuplicateDialogueResponseRouteKeys(RegistryDocument document)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line ||
+                line["responseRoutes"] is not JsonArray responseRoutes)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            if (lineId is null)
+            {
+                continue;
+            }
+
+            var firstRoutesByKey = new Dictionary<string, DialogueResponseRouteKeyOccurrence>(StringComparer.Ordinal);
+            for (var routeIndex = 0; routeIndex < responseRoutes.Count; routeIndex++)
+            {
+                if (responseRoutes[routeIndex] is not JsonObject responseRoute)
+                {
+                    continue;
+                }
+
+                var routeId = GetString(responseRoute, "id");
+                var routeKey = GetString(responseRoute, "routeKey");
+                if (routeId is null || routeKey is null)
+                {
+                    continue;
+                }
+
+                var routeKeyPointer = $"/lines/{lineIndex}/responseRoutes/{routeIndex}/routeKey";
+                if (!firstRoutesByKey.TryGetValue(routeKey, out var firstRoute))
+                {
+                    firstRoutesByKey[routeKey] = new DialogueResponseRouteKeyOccurrence(
+                        routeKeyPointer,
+                        routeId);
+                    continue;
+                }
+
+                yield return new DuplicateDialogueResponseRouteKey(
+                    lineIndex,
+                    routeKeyPointer,
+                    firstRoute.RouteKeyPointer,
+                    lineId,
+                    routeId,
+                    firstRoute.RouteId,
+                    routeKey);
+            }
+        }
+    }
+
     private static IEnumerable<DialogueQuestGateReference> ReadDialogueQuestGateReferences(RegistryDocument document)
     {
         if (document.Root["questGates"] is not JsonArray questGates)
@@ -2712,6 +3534,91 @@ public sealed class ProjectValidationPipeline
         }
     }
 
+    private static IEnumerable<DuplicateDialogueConditionLogicIdentity> ReadDuplicateDialogueConditionLogicIdentities(RegistryDocument document)
+    {
+        if (document.Root["lines"] is not JsonArray lines)
+        {
+            yield break;
+        }
+
+        for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
+        {
+            if (lines[lineIndex] is not JsonObject line ||
+                line["conditionLogic"] is not JsonObject conditionLogic)
+            {
+                continue;
+            }
+
+            var lineId = GetString(line, "id");
+            if (lineId is null)
+            {
+                continue;
+            }
+
+            var firstLogicIdPointersById = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var identity in ReadDialogueConditionLogicIdentities(
+                lineIndex,
+                lineId,
+                conditionLogic,
+                $"/lines/{lineIndex}/conditionLogic"))
+            {
+                if (!firstLogicIdPointersById.TryGetValue(identity.LogicId, out var firstLogicIdPointer))
+                {
+                    firstLogicIdPointersById[identity.LogicId] = identity.LogicIdPointer;
+                    continue;
+                }
+
+                yield return new DuplicateDialogueConditionLogicIdentity(
+                    identity.LineIndex,
+                    identity.LogicIdPointer,
+                    firstLogicIdPointer,
+                    identity.LineId,
+                    identity.LogicId);
+            }
+        }
+    }
+
+    private static IEnumerable<DialogueConditionLogicIdentity> ReadDialogueConditionLogicIdentities(
+        int lineIndex,
+        string lineId,
+        JsonObject conditionLogic,
+        string conditionLogicPointer)
+    {
+        var logicId = GetString(conditionLogic, "id");
+        if (logicId is null)
+        {
+            yield break;
+        }
+
+        yield return new DialogueConditionLogicIdentity(
+            lineIndex,
+            $"{conditionLogicPointer}/id",
+            lineId,
+            logicId);
+
+        if (conditionLogic["groups"] is not JsonArray groups)
+        {
+            yield break;
+        }
+
+        for (var groupIndex = 0; groupIndex < groups.Count; groupIndex++)
+        {
+            if (groups[groupIndex] is not JsonObject group)
+            {
+                continue;
+            }
+
+            foreach (var identity in ReadDialogueConditionLogicIdentities(
+                lineIndex,
+                lineId,
+                group,
+                $"{conditionLogicPointer}/groups/{groupIndex}"))
+            {
+                yield return identity;
+            }
+        }
+    }
+
     private static IEnumerable<DialogueConditionLogicReference> ReadDialogueConditionLogicReferences(RegistryDocument document)
     {
         if (document.Root["lines"] is not JsonArray lines)
@@ -2722,42 +3629,126 @@ public sealed class ProjectValidationPipeline
         for (var lineIndex = 0; lineIndex < lines.Count; lineIndex++)
         {
             if (lines[lineIndex] is not JsonObject line ||
-                line["conditionLogic"] is not JsonObject conditionLogic ||
-                conditionLogic["conditionIds"] is not JsonArray conditionIds)
+                line["conditionLogic"] is not JsonObject conditionLogic)
             {
                 continue;
             }
 
             var lineId = GetString(line, "id");
-            var logicId = GetString(conditionLogic, "id");
-            if (lineId is null || logicId is null)
+            if (lineId is null)
             {
                 continue;
             }
 
             var authoredConditionIds = ReadLineConditionIds(line)
                 .ToHashSet(StringComparer.Ordinal);
-            for (var conditionIdIndex = 0; conditionIdIndex < conditionIds.Count; conditionIdIndex++)
+            foreach (var reference in ReadDialogueConditionLogicReferences(
+                lineIndex,
+                lineId,
+                conditionLogic,
+                $"/lines/{lineIndex}/conditionLogic",
+                authoredConditionIds))
             {
-                if (conditionIds[conditionIdIndex]?.GetValueKind() != JsonValueKind.String)
-                {
-                    continue;
-                }
-
-                var conditionId = conditionIds[conditionIdIndex]?.GetValue<string>();
-                if (string.IsNullOrWhiteSpace(conditionId))
-                {
-                    continue;
-                }
-
-                yield return new DialogueConditionLogicReference(
-                    lineIndex,
-                    conditionIdIndex,
-                    lineId,
-                    logicId,
-                    conditionId,
-                    authoredConditionIds);
+                yield return reference;
             }
+        }
+    }
+
+    private static IEnumerable<DialogueConditionLogicReference> ReadDialogueConditionLogicReferences(
+        int lineIndex,
+        string lineId,
+        JsonObject conditionLogic,
+        string conditionLogicPointer,
+        IReadOnlySet<string> authoredConditionIds)
+    {
+        var logicId = GetString(conditionLogic, "id");
+        if (logicId is null)
+        {
+            yield break;
+        }
+
+        foreach (var reference in ReadDialogueConditionLogicConditionIdReferences(
+            lineIndex,
+            lineId,
+            logicId,
+            conditionLogic,
+            conditionLogicPointer,
+            authoredConditionIds,
+            "conditionIds"))
+        {
+            yield return reference;
+        }
+
+        foreach (var reference in ReadDialogueConditionLogicConditionIdReferences(
+            lineIndex,
+            lineId,
+            logicId,
+            conditionLogic,
+            conditionLogicPointer,
+            authoredConditionIds,
+            "negatedConditionIds"))
+        {
+            yield return reference;
+        }
+
+        if (conditionLogic["groups"] is not JsonArray groups)
+        {
+            yield break;
+        }
+
+        for (var groupIndex = 0; groupIndex < groups.Count; groupIndex++)
+        {
+            if (groups[groupIndex] is not JsonObject group)
+            {
+                continue;
+            }
+
+            foreach (var reference in ReadDialogueConditionLogicReferences(
+                lineIndex,
+                lineId,
+                group,
+                $"{conditionLogicPointer}/groups/{groupIndex}",
+                authoredConditionIds))
+            {
+                yield return reference;
+            }
+        }
+    }
+
+    private static IEnumerable<DialogueConditionLogicReference> ReadDialogueConditionLogicConditionIdReferences(
+        int lineIndex,
+        string lineId,
+        string logicId,
+        JsonObject conditionLogic,
+        string conditionLogicPointer,
+        IReadOnlySet<string> authoredConditionIds,
+        string propertyName)
+    {
+        if (conditionLogic[propertyName] is not JsonArray conditionIds)
+        {
+            yield break;
+        }
+
+        for (var conditionIdIndex = 0; conditionIdIndex < conditionIds.Count; conditionIdIndex++)
+        {
+            if (conditionIds[conditionIdIndex]?.GetValueKind() != JsonValueKind.String)
+            {
+                continue;
+            }
+
+            var conditionId = conditionIds[conditionIdIndex]?.GetValue<string>();
+            if (string.IsNullOrWhiteSpace(conditionId))
+            {
+                continue;
+            }
+
+            yield return new DialogueConditionLogicReference(
+                lineIndex,
+                $"{conditionLogicPointer}/{propertyName}/{conditionIdIndex}",
+                lineId,
+                logicId,
+                conditionId,
+                authoredConditionIds);
         }
     }
 
@@ -2858,6 +3849,21 @@ public sealed class ProjectValidationPipeline
         };
     }
 
+    private static IReadOnlyList<string> ReadStringArray(JsonObject root, string propertyName)
+    {
+        if (root[propertyName] is not JsonArray array)
+        {
+            return [];
+        }
+
+        return array
+            .Where(item => item?.GetValueKind() == JsonValueKind.String)
+            .Select(item => item?.GetValue<string>())
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Cast<string>()
+            .ToArray();
+    }
+
     private static long? GetInteger(JsonObject? root, string propertyName)
     {
         if (root?[propertyName]?.GetValueKind() != JsonValueKind.Number)
@@ -2868,6 +3874,27 @@ public sealed class ProjectValidationPipeline
         try
         {
             return root[propertyName]?.GetValue<long>();
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    private static double? GetNumber(JsonObject? root, string propertyName)
+    {
+        if (root?[propertyName]?.GetValueKind() != JsonValueKind.Number)
+        {
+            return null;
+        }
+
+        try
+        {
+            return root[propertyName]?.GetValue<double>();
         }
         catch (FormatException)
         {
@@ -3224,6 +4251,13 @@ public sealed class ProjectValidationPipeline
 
     private sealed record VoiceTarget(AssetRecord Record, string Stem, string Extension);
 
+    private sealed record McmImageAssetReference(
+        string DisplayPath,
+        IReadOnlyDictionary<string, SourcePosition> SourceLocations,
+        string SettingId,
+        string Filename,
+        string Pointer);
+
     private sealed record DialogueQuestReference(int Index, string LineId, string QuestId);
 
     private sealed record DialogueTopicReference(int LineIndex, string LineId, string TopicId);
@@ -3252,6 +4286,31 @@ public sealed class ProjectValidationPipeline
         string LineId,
         string LinkId,
         string SourceTopicId);
+
+    private sealed record DialogueResponseRouteReference(
+        int LineIndex,
+        int RouteIndex,
+        string LineId,
+        string RouteId,
+        string TargetTopicId);
+
+    private sealed record DuplicateDialogueResponseRouteIdentity(
+        int LineIndex,
+        string RouteIdPointer,
+        string FirstRouteIdPointer,
+        string LineId,
+        string RouteId);
+
+    private sealed record DialogueResponseRouteKeyOccurrence(string RouteKeyPointer, string RouteId);
+
+    private sealed record DuplicateDialogueResponseRouteKey(
+        int LineIndex,
+        string RouteKeyPointer,
+        string FirstRouteKeyPointer,
+        string LineId,
+        string RouteId,
+        string FirstRouteId,
+        string RouteKey);
 
     private sealed record DialogueQuestGateReference(int GateIndex, string GateId, string QuestId);
 
@@ -3309,9 +4368,22 @@ public sealed class ProjectValidationPipeline
         string VariableId,
         QuestReferenceData QuestData);
 
+    private sealed record DialogueConditionLogicIdentity(
+        int LineIndex,
+        string LogicIdPointer,
+        string LineId,
+        string LogicId);
+
+    private sealed record DuplicateDialogueConditionLogicIdentity(
+        int LineIndex,
+        string LogicIdPointer,
+        string FirstLogicIdPointer,
+        string LineId,
+        string LogicId);
+
     private sealed record DialogueConditionLogicReference(
         int LineIndex,
-        int ConditionIdIndex,
+        string ConditionIdPointer,
         string LineId,
         string LogicId,
         string ConditionId,

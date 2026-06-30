@@ -10,20 +10,45 @@ public static class WastelandForgeSchemaCatalog
             "0.1.0",
             "schemas/manifest/0.1.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.Manifest020,
+            "manifest",
+            "0.2.0",
+            "schemas/manifest/0.2.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.Dependency010,
             "dependency",
             "0.1.0",
             "schemas/dependencies/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dependency020,
+            "dependency",
+            "0.2.0",
+            "schemas/dependencies/0.2.0/schema.json"),
         new(
             WastelandForgeSchemaIds.Capability010,
             "capability",
             "0.1.0",
             "schemas/capabilities/0.1.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.Capability020,
+            "capability",
+            "0.2.0",
+            "schemas/capabilities/0.2.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.Asset010,
             "asset",
             "0.1.0",
             "schemas/assets/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Mcm010,
+            "mcm",
+            "0.1.0",
+            "schemas/mcm/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.McmExtenderOutput010,
+            "mcm-extender-output",
+            "0.1.0",
+            "schemas/mcm-extender-output/0.1.0/schema.json"),
         new(
             WastelandForgeSchemaIds.Quest010,
             "quest",
@@ -143,7 +168,32 @@ public static class WastelandForgeSchemaCatalog
             WastelandForgeSchemaIds.Dialogue0180,
             "dialogue",
             "0.18.0",
-            "schemas/dialogue/0.18.0/schema.json")
+            "schemas/dialogue/0.18.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue0190,
+            "dialogue",
+            "0.19.0",
+            "schemas/dialogue/0.19.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue0200,
+            "dialogue",
+            "0.20.0",
+            "schemas/dialogue/0.20.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue0210,
+            "dialogue",
+            "0.21.0",
+            "schemas/dialogue/0.21.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue0220,
+            "dialogue",
+            "0.22.0",
+            "schemas/dialogue/0.22.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Dialogue0230,
+            "dialogue",
+            "0.23.0",
+            "schemas/dialogue/0.23.0/schema.json")
     ];
 
     public static IReadOnlyList<SchemaResource> BuiltIn => BuiltInSchemas;
@@ -196,8 +246,9 @@ public static class WastelandForgeSchemaCatalog
 
     private static string EscapeResourceIdentifier(string segment)
     {
+        var escaped = segment.Replace("-", "_", StringComparison.Ordinal);
         return segment.Length > 0 && char.IsDigit(segment[0])
-            ? "_" + segment
-            : segment;
+            ? "_" + escaped
+            : escaped;
     }
 }

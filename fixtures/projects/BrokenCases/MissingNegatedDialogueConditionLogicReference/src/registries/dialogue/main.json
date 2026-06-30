@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "0.20.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingnegateddialogueconditionlogicreference.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.missingnegateddialogueconditionlogicreference.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingnegateddialogueconditionlogicreference.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingnegateddialogueconditionlogicreference.quest.intro",
+      "topicId": "io.github.theboyyss.missingnegateddialogueconditionlogicreference.topic.greeting",
+      "promptText": "Synthetic negated condition logic reference prompt.",
+      "priority": 10,
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.missingnegateddialogueconditionlogicreference.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.missingnegateddialogueconditionlogicreference.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.missingnegateddialogueconditionlogicreference.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "conditionIds": [
+          "io.github.theboyyss.missingnegateddialogueconditionlogicreference.dialogue.intro.condition.started"
+        ],
+        "negatedConditionIds": [
+          "io.github.theboyyss.missingnegateddialogueconditionlogicreference.dialogue.intro.condition.missing"
+        ],
+        "summary": "Synthetic line-local condition boolean composition declaration with a missing negated condition reference."
+      },
+      "responseText": "Synthetic dialogue line with missing negated condition logic reference."
+    }
+  ]
+}

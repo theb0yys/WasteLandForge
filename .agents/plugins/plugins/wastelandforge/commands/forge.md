@@ -84,6 +84,30 @@ Use this routing:
 | `/forge help` | canonical command list and research-bound operating rules |
 | `/forge --version` | actual CLI version if implemented; otherwise planned version state and open implementation status |
 
+Gate 45 option routing:
+
+- `/forge validate --geck-dialogue-export <path>` routes to the real
+  `forge validate --geck-dialogue-export <path>` CLI behavior when available.
+  Treat it as a file-based validation bridge for a GECK dialogue export text
+  file only. Do not control, automate, import into, or mutate an open GECK
+  session.
+
+Gate 71 option routing:
+
+- `/forge generate --target mcm-json` and `/forge build --target mcm-json`
+  route to the real `forge` CLI behavior when available. Treat the output as
+  the Gate 71 validated MCM Extender JSON runtime subset under `MCM/<menu>.json`,
+  plus `MCM/Translations/<modName>.ini` when translations are declared, and
+  staged referenced texture assets under their game-relative target paths.
+  The output also includes `package-manifest.json` for the loose-file package
+  root. It supports header, image, toggle, keybind, checkbox, string-toggle,
+  slider, choice, and text settings. MCM image filenames are validated against
+  required texture asset targets and existing DDS source-file checks. Do not
+  claim callbacks, multi-slider, color picker, actual `forge package`
+  execution, ZIP/FOMOD package creation,
+  capability-derived runtime requirements, or in-game verification exist until
+  later gates implement them.
+
 ## Verification
 
 Before reporting success, verify the command action using the narrowest reliable local check:

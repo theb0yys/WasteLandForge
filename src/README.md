@@ -168,3 +168,164 @@ Gate 43 adds semantic dialogue condition logic reference validation in
 `WastelandForge.Validation`. It emits `WF-SEM-034` when a schema-valid
 `conditionLogic.conditionIds[]` entry does not resolve to a condition authored
 on the same dialogue line.
+
+Gate 44 adds dialogue registry schema `0.19.0` runtime validation for nested
+dialogue condition group skeletons in `WastelandForge.Validation`. It extends
+the existing `WF-SEM-034` semantic traversal to condition IDs declared inside
+nested `conditionLogic.groups[]` entries.
+
+Gate 45 adds `GeckDialogueExportValidator` in `WastelandForge.Validation` and
+wires it into `forge validate --geck-dialogue-export <path>` from
+`WastelandForge.Cli`. The bridge is file-based: it validates that a GECK
+dialogue export text file exists, is readable text, and is non-empty.
+
+Gate 46 adds dialogue registry schema `0.20.0` runtime validation for explicit
+line-local dialogue condition negation skeletons in `WastelandForge.Validation`.
+It extends existing `WF-SEM-034` semantic traversal to condition IDs declared
+inside `conditionLogic.negatedConditionIds[]`.
+
+Gate 47 adds dialogue registry schema `0.21.0` runtime validation for explicit
+line-local dialogue condition precedence skeletons in
+`WastelandForge.Validation`. Precedence is schema-only in this gate and does
+not decide evaluation ordering or GECK condition-list mapping.
+
+Gate 48 adds dialogue registry schema `0.22.0` runtime validation for explicit
+line-local dialogue condition short-circuit skeletons in
+`WastelandForge.Validation`. Short-circuit intent is schema-only in this gate
+and does not decide evaluation behavior or GECK condition-list mapping.
+
+Gate 49 adds `WF-SEM-035` semantic validation in `WastelandForge.Validation`
+for duplicate root or nested dialogue condition logic IDs inside one
+line-local condition logic tree. It does not add a new schema version.
+
+Gate 50 adds dialogue registry schema `0.23.0` runtime validation for explicit
+line-local dialogue response route skeletons in `WastelandForge.Validation`.
+Response route intent is schema-only in this gate and does not decide target
+reference validation, route selection behavior, or GECK mapping.
+
+Gate 51 adds `WF-SEM-036` semantic validation in
+`WastelandForge.Validation` for schema-valid dialogue response route
+`targetTopicId` values that do not resolve to declared dialogue topics. It
+does not add a new schema version.
+
+Gate 52 adds `WF-SEM-037` semantic validation in
+`WastelandForge.Validation` for schema-valid dialogue response route target
+topics that are declared but have no authored dialogue line endpoint. It does
+not add a new schema version.
+
+Gate 53 adds `WF-SEM-038` semantic validation in
+`WastelandForge.Validation` for duplicate response route IDs authored on the
+same dialogue line. It does not add a new schema version.
+
+Gate 54 adds `WF-SEM-039` semantic validation in
+`WastelandForge.Validation` for duplicate response route keys authored on the
+same dialogue line. It does not add a new schema version.
+
+Gate 55 adds no runtime code. It preserves dialogue registry schema `0.23.0`
+and the existing `WF-SEM-036` through `WF-SEM-039` response route validators
+while recording response route taxonomy as evidence-blocked.
+
+Gate 56 adds no runtime code. It creates a dialogue response route taxonomy
+evidence pack skeleton under `docs/dialogue/` and preserves the existing
+response route validators unchanged.
+
+Gate 57 adds `CapabilityCatalog`, `CapabilityDefinition`, and
+`ProviderDefinition` records plus `BuiltInFnvCapabilityCatalog` in
+`WastelandForge.Registry`. It wires `forge capabilities list` through
+`WastelandForge.Cli` with text and JSON renderers. `capabilities scan` and
+`capabilities explain` remain reserved.
+
+Gate 58 adds capability scan records and `BuiltInFnvCapabilityScanner` in
+`WastelandForge.Registry`. It wires `forge capabilities scan` through
+`WastelandForge.Cli` with text and JSON renderers for root-file, data-file,
+and executable-tool evidence. Runtime probes, MO2 VFS launch, provider
+version checks, `WF-CAP-*` diagnostics, and `capabilities explain` remain
+future work.
+
+Gate 59 adds capability explanation records and `BuiltInFnvCapabilityExplainer`
+in `WastelandForge.Registry`. It wires `forge capabilities explain` through
+`WastelandForge.Cli` with text and JSON renderers for built-in capability and
+provider targets over Gate 58 scan evidence. Runtime probes, MO2 VFS launch,
+provider version checks, `WF-CAP-*` diagnostics, and project requirement
+resolution remain future work.
+
+Gate 60 adds capability requirement resolution records and
+`BuiltInFnvCapabilityRequirementResolver` in `WastelandForge.Registry`. It
+exposes a dependency requirement reader through `WastelandForge.Validation`
+and wires `forge capabilities scan --project` through `WastelandForge.Cli`
+with text and JSON requirement summaries. Runtime probes, MO2 VFS launch,
+provider version checks, and `WF-CAP-*` diagnostics remain future work.
+
+Gate 61 adds `WastelandForge.Generation` metadata report records and
+`MetadataReportGenerator`. It wires `forge generate --target reports` and
+`forge build --target reports` through `WastelandForge.Cli` with text and JSON
+output, deterministic report files, generation/build manifests, and build
+checksums. MCM Extender JSON, JIP scripts, package archives, plugin records,
+runtime probes, and external tool execution remain future work.
+
+Gate 62 adds typed MCM menu reads in `WastelandForge.Validation` and
+`McmJsonGenerator` in `WastelandForge.Generation`. It wires
+`forge generate --target mcm-json` and `forge build --target mcm-json`
+through `WastelandForge.Cli` with text and JSON output, deterministic MCM JSON
+skeleton files, manifests, and build checksums. Runtime MCM Extender schema
+confirmation, JIP scripts, package archives, plugin records, runtime probes,
+and external tool execution remain future work.
+
+Gate 63 replaces the Gate 62 MCM skeleton with a minimal upstream-shaped MCM
+Extender JSON output model. `WastelandForge.Validation` reads
+`minMCMVersion` and slider scale metadata, `WastelandForge.Generation`
+validates generated output against `mcm-extender-output/0.1.0`, and the CLI
+writes `MCM/<menu>.json` under generated or dist output roots. Advanced MCM
+Extender options, translations, callbacks, in-game runtime probes, JIP scripts,
+package archives, plugin records, and external tool execution remain future
+work.
+
+Gate 64 extends the MCM source read model with runtime `requirements` arrays
+and translation maps. `WastelandForge.Generation` passes requirements through
+to root and submenu JSON, writes deterministic
+`MCM/Translations/<modName>.ini` files when translations are declared, records
+translation files in manifests/checksums, and emits `WF-GEN-006` for duplicate
+translation output paths. Additional MCM Extender options, callbacks,
+capability-to-runtime requirement inference, in-game runtime probes, package
+archives, plugin records, and external tool execution remain future work.
+
+Gate 65 extends the MCM source read model with optional string-toggle
+`textOn`/`textOff` labels and teaches `McmJsonGenerator` to emit MCM Extender
+checkbox option type `5` and string-toggle option type `6`. Additional MCM
+Extender options, callbacks, capability-to-runtime requirement
+inference, in-game runtime probes, package archives, plugin records, and
+external tool execution remain future work.
+
+Gate 66 teaches `McmJsonGenerator` to emit MCM Extender keybind option type
+`3` through the existing INI-backed variable path. Multi-slider, color picker,
+callbacks, capability-to-runtime requirement inference, in-game runtime probes,
+package archives, plugin records, and external tool execution remain future
+work.
+
+Gate 67 teaches `McmJsonGenerator` to emit MCM Extender header option type
+`0` without variables. Image maps, multi-slider, color picker, callbacks,
+capability-to-runtime requirement inference, in-game runtime probes, package
+archives, plugin records, and external tool execution remain future work.
+
+Gate 68 teaches `McmJsonGenerator` to emit MCM Extender image option maps on
+type `0` options.
+
+Gate 69 teaches `ProjectValidationPipeline` to validate MCM image filenames
+against required texture asset targets. Existing asset source existence and
+DDS header checks then validate the declared source file. Multi-slider, color
+picker, callbacks, capability-to-runtime requirement inference, in-game
+runtime probes, package archives, plugin records, and external tool execution
+remain future work.
+
+Gate 70 teaches `McmJsonGenerator` to stage referenced MCM texture assets as
+loose files under their game-relative target paths and to include those staged
+paths in outputs, manifests, output digests, and build checksums. Multi-slider,
+color picker, callbacks, capability-to-runtime requirement inference, in-game
+runtime probes, ZIP/FOMOD package archives, plugin records, and external tool
+execution remain future work.
+
+Gate 71 teaches `McmJsonGenerator` to write `package-manifest.json` beside the
+loose-file MCM output tree. The package manifest records menu, translation,
+and asset entries plus payload digests, while ZIP/FOMOD archive creation,
+actual `forge package` execution, plugin records, and external tool execution
+remain future work.

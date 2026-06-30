@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "manifest",
+  "id": "io.github.theboyyss.duplicatedialogueconditionlogicidentity",
+  "name": "Duplicate Dialogue Condition Logic Identity",
+  "version": "0.1.0",
+  "game": "falloutnv",
+  "registries": {
+    "dependencies": "src/registries/dependencies/",
+    "capabilities": "src/registries/capabilities/",
+    "dialogue": "src/registries/dialogue/"
+  }
+}

@@ -5,12 +5,13 @@ namespace WastelandForge.Cli;
 
 internal static class DiagnosticReportTextRenderer
 {
-    public static string Render(DiagnosticReport report)
+    public static string Render(DiagnosticReport report, string command = "validate")
     {
         ArgumentNullException.ThrowIfNull(report);
 
         var builder = new StringBuilder();
-        builder.Append("validate: ");
+        builder.Append(command);
+        builder.Append(": ");
         builder.Append(report.ErrorCount);
         builder.Append(" error(s), ");
         builder.Append(report.WarningCount);

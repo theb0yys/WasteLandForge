@@ -10,6 +10,9 @@ public sealed class SchemaBackCompatTests
         Assert.Equal(
             "https://schemas.wastelandforge.dev/fnv/manifest/0.1.0/schema.json",
             WastelandForgeSchemaIds.Manifest010);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/manifest/0.2.0/schema.json",
+            WastelandForgeSchemaIds.Manifest020);
     }
 
     [Fact]
@@ -19,11 +22,23 @@ public sealed class SchemaBackCompatTests
             "https://schemas.wastelandforge.dev/fnv/dependencies/0.1.0/schema.json",
             WastelandForgeSchemaIds.Dependency010);
         Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dependencies/0.2.0/schema.json",
+            WastelandForgeSchemaIds.Dependency020);
+        Assert.Equal(
             "https://schemas.wastelandforge.dev/fnv/capabilities/0.1.0/schema.json",
             WastelandForgeSchemaIds.Capability010);
         Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/capabilities/0.2.0/schema.json",
+            WastelandForgeSchemaIds.Capability020);
+        Assert.Equal(
             "https://schemas.wastelandforge.dev/fnv/assets/0.1.0/schema.json",
             WastelandForgeSchemaIds.Asset010);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/mcm/0.1.0/schema.json",
+            WastelandForgeSchemaIds.Mcm010);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/mcm-extender-output/0.1.0/schema.json",
+            WastelandForgeSchemaIds.McmExtenderOutput010);
         Assert.Equal(
             "https://schemas.wastelandforge.dev/fnv/quests/0.1.0/schema.json",
             WastelandForgeSchemaIds.Quest010);
@@ -96,6 +111,21 @@ public sealed class SchemaBackCompatTests
         Assert.Equal(
             "https://schemas.wastelandforge.dev/fnv/dialogue/0.18.0/schema.json",
             WastelandForgeSchemaIds.Dialogue0180);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.19.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0190);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.20.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0200);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.21.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0210);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.22.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0220);
+        Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/dialogue/0.23.0/schema.json",
+            WastelandForgeSchemaIds.Dialogue0230);
     }
 
     [Fact]
@@ -111,8 +141,12 @@ public sealed class SchemaBackCompatTests
 
     [Theory]
     [InlineData(WastelandForgeSchemaIds.Dependency010, "dependency", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.Dependency020, "dependency", "0.2.0")]
     [InlineData(WastelandForgeSchemaIds.Capability010, "capability", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.Capability020, "capability", "0.2.0")]
     [InlineData(WastelandForgeSchemaIds.Asset010, "asset", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.Mcm010, "mcm", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.McmExtenderOutput010, "mcm-extender-output", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.Quest010, "quest", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.Quest020, "quest", "0.2.0")]
     [InlineData(WastelandForgeSchemaIds.Quest030, "quest", "0.3.0")]
@@ -137,6 +171,11 @@ public sealed class SchemaBackCompatTests
     [InlineData(WastelandForgeSchemaIds.Dialogue0160, "dialogue", "0.16.0")]
     [InlineData(WastelandForgeSchemaIds.Dialogue0170, "dialogue", "0.17.0")]
     [InlineData(WastelandForgeSchemaIds.Dialogue0180, "dialogue", "0.18.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0190, "dialogue", "0.19.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0200, "dialogue", "0.20.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0210, "dialogue", "0.21.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0220, "dialogue", "0.22.0")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0230, "dialogue", "0.23.0")]
     public void RegistrySchemaCatalogKeepsVersionedResources(string schemaId, string expectedKind, string expectedVersion)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);

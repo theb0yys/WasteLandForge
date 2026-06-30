@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "0.20.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueconditionnegationregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueconditionnegationregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueconditionnegationregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueconditionnegationregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueconditionnegationregistry.topic.greeting",
+      "promptText": "Synthetic condition negation prompt.",
+      "priority": 10,
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueconditionnegationregistry.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.invaliddialogueconditionnegationregistry.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.invaliddialogueconditionnegationregistry.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "conditionIds": [
+          "io.github.theboyyss.invaliddialogueconditionnegationregistry.dialogue.intro.condition.started"
+        ],
+        "negatedConditionIds": [],
+        "summary": "Synthetic line-local condition logic with invalid empty negated references."
+      },
+      "responseText": "Synthetic dialogue line with invalid condition negation shape."
+    }
+  ]
+}

@@ -37,6 +37,9 @@ Gate 16 adds `WF-ASSET-005` for source signature mismatch and `WF-ASSET-006`
 for target root mismatch.
 Gate 17 adds `WF-ASSET-007` for invalid voice target shape, `WF-ASSET-008`
 for incomplete WAV/OGG voice pairs, and `WF-ASSET-009` for missing LIP pairs.
+Gate 69 adds `WF-ASSET-010` for invalid MCM image filename paths and
+`WF-ASSET-011` for MCM image filenames that do not resolve to required
+texture asset targets.
 Gate 18 adds `WF-SEM-015` for dialogue voice worklist entries missing declared
 voice/lip assets.
 Gate 19 adds `WF-SEM-016` for dialogue `questId` references that are not
@@ -94,3 +97,78 @@ Gate 42 adds no new `WF-SEM-*` rule; invalid dialogue condition boolean
 composition shape is covered by `WF-SCHEMA-001`.
 Gate 43 adds `WF-SEM-034` for dialogue condition logic references that are not
 authored on the same dialogue line.
+Gate 44 adds no new `WF-SEM-*` rule; invalid dialogue nested condition group
+shape is covered by `WF-SCHEMA-001`, and `WF-SEM-034` also applies inside
+nested groups.
+Gate 45 adds `WF-LOAD-009` for missing GECK dialogue export files,
+`WF-LOAD-010` for unreadable or binary-looking GECK dialogue export files, and
+`WF-LOAD-011` for empty GECK dialogue export files.
+Gate 46 adds no new `WF-SEM-*` rule; invalid dialogue condition negation
+shape is covered by `WF-SCHEMA-001`, and `WF-SEM-034` also applies to
+`negatedConditionIds`.
+Gate 47 adds no new `WF-SEM-*` rule; invalid dialogue condition precedence
+shape is covered by `WF-SCHEMA-001`.
+Gate 48 adds no new `WF-SEM-*` rule; invalid dialogue condition short-circuit
+shape is covered by `WF-SCHEMA-001`.
+Gate 49 adds `WF-SEM-035` for duplicate dialogue condition logic IDs inside
+one line-local condition logic tree.
+Gate 50 adds no new `WF-SEM-*` rule; invalid dialogue response route shape is
+covered by `WF-SCHEMA-001`.
+Gate 51 adds `WF-SEM-036` for dialogue response route target topics that are
+not declared in dialogue topics.
+Gate 52 adds `WF-SEM-037` for dialogue response route target topics that are
+declared but have no authored dialogue line endpoint.
+Gate 53 adds `WF-SEM-038` for duplicate dialogue response route IDs authored
+on the same dialogue line.
+Gate 54 adds `WF-SEM-039` for duplicate dialogue response route keys authored
+on the same dialogue line.
+Gate 55 adds no new rule family member. It records that response route
+taxonomy and selection behavior require more evidence before new `WF-SEM-*`
+rules are added.
+Gate 56 adds no new rule family member. It creates an evidence pack skeleton
+for response route taxonomy before any new route-meaning diagnostics are
+defined.
+Gate 57 adds no new rule family member. It introduces catalogue listing for
+`forge capabilities list`; `WF-CAP-*` diagnostics remain reserved for local
+capability scan and provider-resolution gates.
+Gate 58 adds no new rule family member. It implements scan evidence output
+for `forge capabilities scan`, but `WF-CAP-*` diagnostics remain reserved
+until provider-resolution and project requirement gates.
+Gate 59 adds no new rule family member. It implements explanation output for
+`forge capabilities explain`, but `WF-CAP-*` diagnostics remain reserved until
+diagnostic projection over provider-resolution and project requirement gates.
+Gate 60 adds project requirement resolution output for
+`forge capabilities scan --project`, but still adds no `WF-CAP-*` diagnostic
+rule family member.
+
+Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
+outside project `generated/` and `WF-BUILD-001` for `forge build` output paths
+that resolve outside project `dist/`. It adds no `WF-CAP-*` diagnostics.
+
+Gate 62 adds `WF-GEN-002` when `mcm-json` generation lacks a declared
+non-optional `runtime.ui.mcm_json` generation dependency, `WF-GEN-003` when
+no MCM menus are declared for that target, and `WF-GEN-004` when multiple MCM
+menus resolve to the same output file. It still adds no `WF-CAP-*`
+diagnostics.
+
+Gate 63 adds `WF-GEN-005` when a source MCM registry cannot be translated into
+the Gate 63 MCM Extender output subset or generated output does not validate
+against `mcm-extender-output/0.1.0/schema.json`. It still adds no
+`WF-CAP-*` diagnostics.
+
+Gate 64 adds `WF-GEN-006` when multiple translated MCM menus resolve to the
+same generated `MCM/Translations/<modName>.ini` file. It still adds no
+`WF-CAP-*` diagnostics.
+
+Gate 65 adds no new rule ID. Unsupported or under-specified MCM option
+generation continues to use `WF-GEN-005`, now with checkbox and string-toggle
+settings included in the supported subset.
+
+Gate 66 adds no new rule ID. Unsupported or under-specified keybind generation
+continues to use `WF-GEN-005`.
+
+Gate 67 adds no new rule ID. Unsupported header generation continues to use
+`WF-GEN-005`.
+
+Gate 68 adds no new rule ID. Unsupported or under-specified image generation
+continues to use `WF-GEN-005`.

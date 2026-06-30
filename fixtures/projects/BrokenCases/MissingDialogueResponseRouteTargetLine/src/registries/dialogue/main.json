@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "0.23.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingdialogueresponseroutetargetline.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.missingdialogueresponseroutetargetline.topic.greeting",
+      "title": "Synthetic Greeting"
+    },
+    {
+      "id": "io.github.theboyyss.missingdialogueresponseroutetargetline.topic.followup",
+      "title": "Synthetic Follow Up"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingdialogueresponseroutetargetline.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingdialogueresponseroutetargetline.quest.intro",
+      "topicId": "io.github.theboyyss.missingdialogueresponseroutetargetline.topic.greeting",
+      "responseText": "Synthetic dialogue line with a declared but empty response route target topic.",
+      "responseRoutes": [
+        {
+          "id": "io.github.theboyyss.missingdialogueresponseroutetargetline.dialogue.intro.responseroute.followup",
+          "routeKey": "default",
+          "targetTopicId": "io.github.theboyyss.missingdialogueresponseroutetargetline.topic.followup",
+          "summary": "Synthetic response route declaration with no authored target line."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "0.19.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.missingnesteddialogueconditionlogicreference.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.missingnesteddialogueconditionlogicreference.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.missingnesteddialogueconditionlogicreference.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.missingnesteddialogueconditionlogicreference.quest.intro",
+      "topicId": "io.github.theboyyss.missingnesteddialogueconditionlogicreference.topic.greeting",
+      "promptText": "Synthetic nested condition logic reference prompt.",
+      "priority": 10,
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.missingnesteddialogueconditionlogicreference.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.missingnesteddialogueconditionlogicreference.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.missingnesteddialogueconditionlogicreference.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "conditionIds": [
+          "io.github.theboyyss.missingnesteddialogueconditionlogicreference.dialogue.intro.condition.started"
+        ],
+        "groups": [
+          {
+            "id": "io.github.theboyyss.missingnesteddialogueconditionlogicreference.dialogue.intro.conditionlogic.group.missing",
+            "operator": "any",
+            "conditionIds": [
+              "io.github.theboyyss.missingnesteddialogueconditionlogicreference.dialogue.intro.condition.missing"
+            ],
+            "summary": "Synthetic nested condition group declaration with a missing condition reference."
+          }
+        ],
+        "summary": "Synthetic line-local condition boolean composition declaration with a missing nested condition reference."
+      },
+      "responseText": "Synthetic dialogue line with missing nested condition logic reference."
+    }
+  ]
+}

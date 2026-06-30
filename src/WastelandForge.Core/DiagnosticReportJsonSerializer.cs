@@ -15,7 +15,7 @@ public static class DiagnosticReportJsonSerializer
         WriteIndented = true
     };
 
-    public static string Serialize(DiagnosticReport report, string? toolVersion = null)
+    public static string Serialize(DiagnosticReport report, string? toolVersion = null, string command = "validate")
     {
         ArgumentNullException.ThrowIfNull(report);
 
@@ -32,7 +32,7 @@ public static class DiagnosticReportJsonSerializer
             {
                 ["name"] = "WastelandForge"
             },
-            ["command"] = "validate"
+            ["command"] = command
         };
         if (!string.IsNullOrWhiteSpace(toolVersion))
         {

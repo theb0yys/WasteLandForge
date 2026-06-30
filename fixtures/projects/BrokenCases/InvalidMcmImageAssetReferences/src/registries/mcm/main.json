@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "mcm",
+  "id": "io.github.theboyyss.invalidmcmimageassetreferences.mcm",
+  "menus": [
+    {
+      "id": "io.github.theboyyss.invalidmcmimageassetreferences.mcm.main",
+      "title": "$InvalidMcmImageAssetReferences",
+      "outputFile": "InvalidMcmImageAssetReferences.json",
+      "minMCMVersion": 1.0,
+      "requires": {
+        "capabilities": [
+          {
+            "id": "runtime.ui.mcm_json"
+          }
+        ]
+      },
+      "translations": {
+        "$InvalidMcmImageAssetReferences": "Invalid MCM Image Asset References",
+        "$MissingLogo": "Missing Logo",
+        "$UnsafeLogo": "Unsafe Logo"
+      },
+      "pages": [
+        {
+          "id": "io.github.theboyyss.invalidmcmimageassetreferences.mcm.general",
+          "title": "$InvalidMcmImageAssetReferences",
+          "settings": [
+            {
+              "id": "io.github.theboyyss.invalidmcmimageassetreferences.mcm.general.unsafe_logo",
+              "label": "$UnsafeLogo",
+              "settingType": "image",
+              "image": {
+                "filename": "../outside/Logo.dds",
+                "width": 256,
+                "height": 64,
+                "systemcolor": 0
+              }
+            },
+            {
+              "id": "io.github.theboyyss.invalidmcmimageassetreferences.mcm.general.missing_logo",
+              "label": "$MissingLogo",
+              "settingType": "image",
+              "image": {
+                "filename": "textures/interface/InvalidMcmImageAssetReferences/MissingLogo.dds",
+                "width": 256,
+                "height": 64,
+                "systemcolor": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

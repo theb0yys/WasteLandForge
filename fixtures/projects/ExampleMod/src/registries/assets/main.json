@@ -14,6 +14,17 @@
       ]
     },
     {
+      "id": "io.github.theboyyss.examplemod.assets.texture.mcm.logo",
+      "assetType": "texture",
+      "source": "src/assets/textures/interface/logo.dds",
+      "target": "textures/interface/ExampleMod/Logo.dds",
+      "required": true,
+      "tags": [
+        "synthetic",
+        "mcm"
+      ]
+    },
+    {
       "id": "io.github.theboyyss.examplemod.assets.voice.intro.hello.wav",
       "assetType": "voice",
       "source": "src/assets/voice/intro_hello.wav",

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "0.22.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.topic.greeting",
+      "promptText": "Synthetic condition short-circuit prompt.",
+      "priority": 10,
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "precedence": 0,
+        "shortCircuit": "yes",
+        "conditionIds": [
+          "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.dialogue.intro.condition.started"
+        ],
+        "negatedConditionIds": [
+          "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.dialogue.intro.condition.started"
+        ],
+        "groups": [
+          {
+            "id": "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.dialogue.intro.conditionlogic.group.valid",
+            "operator": "all",
+            "precedence": 10,
+            "shortCircuit": true,
+            "conditionIds": [
+              "io.github.theboyyss.invaliddialogueconditionshortcircuitregistry.dialogue.intro.condition.started"
+            ],
+            "summary": "Synthetic valid child group below the invalid short-circuit group."
+          }
+        ],
+        "summary": "Synthetic line-local condition logic with invalid short-circuit shape."
+      },
+      "responseText": "Synthetic dialogue line with invalid condition short-circuit shape."
+    }
+  ]
+}

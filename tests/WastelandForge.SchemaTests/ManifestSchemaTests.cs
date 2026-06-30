@@ -19,6 +19,19 @@ public sealed class ManifestSchemaTests
     }
 
     [Fact]
+    public void Manifest020SchemaFileParsesAsJson()
+    {
+        var schemaPath = Path.Combine(RepositoryRoot(), "schemas", "manifest", "0.2.0", "schema.json");
+        var schema = JsonNode.Parse(File.ReadAllText(schemaPath)) as JsonObject;
+
+        Assert.NotNull(schema);
+        Assert.Equal("https://json-schema.org/draft/2020-12/schema", (string?)schema["$schema"]);
+        Assert.Equal(WastelandForgeSchemaIds.Manifest020, (string?)schema["$id"]);
+        Assert.Equal("0.2.0", (string?)schema["properties"]?["schemaVersion"]?["const"]);
+        Assert.NotNull(schema["properties"]?["registries"]?["properties"]?["mcm"]);
+    }
+
+    [Fact]
     public void BuiltInCatalogResolvesManifestSchema()
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest010, out var resource);
@@ -28,6 +41,18 @@ public sealed class ManifestSchemaTests
         Assert.Equal("manifest", resource.Kind);
         Assert.Equal("0.1.0", resource.Version);
         Assert.Equal("schemas/manifest/0.1.0/schema.json", resource.RelativePath);
+    }
+
+    [Fact]
+    public void BuiltInCatalogResolvesManifest020Schema()
+    {
+        var found = WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest020, out var resource);
+
+        Assert.True(found);
+        Assert.NotNull(resource);
+        Assert.Equal("manifest", resource.Kind);
+        Assert.Equal("0.2.0", resource.Version);
+        Assert.Equal("schemas/manifest/0.2.0/schema.json", resource.RelativePath);
     }
 
     [Fact]
@@ -46,8 +71,12 @@ public sealed class ManifestSchemaTests
 
     [Theory]
     [InlineData("dependencies", "0.1.0", WastelandForgeSchemaIds.Dependency010, "dependency")]
+    [InlineData("dependencies", "0.2.0", WastelandForgeSchemaIds.Dependency020, "dependency")]
     [InlineData("capabilities", "0.1.0", WastelandForgeSchemaIds.Capability010, "capability")]
+    [InlineData("capabilities", "0.2.0", WastelandForgeSchemaIds.Capability020, "capability")]
     [InlineData("assets", "0.1.0", WastelandForgeSchemaIds.Asset010, "asset")]
+    [InlineData("mcm", "0.1.0", WastelandForgeSchemaIds.Mcm010, "mcm")]
+    [InlineData("mcm-extender-output", "0.1.0", WastelandForgeSchemaIds.McmExtenderOutput010, null)]
     [InlineData("quests", "0.1.0", WastelandForgeSchemaIds.Quest010, "quest")]
     [InlineData("quests", "0.2.0", WastelandForgeSchemaIds.Quest020, "quest")]
     [InlineData("quests", "0.3.0", WastelandForgeSchemaIds.Quest030, "quest")]
@@ -72,7 +101,12 @@ public sealed class ManifestSchemaTests
     [InlineData("dialogue", "0.16.0", WastelandForgeSchemaIds.Dialogue0160, "dialogue")]
     [InlineData("dialogue", "0.17.0", WastelandForgeSchemaIds.Dialogue0170, "dialogue")]
     [InlineData("dialogue", "0.18.0", WastelandForgeSchemaIds.Dialogue0180, "dialogue")]
-    public void RegistrySchemaFilesParseAsJson(string directoryName, string version, string schemaId, string expectedKind)
+    [InlineData("dialogue", "0.19.0", WastelandForgeSchemaIds.Dialogue0190, "dialogue")]
+    [InlineData("dialogue", "0.20.0", WastelandForgeSchemaIds.Dialogue0200, "dialogue")]
+    [InlineData("dialogue", "0.21.0", WastelandForgeSchemaIds.Dialogue0210, "dialogue")]
+    [InlineData("dialogue", "0.22.0", WastelandForgeSchemaIds.Dialogue0220, "dialogue")]
+    [InlineData("dialogue", "0.23.0", WastelandForgeSchemaIds.Dialogue0230, "dialogue")]
+    public void RegistrySchemaFilesParseAsJson(string directoryName, string version, string schemaId, string? expectedKind)
     {
         var schemaPath = Path.Combine(RepositoryRoot(), "schemas", directoryName, version, "schema.json");
         var schema = JsonNode.Parse(File.ReadAllText(schemaPath)) as JsonObject;
@@ -80,13 +114,20 @@ public sealed class ManifestSchemaTests
         Assert.NotNull(schema);
         Assert.Equal("https://json-schema.org/draft/2020-12/schema", (string?)schema["$schema"]);
         Assert.Equal(schemaId, (string?)schema["$id"]);
-        Assert.Equal(expectedKind, (string?)schema["properties"]?["kind"]?["const"]);
+        if (expectedKind is not null)
+        {
+            Assert.Equal(expectedKind, (string?)schema["properties"]?["kind"]?["const"]);
+        }
     }
 
     [Theory]
     [InlineData(WastelandForgeSchemaIds.Dependency010, "dependency", "0.1.0", "schemas/dependencies/0.1.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dependency020, "dependency", "0.2.0", "schemas/dependencies/0.2.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Capability010, "capability", "0.1.0", "schemas/capabilities/0.1.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Capability020, "capability", "0.2.0", "schemas/capabilities/0.2.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Asset010, "asset", "0.1.0", "schemas/assets/0.1.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Mcm010, "mcm", "0.1.0", "schemas/mcm/0.1.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.McmExtenderOutput010, "mcm-extender-output", "0.1.0", "schemas/mcm-extender-output/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Quest010, "quest", "0.1.0", "schemas/quests/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Quest020, "quest", "0.2.0", "schemas/quests/0.2.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Quest030, "quest", "0.3.0", "schemas/quests/0.3.0/schema.json")]
@@ -111,6 +152,11 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Dialogue0160, "dialogue", "0.16.0", "schemas/dialogue/0.16.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Dialogue0170, "dialogue", "0.17.0", "schemas/dialogue/0.17.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Dialogue0180, "dialogue", "0.18.0", "schemas/dialogue/0.18.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0190, "dialogue", "0.19.0", "schemas/dialogue/0.19.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0200, "dialogue", "0.20.0", "schemas/dialogue/0.20.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0210, "dialogue", "0.21.0", "schemas/dialogue/0.21.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0220, "dialogue", "0.22.0", "schemas/dialogue/0.22.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0230, "dialogue", "0.23.0", "schemas/dialogue/0.23.0/schema.json")]
     public void BuiltInCatalogResolvesRegistrySchemas(string schemaId, string expectedKind, string expectedVersion, string expectedPath)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);
@@ -124,8 +170,12 @@ public sealed class ManifestSchemaTests
 
     [Theory]
     [InlineData(WastelandForgeSchemaIds.Dependency010)]
+    [InlineData(WastelandForgeSchemaIds.Dependency020)]
     [InlineData(WastelandForgeSchemaIds.Capability010)]
+    [InlineData(WastelandForgeSchemaIds.Capability020)]
     [InlineData(WastelandForgeSchemaIds.Asset010)]
+    [InlineData(WastelandForgeSchemaIds.Mcm010)]
+    [InlineData(WastelandForgeSchemaIds.McmExtenderOutput010)]
     [InlineData(WastelandForgeSchemaIds.Quest010)]
     [InlineData(WastelandForgeSchemaIds.Quest020)]
     [InlineData(WastelandForgeSchemaIds.Quest030)]
@@ -150,6 +200,11 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Dialogue0160)]
     [InlineData(WastelandForgeSchemaIds.Dialogue0170)]
     [InlineData(WastelandForgeSchemaIds.Dialogue0180)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0190)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0200)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0210)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0220)]
+    [InlineData(WastelandForgeSchemaIds.Dialogue0230)]
     public void BuiltInCatalogReadsEmbeddedRegistrySchemas(string schemaId)
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource);

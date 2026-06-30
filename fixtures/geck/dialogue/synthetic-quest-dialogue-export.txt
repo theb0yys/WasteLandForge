@@ -1,0 +1,7 @@
+Quest: WFGECKSyntheticQuest
+Topic: WFGECKGreeting
+Info: WFGECKGreetingInfo001
+Prompt: Synthetic GECK export prompt.
+Response: Synthetic GECK export response.
+Speaker: ExampleSpeaker
+VoiceType: ExampleVoice

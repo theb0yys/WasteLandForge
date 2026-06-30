@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "capability",
+  "id": "runtime.ui.mcm_json",
+  "title": "MCM Extender JSON runtime menu support",
+  "satisfiedBy": [
+    {
+      "id": "provider.runtime.mcm_extender",
+      "providerType": "runtime"
+    }
+  ],
+  "requires": {
+    "capabilities": []
+  },
+  "scope": "runtime-session",
+  "stability": "stable",
+  "features": [
+    "mcm-json"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "0.23.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueresponserouteregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueresponserouteregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueresponserouteregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueresponserouteregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueresponserouteregistry.topic.greeting",
+      "promptText": "Synthetic response route prompt.",
+      "priority": 10,
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueresponserouteregistry.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.invaliddialogueresponserouteregistry.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.invaliddialogueresponserouteregistry.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "precedence": 0,
+        "shortCircuit": true,
+        "conditionIds": [
+          "io.github.theboyyss.invaliddialogueresponserouteregistry.dialogue.intro.condition.started"
+        ],
+        "negatedConditionIds": [
+          "io.github.theboyyss.invaliddialogueresponserouteregistry.dialogue.intro.condition.started"
+        ],
+        "groups": [
+          {
+            "id": "io.github.theboyyss.invaliddialogueresponserouteregistry.dialogue.intro.conditionlogic.group.valid",
+            "operator": "all",
+            "precedence": 10,
+            "shortCircuit": true,
+            "conditionIds": [
+              "io.github.theboyyss.invaliddialogueresponserouteregistry.dialogue.intro.condition.started"
+            ],
+            "summary": "Synthetic valid child group below the response route fixture."
+          }
+        ],
+        "summary": "Synthetic valid line-local condition logic for a response route fixture."
+      },
+      "responseText": "Synthetic dialogue line with invalid response route shape.",
+      "responseRoutes": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueresponserouteregistry.dialogue.intro.responseroute.invalid",
+          "routeKey": "",
+          "targetTopicId": "io.github.theboyyss.invaliddialogueresponserouteregistry.topic.greeting",
+          "summary": "Synthetic invalid response route declaration."
+        }
+      ]
+    }
+  ]
+}

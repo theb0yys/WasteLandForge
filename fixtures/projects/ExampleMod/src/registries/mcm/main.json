@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "mcm",
+  "id": "io.github.theboyyss.examplemod.mcm",
+  "menus": [
+    {
+      "id": "io.github.theboyyss.examplemod.mcm.main",
+      "title": "$ExampleModName",
+      "outputFile": "ExampleMod.json",
+      "minMCMVersion": 1.0,
+      "requires": {
+        "capabilities": [
+          {
+            "id": "runtime.ui.mcm_json"
+          }
+        ]
+      },
+      "requirements": [
+        {
+          "type": "file",
+          "file": "Config/ExampleMod.ini"
+        },
+        [
+          {
+            "type": "plugin",
+            "file": "ExampleMod.esp"
+          },
+          {
+            "type": "file",
+            "file": "NVSE/plugins/scripts/ln_ExampleMod.txt"
+          }
+        ]
+      ],
+      "translations": {
+        "$EnableExampleFeature": "Enable Example Feature",
+        "$ExampleHeader": "Example Settings",
+        "$ExampleLogo": "Example Logo",
+        "$ExampleModName": "Example Mod",
+        "$ExampleScale": "Example Scale",
+        "$GeneralPage": "General",
+        "$HudMode": "HUD Mode",
+        "$HudModeCompact": "Compact",
+        "$HudModeFull": "Full",
+        "$QuickMenuKey": "Quick Menu Key",
+        "$ShowHints": "Show Hints"
+      },
+      "pages": [
+        {
+          "id": "io.github.theboyyss.examplemod.mcm.general",
+          "title": "$GeneralPage",
+          "requirements": [
+            {
+              "type": "folder",
+              "file": "Config"
+            }
+          ],
+          "settings": [
+            {
+              "id": "io.github.theboyyss.examplemod.mcm.general.enabled",
+              "label": "$EnableExampleFeature",
+              "settingType": "toggle",
+              "default": true,
+              "ini": {
+                "file": "Config/ExampleMod.ini",
+                "section": "General",
+                "key": "bEnableExampleFeature"
+              }
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.mcm.general.scale",
+              "label": "$ExampleScale",
+              "settingType": "slider",
+              "default": 1,
+              "ini": {
+                "file": "Config/ExampleMod.ini",
+                "section": "General",
+                "key": "fExampleScale"
+              },
+              "scale": {
+                "valueMin": 0,
+                "valueMax": 10,
+                "valueIncrement": 0.5,
+                "valueDecimal": 1
+              }
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.mcm.general.show_hints",
+              "label": "$ShowHints",
+              "settingType": "checkbox",
+              "default": true,
+              "ini": {
+                "file": "Config/ExampleMod.ini",
+                "section": "General",
+                "key": "bShowHints"
+              }
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.mcm.general.hud_mode",
+              "label": "$HudMode",
+              "settingType": "stringToggle",
+              "default": false,
+              "textOn": "$HudModeCompact",
+              "textOff": "$HudModeFull",
+              "ini": {
+                "file": "Config/ExampleMod.ini",
+                "section": "General",
+                "key": "bCompactHud"
+              }
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.mcm.general.quick_menu_key",
+              "label": "$QuickMenuKey",
+              "settingType": "keybind",
+              "default": 33,
+              "ini": {
+                "file": "Config/ExampleMod.ini",
+                "section": "General",
+                "key": "iQuickMenuKey"
+              }
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.mcm.general.header",
+              "label": "$ExampleHeader",
+              "settingType": "header"
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.mcm.general.logo",
+              "label": "$ExampleLogo",
+              "settingType": "image",
+              "image": {
+                "filename": "textures/interface/ExampleMod/Logo.dds",
+                "width": 256,
+                "height": 64,
+                "systemcolor": 0,
+                "offsetX": 0,
+                "offsetY": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

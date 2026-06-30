@@ -1,5 +1,7 @@
 using WastelandForge.Core;
+using WastelandForge.Generation;
 using WastelandForge.Provenance;
+using WastelandForge.Registry;
 using WastelandForge.Validation;
 
 namespace WastelandForge.Cli;
@@ -9,8 +11,6 @@ internal static class ForgeCli
     private static readonly string[] TopLevelReservedCommands =
     [
         "init",
-        "generate",
-        "build",
         "package",
         "docs",
         "graph",
@@ -79,6 +79,27 @@ internal static class ForgeCli
             return RunReleaseVerify(resolution.RemainingArgs);
         }
 
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "generate") ||
+            StringComparer.Ordinal.Equals(resolution.CommandPath, "build"))
+        {
+            return RunMetadataReportCommand(resolution.CommandPath, resolution.RemainingArgs);
+        }
+
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "capabilities list"))
+        {
+            return RunCapabilitiesList(resolution.RemainingArgs);
+        }
+
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "capabilities scan"))
+        {
+            return RunCapabilitiesScan(resolution.RemainingArgs);
+        }
+
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "capabilities explain"))
+        {
+            return RunCapabilitiesExplain(resolution.RemainingArgs);
+        }
+
         return RunReservedCommand(resolution.CommandPath, resolution.RemainingArgs);
     }
 
@@ -111,6 +132,12 @@ internal static class ForgeCli
         }
 
         var report = new ProjectValidationPipeline().Validate(parse.ProjectPath);
+        if (!string.IsNullOrWhiteSpace(parse.GeckDialogueExportPath))
+        {
+            var geckIssues = new GeckDialogueExportValidator().Validate(parse.GeckDialogueExportPath, report.ProjectId);
+            report = new DiagnosticReport(report.ProjectId, report.Issues.Concat(geckIssues));
+        }
+
         if (StringComparer.Ordinal.Equals(parse.Format, "sarif"))
         {
             WritePayload(parse.OutputPath, DiagnosticReportSarifSerializer.Serialize(report, CliConstants.Version));
@@ -173,6 +200,145 @@ internal static class ForgeCli
             : (int)CliExitCode.Success;
     }
 
+    private static int RunMetadataReportCommand(string commandPath, string[] args)
+    {
+        var parse = ParseMetadataReportOptions(commandPath, args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, commandPath, parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        if (StringComparer.Ordinal.Equals(parse.Target, McmJsonGenerator.Target))
+        {
+            var mcmResult = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+                commandPath,
+                parse.ProjectPath,
+                parse.OutputDirectory,
+                CliConstants.Version,
+                parse.DryRun));
+            var mcmPayload = CliConstants.IsMachineFormat(parse.Format)
+                ? McmJsonGeneratorJsonSerializer.Serialize(mcmResult)
+                : McmJsonGeneratorTextRenderer.Render(mcmResult);
+            Console.Write(mcmPayload);
+
+            return mcmResult.HasErrors
+                ? (int)CliExitCode.BlockingDiagnostics
+                : (int)CliExitCode.Success;
+        }
+
+        var result = new MetadataReportGenerator().Run(new MetadataReportOptions(
+            commandPath,
+            parse.ProjectPath,
+            parse.OutputDirectory,
+            parse.Target,
+            CliConstants.Version,
+            parse.DryRun));
+
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? MetadataReportJsonSerializer.Serialize(result)
+            : MetadataReportTextRenderer.Render(result);
+        Console.Write(payload);
+
+        return result.HasErrors
+            ? (int)CliExitCode.BlockingDiagnostics
+            : (int)CliExitCode.Success;
+    }
+
+    private static int RunCapabilitiesList(string[] args)
+    {
+        var parse = ParseCapabilitiesListOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "capabilities list", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var catalog = BuiltInFnvCapabilityCatalog.Create();
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? CapabilityCatalogJsonSerializer.Serialize(catalog, parse.Kind)
+            : CapabilityCatalogTextRenderer.Render(catalog, parse.Kind);
+
+        WritePayload(parse.OutputPath, payload, appendFinalNewline: !CliConstants.IsTextFormat(parse.Format));
+        return (int)CliExitCode.Success;
+    }
+
+    private static int RunCapabilitiesScan(string[] args)
+    {
+        var parse = ParseCapabilitiesScanOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "capabilities scan", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var report = new BuiltInFnvCapabilityScanner().Scan(new CapabilityScanOptions(
+            parse.GameRoot,
+            parse.DataRoot,
+            parse.ToolPaths));
+
+        var exitCode = (int)CliExitCode.Success;
+        if (parse.ProjectPath is not null)
+        {
+            var requirementRead = new ProjectValidationPipeline().ReadCapabilityRequirements(parse.ProjectPath);
+            if (requirementRead.Diagnostics.HasErrors)
+            {
+                var diagnosticPayload = CliConstants.IsMachineFormat(parse.Format)
+                    ? DiagnosticReportJsonSerializer.Serialize(requirementRead.Diagnostics, CliConstants.Version, "capabilities scan")
+                    : DiagnosticReportTextRenderer.Render(requirementRead.Diagnostics, "capabilities scan");
+
+                WritePayload(parse.OutputPath, diagnosticPayload, appendFinalNewline: !CliConstants.IsTextFormat(parse.Format));
+                return (int)CliExitCode.ProjectDiscovery;
+            }
+
+            var requirementResolution = new BuiltInFnvCapabilityRequirementResolver().Resolve(
+                requirementRead.ProjectRoot,
+                requirementRead.ProjectId?.ToString(),
+                report,
+                requirementRead.Requirements);
+            report = report with { Requirements = requirementResolution };
+            if (requirementResolution.Summary.RequiredUnavailable > 0)
+            {
+                exitCode = (int)CliExitCode.CapabilityResolution;
+            }
+        }
+
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? CapabilityScanJsonSerializer.Serialize(report)
+            : CapabilityScanTextRenderer.Render(report);
+
+        WritePayload(parse.OutputPath, payload, appendFinalNewline: !CliConstants.IsTextFormat(parse.Format));
+        return exitCode;
+    }
+
+    private static int RunCapabilitiesExplain(string[] args)
+    {
+        var parse = ParseCapabilitiesExplainOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "capabilities explain", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var report = new BuiltInFnvCapabilityExplainer().Explain(new CapabilityExplanationOptions(
+            parse.TargetId,
+            parse.GameRoot,
+            parse.DataRoot,
+            parse.ToolPaths));
+        if (report is null)
+        {
+            WriteUsage(parse.Format, "capabilities explain", $"Unknown capability or provider id '{parse.TargetId}'.");
+            return (int)CliExitCode.Usage;
+        }
+
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? CapabilityExplanationJsonSerializer.Serialize(report)
+            : CapabilityExplanationTextRenderer.Render(report);
+
+        WritePayload(parse.OutputPath, payload, appendFinalNewline: !CliConstants.IsTextFormat(parse.Format));
+        return (int)CliExitCode.Success;
+    }
+
     private static int RunReservedCommand(string commandPath, string[] args)
     {
         var format = ParseReservedFormat(args, out var formatError);
@@ -205,6 +371,12 @@ internal static class ForgeCli
         if (StringComparer.Ordinal.Equals(command, "validate"))
         {
             return CommandResolution.Command("validate", args[1..]);
+        }
+
+        if (StringComparer.Ordinal.Equals(command, "generate") ||
+            StringComparer.Ordinal.Equals(command, "build"))
+        {
+            return CommandResolution.Command(command, args[1..]);
         }
 
         if (TopLevelReservedCommands.Contains(command, StringComparer.Ordinal))
@@ -244,6 +416,7 @@ internal static class ForgeCli
         var projectPath = ".";
         string? outputPath = null;
         string? summaryPath = null;
+        string? geckDialogueExportPath = null;
         var projectWasSet = false;
 
         for (var index = 0; index < args.Length; index++)
@@ -304,6 +477,16 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--geck-dialogue-export"))
+            {
+                if (!TryReadValue(args, ref index, out geckDialogueExportPath))
+                {
+                    return ValidateParseResult.Fail(format, "Missing value for --geck-dialogue-export.");
+                }
+
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--no-input"))
             {
                 continue;
@@ -323,7 +506,7 @@ internal static class ForgeCli
             projectWasSet = true;
         }
 
-        return ValidateParseResult.Ok(projectPath, outputPath, summaryPath, format);
+        return ValidateParseResult.Ok(projectPath, outputPath, summaryPath, geckDialogueExportPath, format);
     }
 
     private static ReleaseVerifyParseResult ParseReleaseVerifyOptions(string[] args)
@@ -413,6 +596,418 @@ internal static class ForgeCli
         }
 
         return ReleaseVerifyParseResult.Ok(projectPath, outputPath, summaryPath, format);
+    }
+
+    private static MetadataReportParseResult ParseMetadataReportOptions(string commandPath, string[] args)
+    {
+        var format = "human";
+        var projectPath = ".";
+        var target = "reports";
+        string? outputDirectory = null;
+        var dryRun = false;
+        var projectWasSet = false;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return MetadataReportParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return MetadataReportParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return MetadataReportParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return MetadataReportParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectWasSet)
+                {
+                    return MetadataReportParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                projectWasSet = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--target"))
+            {
+                if (!TryReadValue(args, ref index, out target))
+                {
+                    return MetadataReportParseResult.Fail(format, "Missing value for --target.");
+                }
+
+                if (!StringComparer.Ordinal.Equals(target, "reports") &&
+                    !StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target))
+                {
+                    return MetadataReportParseResult.Fail(format, $"Only targets 'reports' and '{McmJsonGenerator.Target}' are implemented for forge {commandPath} in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputDirectory))
+                {
+                    return MetadataReportParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputDirectory = explicitOutputDirectory;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--dry-run"))
+            {
+                dryRun = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return MetadataReportParseResult.Fail(format, $"Unsupported {commandPath} option '{arg}'.");
+            }
+
+            if (projectWasSet)
+            {
+                return MetadataReportParseResult.Fail(format, "Project root was specified more than once.");
+            }
+
+            projectPath = arg;
+            projectWasSet = true;
+        }
+
+        return MetadataReportParseResult.Ok(projectPath, outputDirectory, target, dryRun, format);
+    }
+
+    private static CapabilitiesListParseResult ParseCapabilitiesListOptions(string[] args)
+    {
+        var format = "human";
+        var kind = "all";
+        string? outputPath = null;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return CapabilitiesListParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return CapabilitiesListParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return CapabilitiesListParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputPath))
+                {
+                    return CapabilitiesListParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputPath = explicitOutputPath;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--kind"))
+            {
+                if (!TryReadValue(args, ref index, out kind))
+                {
+                    return CapabilitiesListParseResult.Fail(format, "Missing value for --kind.");
+                }
+
+                if (!IsCapabilityListKind(kind))
+                {
+                    return CapabilitiesListParseResult.Fail(format, $"Unsupported capability list kind '{kind}'.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return CapabilitiesListParseResult.Fail(format, $"Unsupported capabilities list option '{arg}'.");
+            }
+
+            return CapabilitiesListParseResult.Fail(format, $"Unexpected capabilities list argument '{arg}'.");
+        }
+
+        return CapabilitiesListParseResult.Ok(outputPath, format, kind);
+    }
+
+    private static CapabilitiesScanParseResult ParseCapabilitiesScanOptions(string[] args)
+    {
+        var format = "human";
+        string? gameRoot = null;
+        string? dataRoot = null;
+        string? outputPath = null;
+        string? projectPath = null;
+        var toolPaths = new List<string>();
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return CapabilitiesScanParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return CapabilitiesScanParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return CapabilitiesScanParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return CapabilitiesScanParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectPath is not null)
+                {
+                    return CapabilitiesScanParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--game") ||
+                StringComparer.Ordinal.Equals(arg, "--game-root"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitGameRoot))
+                {
+                    return CapabilitiesScanParseResult.Fail(format, $"Missing value for {arg}.");
+                }
+
+                if (gameRoot is not null)
+                {
+                    return CapabilitiesScanParseResult.Fail(format, "Game root was specified more than once.");
+                }
+
+                gameRoot = explicitGameRoot;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--data-root"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitDataRoot))
+                {
+                    return CapabilitiesScanParseResult.Fail(format, "Missing value for --data-root.");
+                }
+
+                if (dataRoot is not null)
+                {
+                    return CapabilitiesScanParseResult.Fail(format, "Data root was specified more than once.");
+                }
+
+                dataRoot = explicitDataRoot;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--tool-path"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitToolPath))
+                {
+                    return CapabilitiesScanParseResult.Fail(format, "Missing value for --tool-path.");
+                }
+
+                toolPaths.Add(explicitToolPath);
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputPath))
+                {
+                    return CapabilitiesScanParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputPath = explicitOutputPath;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return CapabilitiesScanParseResult.Fail(format, $"Unsupported capabilities scan option '{arg}'.");
+            }
+
+            return CapabilitiesScanParseResult.Fail(format, $"Unexpected capabilities scan argument '{arg}'.");
+        }
+
+        return CapabilitiesScanParseResult.Ok(projectPath, gameRoot, dataRoot, toolPaths, outputPath, format);
+    }
+
+    private static CapabilitiesExplainParseResult ParseCapabilitiesExplainOptions(string[] args)
+    {
+        var format = "human";
+        string? targetId = null;
+        string? gameRoot = null;
+        string? dataRoot = null;
+        string? outputPath = null;
+        var toolPaths = new List<string>();
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--game") ||
+                StringComparer.Ordinal.Equals(arg, "--game-root"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitGameRoot))
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, $"Missing value for {arg}.");
+                }
+
+                if (gameRoot is not null)
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, "Game root was specified more than once.");
+                }
+
+                gameRoot = explicitGameRoot;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--data-root"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitDataRoot))
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, "Missing value for --data-root.");
+                }
+
+                if (dataRoot is not null)
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, "Data root was specified more than once.");
+                }
+
+                dataRoot = explicitDataRoot;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--tool-path"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitToolPath))
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, "Missing value for --tool-path.");
+                }
+
+                toolPaths.Add(explicitToolPath);
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputPath))
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputPath = explicitOutputPath;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return CapabilitiesExplainParseResult.Fail(format, $"Unsupported capabilities explain option '{arg}'.");
+            }
+
+            if (targetId is not null)
+            {
+                return CapabilitiesExplainParseResult.Fail(format, "Capability or provider id was specified more than once.");
+            }
+
+            targetId = arg;
+        }
+
+        return string.IsNullOrWhiteSpace(targetId)
+            ? CapabilitiesExplainParseResult.Fail(format, "Missing capability or provider id.")
+            : CapabilitiesExplainParseResult.Ok(targetId, gameRoot, dataRoot, toolPaths, outputPath, format);
     }
 
     private static string ParseReservedFormat(string[] args, out string? error)
@@ -542,6 +1137,11 @@ internal static class ForgeCli
             StringComparer.Ordinal.Equals(value, "-h");
     }
 
+    private static bool IsCapabilityListKind(string kind) =>
+        StringComparer.Ordinal.Equals(kind, "all") ||
+        StringComparer.Ordinal.Equals(kind, "capabilities") ||
+        StringComparer.Ordinal.Equals(kind, "providers");
+
     private sealed record CommandResolution(
         CommandResolutionKind Kind,
         string CommandPath,
@@ -570,14 +1170,15 @@ internal static class ForgeCli
         string ProjectPath,
         string? OutputPath,
         string? SummaryPath,
+        string? GeckDialogueExportPath,
         string Format,
         string Message)
     {
-        public static ValidateParseResult Ok(string projectPath, string? outputPath, string? summaryPath, string format) =>
-            new(true, projectPath, outputPath, summaryPath, format, string.Empty);
+        public static ValidateParseResult Ok(string projectPath, string? outputPath, string? summaryPath, string? geckDialogueExportPath, string format) =>
+            new(true, projectPath, outputPath, summaryPath, geckDialogueExportPath, format, string.Empty);
 
         public static ValidateParseResult Fail(string format, string message) =>
-            new(false, string.Empty, null, null, format, message);
+            new(false, string.Empty, null, null, null, format, message);
     }
 
     private sealed record ReleaseVerifyParseResult(
@@ -593,5 +1194,81 @@ internal static class ForgeCli
 
         public static ReleaseVerifyParseResult Fail(string format, string message) =>
             new(false, string.Empty, null, null, format, message);
+    }
+
+    private sealed record MetadataReportParseResult(
+        bool Success,
+        string ProjectPath,
+        string? OutputDirectory,
+        string Target,
+        bool DryRun,
+        string Format,
+        string Message)
+    {
+        public static MetadataReportParseResult Ok(string projectPath, string? outputDirectory, string target, bool dryRun, string format) =>
+            new(true, projectPath, outputDirectory, target, dryRun, format, string.Empty);
+
+        public static MetadataReportParseResult Fail(string format, string message) =>
+            new(false, string.Empty, null, "reports", false, format, message);
+    }
+
+    private sealed record CapabilitiesListParseResult(
+        bool Success,
+        string? OutputPath,
+        string Format,
+        string Kind,
+        string Message)
+    {
+        public static CapabilitiesListParseResult Ok(string? outputPath, string format, string kind) =>
+            new(true, outputPath, format, kind, string.Empty);
+
+        public static CapabilitiesListParseResult Fail(string format, string message) =>
+            new(false, null, format, "all", message);
+    }
+
+    private sealed record CapabilitiesScanParseResult(
+        bool Success,
+        string? ProjectPath,
+        string? GameRoot,
+        string? DataRoot,
+        IReadOnlyList<string> ToolPaths,
+        string? OutputPath,
+        string Format,
+        string Message)
+    {
+        public static CapabilitiesScanParseResult Ok(
+            string? projectPath,
+            string? gameRoot,
+            string? dataRoot,
+            IReadOnlyList<string> toolPaths,
+            string? outputPath,
+            string format) =>
+            new(true, projectPath, gameRoot, dataRoot, toolPaths, outputPath, format, string.Empty);
+
+        public static CapabilitiesScanParseResult Fail(string format, string message) =>
+            new(false, null, null, null, [], null, format, message);
+    }
+
+    private sealed record CapabilitiesExplainParseResult(
+        bool Success,
+        string TargetId,
+        string? GameRoot,
+        string? DataRoot,
+        IReadOnlyList<string> ToolPaths,
+        string? OutputPath,
+        string Format,
+        string Message)
+    {
+        public static CapabilitiesExplainParseResult Ok(
+            string targetId,
+            string? gameRoot,
+            string? dataRoot,
+            IReadOnlyList<string> toolPaths,
+            string? outputPath,
+            string format) =>
+            new(true, targetId, gameRoot, dataRoot, toolPaths, outputPath, format, string.Empty);
+
+        public static CapabilitiesExplainParseResult Fail(string format, string message) =>
+            new(false, string.Empty, null, null, [], null, format, message);
     }
 }

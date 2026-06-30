@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/dependencies/0.2.0/schema.json",
+  "title": "WastelandForge Dependency Registry",
+  "description": "Dependency requirement registry for WastelandForge projects.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "requires"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the dependency registry contract.",
+      "const": "0.2.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "dependency"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "requires": {
+      "description": "Capability requirements declared by this dependency registry document.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capabilities"
+      ],
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capabilityRequirement"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"
+    },
+    "capabilityRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "phase": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "generation",
+              "validation",
+              "launch",
+              "packaging",
+              "release",
+              "presentation"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "version": {
+          "$ref": "#/$defs/versionConstraint"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "versionConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scheme"
+      ],
+      "properties": {
+        "scheme": {
+          "enum": [
+            "semver",
+            "integer",
+            "scaled-integer",
+            "string",
+            "unknown",
+            "custom"
+          ]
+        },
+        "minInclusive": {
+          "type": "string",
+          "minLength": 1
+        },
+        "maxExclusive": {
+          "type": "string",
+          "minLength": 1
+        },
+        "equals": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.2.0",
+      "kind": "dependency",
+      "id": "io.github.theboyyss.examplemod.dependencies",
+      "requires": {
+        "capabilities": [
+          {
+            "id": "runtime.ui.mcm_json",
+            "phase": [
+              "generation"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

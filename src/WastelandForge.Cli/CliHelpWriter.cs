@@ -78,9 +78,13 @@ internal static class CliHelpWriter
                 WriteCapabilitiesHelp(writer);
                 return true;
             case "capabilities list":
+                WriteCapabilitiesListHelp(writer);
+                return true;
             case "capabilities scan":
+                WriteCapabilitiesScanHelp(writer);
+                return true;
             case "capabilities explain":
-                WriteReservedCommandHelp(writer, commandPath, "Capability catalogue and provider detection are reserved by ADR-008 and ADR-010.");
+                WriteCapabilitiesExplainHelp(writer);
                 return true;
             case "release":
                 WriteReleaseHelp(writer);
@@ -92,6 +96,12 @@ internal static class CliHelpWriter
             case "release publish":
                 WriteReservedCommandHelp(writer, commandPath, "Release verification and publishing are reserved by ADR-011.");
                 return true;
+            case "generate":
+                WriteGenerateHelp(writer);
+                return true;
+            case "build":
+                WriteBuildHelp(writer);
+                return true;
             case "doctor":
                 WriteDoctorHelp(writer);
                 return true;
@@ -99,8 +109,6 @@ internal static class CliHelpWriter
                 WriteReservedCommandHelp(writer, commandPath, "Doctor export is reserved for redacted diagnostic handoff bundles.");
                 return true;
             case "init":
-            case "generate":
-            case "build":
             case "package":
             case "docs":
             case "graph":
@@ -121,18 +129,87 @@ internal static class CliHelpWriter
         writer.WriteLine("forge validate");
         writer.WriteLine();
         writer.WriteLine("Usage:");
-        writer.WriteLine("  forge validate [project-root] [--project <path>] [--output <path>] [--summary <path>] [--format human|plain|json|sarif|github] [--no-input]");
+        writer.WriteLine("  forge validate [project-root] [--project <path>] [--geck-dialogue-export <path>] [--output <path>] [--summary <path>] [--format human|plain|json|sarif|github] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Runs the Gate 5 loader and validation pipeline.");
+        writer.WriteLine("Runs the loader and validation pipeline. GECK dialogue export checks are file-based and do not control an open GECK session.");
         writer.WriteLine();
         writer.WriteLine("Examples:");
         writer.WriteLine("  forge validate fixtures/projects/ExampleMod --format json");
+        writer.WriteLine("  forge validate fixtures/projects/ExampleMod --geck-dialogue-export geck-exports/dialogue.txt --format json");
         writer.WriteLine("  forge validate fixtures/projects/ExampleMod --format sarif --output artifacts/wastelandforge-validation.sarif");
         writer.WriteLine("  forge validate fixtures/projects/ExampleMod --format github --summary artifacts/wastelandforge-validation.md");
         writer.WriteLine("  forge validate --project fixtures/projects/BrokenCases/MissingCapability --format plain");
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
         writer.WriteLine("  0 no blocking diagnostics");
+        writer.WriteLine("  1 blocking diagnostics found");
+        writer.WriteLine("  2 usage or unsupported format");
+    }
+
+    private static void WriteGenerateHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge generate");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge generate [project-root] [--project <path>] [--target reports|mcm-json] [--output generated/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Writes deterministic generated artifacts under project generated/. Target 'reports' writes metadata reports; target 'mcm-json' writes Gate 71 MCM Extender JSON, runtime requirements, translations, header and image options, keybind options, checkbox options, string-toggle options, staged referenced texture assets, and a loose-file package manifest, then validates the output schema and MCM image asset references.");
+        writer.WriteLine("No JIP scripts, runtime probes, MO2 VFS launch, ZIP/FOMOD archives, or plugin records are generated.");
+        writer.WriteLine();
+        writer.WriteLine("Outputs:");
+        writer.WriteLine("  generated/reports/validation.json");
+        writer.WriteLine("  generated/reports/dependency-report.json");
+        writer.WriteLine("  generated/reports/capability-report.json");
+        writer.WriteLine("  generated/reports/generate-report.json");
+        writer.WriteLine("  generated/reports/generation-manifest.json");
+        writer.WriteLine("  generated/mcm-json/MCM/<menu>.json");
+        writer.WriteLine("  generated/mcm-json/MCM/Translations/<modName>.ini");
+        writer.WriteLine("  generated/mcm-json/<asset-target>");
+        writer.WriteLine("  generated/mcm-json/package-manifest.json");
+        writer.WriteLine("  generated/mcm-json/generation-manifest.json");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge generate fixtures/projects/ExampleMod --format json");
+        writer.WriteLine("  forge generate --project fixtures/projects/ExampleMod --output generated/gate61 --target reports");
+        writer.WriteLine("  forge generate fixtures/projects/ExampleMod --target mcm-json --format json");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 reports written or planned");
+        writer.WriteLine("  1 blocking diagnostics found");
+        writer.WriteLine("  2 usage or unsupported format");
+    }
+
+    private static void WriteBuildHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge build");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge build [project-root] [--project <path>] [--target reports|mcm-json] [--output dist/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Runs deterministic build targets and writes local build evidence under project dist/. Target 'reports' writes metadata reports; target 'mcm-json' writes Gate 71 MCM Extender JSON, runtime requirements, translations, header and image options, keybind options, checkbox options, string-toggle options, staged referenced texture assets, and a loose-file package manifest, then validates the output schema and MCM image asset references.");
+        writer.WriteLine("No JIP scripts, runtime probes, MO2 VFS launch, ZIP/FOMOD archives, or plugin records are generated.");
+        writer.WriteLine();
+        writer.WriteLine("Outputs:");
+        writer.WriteLine("  dist/build/validation.json");
+        writer.WriteLine("  dist/build/dependency-report.json");
+        writer.WriteLine("  dist/build/capability-report.json");
+        writer.WriteLine("  dist/build/build-report.json");
+        writer.WriteLine("  dist/build/build-manifest.json");
+        writer.WriteLine("  dist/build/checksums.sha256");
+        writer.WriteLine("  dist/mcm-json/MCM/<menu>.json");
+        writer.WriteLine("  dist/mcm-json/MCM/Translations/<modName>.ini");
+        writer.WriteLine("  dist/mcm-json/<asset-target>");
+        writer.WriteLine("  dist/mcm-json/package-manifest.json");
+        writer.WriteLine("  dist/mcm-json/build-manifest.json");
+        writer.WriteLine("  dist/mcm-json/checksums.sha256");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge build fixtures/projects/ExampleMod --format json");
+        writer.WriteLine("  forge build --project fixtures/projects/ExampleMod --output dist/gate61 --target reports");
+        writer.WriteLine("  forge build fixtures/projects/ExampleMod --target mcm-json --format json");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 build reports written or planned");
         writer.WriteLine("  1 blocking diagnostics found");
         writer.WriteLine("  2 usage or unsupported format");
     }
@@ -146,7 +223,69 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge capabilities scan [options]");
         writer.WriteLine("  forge capabilities explain <capability-or-provider-id> [options]");
         writer.WriteLine();
-        writer.WriteLine("Capability commands are reserved for a later gate. Detection remains local-first and deterministic.");
+        writer.WriteLine("Capability list, path-based scan, project requirement resolution, and catalogue/scan explanation are implemented for the built-in FNV catalogue.");
+    }
+
+    private static void WriteCapabilitiesListHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge capabilities list");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge capabilities list [--kind all|capabilities|providers] [--output <path>] [--format human|plain|json] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Lists the built-in FNV capability and provider catalogue. This does not scan the local machine.");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge capabilities list");
+        writer.WriteLine("  forge capabilities list --kind providers --format json");
+        writer.WriteLine("  forge capabilities list --format json --output artifacts/capabilities.json");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 catalogue listed");
+        writer.WriteLine("  2 usage or unsupported format");
+    }
+
+    private static void WriteCapabilitiesScanHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge capabilities scan");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge capabilities scan [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Scans explicit local paths with root-file, data-file, and executable-tool detectors. When --project is supplied, resolves declared dependency capabilities against scan evidence.");
+        writer.WriteLine("Runtime probes, MO2 VFS launch, and provider version checks are not used.");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge capabilities scan --game \"C:\\Games\\Fallout New Vegas\"");
+        writer.WriteLine("  forge capabilities scan --project fixtures/projects/ExampleMod --game-root fnv --format json");
+        writer.WriteLine("  forge capabilities scan --game-root fnv --tool-path tools/FNVEdit.exe --tool-path tools/ModOrganizer.exe --format json");
+        writer.WriteLine("  forge capabilities scan --format json --output artifacts/capability-scan.json");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 scan completed");
+        writer.WriteLine("  3 project discovery or source-load failure");
+        writer.WriteLine("  4 required project capability unavailable");
+        writer.WriteLine("  2 usage or unsupported format");
+    }
+
+    private static void WriteCapabilitiesExplainHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge capabilities explain");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge capabilities explain <capability-or-provider-id> [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Explains a built-in capability or provider using catalogue data and the same path-based evidence as capabilities scan.");
+        writer.WriteLine("Runtime probes, MO2 VFS launch, provider versions, and project requirement resolution are not used.");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge capabilities explain runtime.ui.mcm_json");
+        writer.WriteLine("  forge capabilities explain provider.runtime.xnvse --game \"C:\\Games\\Fallout New Vegas\" --format json");
+        writer.WriteLine("  forge capabilities explain tool.mo2 --tool-path tools/ModOrganizer.exe --format plain");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 explanation written");
+        writer.WriteLine("  2 usage, unknown id, or unsupported format");
     }
 
     private static void WriteReleaseHelp(TextWriter writer)

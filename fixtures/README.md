@@ -61,6 +61,12 @@ Gate 17 adds:
   through `WF-ASSET-009` failure cases for voice target shape, WAV/OGG pair,
   and LIP pair validation.
 
+Gate 69 adds:
+
+- `projects/BrokenCases/InvalidMcmImageAssetReferences` - deterministic
+  `WF-ASSET-010` and `WF-ASSET-011` failure cases for MCM image filename
+  path shape and required texture asset target resolution.
+
 Gate 18 updates `projects/ExampleMod` with a synthetic dialogue registry and
 matching voice/lip assets, and adds:
 
@@ -287,3 +293,153 @@ Gate 43 preserves dialogue registry schema `0.18.0` and adds:
 - `projects/BrokenCases/MissingDialogueConditionLogicReference` -
   deterministic `WF-SEM-034` failure case for a dialogue condition logic
   reference that is not authored as a condition on the same line.
+
+Gate 44 updates `projects/ExampleMod` to dialogue registry schema `0.19.0`
+with a synthetic nested condition group declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialogueNestedConditionGroupRegistry` - runtime
+  dialogue registry schema failure case for nested condition group shape with
+  an unsupported operator value.
+- `projects/BrokenCases/MissingNestedDialogueConditionLogicReference` -
+  deterministic `WF-SEM-034` failure case for a nested dialogue condition
+  group reference that is not authored as a condition on the same line.
+
+Gate 45 adds:
+
+- `geck/dialogue/synthetic-quest-dialogue-export.txt` - synthetic
+  redistributable text fixture for the file-based GECK dialogue export
+  validation bridge.
+
+Gate 46 updates `projects/ExampleMod` to dialogue registry schema `0.20.0`
+with a synthetic negated condition reference, and adds:
+
+- `projects/BrokenCases/InvalidDialogueConditionNegationRegistry` - runtime
+  dialogue registry schema failure case for invalid empty negated condition
+  reference shape.
+- `projects/BrokenCases/MissingNegatedDialogueConditionLogicReference` -
+  deterministic `WF-SEM-034` failure case for a negated dialogue condition
+  logic reference that is not authored as a condition on the same line.
+
+Gate 47 updates `projects/ExampleMod` to dialogue registry schema `0.21.0`
+with synthetic condition precedence ranks, and adds:
+
+- `projects/BrokenCases/InvalidDialogueConditionPrecedenceRegistry` - runtime
+  dialogue registry schema failure case for invalid condition precedence
+  shape.
+
+Gate 48 updates `projects/ExampleMod` to dialogue registry schema `0.22.0`
+with synthetic condition short-circuit intent, and adds:
+
+- `projects/BrokenCases/InvalidDialogueConditionShortCircuitRegistry` -
+  runtime dialogue registry schema failure case for invalid condition
+  short-circuit shape.
+
+Gate 49 preserves dialogue registry schema `0.22.0` and adds:
+
+- `projects/BrokenCases/DuplicateDialogueConditionLogicIdentity` -
+  deterministic `WF-SEM-035` failure case for a duplicate root/nested
+  condition logic ID inside one dialogue line.
+
+Gate 50 updates `projects/ExampleMod` to dialogue registry schema `0.23.0`
+with a synthetic response route declaration, and adds:
+
+- `projects/BrokenCases/InvalidDialogueResponseRouteRegistry` - runtime
+  dialogue registry schema failure case for invalid response route shape.
+
+Gate 51 preserves dialogue registry schema `0.23.0` and adds:
+
+- `projects/BrokenCases/MissingDialogueResponseRouteTargetReference` -
+  deterministic `WF-SEM-036` failure case for a response route target topic
+  that is not declared in dialogue topics.
+
+Gate 52 preserves dialogue registry schema `0.23.0` and adds:
+
+- `projects/BrokenCases/MissingDialogueResponseRouteTargetLine` -
+  deterministic `WF-SEM-037` failure case for a declared response route target
+  topic with no authored dialogue line endpoint.
+
+Gate 53 preserves dialogue registry schema `0.23.0` and adds:
+
+- `projects/BrokenCases/DuplicateDialogueResponseRouteIdentity` -
+  deterministic `WF-SEM-038` failure case for duplicate response route IDs
+  authored on the same dialogue line.
+
+Gate 54 preserves dialogue registry schema `0.23.0` and adds:
+
+- `projects/BrokenCases/DuplicateDialogueResponseRouteKey` -
+  deterministic `WF-SEM-039` failure case for duplicate response route keys
+  authored on the same dialogue line.
+
+Gate 55 adds no fixture. It is an evidence checkpoint that keeps public
+fixtures synthetic and blocks route taxonomy work until representative evidence
+is documented.
+
+Gate 56 adds no fixture. It creates a docs-only evidence pack skeleton and
+continues to require any future public route examples to be synthetic and
+redistributable.
+
+Gate 57 adds no fixture. Capability catalogue tests use built-in registry data
+and do not inspect local game installs or third-party mod files.
+
+Gate 58 adds no committed fixture. Capability scan tests create temp-only
+synthetic folders and empty marker files at runtime to exercise root-file,
+data-file, and executable-tool detectors.
+
+Gate 59 adds no committed fixture. Capability explanation tests reuse
+temp-only synthetic folders and empty marker files at runtime to explain
+capability and provider status from scan evidence.
+
+Gate 60 adds no committed fixture. Capability requirement resolution tests use
+the existing synthetic ExampleMod dependency registry plus temp-only FNV marker
+files created at runtime.
+
+Gate 61 adds no committed fixture. Metadata report generator tests copy the
+existing synthetic ExampleMod project to temp folders and write generated or
+dist outputs only in those temp folders.
+
+Gate 62 updates the synthetic ExampleMod fixture with manifest schema `0.2.0`,
+a synthetic MCM registry, and a declared `runtime.ui.mcm_json` generation
+dependency. It does not add Bethesda assets, third-party MCM/MCM Extender
+files, or generated outputs to the committed fixture corpus.
+
+Gate 63 updates the synthetic ExampleMod MCM registry with `minMCMVersion` and
+slider scale metadata so the generator can emit and validate the Gate 63
+runtime-shaped MCM Extender JSON subset. It still adds no Bethesda assets,
+third-party MCM/MCM Extender files, or generated outputs to the committed
+fixture corpus.
+
+Gate 64 updates the synthetic ExampleMod MCM registry with runtime
+`requirements` and `$...` translation keys plus translation text. It still
+adds no Bethesda assets, third-party MCM/MCM Extender files, or generated
+outputs to the committed fixture corpus.
+
+Gate 65 updates the synthetic ExampleMod MCM registry with `checkbox` and
+`stringToggle` settings plus matching synthetic translation text. It still
+adds no Bethesda assets, third-party MCM/MCM Extender files, or generated
+outputs to the committed fixture corpus.
+
+Gate 66 updates the synthetic ExampleMod MCM registry with a `keybind` setting
+and matching synthetic translation text. It still adds no Bethesda assets,
+third-party MCM/MCM Extender files, or generated outputs to the committed
+fixture corpus.
+
+Gate 67 updates the synthetic ExampleMod MCM registry with a `header` setting
+and matching synthetic translation text. It still adds no Bethesda assets,
+third-party MCM/MCM Extender files, or generated outputs to the committed
+fixture corpus.
+
+Gate 68 updates the synthetic ExampleMod MCM registry with an `image` setting
+and matching synthetic translation text.
+
+Gate 69 updates the synthetic ExampleMod asset registry with a tiny
+handcrafted DDS-header fixture for that MCM image reference. It still adds no
+Bethesda assets, third-party MCM/MCM Extender files, or generated outputs to
+the committed fixture corpus.
+
+Gate 70 uses that synthetic texture fixture as a generate/build input and
+stages it only into generated or dist output trees during local runs. It still
+adds no generated outputs to the committed fixture corpus.
+
+Gate 71 uses the same fixture to test package-manifest metadata generated
+during local runs. It still adds no generated package manifests or archives to
+the committed fixture corpus.

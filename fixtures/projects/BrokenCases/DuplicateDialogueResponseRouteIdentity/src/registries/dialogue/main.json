@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "0.23.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.duplicatedialogueresponserouteidentity.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.duplicatedialogueresponserouteidentity.topic.greeting",
+      "title": "Synthetic Greeting"
+    },
+    {
+      "id": "io.github.theboyyss.duplicatedialogueresponserouteidentity.topic.followup",
+      "title": "Synthetic Follow Up"
+    },
+    {
+      "id": "io.github.theboyyss.duplicatedialogueresponserouteidentity.topic.alternate",
+      "title": "Synthetic Alternate"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.duplicatedialogueresponserouteidentity.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.duplicatedialogueresponserouteidentity.quest.intro",
+      "topicId": "io.github.theboyyss.duplicatedialogueresponserouteidentity.topic.greeting",
+      "responseText": "Synthetic dialogue line with duplicate response route identity.",
+      "responseRoutes": [
+        {
+          "id": "io.github.theboyyss.duplicatedialogueresponserouteidentity.dialogue.intro.responseroute.duplicate",
+          "routeKey": "default",
+          "targetTopicId": "io.github.theboyyss.duplicatedialogueresponserouteidentity.topic.followup",
+          "summary": "Synthetic first response route declaration."
+        },
+        {
+          "id": "io.github.theboyyss.duplicatedialogueresponserouteidentity.dialogue.intro.responseroute.duplicate",
+          "routeKey": "alternate",
+          "targetTopicId": "io.github.theboyyss.duplicatedialogueresponserouteidentity.topic.alternate",
+          "summary": "Synthetic duplicate response route identity declaration."
+        }
+      ]
+    },
+    {
+      "id": "io.github.theboyyss.duplicatedialogueresponserouteidentity.dialogue.intro.followup",
+      "questId": "io.github.theboyyss.duplicatedialogueresponserouteidentity.quest.intro",
+      "topicId": "io.github.theboyyss.duplicatedialogueresponserouteidentity.topic.followup",
+      "responseText": "Synthetic follow-up endpoint line."
+    },
+    {
+      "id": "io.github.theboyyss.duplicatedialogueresponserouteidentity.dialogue.intro.alternate",
+      "questId": "io.github.theboyyss.duplicatedialogueresponserouteidentity.quest.intro",
+      "topicId": "io.github.theboyyss.duplicatedialogueresponserouteidentity.topic.alternate",
+      "responseText": "Synthetic alternate endpoint line."
+    }
+  ]
+}

@@ -1,0 +1,1261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/dialogue/0.23.0/schema.json",
+  "title": "WastelandForge Dialogue Registry",
+  "description": "Dialogue registry for WastelandForge source-controlled dialogue lines, voice worklist declarations, dialogue condition skeletons, dialogue result-script skeletons, dialogue topic/link skeletons, quest-level dialogue gate skeletons, dialogue result-script variable mutation skeletons, Link From skeletons, priority/prompt routing skeletons, Speech Challenge skeletons, skill gate skeletons, perk gate skeletons, faction/reputation gate skeletons, identity gate skeletons, local world flag gate skeletons, event history gate skeletons, companion state gate skeletons, result-script side-effect gate skeletons, condition boolean composition skeletons, nested condition group skeletons, condition negation skeletons, condition precedence skeletons, condition short-circuit skeletons, and response route skeletons.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "lines"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the dialogue registry contract.",
+      "const": "0.23.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "dialogue"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "topics": {
+      "description": "Minimal source-controlled dialogue topic declarations.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dialogueTopic"
+      },
+      "uniqueItems": true
+    },
+    "questGates": {
+      "description": "Minimal quest-level dialogue gate declarations. Gate 28 models quest-stage and quest-variable gates before line-local dialogue conditions.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dialogueQuestGate"
+      },
+      "uniqueItems": true
+    },
+    "lines": {
+      "description": "Source-controlled dialogue line declarations.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dialogueLine"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pluginName": {
+      "type": "string",
+      "pattern": "^[^/\\\\]+\\.(?:[Ee][Ss][Mm]|[Ee][Ss][Pp])$"
+    },
+    "pathSegment": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "[/\\\\]"
+      }
+    },
+    "fileStem": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "[/\\\\.]"
+      }
+    },
+    "dialogueTopic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueQuestGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "questId",
+        "conditions"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "questId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "conditions": {
+          "description": "Minimal quest-level dialogue gate conditions. Gate 28 supports quest stage and quest variable checks against the gate quest only.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueQuestGateCondition"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "questId",
+        "topicId",
+        "responseText"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "questId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "topicId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "speaker": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "promptText": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "priority": {
+          "description": "Explicit dialogue info priority for Gate 32 prompt routing skeletons. Exact GECK priority ranges remain open.",
+          "type": "integer"
+        },
+        "speechChallenge": {
+          "$ref": "#/$defs/speechChallenge"
+        },
+        "skillGates": {
+          "description": "Minimal line-local skill gate declarations. Gate 34 models authored skill threshold checks without deciding the full game skill taxonomy or GECK condition mapping.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueSkillGate"
+          },
+          "uniqueItems": true
+        },
+        "perkGates": {
+          "description": "Minimal line-local perk gate declarations. Gate 35 models authored perk possession checks without deciding perk registry resolution or GECK condition mapping.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialoguePerkGate"
+          },
+          "uniqueItems": true
+        },
+        "factionGates": {
+          "description": "Minimal line-local faction relation gate declarations. Gate 36 keeps operational faction relation separate from reputation standing.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueFactionGate"
+          },
+          "uniqueItems": true
+        },
+        "reputationGates": {
+          "description": "Minimal line-local reputation standing gate declarations. Gate 36 keeps social reputation separate from operational faction relation.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueReputationGate"
+          },
+          "uniqueItems": true
+        },
+        "identityGates": {
+          "description": "Minimal line-local identity gate declarations. Gate 37 models authored identity checks without deciding identity taxonomy or GECK condition mapping.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueIdentityGate"
+          },
+          "uniqueItems": true
+        },
+        "worldFlagGates": {
+          "description": "Minimal line-local local world flag gate declarations. Gate 38 models authored world-state checks without deciding world-state registry resolution, flag taxonomy, or GECK condition mapping.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueWorldFlagGate"
+          },
+          "uniqueItems": true
+        },
+        "eventHistoryGates": {
+          "description": "Minimal line-local event history gate declarations. Gate 39 models authored consequence-signal checks without deciding event-history registry resolution, lifecycle taxonomy, consumers, or GECK condition mapping.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueEventHistoryGate"
+          },
+          "uniqueItems": true
+        },
+        "companionStateGates": {
+          "description": "Minimal line-local companion state gate declarations. Gate 40 models authored companion-state checks without deciding companion registry resolution, bespoke observer models, state taxonomy, or GECK condition mapping.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueCompanionStateGate"
+          },
+          "uniqueItems": true
+        },
+        "resultScriptSideEffectGates": {
+          "description": "Minimal line-local result-script side-effect gate declarations. Gate 41 models authored side-effect checks without deciding effect registry resolution, execution ordering, raw script semantics, or GECK condition mapping.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueResultScriptSideEffectGate"
+          },
+          "uniqueItems": true
+        },
+        "responseText": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "conditions": {
+          "description": "Minimal line-local dialogue condition declarations. Gate 25 supports quest stage and quest variable checks against the line quest only.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueCondition"
+          },
+          "uniqueItems": true
+        },
+        "conditionLogic": {
+          "description": "Minimal line-local condition boolean composition declaration over authored condition IDs. Gate 50 preserves explicit authored short-circuit intent while evaluation semantics and GECK condition-list mapping remain open.",
+          "$ref": "#/$defs/dialogueConditionLogic"
+        },
+        "resultScripts": {
+          "description": "Minimal dialogue result-script declarations. Gate 29 allows explicit quest-variable integer increment mutations against the line quest.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueResultScript"
+          },
+          "uniqueItems": true
+        },
+        "links": {
+          "description": "Minimal topic link declarations. Gate 30 models Link To target topics and Link From source topics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueLink"
+          },
+          "uniqueItems": true
+        },
+        "responseRoutes": {
+          "description": "Minimal authored response route declarations. Gate 50 records route intent and target topics without deciding response selection, Speech Challenge branching, GECK mapping, or generated plugin output.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueResponseRoute"
+          },
+          "uniqueItems": true
+        },
+        "voice": {
+          "$ref": "#/$defs/voiceWorkItem"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "uniqueItems": true
+        }
+      },
+      "dependentRequired": {
+        "promptText": [
+          "priority"
+        ]
+      }
+    },
+    "speechChallenge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill",
+        "threshold"
+      ],
+      "properties": {
+        "skill": {
+          "description": "Gate 33 only models the documented Speech Challenge surface.",
+          "const": "speech"
+        },
+        "threshold": {
+          "description": "Explicit authored Speech threshold. Exact GECK range and evaluation semantics remain open.",
+          "type": "integer"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueSkillGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "skill",
+        "threshold"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "skill": {
+          "description": "Authored skill key for a line-local dialogue skill gate. Exact game skill taxonomy remains open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "threshold": {
+          "description": "Explicit authored skill threshold. Exact GECK range and evaluation semantics remain open.",
+          "type": "integer"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialoguePerkGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "perk"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "perk": {
+          "description": "Authored perk key for a line-local dialogue perk gate. Exact perk taxonomy and registry resolution remain open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueFactionGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "faction",
+        "relation"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "faction": {
+          "description": "Authored faction key for a line-local faction relation gate. Exact faction registry resolution remains open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "relation": {
+          "description": "Authored operational faction relation key. Exact relation taxonomy and GECK mapping remain open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueReputationGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "faction",
+        "standing"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "faction": {
+          "description": "Authored faction key for a line-local reputation gate. Exact faction registry resolution remains open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "standing": {
+          "description": "Authored social reputation standing key. Exact reputation taxonomy and threshold mapping remain open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueIdentityGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "identity"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "identity": {
+          "description": "Authored identity key for a line-local dialogue identity gate. Exact identity taxonomy and actor/player mapping remain open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueWorldFlagGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "flag",
+        "state"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "flag": {
+          "description": "Authored local world flag key for a line-local dialogue world flag gate. Exact world-state registry resolution remains open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "state": {
+          "description": "Authored expected local world flag state. Exact state taxonomy and GECK mapping remain open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueEventHistoryGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "event",
+        "state"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "event": {
+          "description": "Authored event history signal key for a line-local dialogue event history gate. Exact event-history registry resolution remains open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "state": {
+          "description": "Authored expected event history state. Exact event lifecycle taxonomy and GECK mapping remain open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueCompanionStateGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "companion",
+        "state"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "companion": {
+          "description": "Authored companion key for a line-local dialogue companion state gate. Exact companion registry resolution remains open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "state": {
+          "description": "Authored companion state key for a line-local dialogue companion state gate. Exact state taxonomy, value model, observer semantics, and GECK mapping remain open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueResultScriptSideEffectGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "effect",
+        "state"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "effect": {
+          "description": "Authored result-script side-effect key for a line-local dialogue side-effect gate. Exact effect registry resolution remains open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "state": {
+          "description": "Authored expected result-script side-effect state. Exact state taxonomy, execution ordering, raw script semantics, and GECK mapping remain open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueQuestGateCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "conditionType"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "conditionType": {
+          "description": "Gate 28 only models quest-level quest-stage and quest-variable dialogue gate skeletons.",
+          "enum": [
+            "questStageDone",
+            "questVariableEquals"
+          ]
+        },
+        "stageId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "variableId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "equalsInteger": {
+          "description": "Integer comparison value for quest-variable-equals dialogue quest gate skeletons.",
+          "type": "integer"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "conditionType": {
+                "const": "questStageDone"
+              }
+            },
+            "required": [
+              "conditionType"
+            ]
+          },
+          "then": {
+            "required": [
+              "stageId"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "variableId"
+                  ]
+                },
+                {
+                  "required": [
+                    "equalsInteger"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "conditionType": {
+                "const": "questVariableEquals"
+              }
+            },
+            "required": [
+              "conditionType"
+            ]
+          },
+          "then": {
+            "required": [
+              "variableId",
+              "equalsInteger"
+            ],
+            "not": {
+              "required": [
+                "stageId"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "dialogueCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "conditionType"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "conditionType": {
+          "description": "Gate 25 only models line-local quest-stage and quest-variable condition skeletons.",
+          "enum": [
+            "questStageDone",
+            "questVariableEquals"
+          ]
+        },
+        "stageId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "variableId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "equalsInteger": {
+          "description": "Integer comparison value for quest-variable-equals dialogue condition skeletons.",
+          "type": "integer"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "conditionType": {
+                "const": "questStageDone"
+              }
+            },
+            "required": [
+              "conditionType"
+            ]
+          },
+          "then": {
+            "required": [
+              "stageId"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "variableId"
+                  ]
+                },
+                {
+                  "required": [
+                    "equalsInteger"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "conditionType": {
+                "const": "questVariableEquals"
+              }
+            },
+            "required": [
+              "conditionType"
+            ]
+          },
+          "then": {
+            "required": [
+              "variableId",
+              "equalsInteger"
+            ],
+            "not": {
+              "required": [
+                "stageId"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "dialogueConditionLogic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "operator"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "operator": {
+          "description": "Gate 50 preserves explicit all/any boolean groups, nested child groups, negated condition ID references, authored precedence ranks, and short-circuit intent. Exact GECK condition-list mapping and evaluation semantics remain open.",
+          "enum": [
+            "all",
+            "any"
+          ]
+        },
+        "precedence": {
+          "description": "Authored precedence rank for this condition logic group. Gate 50 preserves precedence intent without deciding execution ordering, GECK condition-list mapping, or evaluation semantics.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "shortCircuit": {
+          "description": "Authored short-circuit intent for this condition logic group. Gate 50 preserves intent without deciding exact evaluation behavior or GECK condition-list mapping.",
+          "type": "boolean"
+        },
+        "conditionIds": {
+          "description": "Authored line-local condition IDs included directly in this boolean group.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/logicalId"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "negatedConditionIds": {
+          "description": "Authored line-local condition IDs included directly in this boolean group as explicit negated references. Gate 50 preserves negation intent without deciding GECK condition-list mapping or evaluation semantics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/logicalId"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "groups": {
+          "description": "Nested child condition groups. Gate 50 preserves grouping, precedence, and short-circuit intent without deciding evaluation semantics or GECK condition-list mapping.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueConditionLogicGroup"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "conditionIds"
+          ]
+        },
+        {
+          "required": [
+            "negatedConditionIds"
+          ]
+        },
+        {
+          "required": [
+            "groups"
+          ]
+        }
+      ]
+    },
+    "dialogueConditionLogicGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "operator"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "operator": {
+          "description": "Explicit all/any operator for a nested Gate 50 condition group. Exact GECK condition-list mapping and evaluation semantics remain open.",
+          "enum": [
+            "all",
+            "any"
+          ]
+        },
+        "precedence": {
+          "description": "Authored precedence rank for this nested condition group. Gate 50 preserves precedence intent without deciding execution ordering, GECK condition-list mapping, or evaluation semantics.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "shortCircuit": {
+          "description": "Authored short-circuit intent for this nested condition group. Gate 50 preserves intent without deciding exact evaluation behavior or GECK condition-list mapping.",
+          "type": "boolean"
+        },
+        "conditionIds": {
+          "description": "Authored line-local condition IDs included directly in this nested boolean group.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/logicalId"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "negatedConditionIds": {
+          "description": "Authored line-local condition IDs included directly in this nested boolean group as explicit negated references. Gate 50 preserves negation intent without deciding GECK condition-list mapping or evaluation semantics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/logicalId"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "groups": {
+          "description": "Nested child condition groups below this group. Gate 50 preserves grouping, precedence, and short-circuit intent without deciding evaluation semantics or GECK condition-list mapping.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueConditionLogicGroup"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "conditionIds"
+          ]
+        },
+        {
+          "required": [
+            "negatedConditionIds"
+          ]
+        },
+        {
+          "required": [
+            "groups"
+          ]
+        }
+      ]
+    },
+    "dialogueResultScript": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "scriptType"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "scriptType": {
+          "description": "Gate 26 only models a dialogue result-script declaration skeleton.",
+          "const": "dialogueResult"
+        },
+        "mutations": {
+          "description": "Minimal dialogue result-script variable mutation declarations. Gate 29 only models quest-variable integer increments against the line quest.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dialogueResultScriptMutation"
+          },
+          "uniqueItems": true
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueResultScriptMutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "mutationType",
+        "variableId",
+        "deltaInteger"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "mutationType": {
+          "description": "Gate 29 only models quest-variable integer increment result-script mutations.",
+          "const": "questVariableIncrement"
+        },
+        "variableId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "deltaInteger": {
+          "description": "Integer increment delta for the quest variable.",
+          "type": "integer"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "dialogueLink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "linkType"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "linkType": {
+          "description": "Gate 30 models Link To and Link From topic reference skeletons.",
+          "enum": [
+            "linkTo",
+            "linkFrom"
+          ]
+        },
+        "targetTopicId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "sourceTopicId": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "linkType": {
+                "const": "linkTo"
+              }
+            },
+            "required": [
+              "linkType"
+            ]
+          },
+          "then": {
+            "required": [
+              "targetTopicId"
+            ],
+            "not": {
+              "required": [
+                "sourceTopicId"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "linkType": {
+                "const": "linkFrom"
+              }
+            },
+            "required": [
+              "linkType"
+            ]
+          },
+          "then": {
+            "required": [
+              "sourceTopicId"
+            ],
+            "not": {
+              "required": [
+                "targetTopicId"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "dialogueResponseRoute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "routeKey",
+        "targetTopicId"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "routeKey": {
+          "description": "Authored response route key. Gate 50 leaves route taxonomy, selection semantics, Speech Challenge branching, and GECK mapping open.",
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "targetTopicId": {
+          "description": "Authored target topic for this response route. Gate 50 records source intent; target reference validation is a later semantic gate.",
+          "$ref": "#/$defs/logicalId"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "voiceWorkItem": {
+      "description": "Voice worklist mapping for a dialogue line. It points to sound/voice/<PluginName>/<VoiceType>/<FileStem> assets.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plugin",
+        "voiceType",
+        "fileStem"
+      ],
+      "properties": {
+        "plugin": {
+          "$ref": "#/$defs/pluginName"
+        },
+        "voiceType": {
+          "$ref": "#/$defs/pathSegment"
+        },
+        "fileStem": {
+          "$ref": "#/$defs/fileStem"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.23.0",
+      "kind": "dialogue",
+      "id": "io.github.theboyyss.examplemod.dialogue",
+      "topics": [
+        {
+          "id": "io.github.theboyyss.examplemod.topic.greeting",
+          "title": "Synthetic Greeting"
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.topic.followup",
+          "title": "Synthetic Follow Up"
+        }
+      ],
+      "questGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.gate.intro.available",
+          "questId": "io.github.theboyyss.examplemod.quest.intro",
+          "conditions": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.gate.intro.condition.started",
+              "conditionType": "questStageDone",
+              "stageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+              "summary": "Synthetic quest-level dialogue gate over quest stage state."
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.gate.intro.condition.dialoguephasezero",
+              "conditionType": "questVariableEquals",
+              "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+              "equalsInteger": 0,
+              "summary": "Synthetic quest-level dialogue gate over quest variable state."
+            }
+          ],
+          "summary": "Synthetic quest-level dialogue gate declaration."
+        }
+      ],
+      "lines": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.hello",
+          "questId": "io.github.theboyyss.examplemod.quest.intro",
+          "topicId": "io.github.theboyyss.examplemod.topic.greeting",
+          "speaker": "ExampleSpeaker",
+          "promptText": "Synthetic greeting prompt.",
+          "priority": 10,
+          "speechChallenge": {
+            "skill": "speech",
+            "threshold": 25,
+            "summary": "Synthetic Speech Challenge declaration."
+          },
+          "skillGates": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.skillgate.science",
+              "skill": "science",
+              "threshold": 50,
+              "summary": "Synthetic line-local skill gate declaration."
+            }
+          ],
+          "perkGates": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.perkgate.synthetic",
+              "perk": "syntheticPerk",
+              "summary": "Synthetic line-local perk gate declaration."
+            }
+          ],
+          "factionGates": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.factiongate.ncr",
+              "faction": "ncr",
+              "relation": "ally",
+              "summary": "Synthetic line-local faction relation gate declaration."
+            }
+          ],
+          "reputationGates": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.reputationgate.ncr",
+              "faction": "ncr",
+              "standing": "liked",
+              "summary": "Synthetic line-local reputation standing gate declaration."
+            }
+          ],
+          "identityGates": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.identitygate.synthetic",
+              "identity": "syntheticIdentity",
+              "summary": "Synthetic line-local identity gate declaration."
+            }
+          ],
+          "worldFlagGates": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.worldflaggate.freesidepower",
+              "flag": "freesidePowerRestored",
+              "state": "true",
+              "summary": "Synthetic line-local local world flag gate declaration."
+            }
+          ],
+          "eventHistoryGates": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.eventhistorygate.synthetic",
+              "event": "syntheticEventObserved",
+              "state": "recorded",
+              "summary": "Synthetic line-local event history gate declaration."
+            }
+          ],
+          "companionStateGates": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.companionstategate.synthetic",
+              "companion": "syntheticCompanion",
+              "state": "syntheticCompanionState",
+              "summary": "Synthetic line-local companion state gate declaration."
+            }
+          ],
+          "resultScriptSideEffectGates": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.resultscriptsideeffectgate.synthetic",
+              "effect": "syntheticResultScriptSideEffect",
+              "state": "applied",
+              "summary": "Synthetic line-local result-script side-effect gate declaration."
+            }
+          ],
+          "responseText": "Synthetic hello line.",
+          "conditions": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.started",
+              "conditionType": "questStageDone",
+              "stageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+              "summary": "Synthetic dialogue condition over quest stage state."
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephasezero",
+              "conditionType": "questVariableEquals",
+              "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+              "equalsInteger": 0,
+              "summary": "Synthetic dialogue condition over quest variable state."
+            },
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephaseone",
+              "conditionType": "questVariableEquals",
+              "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+              "equalsInteger": 1,
+              "summary": "Synthetic dialogue condition used by a negated condition reference."
+            }
+          ],
+          "conditionLogic": {
+            "id": "io.github.theboyyss.examplemod.dialogue.intro.conditionlogic.all",
+            "operator": "all",
+            "precedence": 0,
+            "shortCircuit": true,
+            "conditionIds": [
+              "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephasezero"
+            ],
+            "negatedConditionIds": [
+              "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephaseone"
+            ],
+            "groups": [
+              {
+                "id": "io.github.theboyyss.examplemod.dialogue.intro.conditionlogic.group.quest",
+                "operator": "all",
+                "precedence": 10,
+                "shortCircuit": true,
+                "conditionIds": [
+                  "io.github.theboyyss.examplemod.dialogue.intro.condition.started"
+                ],
+                "summary": "Synthetic nested condition group declaration."
+              }
+            ],
+            "summary": "Synthetic line-local condition boolean composition declaration."
+          },
+          "resultScripts": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.result.advance",
+              "scriptType": "dialogueResult",
+              "mutations": [
+                {
+                  "id": "io.github.theboyyss.examplemod.dialogue.intro.result.advance.mutation.dialoguephase",
+                  "mutationType": "questVariableIncrement",
+                  "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+                  "deltaInteger": 1,
+                  "summary": "Synthetic dialogue result-script variable increment declaration."
+                }
+              ],
+              "summary": "Synthetic dialogue result-script declaration."
+            }
+          ],
+          "links": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.link.followup",
+              "linkType": "linkTo",
+              "targetTopicId": "io.github.theboyyss.examplemod.topic.followup",
+              "summary": "Synthetic topic link declaration."
+            }
+          ],
+          "responseRoutes": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.responseroute.default",
+              "routeKey": "default",
+              "targetTopicId": "io.github.theboyyss.examplemod.topic.followup",
+              "summary": "Synthetic response route declaration."
+            }
+          ],
+          "voice": {
+            "plugin": "ExampleMod.esm",
+            "voiceType": "ExampleVoice",
+            "fileStem": "intro_hello"
+          },
+          "tags": [
+            "synthetic"
+          ]
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.followup",
+          "questId": "io.github.theboyyss.examplemod.quest.intro",
+          "topicId": "io.github.theboyyss.examplemod.topic.followup",
+          "priority": 20,
+          "responseText": "Synthetic follow-up line.",
+          "links": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.link.fromgreeting",
+              "linkType": "linkFrom",
+              "sourceTopicId": "io.github.theboyyss.examplemod.topic.greeting",
+              "summary": "Synthetic Link From declaration."
+            }
+          ],
+          "tags": [
+            "synthetic"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -76,6 +76,16 @@ succeeds.
 Gate 17 adds voice and dialogue asset `WF-ASSET-*` semantic diagnostics for
 voice/lip target shape and WAV/OGG/LIP pair checks using the asset registry.
 
+Gate 69 adds MCM image asset `WF-ASSET-*` semantic diagnostics for image
+filename path shape and required texture asset target resolution using the
+asset registry.
+
+Gate 70 adds no new diagnostic rule family or rule ID; it consumes the Gate 69
+validation result before staging loose texture files.
+
+Gate 71 adds no new diagnostic rule family or rule ID; it records package
+metadata after validation, output validation, and loose-file staging succeed.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.
@@ -206,6 +216,116 @@ composition shape is reported through `WF-SCHEMA-001`.
 Gate 43 adds no new schema. It adds `WF-SEM-034` for dialogue condition logic
 `conditionIds` entries that do not resolve to conditions authored on the same
 dialogue line.
+
+Gate 44 adds dialogue registry schema `0.19.0` for explicit nested dialogue
+condition group skeleton declarations. It adds no new `WF-SEM-*` rule; invalid
+nested group shape is reported through `WF-SCHEMA-001`, and existing
+`WF-SEM-034` condition ID reference validation also applies inside nested
+groups.
+
+Gate 45 adds file-based GECK dialogue export load diagnostics for
+`forge validate --geck-dialogue-export <path>`. `WF-LOAD-009` reports a
+missing export file, `WF-LOAD-010` reports an unreadable or binary-looking
+export file, and `WF-LOAD-011` reports an empty export file.
+
+Gate 46 adds dialogue registry schema `0.20.0` for explicit dialogue condition
+negation skeleton declarations. It adds no new `WF-SEM-*` rule; invalid
+negation shape is reported through `WF-SCHEMA-001`, and existing `WF-SEM-034`
+condition ID reference validation also applies to `negatedConditionIds`.
+
+Gate 47 adds dialogue registry schema `0.21.0` for explicit dialogue condition
+precedence skeleton declarations. It adds no new `WF-SEM-*` rule; invalid
+precedence shape is reported through `WF-SCHEMA-001`.
+
+Gate 48 adds dialogue registry schema `0.22.0` for explicit dialogue condition
+short-circuit skeleton declarations. It adds no new `WF-SEM-*` rule; invalid
+short-circuit shape is reported through `WF-SCHEMA-001`.
+
+Gate 49 adds no new schema. It adds `WF-SEM-035` for duplicate root or nested
+dialogue condition logic IDs inside one line-local condition logic tree.
+
+Gate 50 adds dialogue registry schema `0.23.0` for explicit dialogue response
+route skeleton declarations. It adds no new `WF-SEM-*` rule; invalid response
+route shape is reported through `WF-SCHEMA-001`.
+
+Gate 51 adds no new schema. It adds `WF-SEM-036` for dialogue response route
+`targetTopicId` values that do not resolve to declared dialogue topics.
+
+Gate 52 adds no new schema. It adds `WF-SEM-037` for dialogue response route
+target topics that are declared but have no authored dialogue line endpoint.
+
+Gate 53 adds no new schema. It adds `WF-SEM-038` for duplicate dialogue
+response route IDs authored on the same dialogue line.
+
+Gate 54 adds no new schema. It adds `WF-SEM-039` for duplicate dialogue
+response route keys authored on the same dialogue line.
+
+Gate 55 adds no schema, diagnostic rule, or report field. It records that
+response route taxonomy and selection behavior remain evidence-blocked before
+Forge adds new diagnostics for route meaning.
+
+Gate 56 adds no schema, diagnostic rule, or report field. It creates a
+dialogue response route taxonomy evidence pack skeleton before Forge adds new
+diagnostics for route meaning.
+
+Gate 57 adds no schema, diagnostic rule, or diagnostic report field. It adds
+catalogue listing output for `forge capabilities list`; local provider
+detection and future `WF-CAP-*` diagnostics remain later work.
+
+Gate 58 adds `forge capabilities scan` output as a separate capability scan
+report. It adds no `WF-CAP-*` diagnostics and does not change the canonical
+diagnostic report shape used by `forge validate` or `forge release verify`.
+
+Gate 59 adds `forge capabilities explain` output as a separate capability
+explanation report over catalogue and scan evidence. It adds no `WF-CAP-*`
+diagnostics and does not change the canonical diagnostic report shape used by
+`forge validate` or `forge release verify`.
+
+Gate 60 extends the separate `forge capabilities scan` report with an optional
+project requirement resolution section when `--project` is supplied. It adds no
+`WF-CAP-*` diagnostics and does not change the canonical diagnostic report
+shape used by `forge validate` or `forge release verify`.
+
+Gate 61 adds separate metadata report output for `forge generate --target
+reports` and `forge build --target reports`. The generated validation report
+uses the existing canonical diagnostic report aggregate. The command report
+adds no canonical diagnostic report fields, but it may include blocking
+diagnostics such as `WF-GEN-001` when a generate output path escapes
+`generated/` or `WF-BUILD-001` when a build output path escapes `dist/`.
+
+Gate 62 adds separate MCM JSON generator command output for `forge generate
+--target mcm-json` and `forge build --target mcm-json`. It does not change
+the canonical diagnostic report shape. Blocking generator diagnostics may
+include `WF-GEN-002` for missing declared generation capability,
+`WF-GEN-003` for no MCM source menus, and `WF-GEN-004` for duplicate MCM
+output files.
+
+Gate 63 keeps the same command output shape and adds output-schema validation
+before MCM JSON files are written. Blocking generator diagnostics may also
+include `WF-GEN-005` for unsupported MCM source settings, missing runtime
+metadata needed by the Gate 63 output subset, or output schema validation
+failures.
+
+Gate 64 keeps the same command output shape and adds translation-file outputs
+when MCM source declares translations. Blocking generator diagnostics may also
+include `WF-GEN-006` when translated menus collide on the same
+`MCM/Translations/<modName>.ini` output path.
+
+Gate 65 keeps the same command and diagnostic output shape while expanding
+`WF-GEN-005` coverage to the larger supported MCM option subset. It adds no
+new diagnostic report fields and no new rule family member.
+
+Gate 66 keeps the same command and diagnostic output shape while adding
+keybind to the supported MCM option subset. It adds no new diagnostic report
+fields and no new rule family member.
+
+Gate 67 keeps the same command and diagnostic output shape while adding header
+to the supported MCM option subset. It adds no new diagnostic report fields
+and no new rule family member.
+
+Gate 68 keeps the same command and diagnostic output shape while adding image
+to the supported MCM option subset. It adds no new diagnostic report fields
+and no new rule family member.
 
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

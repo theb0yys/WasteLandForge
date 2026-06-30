@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "0.21.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.topic.greeting",
+      "title": "Synthetic Greeting"
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.quest.intro",
+      "topicId": "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.topic.greeting",
+      "promptText": "Synthetic condition precedence prompt.",
+      "priority": 10,
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "precedence": -1,
+        "conditionIds": [
+          "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.dialogue.intro.condition.started"
+        ],
+        "negatedConditionIds": [
+          "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.dialogue.intro.condition.started"
+        ],
+        "groups": [
+          {
+            "id": "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.dialogue.intro.conditionlogic.group.valid",
+            "operator": "all",
+            "precedence": 10,
+            "conditionIds": [
+              "io.github.theboyyss.invaliddialogueconditionprecedenceregistry.dialogue.intro.condition.started"
+            ],
+            "summary": "Synthetic valid child group below the invalid precedence group."
+          }
+        ],
+        "summary": "Synthetic line-local condition logic with invalid precedence."
+      },
+      "responseText": "Synthetic dialogue line with invalid condition precedence shape."
+    }
+  ]
+}

@@ -139,3 +139,64 @@ conditions authored on the same dialogue line. Nested groups, negation,
 precedence, short-circuit behavior, GECK condition-list mapping, evaluation
 semantics, and generated plugin records remain later narrative and tooling
 gates.
+
+Gate 44 adds `0.19.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds explicit nested `groups` under line-local `conditionLogic` declarations,
+where each group has an authored `id`, an `all`/`any` operator, and direct
+`conditionIds` and/or child groups. Negation, precedence, short-circuit
+behavior, GECK condition-list mapping, evaluation semantics, and generated
+plugin records remain later narrative and tooling gates.
+
+Gate 46 adds `0.20.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds explicit `negatedConditionIds` under line-local `conditionLogic`
+declarations and nested groups. The field records authored negation intent over
+line-local conditions without deciding precedence, short-circuit behavior,
+GECK condition-list mapping, evaluation semantics, or generated plugin
+records.
+
+Gate 47 adds `0.21.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds optional integer `precedence` ranks under line-local `conditionLogic`
+declarations and nested groups. The field records authored precedence intent
+without deciding execution ordering, short-circuit behavior, GECK
+condition-list mapping, evaluation semantics, or generated plugin records.
+
+Gate 48 adds `0.22.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds optional boolean `shortCircuit` declarations under line-local
+`conditionLogic` declarations and nested groups. The field records authored
+short-circuit intent without deciding execution behavior, GECK condition-list
+mapping, evaluation semantics, or generated plugin records.
+
+Gate 49 adds no new schema. It preserves `0.22.0/schema.json` and adds
+semantic validation that root and nested `conditionLogic.id` values are unique
+inside one dialogue line's condition logic tree.
+
+Gate 50 adds `0.23.0/schema.json` as a new immutable Draft 2020-12 schema. It
+adds line-local `responseRoutes` declarations with authored route keys and
+target topic IDs. The field records response routing intent without deciding
+route taxonomy, response selection behavior, Speech Challenge branching, GECK
+condition/list mapping, target reference validation, or generated plugin
+records.
+
+Gate 51 adds no new schema. It preserves `0.23.0/schema.json` and adds
+semantic validation that response route `targetTopicId` values resolve to
+declared dialogue topics when topics are declared.
+
+Gate 52 adds no new schema. It preserves `0.23.0/schema.json` and adds
+semantic validation that declared response route target topics have at least
+one authored dialogue line endpoint.
+
+Gate 53 adds no new schema. It preserves `0.23.0/schema.json` and adds
+semantic validation that response route IDs are unique on the same dialogue
+line.
+
+Gate 54 adds no new schema. It preserves `0.23.0/schema.json` and adds
+semantic validation that response route keys are unique on the same dialogue
+line.
+
+Gate 55 adds no new schema. It preserves `0.23.0/schema.json` and records
+that route-key taxonomy, selection behavior, Speech Challenge route
+integration, and GECK/plugin mapping require an evidence pack before
+implementation.
+
+Gate 56 adds no new schema. It creates that evidence pack skeleton under
+`docs/dialogue/` while preserving `0.23.0/schema.json`.
