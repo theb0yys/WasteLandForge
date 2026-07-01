@@ -207,6 +207,57 @@ Gate 101 adds no new diagnostic rule family or rule ID. Archive detail
 cross-report consistency failures for existing package evidence continue to
 use `WF-BUILD-006`.
 
+Gate 102 adds no new diagnostic rule family or rule ID. Package archive
+presence revalidation failures for existing package evidence continue to use
+`WF-BUILD-006`.
+
+Gate 103 adds no new diagnostic rule family or rule ID. Checksum
+unexpected-entry revalidation failures for existing package evidence continue
+to use `WF-BUILD-006`.
+
+Gate 104 adds no new diagnostic rule family or rule ID. Checksum
+duplicate-entry revalidation failures for existing package evidence continue
+to use `WF-BUILD-006`.
+
+Gate 105 adds no new diagnostic rule family or rule ID. Checksum
+canonical-order revalidation failures for existing package evidence continue
+to use `WF-BUILD-006`.
+
+Gate 106 adds no new diagnostic rule family or rule ID. Checksum digest
+canonical-casing revalidation failures for existing package evidence continue
+to use `WF-BUILD-006`.
+
+Gate 107 adds no new diagnostic rule family or rule ID. Checksum line-ending
+and trailing-newline revalidation failures for existing package evidence
+continue to use `WF-BUILD-006`.
+
+Gate 108 adds no new diagnostic rule family or rule ID. Checksum path separator
+canonicalization failures for existing package evidence continue to use
+`WF-BUILD-006`.
+
+Gate 109 adds no new diagnostic rule family or rule ID. Checksum blank-line
+revalidation failures for existing package evidence continue to use
+`WF-BUILD-006`.
+
+Gate 110 adds no new diagnostic rule family or rule ID. Checksum entry spacing
+canonicalization failures for existing package evidence continue to use
+`WF-BUILD-006`.
+
+Gate 111 adds no new diagnostic rule family or rule ID. Checksum path casing
+canonicalization failures for existing package evidence continue to use
+`WF-BUILD-006`.
+
+Gate 112 adds no new diagnostic rule family or rule ID. Checksum
+case-insensitive duplicate failures for existing package evidence continue to
+use `WF-BUILD-006`.
+
+Gate 113 adds no new diagnostic rule family or rule ID. Checksum malformed-entry
+format failures for existing package evidence continue to use `WF-BUILD-006`.
+
+Gate 114 adds no new diagnostic rule family or rule ID. Checksum path
+containment failures for existing package evidence continue to use
+`WF-BUILD-006`.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

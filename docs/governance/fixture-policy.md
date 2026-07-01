@@ -196,3 +196,81 @@ temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
 package outputs. It still adds no generated package verification reports,
 build manifests, checksum files, archives, or package command output trees to
 the committed fixture corpus.
+
+Gate 102 adds package archive presence revalidation tests using temp-only
+copies of the synthetic `ExampleMod` fixture and temp-only generated package
+outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 103 adds checksum unexpected-entry revalidation tests using temp-only
+copies of the synthetic `ExampleMod` fixture and temp-only generated package
+outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 104 adds checksum duplicate-entry revalidation tests using temp-only
+copies of the synthetic `ExampleMod` fixture and temp-only generated package
+outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 105 adds checksum canonical-order revalidation tests using temp-only
+copies of the synthetic `ExampleMod` fixture and temp-only generated package
+outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 106 adds checksum digest canonical-casing revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 107 adds checksum line-ending and trailing-newline revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 108 adds checksum path separator canonicalization revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 109 adds checksum blank-line revalidation tests using temp-only copies of
+the synthetic `ExampleMod` fixture and temp-only generated package outputs. It
+still adds no generated package verification reports, build manifests, checksum
+files, archives, or package command output trees to the committed fixture
+corpus.
+
+Gate 110 adds checksum entry spacing canonicalization revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 111 adds checksum path casing canonicalization revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 112 adds checksum case-insensitive duplicate revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 113 adds checksum malformed-entry format revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.
+
+Gate 114 adds checksum path containment revalidation tests using temp-only
+copies of the synthetic `ExampleMod` fixture and temp-only generated package
+outputs. It still adds no generated package verification reports, build
+manifests, checksum files, archives, or package command output trees to the
+committed fixture corpus.

@@ -106,9 +106,22 @@ Gate status:
 - `gates/gate-099-mcm-extender-package-verify-existing-install-preview-archive-detail-content-revalidation.md` - Gate 99, MCM Extender package verify-existing install-preview archive detail content revalidation.
 - `gates/gate-100-mcm-extender-package-verify-existing-package-manifest-archive-detail-content-revalidation.md` - Gate 100, MCM Extender package verify-existing package-manifest archive detail content revalidation.
 - `gates/gate-101-mcm-extender-package-verify-existing-archive-detail-cross-report-consistency-revalidation.md` - Gate 101, MCM Extender package verify-existing archive detail cross-report consistency revalidation.
+- `gates/gate-102-mcm-extender-package-verify-existing-package-archive-presence-revalidation.md` - Gate 102, MCM Extender package verify-existing package archive presence revalidation.
+- `gates/gate-103-mcm-extender-package-verify-existing-checksum-unexpected-entry-revalidation.md` - Gate 103, MCM Extender package verify-existing checksum unexpected-entry revalidation.
+- `gates/gate-104-mcm-extender-package-verify-existing-checksum-duplicate-entry-revalidation.md` - Gate 104, MCM Extender package verify-existing checksum duplicate-entry revalidation.
+- `gates/gate-105-mcm-extender-package-verify-existing-checksum-canonical-order-revalidation.md` - Gate 105, MCM Extender package verify-existing checksum canonical-order revalidation.
+- `gates/gate-106-mcm-extender-package-verify-existing-checksum-digest-canonical-casing-revalidation.md` - Gate 106, MCM Extender package verify-existing checksum digest canonical-casing revalidation.
+- `gates/gate-107-mcm-extender-package-verify-existing-checksum-line-ending-trailing-newline-revalidation.md` - Gate 107, MCM Extender package verify-existing checksum line-ending and trailing-newline revalidation.
+- `gates/gate-108-mcm-extender-package-verify-existing-checksum-path-separator-canonicalization-revalidation.md` - Gate 108, MCM Extender package verify-existing checksum path separator canonicalization revalidation.
+- `gates/gate-109-mcm-extender-package-verify-existing-checksum-blank-line-revalidation.md` - Gate 109, MCM Extender package verify-existing checksum blank-line revalidation.
+- `gates/gate-110-mcm-extender-package-verify-existing-checksum-entry-spacing-canonicalization-revalidation.md` - Gate 110, MCM Extender package verify-existing checksum entry spacing canonicalization revalidation.
+- `gates/gate-111-mcm-extender-package-verify-existing-checksum-path-casing-canonicalization-revalidation.md` - Gate 111, MCM Extender package verify-existing checksum path casing canonicalization revalidation.
+- `gates/gate-112-mcm-extender-package-verify-existing-checksum-case-insensitive-duplicate-revalidation.md` - Gate 112, MCM Extender package verify-existing checksum case-insensitive duplicate revalidation.
+- `gates/gate-113-mcm-extender-package-verify-existing-checksum-malformed-entry-format-revalidation.md` - Gate 113, MCM Extender package verify-existing checksum malformed-entry format revalidation.
+- `gates/gate-114-mcm-extender-package-verify-existing-checksum-path-containment-revalidation.md` - Gate 114, MCM Extender package verify-existing checksum path containment revalidation.
 
 Next gate:
 
-- Gate 102 - MCM Extender package verify-existing package archive presence revalidation.
+- Gate 115 - MCM Extender package verify-existing checksum comment-line rejection revalidation.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

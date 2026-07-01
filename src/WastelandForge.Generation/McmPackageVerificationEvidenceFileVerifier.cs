@@ -148,13 +148,8 @@ public static class McmPackageVerificationEvidenceFileVerifier
         List<DiagnosticIssue> issues)
     {
         var outputRoot = Path.GetDirectoryName(checksumsPath) ?? projectRoot;
-        var checksumEntries = ReadChecksumEntries(projectRoot, outputRoot, checksumsPath, checksums, projectId, issues);
-        foreach (var checksumEntry in checksumEntries.Values.OrderBy(entry => entry.Path, StringComparer.Ordinal))
-        {
-            ValidateChecksumEntry(projectRoot, outputRoot, checksumEntry, projectId, issues);
-        }
-
-        foreach (var expectedEntry in ReadExpectedChecksumEntries(
+        ValidateChecksumTextFormat(projectRoot, checksumsPath, checksums, projectId, issues);
+        var expectedEntries = ReadExpectedChecksumEntries(
             projectRoot,
             outputRoot,
             packageManifest,
@@ -162,9 +157,23 @@ public static class McmPackageVerificationEvidenceFileVerifier
             packageManifestPath,
             installPreviewPath,
             packageVerificationPath,
-            packageVerificationSummaryPath))
+            packageVerificationSummaryPath);
+        var checksumEntries = ReadChecksumEntries(projectRoot, outputRoot, checksumsPath, checksums, projectId, issues);
+        foreach (var checksumEntry in checksumEntries.Entries.Values.OrderBy(entry => entry.Path, StringComparer.Ordinal))
         {
-            if (checksumEntries.ContainsKey(expectedEntry))
+            ValidateChecksumEntry(projectRoot, outputRoot, checksumEntry, expectedEntries, projectId, issues);
+        }
+
+        ValidateChecksumDigestCanonicalCasing(projectRoot, checksumsPath, checksumEntries.OrderedEntries, expectedEntries, projectId, issues);
+        ValidateChecksumPathSeparatorCanonicalization(projectRoot, checksumsPath, checksumEntries.OrderedEntries, expectedEntries, projectId, issues);
+        ValidateChecksumEntrySpacingCanonicalization(projectRoot, checksumsPath, checksumEntries.OrderedEntries, expectedEntries, projectId, issues);
+        ValidateChecksumPathCasingCanonicalization(projectRoot, checksumsPath, checksumEntries.OrderedEntries, expectedEntries, projectId, issues);
+        ValidateChecksumCanonicalOrder(projectRoot, checksumsPath, checksumEntries.OrderedEntries, expectedEntries, projectId, issues);
+        foreach (var expectedEntry in expectedEntries)
+        {
+            if (ContainsChecksumEntryPath(checksumEntries.Entries.Keys, expectedEntry) ||
+                ContainsChecksumEntryPath(checksumEntries.MalformedEntryPaths, expectedEntry) ||
+                ContainsRejectedChecksumEntryPath(checksumEntries.RejectedEntryPaths, expectedEntry))
             {
                 continue;
             }
@@ -176,9 +185,24 @@ public static class McmPackageVerificationEvidenceFileVerifier
                 "MCM package checksum entry is missing",
                 $"Expected checksums.sha256 to contain '{expectedEntry}', but no entry was found."));
         }
+
+        foreach (var checksumEntry in checksumEntries.Entries.Values.OrderBy(entry => entry.Path, StringComparer.Ordinal))
+        {
+            if (FindExpectedChecksumEntryPath(checksumEntry.Path, expectedEntries) is not null)
+            {
+                continue;
+            }
+
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                checksumsPath,
+                projectId,
+                "MCM package checksum entry is not expected",
+                $"checksums.sha256 records '{checksumEntry.Path}', but package evidence does not declare that checksum entry."));
+        }
     }
 
-    private static Dictionary<string, ChecksumEntry> ReadChecksumEntries(
+    private static ChecksumEntrySet ReadChecksumEntries(
         string projectRoot,
         string outputRoot,
         string checksumsPath,
@@ -187,6 +211,9 @@ public static class McmPackageVerificationEvidenceFileVerifier
         List<DiagnosticIssue> issues)
     {
         var entries = new Dictionary<string, ChecksumEntry>(StringComparer.Ordinal);
+        var orderedEntries = new List<ChecksumEntry>();
+        var malformedEntryPaths = new List<string>();
+        var rejectedEntryPaths = new List<string>();
         var lines = checksums.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
         for (var index = 0; index < lines.Length; index++)
         {
@@ -196,46 +223,402 @@ public static class McmPackageVerificationEvidenceFileVerifier
                 continue;
             }
 
-            var separatorIndex = line.IndexOf("  ", StringComparison.Ordinal);
-            if (separatorIndex <= 0 || separatorIndex + 2 >= line.Length)
+            if (!TryReadChecksumEntryLine(line, out var sha256, out var rawSeparator, out var rawPath))
             {
                 issues.Add(CreateMalformedChecksumEntryIssue(projectRoot, checksumsPath, projectId, index + 1));
                 continue;
             }
 
-            var sha256 = line[..separatorIndex];
-            var rawPath = line[(separatorIndex + 2)..];
-            if (!IsSha256(sha256) || string.IsNullOrWhiteSpace(rawPath))
+            var parsedPath = rawPath.Trim();
+            if (!IsSha256(sha256) || string.IsNullOrWhiteSpace(parsedPath))
             {
+                if (!string.IsNullOrWhiteSpace(parsedPath) &&
+                    TryNormalizeChecksumEntryPath(outputRoot, parsedPath, out var malformedEntryPath))
+                {
+                    malformedEntryPaths.Add(malformedEntryPath);
+                }
+
                 issues.Add(CreateMalformedChecksumEntryIssue(projectRoot, checksumsPath, projectId, index + 1));
                 continue;
             }
 
-            if (!TryNormalizeChecksumEntryPath(outputRoot, rawPath, out var normalizedPath))
+            if (!TryNormalizeChecksumEntryPath(outputRoot, parsedPath, out var normalizedPath))
             {
+                rejectedEntryPaths.Add(NormalizeChecksumEntryPathText(parsedPath));
                 issues.Add(CreateFileIssue(
                     projectRoot,
                     checksumsPath,
                     projectId,
                     "MCM package checksum path must stay under package root",
-                    $"Expected checksums.sha256 line {index + 1} path '{rawPath}' to stay under the package root."));
+                    $"Expected checksums.sha256 line {index + 1} path '{parsedPath}' to stay under the package root."));
                 continue;
             }
 
-            entries[normalizedPath] = new ChecksumEntry(normalizedPath, sha256.ToLowerInvariant());
+            var duplicatePath = FindChecksumEntryPath(entries.Keys, normalizedPath);
+            if (duplicatePath is not null)
+            {
+                issues.Add(CreateFileIssue(
+                    projectRoot,
+                    checksumsPath,
+                    projectId,
+                    "MCM package checksum entry is duplicated",
+                    $"Expected checksums.sha256 to record '{duplicatePath}' once, but line {index + 1} records duplicate entry '{normalizedPath}'."));
+                continue;
+            }
+
+            var entry = new ChecksumEntry(normalizedPath, rawPath, parsedPath, rawSeparator, sha256, sha256.ToLowerInvariant(), index + 1);
+            entries[normalizedPath] = entry;
+            orderedEntries.Add(entry);
         }
 
-        return entries;
+        return new ChecksumEntrySet(entries, orderedEntries, malformedEntryPaths, rejectedEntryPaths);
+    }
+
+    private static bool TryReadChecksumEntryLine(
+        string line,
+        out string sha256,
+        out string rawSeparator,
+        out string rawPath)
+    {
+        sha256 = string.Empty;
+        rawSeparator = string.Empty;
+        rawPath = string.Empty;
+        if (line.Length < 66)
+        {
+            return false;
+        }
+
+        sha256 = line[..64];
+        var separatorEnd = 64;
+        while (separatorEnd < line.Length && IsChecksumEntrySeparatorCharacter(line[separatorEnd]))
+        {
+            separatorEnd++;
+        }
+
+        if (separatorEnd == 64 || separatorEnd >= line.Length)
+        {
+            return false;
+        }
+
+        rawSeparator = line[64..separatorEnd];
+        rawPath = line[separatorEnd..];
+        return true;
+    }
+
+    private static bool IsChecksumEntrySeparatorCharacter(char value) =>
+        value is ' ' or '\t';
+
+    private static bool ContainsChecksumEntryPath(IEnumerable<string> paths, string expectedPath) =>
+        FindChecksumEntryPath(paths, expectedPath) is not null;
+
+    private static bool ContainsRejectedChecksumEntryPath(IEnumerable<string> paths, string expectedPath) =>
+        paths.Any(path => RejectedChecksumEntryMayReferToExpectedPath(path, expectedPath));
+
+    private static string? FindChecksumEntryPath(IEnumerable<string> paths, string path)
+    {
+        foreach (var existingPath in paths)
+        {
+            if (StringComparer.OrdinalIgnoreCase.Equals(existingPath, path))
+            {
+                return existingPath;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool RejectedChecksumEntryMayReferToExpectedPath(string rejectedPath, string expectedPath)
+    {
+        var normalizedRejectedPath = NormalizeChecksumEntryPathText(rejectedPath);
+        var normalizedExpectedPath = NormalizeChecksumEntryPathText(expectedPath);
+        if (StringComparer.OrdinalIgnoreCase.Equals(normalizedRejectedPath, normalizedExpectedPath))
+        {
+            return true;
+        }
+
+        while (normalizedRejectedPath.StartsWith("../", StringComparison.Ordinal))
+        {
+            normalizedRejectedPath = normalizedRejectedPath[3..];
+            if (StringComparer.OrdinalIgnoreCase.Equals(normalizedRejectedPath, normalizedExpectedPath))
+            {
+                return true;
+            }
+        }
+
+        return normalizedRejectedPath.EndsWith($"/{normalizedExpectedPath}", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeChecksumEntryPathText(string path) =>
+        path.Trim().Replace('\\', '/');
+
+    private static string? FindExpectedChecksumEntryPath(string path, ISet<string> expectedEntries)
+    {
+        if (expectedEntries.Contains(path))
+        {
+            return path;
+        }
+
+        foreach (var expectedEntry in expectedEntries)
+        {
+            if (StringComparer.OrdinalIgnoreCase.Equals(path, expectedEntry))
+            {
+                return expectedEntry;
+            }
+        }
+
+        return null;
+    }
+
+    private static void ValidateChecksumTextFormat(
+        string projectRoot,
+        string checksumsPath,
+        string checksums,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        if (!EndsWithLineEnding(checksums))
+        {
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                checksumsPath,
+                projectId,
+                "MCM package checksum file is missing final newline",
+                "Expected checksums.sha256 to end with a final newline, matching Forge-generated checksum evidence."));
+        }
+
+        var lineNumber = 1;
+        for (var index = 0; index < checksums.Length; index++)
+        {
+            var current = checksums[index];
+            if (current == '\r')
+            {
+                if (index + 1 < checksums.Length && checksums[index + 1] == '\n')
+                {
+                    if (!StringComparer.Ordinal.Equals(Environment.NewLine, "\r\n"))
+                    {
+                        AddChecksumLineEndingIssue(projectRoot, checksumsPath, projectId, lineNumber, issues);
+                        return;
+                    }
+
+                    index++;
+                    lineNumber++;
+                    continue;
+                }
+
+                AddChecksumLineEndingIssue(projectRoot, checksumsPath, projectId, lineNumber, issues);
+                return;
+            }
+
+            if (current != '\n')
+            {
+                continue;
+            }
+
+            if (!StringComparer.Ordinal.Equals(Environment.NewLine, "\n"))
+            {
+                AddChecksumLineEndingIssue(projectRoot, checksumsPath, projectId, lineNumber, issues);
+                return;
+            }
+
+            lineNumber++;
+        }
+
+        ValidateChecksumBlankLines(projectRoot, checksumsPath, checksums, projectId, issues);
+    }
+
+    private static bool EndsWithLineEnding(string value) =>
+        value.EndsWith('\n') || value.EndsWith('\r');
+
+    private static void ValidateChecksumBlankLines(
+        string projectRoot,
+        string checksumsPath,
+        string checksums,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        var lines = checksums
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Split('\n');
+        var lineCount = EndsWithLineEnding(checksums) ? lines.Length - 1 : lines.Length;
+        for (var index = 0; index < lineCount; index++)
+        {
+            if (!string.IsNullOrWhiteSpace(lines[index]))
+            {
+                continue;
+            }
+
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                checksumsPath,
+                projectId,
+                "MCM package checksum blank line is not canonical",
+                $"Expected checksums.sha256 line {index + 1} to contain a checksum entry; Forge-generated checksum evidence does not include blank lines."));
+            return;
+        }
+    }
+
+    private static void AddChecksumLineEndingIssue(
+        string projectRoot,
+        string checksumsPath,
+        LogicalId? projectId,
+        int lineNumber,
+        List<DiagnosticIssue> issues) =>
+        issues.Add(CreateFileIssue(
+            projectRoot,
+            checksumsPath,
+            projectId,
+            "MCM package checksum line ending is not canonical",
+            $"Expected checksums.sha256 line {lineNumber} to use {FormatLineEnding(Environment.NewLine)} line endings, matching Forge-generated checksum evidence."));
+
+    private static string FormatLineEnding(string lineEnding) =>
+        StringComparer.Ordinal.Equals(lineEnding, "\r\n")
+            ? "CRLF"
+            : StringComparer.Ordinal.Equals(lineEnding, "\n")
+                ? "LF"
+                : "platform";
+
+    private static void ValidateChecksumDigestCanonicalCasing(
+        string projectRoot,
+        string checksumsPath,
+        IReadOnlyList<ChecksumEntry> entries,
+        ISet<string> expectedEntries,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        foreach (var entry in entries.Where(entry => FindExpectedChecksumEntryPath(entry.Path, expectedEntries) is not null))
+        {
+            if (StringComparer.Ordinal.Equals(entry.RawSha256, entry.Sha256))
+            {
+                continue;
+            }
+
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                checksumsPath,
+                projectId,
+                "MCM package checksum digest casing is not canonical",
+                $"Expected checksums.sha256 line {entry.LineNumber} digest for '{entry.Path}' to use lowercase SHA-256 hex."));
+        }
+    }
+
+    private static void ValidateChecksumPathSeparatorCanonicalization(
+        string projectRoot,
+        string checksumsPath,
+        IReadOnlyList<ChecksumEntry> entries,
+        ISet<string> expectedEntries,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        foreach (var entry in entries.Where(entry => FindExpectedChecksumEntryPath(entry.Path, expectedEntries) is not null))
+        {
+            if (!entry.ParsedPath.Contains('\\', StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                checksumsPath,
+                projectId,
+                "MCM package checksum path separator is not canonical",
+                $"Expected checksums.sha256 line {entry.LineNumber} path for '{entry.Path}' to use '/' separators."));
+        }
+    }
+
+    private static void ValidateChecksumEntrySpacingCanonicalization(
+        string projectRoot,
+        string checksumsPath,
+        IReadOnlyList<ChecksumEntry> entries,
+        ISet<string> expectedEntries,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        foreach (var entry in entries.Where(entry => FindExpectedChecksumEntryPath(entry.Path, expectedEntries) is not null))
+        {
+            if (StringComparer.Ordinal.Equals(entry.RawSeparator, "  ") &&
+                StringComparer.Ordinal.Equals(entry.RawPath, entry.ParsedPath))
+            {
+                continue;
+            }
+
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                checksumsPath,
+                projectId,
+                "MCM package checksum entry spacing is not canonical",
+                $"Expected checksums.sha256 line {entry.LineNumber} entry for '{entry.Path}' to use exactly two spaces between digest and path and no leading or trailing path whitespace."));
+        }
+    }
+
+    private static void ValidateChecksumPathCasingCanonicalization(
+        string projectRoot,
+        string checksumsPath,
+        IReadOnlyList<ChecksumEntry> entries,
+        ISet<string> expectedEntries,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        foreach (var entry in entries)
+        {
+            var expectedEntry = FindExpectedChecksumEntryPath(entry.Path, expectedEntries);
+            if (expectedEntry is null || StringComparer.Ordinal.Equals(entry.Path, expectedEntry))
+            {
+                continue;
+            }
+
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                checksumsPath,
+                projectId,
+                "MCM package checksum path casing is not canonical",
+                $"Expected checksums.sha256 line {entry.LineNumber} path '{entry.Path}' to match package evidence path casing '{expectedEntry}'."));
+        }
+    }
+
+    private static void ValidateChecksumCanonicalOrder(
+        string projectRoot,
+        string checksumsPath,
+        IReadOnlyList<ChecksumEntry> entries,
+        ISet<string> expectedEntries,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        string? previous = null;
+        foreach (var entry in entries)
+        {
+            var expectedEntry = FindExpectedChecksumEntryPath(entry.Path, expectedEntries);
+            if (expectedEntry is null)
+            {
+                continue;
+            }
+
+            if (previous is null || StringComparer.Ordinal.Compare(previous, expectedEntry) <= 0)
+            {
+                previous = expectedEntry;
+                continue;
+            }
+
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                checksumsPath,
+                projectId,
+                "MCM package checksum entries are not in canonical order",
+                $"Expected checksums.sha256 entries to be sorted by normalized package-root-relative path, but line {entry.LineNumber} records '{expectedEntry}' after '{previous}'."));
+            return;
+        }
     }
 
     private static void ValidateChecksumEntry(
         string projectRoot,
         string outputRoot,
         ChecksumEntry entry,
+        ISet<string> expectedEntries,
         LogicalId? projectId,
         List<DiagnosticIssue> issues)
     {
-        var path = Path.GetFullPath(Path.Combine(outputRoot, entry.Path.Replace('/', Path.DirectorySeparatorChar)));
+        var entryPath = FindExpectedChecksumEntryPath(entry.Path, expectedEntries) ?? entry.Path;
+        var path = Path.GetFullPath(Path.Combine(outputRoot, entryPath.Replace('/', Path.DirectorySeparatorChar)));
         string actualSha256;
         try
         {
@@ -358,7 +741,7 @@ public static class McmPackageVerificationEvidenceFileVerifier
             checksumsPath,
             projectId,
             "MCM package checksum entry is malformed",
-            $"Expected checksums.sha256 line {lineNumber} to contain a 64-character SHA-256, two spaces, and a package-root-relative file path.");
+            $"Expected checksums.sha256 line {lineNumber} to contain a 64-character SHA-256 hex digest, two spaces, and a package-root-relative file path.");
 
     private static void ValidateInstallPreviewSummary(
         string projectRoot,
@@ -1339,9 +1722,20 @@ public static class McmPackageVerificationEvidenceFileVerifier
     private static string ToDisplayPath(string root, string path) =>
         Path.GetRelativePath(root, path).Replace('\\', '/');
 
+    private sealed record ChecksumEntrySet(
+        Dictionary<string, ChecksumEntry> Entries,
+        IReadOnlyList<ChecksumEntry> OrderedEntries,
+        IReadOnlyList<string> MalformedEntryPaths,
+        IReadOnlyList<string> RejectedEntryPaths);
+
     private sealed record ChecksumEntry(
         string Path,
-        string Sha256);
+        string RawPath,
+        string ParsedPath,
+        string RawSeparator,
+        string RawSha256,
+        string Sha256,
+        int LineNumber);
 
     private sealed record PackageManifestEntryEvidence(
         string Key,

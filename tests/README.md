@@ -460,6 +460,92 @@ coverage for archive detail cross-report consistency revalidation in
 refresh checksum/build-manifest digest evidence, and assert blocking
 `WF-BUILD-006` cross-report diagnostics.
 
+Gate 102 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for package archive presence revalidation in
+`forge package --target mcm-json --verify-existing`. The tests rewrite package
+evidence to record archive status `not-created` while leaving the generated
+`package.zip` in place, refresh checksum/build-manifest digest evidence where
+the CLI needs it, and assert a single blocking `WF-BUILD-006` archive-presence
+diagnostic.
+
+Gate 103 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum unexpected-entry revalidation in
+`forge package --target mcm-json --verify-existing`. The tests add a temp-only
+extra generated file, append a matching `checksums.sha256` line for that file,
+and assert a single blocking `WF-BUILD-006` checksum unexpected-entry
+diagnostic.
+
+Gate 104 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum duplicate-entry revalidation in
+`forge package --target mcm-json --verify-existing`. The tests append a second
+matching `checksums.sha256` line for an expected package file and assert a
+single blocking `WF-BUILD-006` checksum duplicate-entry diagnostic.
+
+Gate 105 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum canonical-order revalidation in
+`forge package --target mcm-json --verify-existing`. The tests move an expected
+checksum entry before an earlier-sorting package file and assert a single
+blocking `WF-BUILD-006` checksum canonical-order diagnostic.
+
+Gate 106 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum digest canonical-casing revalidation in
+`forge package --target mcm-json --verify-existing`. The tests rewrite an
+expected checksum digest to uppercase while preserving the correct digest value
+and assert a single blocking `WF-BUILD-006` checksum casing diagnostic.
+
+Gate 107 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum line-ending and trailing-newline revalidation in
+`forge package --target mcm-json --verify-existing`. The tests remove the final
+newline and rewrite checksum line endings to a non-canonical separator, then
+assert single blocking `WF-BUILD-006` checksum text-format diagnostics.
+
+Gate 108 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum path separator canonicalization revalidation in
+`forge package --target mcm-json --verify-existing`. The tests rewrite an
+expected checksum path to use backslash separators while preserving the correct
+digest value, then assert a single blocking `WF-BUILD-006` checksum path
+separator diagnostic.
+
+Gate 109 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum blank-line revalidation in
+`forge package --target mcm-json --verify-existing`. The tests insert a blank
+row into generated `checksums.sha256` while preserving all valid entries, then
+assert a single blocking `WF-BUILD-006` checksum blank-line diagnostic.
+
+Gate 110 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum entry spacing canonicalization revalidation in
+`forge package --target mcm-json --verify-existing`. The tests rewrite an
+expected checksum entry to use a single space between digest and path while
+preserving the correct digest value, then assert a single blocking
+`WF-BUILD-006` checksum entry spacing diagnostic.
+
+Gate 111 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum path casing canonicalization revalidation in
+`forge package --target mcm-json --verify-existing`. The tests rewrite an
+expected checksum path to differ only by directory casing while preserving the
+correct digest value, then assert a single blocking `WF-BUILD-006` checksum
+path casing diagnostic.
+
+Gate 112 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum case-insensitive duplicate revalidation in
+`forge package --target mcm-json --verify-existing`. The tests append a second
+checksum entry whose normalized package-root-relative path differs only by
+case, then assert a single blocking `WF-BUILD-006` checksum duplicate-entry
+diagnostic.
+
+Gate 113 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum malformed-entry format revalidation in
+`forge package --target mcm-json --verify-existing`. The tests rewrite an
+expected checksum digest to malformed hex while preserving the expected path,
+then assert a single blocking `WF-BUILD-006` checksum malformed-entry
+diagnostic.
+
+Gate 114 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum path containment revalidation in
+`forge package --target mcm-json --verify-existing`. The tests rewrite an
+expected checksum path to escape the package root, then assert a single
+blocking `WF-BUILD-006` checksum path-containment diagnostic.
+
 Run the full local suite serially:
 
 ```text

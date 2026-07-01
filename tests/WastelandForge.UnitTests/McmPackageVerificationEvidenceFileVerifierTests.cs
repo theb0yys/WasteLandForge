@@ -218,6 +218,343 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
     }
 
     [Fact]
+    public void VerifyReportsUnexpectedChecksumEntry()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        var extraPath = Path.Combine(projectRoot, "dist", "mcm-json", "stale-output.txt");
+        File.WriteAllText(extraPath, "stale");
+        AppendChecksumEntry(Path.Combine(projectRoot, outputs.Checksums!), "stale-output.txt", extraPath);
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum entry is not expected", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("stale-output.txt", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsDuplicateChecksumEntry()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        AppendChecksumEntry(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "MCM/ExampleMod.json",
+            Path.Combine(projectRoot, "dist", "mcm-json", "MCM", "ExampleMod.json"));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum entry is duplicated", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("MCM/ExampleMod.json", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsCaseInsensitiveDuplicateChecksumEntry()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        AppendChecksumEntry(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "mcm/ExampleMod.json",
+            Path.Combine(projectRoot, "dist", "mcm-json", "MCM", "ExampleMod.json"));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum entry is duplicated", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("MCM/ExampleMod.json", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("mcm/ExampleMod.json", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsMalformedChecksumEntryWithoutMissingCascade()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        RewriteChecksumEntrySha256(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "MCM/ExampleMod.json",
+            new string('z', 64));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum entry is malformed", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("SHA-256 hex digest", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsChecksumPathContainmentWithoutMissingCascade()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        RewriteChecksumEntryPath(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "MCM/ExampleMod.json",
+            "../MCM/ExampleMod.json");
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum path must stay under package root", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("../MCM/ExampleMod.json", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("package root", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsChecksumEntriesNotInCanonicalOrder()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        MoveChecksumEntryBefore(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "package-verification.md",
+            "MCM/ExampleMod.json");
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum entries are not in canonical order", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("MCM/ExampleMod.json", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("package-verification.md", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsChecksumDigestCasingNotCanonical()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        RewriteChecksumEntrySha256(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "MCM/ExampleMod.json",
+            ComputeSha256(Path.Combine(projectRoot, "dist", "mcm-json", "MCM", "ExampleMod.json")).ToUpperInvariant());
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum digest casing is not canonical", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("MCM/ExampleMod.json", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("lowercase", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsChecksumPathSeparatorNotCanonical()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        RewriteChecksumEntryPath(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "MCM/ExampleMod.json",
+            "MCM\\ExampleMod.json");
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum path separator is not canonical", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("MCM/ExampleMod.json", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("'/' separators", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsChecksumPathCasingNotCanonical()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        RewriteChecksumEntryPath(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "MCM/ExampleMod.json",
+            "mcm/ExampleMod.json");
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum path casing is not canonical", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("mcm/ExampleMod.json", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("MCM/ExampleMod.json", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsChecksumBlankLineNotCanonical()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        InsertBlankChecksumLineBefore(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "package-verification.md");
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum blank line is not canonical", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("blank lines", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsChecksumEntrySpacingNotCanonical()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        RewriteChecksumEntrySeparator(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "MCM/ExampleMod.json",
+            " ");
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum entry spacing is not canonical", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("MCM/ExampleMod.json", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("exactly two spaces", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsChecksumFileMissingFinalNewline()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        RemoveFinalLineEnding(Path.Combine(projectRoot, outputs.Checksums!));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum file is missing final newline", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("final newline", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsChecksumLineEndingNotCanonical()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        RewriteLineEndings(Path.Combine(projectRoot, outputs.Checksums!), NonCanonicalLineEnding());
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum line ending is not canonical", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("line ending", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void VerifyReportsMismatchFromEditedBuildManifestCrossChecks()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");
@@ -756,10 +1093,129 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
         throw new InvalidOperationException($"Checksum entry '{entryPath}' was not found.");
     }
 
+    private static void InsertBlankChecksumLineBefore(string checksumsPath, string beforeEntryPath)
+    {
+        var lines = File.ReadAllLines(checksumsPath).ToList();
+        var index = lines.FindIndex(line => line.EndsWith($"  {beforeEntryPath}", StringComparison.Ordinal));
+        if (index < 0)
+        {
+            throw new InvalidOperationException($"Checksum entry '{beforeEntryPath}' was not found.");
+        }
+
+        lines.Insert(index, string.Empty);
+        File.WriteAllLines(checksumsPath, lines);
+    }
+
+    private static void RewriteChecksumEntrySeparator(string checksumsPath, string entryPath, string separator)
+    {
+        var lines = File.ReadAllLines(checksumsPath);
+        for (var index = 0; index < lines.Length; index++)
+        {
+            if (!lines[index].EndsWith($"  {entryPath}", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var separatorIndex = lines[index].IndexOf("  ", StringComparison.Ordinal);
+            lines[index] = $"{lines[index][..separatorIndex]}{separator}{entryPath}";
+            File.WriteAllLines(checksumsPath, lines);
+            return;
+        }
+
+        throw new InvalidOperationException($"Checksum entry '{entryPath}' was not found.");
+    }
+
+    private static void RewriteChecksumEntryPath(string checksumsPath, string entryPath, string replacementPath)
+    {
+        var lines = File.ReadAllLines(checksumsPath);
+        for (var index = 0; index < lines.Length; index++)
+        {
+            if (!lines[index].EndsWith($"  {entryPath}", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var separatorIndex = lines[index].IndexOf("  ", StringComparison.Ordinal);
+            lines[index] = $"{lines[index][..separatorIndex]}  {replacementPath}";
+            File.WriteAllLines(checksumsPath, lines);
+            return;
+        }
+
+        throw new InvalidOperationException($"Checksum entry '{entryPath}' was not found.");
+    }
+
     private static void RefreshChecksumEntrySha256(string checksumsPath, string entryPath, string filePath)
     {
-        using var stream = File.OpenRead(filePath);
-        RewriteChecksumEntrySha256(checksumsPath, entryPath, Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant());
+        RewriteChecksumEntrySha256(checksumsPath, entryPath, ComputeSha256(filePath));
+    }
+
+    private static void AppendChecksumEntry(string checksumsPath, string entryPath, string filePath)
+    {
+        File.AppendAllText(checksumsPath, $"{ComputeSha256(filePath)}  {entryPath}{Environment.NewLine}");
+    }
+
+    private static string ComputeSha256(string path)
+    {
+        using var stream = File.OpenRead(path);
+        return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+    }
+
+    private static void RemoveFinalLineEnding(string path)
+    {
+        var content = File.ReadAllText(path);
+        if (content.EndsWith(Environment.NewLine, StringComparison.Ordinal))
+        {
+            content = content[..^Environment.NewLine.Length];
+        }
+        else if (content.EndsWith('\n') || content.EndsWith('\r'))
+        {
+            content = content[..^1];
+        }
+
+        File.WriteAllText(path, content);
+    }
+
+    private static void RewriteLineEndings(string path, string lineEnding)
+    {
+        var lines = File.ReadAllText(path)
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Split('\n');
+        if (lines.Length > 0 && lines[^1].Length == 0)
+        {
+            lines = lines[..^1];
+        }
+
+        File.WriteAllText(path, string.Join(lineEnding, lines) + lineEnding);
+    }
+
+    private static string NonCanonicalLineEnding() =>
+        StringComparer.Ordinal.Equals(Environment.NewLine, "\r\n") ? "\n" : "\r\n";
+
+    private static void MoveChecksumEntryBefore(string checksumsPath, string movedEntryPath, string beforeEntryPath)
+    {
+        var lines = File.ReadAllLines(checksumsPath).ToList();
+        var movedIndex = lines.FindIndex(line => line.EndsWith($"  {movedEntryPath}", StringComparison.Ordinal));
+        var beforeIndex = lines.FindIndex(line => line.EndsWith($"  {beforeEntryPath}", StringComparison.Ordinal));
+        if (movedIndex < 0)
+        {
+            throw new InvalidOperationException($"Checksum entry '{movedEntryPath}' was not found.");
+        }
+
+        if (beforeIndex < 0)
+        {
+            throw new InvalidOperationException($"Checksum entry '{beforeEntryPath}' was not found.");
+        }
+
+        var line = lines[movedIndex];
+        lines.RemoveAt(movedIndex);
+        if (movedIndex < beforeIndex)
+        {
+            beforeIndex--;
+        }
+
+        lines.Insert(beforeIndex, line);
+        File.WriteAllLines(checksumsPath, lines);
     }
 
     private static void RefreshBuildManifestOutputDigest(string buildManifestPath, string entryPath, string filePath)

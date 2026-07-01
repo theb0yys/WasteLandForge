@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 101 MCM Extender package verify-existing archive detail cross-report consistency revalidation
+Status: Gate 114 MCM Extender package verify-existing checksum path containment revalidation
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -314,6 +314,45 @@ forge --version
 - Gate 101 adds archive detail cross-report consistency revalidation to that
   verify-existing diagnostic mode; normal package generation still does not
   run diagnostic package verification.
+- Gate 102 adds package archive presence revalidation to that verify-existing
+  diagnostic mode; normal package generation still does not run diagnostic
+  package verification.
+- Gate 103 adds checksum unexpected-entry revalidation to that verify-existing
+  diagnostic mode; normal package generation still does not run diagnostic
+  package verification.
+- Gate 104 adds checksum duplicate-entry revalidation to that verify-existing
+  diagnostic mode; normal package generation still does not run diagnostic
+  package verification.
+- Gate 105 adds checksum canonical-order revalidation to that verify-existing
+  diagnostic mode; normal package generation still does not run diagnostic
+  package verification.
+- Gate 106 adds checksum digest canonical-casing revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not run
+  diagnostic package verification.
+- Gate 107 adds checksum line-ending and trailing-newline revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not run
+  diagnostic package verification.
+- Gate 108 adds checksum path separator canonicalization revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not run
+  diagnostic package verification.
+- Gate 109 adds checksum blank-line revalidation to that verify-existing
+  diagnostic mode; normal package generation still does not run diagnostic
+  package verification.
+- Gate 110 adds checksum entry spacing canonicalization revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not run
+  diagnostic package verification.
+- Gate 111 adds checksum path casing canonicalization revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not run
+  diagnostic package verification.
+- Gate 112 adds checksum case-insensitive duplicate revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not run
+  diagnostic package verification.
+- Gate 113 adds checksum malformed-entry format revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not run
+  diagnostic package verification.
+- Gate 114 adds checksum path containment revalidation to that verify-existing
+  diagnostic mode; normal package generation still does not run diagnostic
+  package verification.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.
 - `forge validate --format sarif --output <path>` writes SARIF to a file.
 - `forge validate --format github` emits GitHub workflow-command annotations.
@@ -743,6 +782,79 @@ verify-existing mode. When `package-manifest.json` archive SHA-256 or length
 is already stale against the actual archive, `install-preview.json` and
 `package-verification.json` archive SHA-256 and length fields are also checked
 for consistency with `package-manifest.json` and with each other.
+
+Gate 102 adds package archive presence revalidation for that verify-existing
+mode. When `package.zip` exists beside `package-manifest.json` but package
+evidence records archive status `not-created`, the file-based verifier emits
+`WF-BUILD-006` without regenerating package outputs.
+
+Gate 103 adds checksum unexpected-entry revalidation for that verify-existing
+mode. When `checksums.sha256` records a package-root-relative file entry that
+is not expected from package evidence, the file-based verifier emits
+`WF-BUILD-006` without regenerating package outputs.
+
+Gate 104 adds checksum duplicate-entry revalidation for that verify-existing
+mode. When `checksums.sha256` records the same normalized package-root-relative
+file entry more than once, the file-based verifier emits `WF-BUILD-006`
+without regenerating package outputs.
+
+Gate 105 adds checksum canonical-order revalidation for that verify-existing
+mode. When expected package evidence entries in `checksums.sha256` are not
+sorted by normalized package-root-relative path, the file-based verifier emits
+`WF-BUILD-006` without regenerating package outputs.
+
+Gate 106 adds checksum digest canonical-casing revalidation for that
+verify-existing mode. When expected package evidence entries in
+`checksums.sha256` use uppercase SHA-256 hex, the file-based verifier emits
+`WF-BUILD-006` without regenerating package outputs.
+
+Gate 107 adds checksum line-ending and trailing-newline revalidation for that
+verify-existing mode. When `checksums.sha256` is missing its final newline or
+uses non-canonical line endings for the current Forge-generated checksum
+format, the file-based verifier emits `WF-BUILD-006` without regenerating
+package outputs.
+
+Gate 108 adds checksum path separator canonicalization revalidation for that
+verify-existing mode. When an expected package evidence entry in
+`checksums.sha256` uses backslash separators instead of Forge-generated `/`
+package-root-relative paths, the file-based verifier emits `WF-BUILD-006`
+without regenerating package outputs.
+
+Gate 109 adds checksum blank-line revalidation for that verify-existing mode.
+When `checksums.sha256` contains blank or whitespace-only rows, the file-based
+verifier emits `WF-BUILD-006` without regenerating package outputs.
+
+Gate 110 adds checksum entry spacing canonicalization revalidation for that
+verify-existing mode. When an expected `checksums.sha256` entry does not use
+exactly two spaces between digest and path, or has leading/trailing path
+whitespace, the file-based verifier emits `WF-BUILD-006` without regenerating
+package outputs.
+
+Gate 111 adds checksum path casing canonicalization revalidation for that
+verify-existing mode. When an expected `checksums.sha256` entry matches package
+evidence only case-insensitively, the file-based verifier emits
+`WF-BUILD-006` without regenerating package outputs or reporting missing and
+unexpected checksum entries for the same path.
+
+Gate 112 adds checksum case-insensitive duplicate revalidation for that
+verify-existing mode. When two `checksums.sha256` entries record the same
+normalized package-root-relative path ignoring case, the file-based verifier
+emits one `WF-BUILD-006` duplicate-entry diagnostic without regenerating package
+outputs or reporting path-casing, missing, or unexpected checksum entries for
+the later duplicate row.
+
+Gate 113 adds checksum malformed-entry format revalidation for that
+verify-existing mode. When an expected `checksums.sha256` row has a malformed
+SHA-256 digest or entry shape but still names a recognizable
+package-root-relative path, the file-based verifier emits one `WF-BUILD-006`
+malformed-entry diagnostic without regenerating package outputs or reporting
+the same path as missing.
+
+Gate 114 adds checksum path containment revalidation for that verify-existing
+mode. When a `checksums.sha256` row uses parent-directory traversal or another
+path form that escapes the package root, the file-based verifier emits one
+`WF-BUILD-006` path-containment diagnostic without regenerating package outputs
+or reporting the same recognizable expected path as missing.
 
 ## Exit Codes
 

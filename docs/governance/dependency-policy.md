@@ -151,3 +151,42 @@ rehost, or require third-party runtime dependencies.
 Gate 101 adds only archive detail cross-report consistency revalidation over
 the same local package evidence diagnostics; it still does not add, download,
 rehost, or require third-party runtime dependencies.
+Gate 102 adds only package archive presence revalidation over the same local
+package evidence diagnostics; it still does not add, download, rehost, or
+require third-party runtime dependencies.
+Gate 103 adds only checksum unexpected-entry revalidation over the same local
+package evidence diagnostics; it still does not add, download, rehost, or
+require third-party runtime dependencies.
+Gate 104 adds only checksum duplicate-entry revalidation over the same local
+package evidence diagnostics; it still does not add, download, rehost, or
+require third-party runtime dependencies.
+Gate 105 adds only checksum canonical-order revalidation over the same local
+package evidence diagnostics; it still does not add, download, rehost, or
+require third-party runtime dependencies.
+Gate 106 adds only checksum digest canonical-casing revalidation over the same
+local package evidence diagnostics; it still does not add, download, rehost, or
+require third-party runtime dependencies.
+Gate 107 adds only checksum line-ending and trailing-newline revalidation over
+the same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.
+Gate 108 adds only checksum path separator canonicalization revalidation over
+the same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.
+Gate 109 adds only checksum blank-line revalidation over the same local package
+evidence diagnostics; it still does not add, download, rehost, or require
+third-party runtime dependencies.
+Gate 110 adds only checksum entry spacing canonicalization revalidation over
+the same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.
+Gate 111 adds only checksum path casing canonicalization revalidation over the
+same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.
+Gate 112 adds only checksum case-insensitive duplicate revalidation over the
+same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.
+Gate 113 adds only checksum malformed-entry format revalidation over the same
+local package evidence diagnostics; it still does not add, download, rehost, or
+require third-party runtime dependencies.
+Gate 114 adds only checksum path containment revalidation over the same local
+package evidence diagnostics; it still does not add, download, rehost, or
+require third-party runtime dependencies.

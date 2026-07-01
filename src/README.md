@@ -525,3 +525,82 @@ SHA-256 or length is already stale against the actual archive, the reusable
 validator now compares the archive SHA-256 and length fields across
 `package-manifest.json`, `install-preview.json`, and
 `package-verification.json` without regenerating package outputs.
+
+Gate 102 adds package archive presence revalidation to that verify-existing
+package evidence path. When `package.zip` exists beside `package-manifest.json`
+but package evidence records archive status `not-created`, the file-based
+verifier now emits a blocking `WF-BUILD-006` diagnostic without regenerating
+package outputs.
+
+Gate 103 adds checksum unexpected-entry revalidation to that verify-existing
+package evidence path. The file-based verifier now reports a blocking
+`WF-BUILD-006` diagnostic when `checksums.sha256` records a valid
+package-root-relative entry that package evidence does not expect, without
+regenerating package outputs.
+
+Gate 104 adds checksum duplicate-entry revalidation to that verify-existing
+package evidence path. The file-based verifier now reports a blocking
+`WF-BUILD-006` diagnostic when `checksums.sha256` records the same normalized
+package-root-relative entry more than once, without regenerating package
+outputs.
+
+Gate 105 adds checksum canonical-order revalidation to that verify-existing
+package evidence path. The file-based verifier now reports a blocking
+`WF-BUILD-006` diagnostic when expected package evidence entries in
+`checksums.sha256` are not sorted by normalized package-root-relative path,
+without regenerating package outputs.
+
+Gate 106 adds checksum digest canonical-casing revalidation to that
+verify-existing package evidence path. The file-based verifier now reports a
+blocking `WF-BUILD-006` diagnostic when expected package evidence entries in
+`checksums.sha256` use uppercase SHA-256 hex, without regenerating package
+outputs.
+
+Gate 107 adds checksum line-ending and trailing-newline revalidation to that
+verify-existing package evidence path. The file-based verifier now reports
+blocking `WF-BUILD-006` diagnostics when `checksums.sha256` is missing its
+final newline or uses non-canonical line endings for the current
+Forge-generated checksum format, without regenerating package outputs.
+
+Gate 108 adds checksum path separator canonicalization revalidation to that
+verify-existing package evidence path. The file-based verifier now reports a
+blocking `WF-BUILD-006` diagnostic when an expected checksum entry uses
+backslash separators instead of Forge-generated `/` package-root-relative
+paths, without regenerating package outputs.
+
+Gate 109 adds checksum blank-line revalidation to that verify-existing package
+evidence path. The file-based verifier now reports a blocking `WF-BUILD-006`
+diagnostic when `checksums.sha256` contains blank or whitespace-only rows,
+without regenerating package outputs.
+
+Gate 110 adds checksum entry spacing canonicalization revalidation to that
+verify-existing package evidence path. The file-based verifier now reports a
+blocking `WF-BUILD-006` diagnostic when an expected checksum entry does not use
+exactly two spaces between digest and path, or has leading/trailing path
+whitespace, without regenerating package outputs.
+
+Gate 111 adds checksum path casing canonicalization revalidation to that
+verify-existing package evidence path. The file-based verifier now reports a
+blocking `WF-BUILD-006` diagnostic when an expected checksum entry matches
+package evidence only case-insensitively, while suppressing missing/unexpected
+checksum entry cascades for that same path.
+
+Gate 112 adds checksum case-insensitive duplicate revalidation to that
+verify-existing package evidence path. The file-based verifier now reports a
+single blocking `WF-BUILD-006` duplicate-entry diagnostic when two checksum
+entries record the same normalized package-root-relative path ignoring case,
+while suppressing path-casing, missing, and unexpected checksum entry cascades
+for the later duplicate row.
+
+Gate 113 adds checksum malformed-entry format revalidation to that
+verify-existing package evidence path. The file-based verifier now reports a
+single blocking `WF-BUILD-006` malformed-entry diagnostic when an expected
+checksum row has a malformed SHA-256 digest or entry shape but still names a
+recognizable package-root-relative path, while suppressing the missing-entry
+cascade for that same path.
+
+Gate 114 adds checksum path containment revalidation to that verify-existing
+package evidence path. The file-based verifier now reports a single blocking
+`WF-BUILD-006` path-containment diagnostic when a checksum row escapes the
+package root, while suppressing the missing-entry cascade for the same
+recognizable expected path.

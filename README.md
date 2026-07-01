@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 101 adds archive
-detail cross-report consistency revalidation for
+The project is currently in gated v0.1 implementation. Gate 114 adds checksum
+path containment revalidation for
 `forge package --target mcm-json --verify-existing` while preserving the CLI
 command surface.
 
@@ -18,7 +18,7 @@ command surface.
 
 ## Current Gate
 
-Gate 101 advances the first game-facing generator path. It keeps
+Gate 114 advances the first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -276,12 +276,85 @@ checks SHA-256 and length agreement across `package-manifest.json`,
 `install-preview.json`, and `package-verification.json` without regenerating
 package outputs.
 
+Gate 102 adds package archive presence revalidation to that verify-existing
+mode. If `package.zip` exists beside `package-manifest.json` while the package
+evidence records archive status `not-created`, the file-based verifier emits a
+blocking `WF-BUILD-006` diagnostic without regenerating package outputs.
+
+Gate 103 adds checksum unexpected-entry revalidation to that verify-existing
+mode. If `checksums.sha256` records a valid file entry that is not declared by
+package evidence, the file-based verifier emits a blocking `WF-BUILD-006`
+diagnostic without regenerating package outputs.
+
+Gate 104 adds checksum duplicate-entry revalidation to that verify-existing
+mode. If `checksums.sha256` records the same normalized package-root-relative
+file entry more than once, the file-based verifier emits a blocking
+`WF-BUILD-006` diagnostic without regenerating package outputs.
+
+Gate 105 adds checksum canonical-order revalidation to that verify-existing
+mode. If expected package evidence entries in `checksums.sha256` are not sorted
+by normalized package-root-relative path, the file-based verifier emits a
+blocking `WF-BUILD-006` diagnostic without regenerating package outputs.
+
+Gate 106 adds checksum digest canonical-casing revalidation to that
+verify-existing mode. If expected package evidence entries in
+`checksums.sha256` use uppercase SHA-256 hex, the file-based verifier emits a
+blocking `WF-BUILD-006` diagnostic without regenerating package outputs.
+
+Gate 107 adds checksum line-ending and trailing-newline revalidation to that
+verify-existing mode. If `checksums.sha256` is missing its final newline or
+uses non-canonical line endings for the current Forge-generated checksum
+format, the file-based verifier emits blocking `WF-BUILD-006` diagnostics
+without regenerating package outputs.
+
+Gate 108 adds checksum path separator canonicalization revalidation to that
+verify-existing mode. If an expected package evidence entry in
+`checksums.sha256` uses backslash separators instead of Forge-generated `/`
+package-root-relative paths, the file-based verifier emits a blocking
+`WF-BUILD-006` diagnostic without regenerating package outputs.
+
+Gate 109 adds checksum blank-line revalidation to that verify-existing mode.
+If `checksums.sha256` contains blank or whitespace-only rows, the file-based
+verifier emits a blocking `WF-BUILD-006` diagnostic without regenerating
+package outputs.
+
+Gate 110 adds checksum entry spacing canonicalization revalidation to that
+verify-existing mode. If an expected `checksums.sha256` entry does not use
+exactly two spaces between the digest and path, or has leading/trailing path
+whitespace, the file-based verifier emits a blocking `WF-BUILD-006` diagnostic
+without regenerating package outputs.
+
+Gate 111 adds checksum path casing canonicalization revalidation to that
+verify-existing mode. If an expected `checksums.sha256` entry matches package
+evidence only case-insensitively, the file-based verifier emits a blocking
+`WF-BUILD-006` diagnostic without also reporting missing or unexpected checksum
+entries.
+
+Gate 112 adds checksum case-insensitive duplicate revalidation to that
+verify-existing mode. If two `checksums.sha256` entries record the same
+normalized package-root-relative path ignoring case, the file-based verifier
+emits one blocking `WF-BUILD-006` duplicate-entry diagnostic without also
+reporting path-casing, missing, or unexpected checksum entries for the later
+duplicate row.
+
+Gate 113 adds checksum malformed-entry format revalidation to that
+verify-existing mode. If an expected `checksums.sha256` row has a malformed
+digest or entry shape but still names a recognizable package-root-relative path,
+the file-based verifier emits one blocking `WF-BUILD-006` malformed-entry
+diagnostic without also reporting the same path as missing.
+
+Gate 114 adds checksum path containment revalidation to that verify-existing
+mode. If a `checksums.sha256` row uses parent-directory traversal or another
+path form that escapes the package root, the file-based verifier emits one
+blocking `WF-BUILD-006` path-containment diagnostic without also reporting the
+same recognizable expected path as missing.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
 `unknown` in this gate because their safe file-marker policy remains open.
 
-Gate 101 does not inspect an MO2 profile, launch through MO2 VFS, probe a
+Gate 114 does not inspect an MO2 profile, launch through MO2 VFS, probe a
 runtime, parse provider versions, emit `WF-CAP-*` diagnostics, generate
 in-game-verified MCM Extender files, generate JIP text scripts, package
 archives as FOMOD installers, or compile plugin records. Remaining advanced
@@ -548,6 +621,39 @@ package generation.
 Gate 101 adds archive detail cross-report consistency revalidation to that
 verify-existing mode without adding package-verifier behavior to normal
 package generation.
+Gate 102 adds package archive presence revalidation to that verify-existing
+mode without adding package-verifier behavior to normal package generation.
+Gate 103 adds checksum unexpected-entry revalidation to that verify-existing
+mode without adding package-verifier behavior to normal package generation.
+Gate 104 adds checksum duplicate-entry revalidation to that verify-existing
+mode without adding package-verifier behavior to normal package generation.
+Gate 105 adds checksum canonical-order revalidation to that verify-existing
+mode without adding package-verifier behavior to normal package generation.
+Gate 106 adds checksum digest canonical-casing revalidation to that
+verify-existing mode without adding package-verifier behavior to normal package
+generation.
+Gate 107 adds checksum line-ending and trailing-newline revalidation to that
+verify-existing mode without adding package-verifier behavior to normal package
+generation.
+Gate 108 adds checksum path separator canonicalization revalidation to that
+verify-existing mode without adding package-verifier behavior to normal package
+generation.
+Gate 109 adds checksum blank-line revalidation to that verify-existing mode
+without adding package-verifier behavior to normal package generation.
+Gate 110 adds checksum entry spacing canonicalization revalidation to that
+verify-existing mode without adding package-verifier behavior to normal package
+generation.
+Gate 111 adds checksum path casing canonicalization revalidation to that
+verify-existing mode without adding package-verifier behavior to normal package
+generation.
+Gate 112 adds checksum case-insensitive duplicate revalidation to that
+verify-existing mode without adding package-verifier behavior to normal package
+generation.
+Gate 113 adds checksum malformed-entry format revalidation to that
+verify-existing mode without adding package-verifier behavior to normal package
+generation.
+Gate 114 adds checksum path containment revalidation to that verify-existing
+mode without adding package-verifier behavior to normal package generation.
 
 It intentionally does not create:
 

@@ -92,11 +92,11 @@ Gate 45 option routing:
   file only. Do not control, automate, import into, or mutate an open GECK
   session.
 
-Gate 101 option routing:
+Gate 114 option routing:
 
 - `/forge generate --target mcm-json`, `/forge build --target mcm-json`, and
   `/forge package --target mcm-json` route to the real `forge` CLI behavior
-  when available. Treat the output as the Gate 101 validated MCM Extender JSON
+  when available. Treat the output as the Gate 114 validated MCM Extender JSON
   runtime subset under `MCM/<menu>.json`, plus
   `MCM/Translations/<modName>.ini` when translations are declared, and staged
   referenced texture assets under their game-relative target paths. Build and
@@ -127,7 +127,15 @@ Gate 101 option routing:
   package-verification archive detail content revalidation and
   install-preview archive detail content revalidation and package-manifest
   archive detail content revalidation plus archive detail cross-report
-  consistency revalidation.
+  consistency revalidation, package archive presence revalidation, and
+  checksum unexpected-entry revalidation, checksum duplicate-entry
+  revalidation, checksum case-insensitive duplicate-entry revalidation,
+  checksum malformed-entry revalidation, checksum path containment
+  revalidation, checksum canonical-order revalidation, checksum digest
+  canonical-casing revalidation, checksum path separator canonicalization
+  revalidation, checksum path casing canonicalization revalidation, checksum
+  blank-line revalidation, checksum entry spacing revalidation, checksum
+  line-ending revalidation, and checksum trailing-newline revalidation.
   These remain
   reports only:
   they list Data-relative would-copy paths and do not install into Data or MO2. It
@@ -152,8 +160,15 @@ Gate 101 option routing:
   `package-verification.md` against `package-verification.json` and revalidates
   `package-verification.json` check objects and metadata fields against
   package evidence, plus archive detail content in `package-verification.json`,
-  `install-preview.json`, and `package-manifest.json`, and cross-report
-  consistency between those archive details. Do not invent `/forge verify-package`,
+  `install-preview.json`, and `package-manifest.json`, cross-report
+  consistency between those archive details, and physical `package.zip`
+  presence when evidence records no archive, unexpected checksum entries not
+  declared by package evidence, duplicate checksum entries, checksum entries
+  out of canonical order, uppercase checksum digests, backslash checksum path
+  separators, checksum paths with casing drift, blank checksum rows,
+  non-canonical checksum entry spacing, non-canonical checksum line endings,
+  and missing checksum final newlines.
+  Do not invent `/forge verify-package`,
   `/forge package verify`, or other verifier aliases.
 
 ## Verification
