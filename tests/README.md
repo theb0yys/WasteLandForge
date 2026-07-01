@@ -384,6 +384,67 @@ tests cover clean summary output, blocking `WF-BUILD-006` summary output, and
 rejection of `--summary` for normal package generation without
 `--verify-existing`.
 
+Gate 91 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum-file revalidation in
+`forge package --target mcm-json --verify-existing`. The tests cover edited
+checksum digests, missing checksum entries, verify-existing JSON evidence, and
+the extra checksum diagnostic produced when a payload file no longer matches
+`checksums.sha256`.
+
+Gate 92 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for build-manifest content revalidation in
+`forge package --target mcm-json --verify-existing`. The tests cover edited
+build-manifest cross-check evidence, edited build-manifest output digests,
+verify-existing JSON evidence, and the extra build-manifest diagnostic
+produced when a payload file no longer matches recorded output digests.
+
+Gate 93 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for install-preview summary content revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit
+`install-preview.md`, refresh checksum/build-manifest digest evidence, and
+assert a single blocking `WF-BUILD-006` summary-content diagnostic.
+
+Gate 94 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for install-preview/package-manifest entry content cross-checking in
+`forge package --target mcm-json --verify-existing`. The tests edit an
+`install-preview.json` entry, refresh install-preview summary,
+checksum/build-manifest digest evidence, and assert a single blocking
+`WF-BUILD-006` entry-content diagnostic.
+
+Gate 95 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for package-verification summary content revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit
+`package-verification.md`, refresh checksum/build-manifest digest evidence,
+and assert a single blocking `WF-BUILD-006` summary-content diagnostic.
+
+Gate 96 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for package-verification JSON check content revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit
+`package-verification.json` check evidence, refresh checksum/build-manifest
+digest evidence, and assert a single blocking `WF-BUILD-006` check-content
+diagnostic.
+
+Gate 97 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for package-verification JSON metadata content revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit
+`package-verification.json` verification metadata, refresh
+checksum/build-manifest digest evidence, and assert a single blocking
+`WF-BUILD-006` metadata-content diagnostic.
+
+Gate 98 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for package-verification archive detail content revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit
+`package-verification.json` archive digest metadata, refresh
+checksum/build-manifest digest evidence, and assert a single blocking
+`WF-BUILD-006` archive-detail diagnostic.
+
+Gate 99 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for install-preview archive detail content revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit
+`install-preview.json` archive digest metadata, refresh
+checksum/build-manifest digest evidence, and assert a single blocking
+`WF-BUILD-006` archive-detail diagnostic.
+
 Run the full local suite serially:
 
 ```text

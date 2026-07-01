@@ -97,11 +97,11 @@ Gate 45 option routing:
   export text file and do not control, automate, import into, or mutate an
   open GECK session.
 
-Gate 90 option routing:
+Gate 99 option routing:
 
 - `/forge generate --target mcm-json`, `/forge build --target mcm-json`, and
   `/forge package --target mcm-json` map to the real `forge` CLI behavior when
-  available. The output is the Gate 90 validated MCM Extender JSON runtime
+  available. The output is the Gate 99 validated MCM Extender JSON runtime
   subset under `MCM/<menu>.json`, plus `MCM/Translations/<modName>.ini` when
   translations are declared, and staged referenced texture assets under their
   game-relative target paths. Build and package output also include
@@ -122,7 +122,15 @@ Gate 90 option routing:
   Successful runs record `packageVerification.crossChecks`; mismatches are
   blocking `WF-BUILD-006` diagnostics through reusable validator,
   file-based verifier, payload digest verification, archive digest
-  verification, and archive entry-name revalidation code. These remain
+  verification, archive entry-name revalidation, checksum-file revalidation,
+  build-manifest content revalidation, install-preview summary content
+  revalidation, and install-preview/package-manifest entry cross-check
+  revalidation code, package-verification summary content revalidation, and
+  package-verification JSON check content revalidation, plus
+  package-verification JSON metadata content revalidation and
+  package-verification archive detail content revalidation and
+  install-preview archive detail content revalidation.
+  These remain
   reports only:
   they list Data-relative would-copy paths and do not install into Data or
   MO2. It supports header,
@@ -138,8 +146,15 @@ Gate 90 option routing:
   available. It verifies existing generated package evidence without
   regenerating outputs. It supports `--format sarif` and `--format github` for
   package evidence diagnostics and `--summary <path>` for Markdown diagnostic
-  summaries. Do not invent `/forge verify-package`, `/forge package verify`,
-  or other verifier aliases.
+  summaries, revalidates `checksums.sha256` against package evidence and
+  payload files, and revalidates `build-manifest.json` against package
+  evidence and output digests. It also revalidates `install-preview.md`
+  against `install-preview.json` and cross-checks `install-preview.json`
+  entries against `package-manifest.json` entries. It also revalidates
+  `package-verification.md` against `package-verification.json` and
+  revalidates `package-verification.json` check objects and metadata fields
+  against package evidence. Do not invent `/forge verify-package`,
+  `/forge package verify`, or other verifier aliases.
 
 ## Safety gates
 

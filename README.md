@@ -2,9 +2,10 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 90 adds Markdown
-summary output for `forge package --target mcm-json --verify-existing` while
-preserving the CLI command surface.
+The project is currently in gated v0.1 implementation. Gate 99 adds
+install-preview archive detail content revalidation for
+`forge package --target mcm-json --verify-existing` while preserving the CLI
+command surface.
 
 ## Architecture Spine
 
@@ -17,7 +18,7 @@ preserving the CLI command surface.
 
 ## Current Gate
 
-Gate 90 advances the first game-facing generator path. It keeps
+Gate 99 advances the first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -201,12 +202,72 @@ the same canonical Markdown diagnostic projection as validation and release
 verification. Normal `forge package --summary <path>` remains rejected unless
 `--verify-existing` is set.
 
+Gate 91 adds checksum-file revalidation to that verify-existing mode. The
+file-based verifier now reads `checksums.sha256`, recomputes SHA-256 values
+for listed package files, rejects checksum paths outside the package root, and
+requires checksum entries for package evidence, payload files, created package
+archives, and `build-manifest.json`. The same `WF-BUILD-006` diagnostic family
+is used for blocking package evidence mismatches.
+
+Gate 92 adds build-manifest content revalidation to that verify-existing mode.
+The file-based verifier now reads `build-manifest.json`, checks core package
+evidence fields against the package manifest, install-preview report, and
+package-verification report, and recomputes build-manifest output digests for
+package payload and evidence files.
+
+Gate 93 adds install-preview summary content revalidation to that
+verify-existing mode. The file-based verifier now reads `install-preview.md`
+and checks header, provenance, package root, preview-only flags, archive
+status, would-copy entries, declared sources, target files, and limitations
+against `install-preview.json`.
+
+Gate 94 adds install-preview/package-manifest entry content cross-checking to
+that verify-existing mode. The file-based verifier now compares
+`package-manifest.json` entries with `install-preview.json` entries by package
+kind, ID, and path, then checks source files, install paths, media types,
+actions, declared asset sources, and target files without regenerating package
+outputs.
+
+Gate 95 adds package-verification summary content revalidation to that
+verify-existing mode. The reusable package-verification evidence validator now
+checks `package-verification.md` header, provenance, project, command, target,
+package counts, archive state, check lines, and limitations against
+`package-verification.json` and computed package evidence without regenerating
+package outputs.
+
+Gate 96 adds package-verification JSON check content revalidation to that
+verify-existing mode. The reusable package-verification evidence validator now
+checks generated `package-verification.json` check objects for expected
+schema-check statuses, evidence paths, install-preview summary evidence,
+payload digest status, payload digest count, and package archive
+status/validation against package evidence without regenerating package
+outputs.
+
+Gate 97 adds package-verification JSON metadata content revalidation to that
+verify-existing mode. The reusable package-verification evidence validator now
+checks `package-verification.json` format, kind, verification type, command,
+target, dry-run flag, project ID, package type, layout, package counts,
+result, and local-only limitations against package manifest, install-preview,
+and expected generated package evidence without regenerating package outputs.
+
+Gate 98 adds package-verification archive detail content revalidation to that
+verify-existing mode. The reusable package-verification evidence validator now
+checks no-archive reason text and created archive media type, compression,
+SHA-256, and length recorded in `package-verification.json` against generated
+package evidence without regenerating package outputs.
+
+Gate 99 adds install-preview archive detail content revalidation to that
+verify-existing mode. The reusable package-verification evidence validator now
+checks no-archive reason text and created archive media type, compression,
+SHA-256, and length recorded in `install-preview.json` against generated
+package evidence without regenerating package outputs.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
 `unknown` in this gate because their safe file-marker policy remains open.
 
-Gate 90 does not inspect an MO2 profile, launch through MO2 VFS, probe a
+Gate 99 does not inspect an MO2 profile, launch through MO2 VFS, probe a
 runtime, parse provider versions, emit `WF-CAP-*` diagnostics, generate
 in-game-verified MCM Extender files, generate JIP text scripts, package
 archives as FOMOD installers, or compile plugin records. Remaining advanced
@@ -442,6 +503,31 @@ Gate 89 adds SARIF and GitHub diagnostic projections to that verify-existing
 mode and keeps normal package generation on human/plain/json output only.
 Gate 90 adds Markdown diagnostic summary output to that verify-existing mode
 and keeps normal package generation from accepting diagnostic summary files.
+Gate 91 adds checksum-file revalidation to that verify-existing mode without
+adding package-verifier behavior to normal package generation.
+Gate 92 adds build-manifest content revalidation to that verify-existing mode
+without adding package-verifier behavior to normal package generation.
+Gate 93 adds install-preview summary content revalidation to that
+verify-existing mode without adding package-verifier behavior to normal
+package generation.
+Gate 94 adds install-preview/package-manifest entry content cross-check
+revalidation to that verify-existing mode without adding package-verifier
+behavior to normal package generation.
+Gate 95 adds package-verification summary content revalidation to that
+verify-existing mode without adding package-verifier behavior to normal
+package generation.
+Gate 96 adds package-verification JSON check content revalidation to that
+verify-existing mode without adding package-verifier behavior to normal
+package generation.
+Gate 97 adds package-verification JSON metadata content revalidation to that
+verify-existing mode without adding package-verifier behavior to normal
+package generation.
+Gate 98 adds package-verification archive detail content revalidation to that
+verify-existing mode without adding package-verifier behavior to normal
+package generation.
+Gate 99 adds install-preview archive detail content revalidation to that
+verify-existing mode without adding package-verifier behavior to normal
+package generation.
 
 It intentionally does not create:
 

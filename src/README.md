@@ -454,3 +454,60 @@ Gate 90 adds Markdown summary file output to that verify-existing package
 evidence path. The CLI now accepts `--summary <path>` with
 `--verify-existing` and writes the existing Markdown diagnostic projection
 without regenerating package outputs.
+
+Gate 91 adds checksum-file revalidation to that verify-existing package
+evidence path. The file-based verifier now reads `checksums.sha256`,
+recomputes SHA-256 values for listed package files, requires expected package
+evidence entries, and reports blocking `WF-BUILD-006` diagnostics for checksum
+evidence mismatches without regenerating package outputs.
+
+Gate 92 adds build-manifest content revalidation to that verify-existing
+package evidence path. The file-based verifier now reads `build-manifest.json`,
+checks package evidence fields against already loaded package files, and
+recomputes build-manifest output digests without regenerating package outputs.
+
+Gate 93 adds install-preview summary content revalidation to that
+verify-existing package evidence path. The file-based verifier now reads
+`install-preview.md` and checks required human-summary lines against the
+schema-validated `install-preview.json` without regenerating package outputs.
+
+Gate 94 adds install-preview/package-manifest entry content cross-checking to
+that verify-existing package evidence path. The file-based verifier now
+compares `package-manifest.json` entries with `install-preview.json` entries
+by kind, ID, and package path, then checks mapped source files, install paths,
+media types, actions, declared asset sources, and target files without
+regenerating package outputs.
+
+Gate 95 adds package-verification summary content revalidation to that
+verify-existing package evidence path. The reusable package-verification
+evidence validator now checks `package-verification.md` header, provenance,
+project, command, target, package counts, archive state, check lines, and
+limitations against `package-verification.json` and computed package evidence
+without regenerating package outputs.
+
+Gate 96 adds package-verification JSON check content revalidation to that
+verify-existing package evidence path. The reusable package-verification
+evidence validator now checks generated `package-verification.json` check
+statuses, evidence paths, payload digest status/count, and package archive
+status/validation against package evidence without regenerating package
+outputs.
+
+Gate 97 adds package-verification JSON metadata content revalidation to that
+verify-existing package evidence path. The reusable package-verification
+evidence validator now checks generated `package-verification.json` format,
+kind, verification type, command, target, dry-run flag, project ID, package
+type, layout, package counts, result, and limitations against expected
+generated evidence, `package-manifest.json`, and `install-preview.json`
+without regenerating package outputs.
+
+Gate 98 adds package-verification archive detail content revalidation to that
+verify-existing package evidence path. The reusable package-verification
+evidence validator now checks generated `package-verification.json` archive
+reason text, media type, compression, SHA-256, and length against generated
+package evidence without regenerating package outputs.
+
+Gate 99 adds install-preview archive detail content revalidation to that
+verify-existing package evidence path. The reusable package-verification
+evidence validator now checks generated `install-preview.json` archive reason
+text, media type, compression, SHA-256, and length against generated package
+evidence without regenerating package outputs.

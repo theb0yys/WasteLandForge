@@ -29,7 +29,9 @@ internal static class McmPackageVerificationJsonSerializer
             ["installPreview"] = result.InstallPreview,
             ["installPreviewSummary"] = result.InstallPreviewSummary,
             ["packageVerification"] = result.PackageVerification,
-            ["packageVerificationSummary"] = result.PackageVerificationSummary
+            ["packageVerificationSummary"] = result.PackageVerificationSummary,
+            ["checksums"] = result.Checksums,
+            ["buildManifest"] = result.BuildManifest
         };
         if (result.PackageArchive is not null)
         {

@@ -44,6 +44,88 @@ public sealed class McmPackageVerificationEvidenceValidatorTests
     }
 
     [Fact]
+    public void ValidateReportsCheckEvidenceMismatch()
+    {
+        var request = CreateRequest();
+        ((JsonObject?)((JsonArray?)request.PackageVerification["checks"])![0])!["evidence"] = "generated/mcm-json/stale-package-manifest.json";
+
+        var issues = McmPackageVerificationEvidenceValidator.Validate(request);
+
+        var issue = Assert.Single(issues, issue => issue.Title == "Package verification check evidence does not match package evidence");
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-verification.json", issue.PrimaryLocation.File);
+        Assert.Equal("/checks/0/evidence", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("package-manifest-schema", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("generated/mcm-json/package-manifest.json", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("generated/mcm-json/stale-package-manifest.json", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateReportsCheckStatusMismatch()
+    {
+        var request = CreateRequest();
+        ((JsonObject?)((JsonArray?)request.PackageVerification["checks"])![3])!["status"] = "stale";
+
+        var issues = McmPackageVerificationEvidenceValidator.Validate(request);
+
+        var issue = Assert.Single(issues, issue => issue.Title == "Package verification check status does not match package evidence");
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-verification.json", issue.PrimaryLocation.File);
+        Assert.Equal("/checks/3/status", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("package-payload-digests", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("recorded", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("stale", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateReportsMetadataMismatch()
+    {
+        var request = CreateRequest();
+        request.PackageVerification["verificationType"] = "wastelandforge/stale-package-verification/v1";
+
+        var issues = McmPackageVerificationEvidenceValidator.Validate(request);
+
+        var issue = Assert.Single(issues, issue => issue.Title == "Package verification verification type does not match expected package evidence");
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-verification.json", issue.PrimaryLocation.File);
+        Assert.Equal("/verificationType", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("wastelandforge/mcm-json-loose-file-package-verification/v1", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("wastelandforge/stale-package-verification/v1", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateReportsArchiveReasonMismatch()
+    {
+        var request = CreateRequest();
+        ((JsonObject?)request.PackageVerification["archive"])!["reason"] = "stale reason";
+
+        var issues = McmPackageVerificationEvidenceValidator.Validate(request);
+
+        var issue = Assert.Single(issues, issue => issue.Title == "Package verification archive reason does not match expected package evidence");
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-verification.json", issue.PrimaryLocation.File);
+        Assert.Equal("/archive/reason", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("ZIP archive creation is only written by build/package commands.", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("stale reason", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateReportsInstallPreviewArchiveReasonMismatch()
+    {
+        var request = CreateRequest();
+        ((JsonObject?)request.InstallPreview["archive"])!["reason"] = "stale reason";
+
+        var issues = McmPackageVerificationEvidenceValidator.Validate(request);
+
+        var issue = Assert.Single(issues, issue => issue.Title == "Install preview archive reason does not match expected package evidence");
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/install-preview.json", issue.PrimaryLocation.File);
+        Assert.Equal("/archive/reason", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("ZIP archive creation is only written by build/package commands.", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("stale reason", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidateReportsSummaryMismatch()
     {
         var request = CreateRequest() with
@@ -64,6 +146,7 @@ public sealed class McmPackageVerificationEvidenceValidatorTests
         var projectRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "wf-package-verification-validator"));
         var packageManifestPath = Path.Combine(projectRoot, "generated", "mcm-json", "package-manifest.json");
         var installPreviewPath = Path.Combine(projectRoot, "generated", "mcm-json", "install-preview.json");
+        var installPreviewSummaryPath = Path.Combine(projectRoot, "generated", "mcm-json", "install-preview.md");
         var packageVerificationPath = Path.Combine(projectRoot, "generated", "mcm-json", "package-verification.json");
         var packageVerificationSummaryPath = Path.Combine(projectRoot, "generated", "mcm-json", "package-verification.md");
         var payloadDigests = new[]
@@ -86,13 +169,22 @@ public sealed class McmPackageVerificationEvidenceValidatorTests
             CreateSummary(),
             payloadDigests,
             null,
-            null);
+            null,
+            installPreviewSummaryPath);
     }
 
     private static JsonObject CreatePackageManifest() =>
         new()
         {
+            ["formatVersion"] = "0.1",
+            ["kind"] = "wastelandforge.package-manifest",
+            ["packageType"] = "wastelandforge/mcm-json-loose-files/v1",
+            ["command"] = "generate",
+            ["target"] = "mcm-json",
+            ["dryRun"] = false,
+            ["project"] = new JsonObject(),
             ["root"] = "generated/mcm-json",
+            ["layout"] = "fallout-new-vegas-data-loose-files",
             ["archive"] = new JsonObject
             {
                 ["status"] = "not-created",
@@ -120,14 +212,24 @@ public sealed class McmPackageVerificationEvidenceValidatorTests
     private static JsonObject CreateInstallPreview() =>
         new()
         {
+            ["formatVersion"] = "0.1",
+            ["kind"] = "wastelandforge.install-preview",
+            ["previewType"] = "wastelandforge/mcm-json-loose-file-install-preview/v1",
+            ["command"] = "generate",
+            ["target"] = "mcm-json",
+            ["dryRun"] = false,
+            ["project"] = new JsonObject(),
             ["package"] = new JsonObject
             {
-                ["root"] = "generated/mcm-json"
+                ["packageType"] = "wastelandforge/mcm-json-loose-files/v1",
+                ["root"] = "generated/mcm-json",
+                ["layout"] = "fallout-new-vegas-data-loose-files"
             },
             ["archive"] = new JsonObject
             {
                 ["status"] = "not-created",
-                ["validation"] = "not-applicable"
+                ["validation"] = "not-applicable",
+                ["reason"] = "ZIP archive creation is only written by build/package commands."
             },
             ["entries"] = new JsonArray
             {
@@ -141,10 +243,22 @@ public sealed class McmPackageVerificationEvidenceValidatorTests
     private static JsonObject CreatePackageVerification() =>
         new()
         {
+            ["formatVersion"] = "0.1",
+            ["kind"] = "wastelandforge.package-verification",
+            ["verificationType"] = "wastelandforge/mcm-json-loose-file-package-verification/v1",
+            ["command"] = "generate",
+            ["target"] = "mcm-json",
+            ["dryRun"] = false,
+            ["project"] = new JsonObject(),
             ["package"] = new JsonObject
             {
+                ["packageType"] = "wastelandforge/mcm-json-loose-files/v1",
                 ["root"] = "generated/mcm-json",
-                ["entries"] = 1
+                ["layout"] = "fallout-new-vegas-data-loose-files",
+                ["entries"] = 1,
+                ["menus"] = 1,
+                ["translations"] = 0,
+                ["assets"] = 0
             },
             ["checks"] = new JsonArray
             {
@@ -182,23 +296,49 @@ public sealed class McmPackageVerificationEvidenceValidatorTests
             ["archive"] = new JsonObject
             {
                 ["status"] = "not-created",
-                ["validation"] = "not-applicable"
+                ["validation"] = "not-applicable",
+                ["reason"] = "ZIP archive creation is only written by build/package commands."
             },
-            ["result"] = "passed"
+            ["result"] = "passed",
+            ["limitations"] = new JsonArray
+            {
+                "Verification is local package evidence only; Forge did not install files into Data or MO2.",
+                "Verification does not launch the game or inspect MO2 VFS/profile conflicts.",
+                "Verification does not prove runtime MCM Extender visibility."
+            }
         };
 
     private static string CreateSummary() =>
         string.Join(
             Environment.NewLine,
             "# WastelandForge MCM Package Verification",
+            string.Empty,
+            "Generated by WastelandForge. Do not edit; regenerate from source contracts.",
+            string.Empty,
+            "Project: unknown",
+            "Command: generate",
+            "Target: mcm-json",
             "Package root: generated/mcm-json",
+            "Layout: fallout-new-vegas-data-loose-files",
             "Entries: 1",
+            "Menus: 1",
+            "Translations: 0",
+            "Assets: 0",
             "Result: passed",
             "Archive: not-created",
             "Archive validation: not-applicable",
+            string.Empty,
+            "## Checks",
             "- package-manifest-schema: passed (generated/mcm-json/package-manifest.json)",
             "- install-preview-schema: passed (generated/mcm-json/install-preview.json)",
+            "- install-preview-summary: written (generated/mcm-json/install-preview.md)",
             "- package-payload-digests: recorded (count: 1)",
+            "- package-archive: not-created (validation: not-applicable)",
             "- package-verification-cross-checks: passed (manifest, install-preview, payload-digests, archive, summary)",
+            string.Empty,
+            "## Limitations",
+            "- Verification is local package evidence only; Forge did not install files into Data or MO2.",
+            "- Verification does not launch the game or inspect MO2 VFS/profile conflicts.",
+            "- Verification does not prove runtime MCM Extender visibility.",
             string.Empty);
 }

@@ -16,4 +16,5 @@ public sealed record McmPackageVerificationEvidenceValidationRequest(
     string PackageVerificationSummary,
     IReadOnlyList<FileDigest> PackagePayloadDigests,
     FileDigest? PackageArchiveDigest,
-    LogicalId? ProjectId);
+    LogicalId? ProjectId,
+    string? InstallPreviewSummaryPath = null);

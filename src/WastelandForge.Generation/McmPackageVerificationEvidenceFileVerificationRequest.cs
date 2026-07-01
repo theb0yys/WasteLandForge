@@ -8,4 +8,7 @@ public sealed record McmPackageVerificationEvidenceFileVerificationRequest(
     string InstallPreviewPath,
     string PackageVerificationPath,
     string PackageVerificationSummaryPath,
-    LogicalId? ProjectId);
+    LogicalId? ProjectId,
+    string? ChecksumsPath = null,
+    string? BuildManifestPath = null,
+    string? InstallPreviewSummaryPath = null);

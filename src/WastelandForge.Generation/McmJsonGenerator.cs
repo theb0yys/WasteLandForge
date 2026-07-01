@@ -223,7 +223,8 @@ public sealed class McmJsonGenerator
             packageVerificationSummary,
             packagePayloadDigests,
             packageArchiveDigest,
-            projectId)));
+            projectId,
+            installPreviewSummaryPath)));
 
         if (issues.Any(issue => issue.Severity == DiagnosticSeverity.Error))
         {

@@ -294,7 +294,10 @@ internal static class ForgeCli
             paths.InstallPreview,
             paths.PackageVerification,
             paths.PackageVerificationSummary,
-            null));
+            ProjectId: null,
+            ChecksumsPath: paths.Checksums,
+            BuildManifestPath: paths.BuildManifest,
+            InstallPreviewSummaryPath: paths.InstallPreviewSummary));
         var result = new McmPackageVerificationCliResult(
             paths.ProjectRoot,
             paths.Root,
@@ -303,6 +306,8 @@ internal static class ForgeCli
             paths.InstallPreviewSummary,
             paths.PackageVerification,
             paths.PackageVerificationSummary,
+            paths.Checksums,
+            paths.BuildManifest,
             paths.PackageArchive,
             new DiagnosticReport(null, issues));
 
@@ -957,6 +962,8 @@ internal static class ForgeCli
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-preview.md")),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-verification.json")),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-verification.md")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "checksums.sha256")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-manifest.json")),
             File.Exists(packageArchivePath) ? ToDisplayPath(projectRoot, packageArchivePath) : null);
         message = string.Empty;
         return true;
@@ -1508,6 +1515,8 @@ internal static class ForgeCli
         string InstallPreviewSummary,
         string PackageVerification,
         string PackageVerificationSummary,
+        string Checksums,
+        string BuildManifest,
         string? PackageArchive);
 
     private sealed record CapabilitiesListParseResult(

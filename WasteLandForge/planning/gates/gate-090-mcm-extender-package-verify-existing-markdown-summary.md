@@ -73,7 +73,14 @@ The command now:
 
 ## Validation Results
 
-- Pending final local validation for this gate.
+- `dotnet build --no-restore` passed with 0 warnings and 0 errors.
+- `dotnet test tests/WastelandForge.GoldenTests/WastelandForge.GoldenTests.csproj --no-build --no-restore` passed 40 tests.
+- `dotnet test WastelandForge.sln --no-build --no-restore -m:1` passed 304 tests.
+- `git diff --check` passed.
+- Targeted trailing-whitespace scan over changed files returned no matches.
+- Stale current-Gate-89 wording scan returned no matches.
+- Protected-file scan for Tales from the Age of Men / Age of Men / overhaul
+  terms returned no matches outside ignored build output trees.
 
 ## Open Checks
 

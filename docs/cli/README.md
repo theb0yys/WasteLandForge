@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 90 MCM Extender package verify-existing Markdown summary output
+Status: Gate 99 MCM Extender package verify-existing install-preview archive detail content revalidation
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -281,6 +281,33 @@ forge --version
   formats.
 - Gate 90 adds `--summary <path>` to that verify-existing diagnostic mode;
   normal package generation still rejects Markdown diagnostic summaries.
+- Gate 91 adds checksum-file revalidation to that verify-existing diagnostic
+  mode; normal package generation still does not run diagnostic package
+  verification.
+- Gate 92 adds build-manifest content revalidation to that verify-existing
+  diagnostic mode; normal package generation still does not run diagnostic
+  package verification.
+- Gate 93 adds install-preview summary content revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not
+  run diagnostic package verification.
+- Gate 94 adds install-preview/package-manifest entry content cross-checking
+  to that verify-existing diagnostic mode; normal package generation still
+  does not run diagnostic package verification.
+- Gate 95 adds package-verification summary content revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not
+  run diagnostic package verification.
+- Gate 96 adds package-verification JSON check content revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not
+  run diagnostic package verification.
+- Gate 97 adds package-verification JSON metadata content revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not
+  run diagnostic package verification.
+- Gate 98 adds package-verification archive detail content revalidation to
+  that verify-existing diagnostic mode; normal package generation still does
+  not run diagnostic package verification.
+- Gate 99 adds install-preview archive detail content revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not
+  run diagnostic package verification.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.
 - `forge validate --format sarif --output <path>` writes SARIF to a file.
 - `forge validate --format github` emits GitHub workflow-command annotations.
@@ -648,6 +675,56 @@ Gate 90 adds Markdown summary file output for that verify-existing mode.
 Markdown diagnostic summary beside the selected primary output format. Normal
 package generation still rejects `--summary <path>` unless `--verify-existing`
 is specified.
+
+Gate 91 adds checksum-file revalidation for that verify-existing mode.
+`checksums.sha256` is read from the selected package output root, listed
+entries have their SHA-256 values recomputed, required package evidence entries
+must be present, and checksum paths must stay under the package root.
+
+Gate 92 adds build-manifest content revalidation for that verify-existing
+mode. `build-manifest.json` is read from the selected package output root,
+core package evidence fields are compared against package evidence files, and
+manifest output digests are recomputed from current files.
+
+Gate 93 adds install-preview summary content revalidation for that
+verify-existing mode. `install-preview.md` is read from the selected package
+output root and required human-summary lines are compared against
+`install-preview.json`.
+
+Gate 94 adds install-preview/package-manifest entry content cross-checking for
+that verify-existing mode. `package-manifest.json` entries are compared
+against `install-preview.json` entries by package kind, ID, and path, then
+source files, install paths, media types, actions, declared asset sources, and
+target files are checked for stale or inconsistent evidence.
+
+Gate 95 adds package-verification summary content revalidation for that
+verify-existing mode. `package-verification.md` is checked for header,
+provenance, project, command, target, package counts, archive state, check
+lines, and local-only limitations against `package-verification.json` and
+computed package evidence.
+
+Gate 96 adds package-verification JSON check content revalidation for that
+verify-existing mode. `package-verification.json` check objects are compared
+against package evidence for expected schema check statuses and evidence
+paths, install-preview summary evidence, payload digest status/count, and
+package archive status/validation.
+
+Gate 97 adds package-verification JSON metadata content revalidation for that
+verify-existing mode. `package-verification.json` metadata fields are compared
+against expected generated evidence and the package manifest/install-preview
+reports, including format, kind, verification type, command, target, dry-run
+flag, project ID, package type, layout, package counts, result, and
+limitations.
+
+Gate 98 adds package-verification archive detail content revalidation for that
+verify-existing mode. `package-verification.json` archive fields are compared
+against expected generated evidence for no-archive reason text and created
+archive media type, compression, SHA-256, and length.
+
+Gate 99 adds install-preview archive detail content revalidation for that
+verify-existing mode. `install-preview.json` archive fields are compared
+against expected generated evidence for no-archive reason text and created
+archive media type, compression, SHA-256, and length.
 
 ## Exit Codes
 

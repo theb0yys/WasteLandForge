@@ -10,6 +10,8 @@ internal sealed record McmPackageVerificationCliResult(
     string InstallPreviewSummary,
     string PackageVerification,
     string PackageVerificationSummary,
+    string Checksums,
+    string BuildManifest,
     string? PackageArchive,
     DiagnosticReport Diagnostics)
 {

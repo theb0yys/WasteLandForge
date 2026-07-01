@@ -129,3 +129,58 @@ using temp-only copies of the synthetic `ExampleMod` fixture and temp-only
 summary files. It still adds no generated package verification reports,
 summaries, archives, manifests, or package command output trees to the
 committed fixture corpus.
+
+Gate 91 adds checksum-file revalidation tests using temp-only copies of the
+synthetic `ExampleMod` fixture and temp-only generated package outputs. It
+still adds no generated package verification reports, checksum files,
+archives, manifests, or package command output trees to the committed fixture
+corpus.
+
+Gate 92 adds build-manifest content revalidation tests using temp-only copies
+of the synthetic `ExampleMod` fixture and temp-only generated package outputs.
+It still adds no generated package verification reports, build manifests,
+checksum files, archives, or package command output trees to the committed
+fixture corpus.
+
+Gate 93 adds install-preview summary content revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated install-preview summaries,
+package verification reports, build manifests, checksum files, archives, or
+package command output trees to the committed fixture corpus.
+
+Gate 94 adds install-preview/package-manifest entry content cross-check tests
+using temp-only copies of the synthetic `ExampleMod` fixture and temp-only
+generated package outputs. It still adds no generated install-preview reports,
+package manifests, package verification reports, build manifests, checksum
+files, archives, or package command output trees to the committed fixture
+corpus.
+
+Gate 95 adds package-verification summary content revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification summaries,
+package verification reports, build manifests, checksum files, archives, or
+package command output trees to the committed fixture corpus.
+
+Gate 96 adds package-verification JSON check content revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports,
+build manifests, checksum files, archives, or package command output trees to
+the committed fixture corpus.
+
+Gate 97 adds package-verification JSON metadata content revalidation tests
+using temp-only copies of the synthetic `ExampleMod` fixture and temp-only
+generated package outputs. It still adds no generated package verification
+reports, build manifests, checksum files, archives, or package command output
+trees to the committed fixture corpus.
+
+Gate 98 adds package-verification archive detail content revalidation tests
+using temp-only copies of the synthetic `ExampleMod` fixture and temp-only
+generated package outputs. It still adds no generated package verification
+reports, build manifests, checksum files, archives, or package command output
+trees to the committed fixture corpus.
+
+Gate 99 adds install-preview archive detail content revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports,
+build manifests, checksum files, archives, or package command output trees to
+the committed fixture corpus.

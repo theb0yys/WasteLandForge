@@ -163,6 +163,42 @@ Gate 90 adds no new diagnostic rule family or rule ID. It projects those same
 verify-existing package evidence diagnostics to Markdown summary files through
 `--summary <path>`.
 
+Gate 91 adds no new diagnostic rule family or rule ID. Checksum-file
+revalidation failures for existing package evidence continue to use
+`WF-BUILD-006`.
+
+Gate 92 adds no new diagnostic rule family or rule ID. Build-manifest content
+revalidation failures for existing package evidence continue to use
+`WF-BUILD-006`.
+
+Gate 93 adds no new diagnostic rule family or rule ID. Install-preview summary
+content revalidation failures for existing package evidence continue to use
+`WF-BUILD-006`.
+
+Gate 94 adds no new diagnostic rule family or rule ID.
+Install-preview/package-manifest entry content cross-check failures for
+existing package evidence continue to use `WF-BUILD-006`.
+
+Gate 95 adds no new diagnostic rule family or rule ID. Package-verification
+summary content revalidation failures for existing package evidence continue
+to use `WF-BUILD-006`.
+
+Gate 96 adds no new diagnostic rule family or rule ID. Package-verification
+JSON check content revalidation failures for existing package evidence
+continue to use `WF-BUILD-006`.
+
+Gate 97 adds no new diagnostic rule family or rule ID. Package-verification
+JSON metadata content revalidation failures for existing package evidence
+continue to use `WF-BUILD-006`.
+
+Gate 98 adds no new diagnostic rule family or rule ID. Package-verification
+archive detail content revalidation failures for existing package evidence
+continue to use `WF-BUILD-006`.
+
+Gate 99 adds no new diagnostic rule family or rule ID. Install-preview archive
+detail content revalidation failures for existing package evidence continue
+to use `WF-BUILD-006`.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

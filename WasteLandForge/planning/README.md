@@ -95,9 +95,18 @@ Gate status:
 - `gates/gate-088-mcm-extender-package-verify-existing-command.md` - Gate 88, MCM Extender package verify-existing command skeleton.
 - `gates/gate-089-mcm-extender-package-verify-existing-sarif-github.md` - Gate 89, MCM Extender package verify-existing SARIF and GitHub diagnostic output.
 - `gates/gate-090-mcm-extender-package-verify-existing-markdown-summary.md` - Gate 90, MCM Extender package verify-existing Markdown summary output.
+- `gates/gate-091-mcm-extender-package-verify-existing-checksum-file-revalidation.md` - Gate 91, MCM Extender package verify-existing checksum-file revalidation.
+- `gates/gate-092-mcm-extender-package-verify-existing-build-manifest-content-revalidation.md` - Gate 92, MCM Extender package verify-existing build-manifest content revalidation.
+- `gates/gate-093-mcm-extender-package-verify-existing-install-preview-summary-content-revalidation.md` - Gate 93, MCM Extender package verify-existing install-preview summary content revalidation.
+- `gates/gate-094-mcm-extender-package-verify-existing-install-preview-package-manifest-entry-cross-check.md` - Gate 94, MCM Extender package verify-existing install-preview/package-manifest entry content cross-check revalidation.
+- `gates/gate-095-mcm-extender-package-verify-existing-package-verification-summary-content-revalidation.md` - Gate 95, MCM Extender package verify-existing package-verification summary content revalidation.
+- `gates/gate-096-mcm-extender-package-verify-existing-package-verification-json-check-content-revalidation.md` - Gate 96, MCM Extender package verify-existing package-verification JSON check content revalidation.
+- `gates/gate-097-mcm-extender-package-verify-existing-package-verification-json-metadata-content-revalidation.md` - Gate 97, MCM Extender package verify-existing package-verification JSON metadata content revalidation.
+- `gates/gate-098-mcm-extender-package-verify-existing-package-verification-archive-detail-content-revalidation.md` - Gate 98, MCM Extender package verify-existing package-verification archive detail content revalidation.
+- `gates/gate-099-mcm-extender-package-verify-existing-install-preview-archive-detail-content-revalidation.md` - Gate 99, MCM Extender package verify-existing install-preview archive detail content revalidation.
 
 Next gate:
 
-- Gate 91 - MCM Extender package verify-existing checksum-file revalidation.
+- Gate 100 - MCM Extender package verify-existing package-manifest archive detail content revalidation.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

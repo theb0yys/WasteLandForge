@@ -118,3 +118,30 @@ third-party runtime dependencies.
 Gate 90 adds only Markdown summary projection over the same local package
 evidence diagnostics; it still does not add, download, rehost, or require
 third-party runtime dependencies.
+Gate 91 adds only checksum-file revalidation over the same local package
+evidence diagnostics; it still does not add, download, rehost, or require
+third-party runtime dependencies.
+Gate 92 adds only build-manifest content revalidation over the same local
+package evidence diagnostics; it still does not add, download, rehost, or
+require third-party runtime dependencies.
+Gate 93 adds only install-preview summary content revalidation over the same
+local package evidence diagnostics; it still does not add, download, rehost,
+or require third-party runtime dependencies.
+Gate 94 adds only install-preview/package-manifest entry content cross-checking
+over the same local package evidence diagnostics; it still does not add,
+download, rehost, or require third-party runtime dependencies.
+Gate 95 adds only package-verification summary content revalidation over the
+same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.
+Gate 96 adds only package-verification JSON check content revalidation over
+the same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.
+Gate 97 adds only package-verification JSON metadata content revalidation over
+the same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.
+Gate 98 adds only package-verification archive detail content revalidation
+over the same local package evidence diagnostics; it still does not add,
+download, rehost, or require third-party runtime dependencies.
+Gate 99 adds only install-preview archive detail content revalidation over the
+same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.
