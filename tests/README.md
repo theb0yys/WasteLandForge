@@ -373,6 +373,17 @@ Gate 88 adds `WastelandForge.GoldenTests` coverage for
 existing package evidence verification and an edited generated payload file
 that returns blocking `WF-BUILD-006`.
 
+Gate 89 adds `WastelandForge.GoldenTests` coverage for
+`forge package --target mcm-json --verify-existing --format sarif`,
+`--format github`, GitHub step-summary append behavior, and rejection of
+SARIF for normal package generation without `--verify-existing`.
+
+Gate 90 adds `WastelandForge.GoldenTests` coverage for
+`forge package --target mcm-json --verify-existing --summary <path>`. The
+tests cover clean summary output, blocking `WF-BUILD-006` summary output, and
+rejection of `--summary` for normal package generation without
+`--verify-existing`.
+
 Run the full local suite serially:
 
 ```text

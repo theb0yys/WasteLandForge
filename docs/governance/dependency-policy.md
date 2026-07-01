@@ -112,3 +112,9 @@ download, rehost, or require third-party runtime dependencies.
 Gate 88 adds only local file-based verification over Forge-generated package
 evidence; it still does not add, download, rehost, or require third-party
 runtime dependencies.
+Gate 89 adds only SARIF/GitHub output projection over the same local package
+evidence diagnostics; it still does not add, download, rehost, or require
+third-party runtime dependencies.
+Gate 90 adds only Markdown summary projection over the same local package
+evidence diagnostics; it still does not add, download, rehost, or require
+third-party runtime dependencies.

@@ -155,6 +155,14 @@ Gate 88 adds no new diagnostic rule family or rule ID. It exposes existing
 `WF-BUILD-006` package evidence diagnostics through
 `forge package --target mcm-json --verify-existing`.
 
+Gate 89 adds no new diagnostic rule family or rule ID. It projects those same
+verify-existing package evidence diagnostics to SARIF 2.1.0 and GitHub
+workflow-command annotations.
+
+Gate 90 adds no new diagnostic rule family or rule ID. It projects those same
+verify-existing package evidence diagnostics to Markdown summary files through
+`--summary <path>`.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

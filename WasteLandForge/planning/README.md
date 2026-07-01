@@ -93,9 +93,11 @@ Gate status:
 - `gates/gate-086-mcm-extender-package-archive-entry-revalidation.md` - Gate 86, MCM Extender package archive entry revalidation skeleton.
 - `gates/gate-087-mcm-extender-package-verification-command-surface.md` - Gate 87, MCM Extender package verification command-surface decision checkpoint.
 - `gates/gate-088-mcm-extender-package-verify-existing-command.md` - Gate 88, MCM Extender package verify-existing command skeleton.
+- `gates/gate-089-mcm-extender-package-verify-existing-sarif-github.md` - Gate 89, MCM Extender package verify-existing SARIF and GitHub diagnostic output.
+- `gates/gate-090-mcm-extender-package-verify-existing-markdown-summary.md` - Gate 90, MCM Extender package verify-existing Markdown summary output.
 
 Next gate:
 
-- Gate 89 - MCM Extender package verify-existing SARIF and GitHub diagnostic output.
+- Gate 91 - MCM Extender package verify-existing checksum-file revalidation.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

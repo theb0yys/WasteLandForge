@@ -97,11 +97,11 @@ Gate 45 option routing:
   export text file and do not control, automate, import into, or mutate an
   open GECK session.
 
-Gate 88 option routing:
+Gate 90 option routing:
 
 - `/forge generate --target mcm-json`, `/forge build --target mcm-json`, and
   `/forge package --target mcm-json` map to the real `forge` CLI behavior when
-  available. The output is the Gate 88 validated MCM Extender JSON runtime
+  available. The output is the Gate 90 validated MCM Extender JSON runtime
   subset under `MCM/<menu>.json`, plus `MCM/Translations/<modName>.ini` when
   translations are declared, and staged referenced texture assets under their
   game-relative target paths. Build and package output also include
@@ -136,8 +136,10 @@ Gate 88 option routing:
 - `/forge package --target mcm-json --verify-existing` maps to the real
   `forge package --target mcm-json --verify-existing` CLI behavior when
   available. It verifies existing generated package evidence without
-  regenerating outputs. Do not invent `/forge verify-package`,
-  `/forge package verify`, or other verifier aliases.
+  regenerating outputs. It supports `--format sarif` and `--format github` for
+  package evidence diagnostics and `--summary <path>` for Markdown diagnostic
+  summaries. Do not invent `/forge verify-package`, `/forge package verify`,
+  or other verifier aliases.
 
 ## Safety gates
 

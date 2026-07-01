@@ -444,3 +444,13 @@ Gate 88 implements that entrypoint under `forge package`. The CLI now parses
 runs `McmPackageVerificationEvidenceFileVerifier`, and renders human/plain/json
 verification output. It still adds no source schema, installer behavior, MO2
 inspection, runtime probe, or plugin-record output.
+
+Gate 89 adds SARIF and GitHub diagnostic output to that verify-existing package
+evidence path. The CLI now renders the verifier `DiagnosticReport` through the
+existing SARIF 2.1.0 and GitHub workflow-command annotation projections while
+normal package generation remains limited to human/plain/json output.
+
+Gate 90 adds Markdown summary file output to that verify-existing package
+evidence path. The CLI now accepts `--summary <path>` with
+`--verify-existing` and writes the existing Markdown diagnostic projection
+without regenerating package outputs.

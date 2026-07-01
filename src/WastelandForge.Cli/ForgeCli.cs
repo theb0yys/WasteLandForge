@@ -306,10 +306,23 @@ internal static class ForgeCli
             paths.PackageArchive,
             new DiagnosticReport(null, issues));
 
-        var payload = CliConstants.IsMachineFormat(parse.Format)
-            ? McmPackageVerificationJsonSerializer.Serialize(result)
-            : McmPackageVerificationTextRenderer.Render(result);
-        Console.Write(payload);
+        if (StringComparer.Ordinal.Equals(parse.Format, "sarif"))
+        {
+            Console.WriteLine(DiagnosticReportSarifSerializer.Serialize(result.Diagnostics, CliConstants.Version, "package verify-existing"));
+        }
+        else if (StringComparer.Ordinal.Equals(parse.Format, "github"))
+        {
+            Console.Write(DiagnosticReportGitHubAnnotationRenderer.Render(result.Diagnostics));
+        }
+        else
+        {
+            var payload = CliConstants.IsMachineFormat(parse.Format)
+                ? McmPackageVerificationJsonSerializer.Serialize(result)
+                : McmPackageVerificationTextRenderer.Render(result);
+            Console.Write(payload);
+        }
+
+        WriteMarkdownSummary(parse.SummaryPath, result.Diagnostics, "package verify-existing", writeGitHubStepSummary: StringComparer.Ordinal.Equals(parse.Format, "github"));
 
         return result.HasErrors
             ? (int)CliExitCode.BlockingDiagnostics
@@ -782,6 +795,7 @@ internal static class ForgeCli
         var projectPath = ".";
         var target = McmJsonGenerator.Target;
         string? outputDirectory = null;
+        string? summaryPath = null;
         var dryRun = false;
         var verifyExisting = false;
         var projectWasSet = false;
@@ -799,12 +813,6 @@ internal static class ForgeCli
                 if (!CliConstants.IsKnownFormat(format))
                 {
                     return PackageParseResult.Fail(format, $"Unsupported format '{format}'.");
-                }
-
-                if (StringComparer.Ordinal.Equals(format, "sarif") ||
-                    StringComparer.Ordinal.Equals(format, "github"))
-                {
-                    return PackageParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
                 }
 
                 continue;
@@ -854,6 +862,17 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--summary"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitSummaryPath))
+                {
+                    return PackageParseResult.Fail(format, "Missing value for --summary.");
+                }
+
+                summaryPath = explicitSummaryPath;
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--dry-run"))
             {
                 dryRun = true;
@@ -895,7 +914,19 @@ internal static class ForgeCli
             return PackageParseResult.Fail(format, "Cannot combine --verify-existing with --dry-run.");
         }
 
-        return PackageParseResult.Ok(projectPath, outputDirectory, target, dryRun, verifyExisting, format);
+        if (!verifyExisting &&
+            (StringComparer.Ordinal.Equals(format, "sarif") ||
+                StringComparer.Ordinal.Equals(format, "github")))
+        {
+            return PackageParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
+        }
+
+        if (!verifyExisting && !string.IsNullOrWhiteSpace(summaryPath))
+        {
+            return PackageParseResult.Fail(format, "--summary is only available for package verify-existing diagnostics in the current gate.");
+        }
+
+        return PackageParseResult.Ok(projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, format);
     }
 
     private static bool TryResolvePackageEvidencePaths(
@@ -1455,17 +1486,18 @@ internal static class ForgeCli
         bool Success,
         string ProjectPath,
         string? OutputDirectory,
+        string? SummaryPath,
         string Target,
         bool DryRun,
         bool VerifyExisting,
         string Format,
         string Message)
     {
-        public static PackageParseResult Ok(string projectPath, string? outputDirectory, string target, bool dryRun, bool verifyExisting, string format) =>
-            new(true, projectPath, outputDirectory, target, dryRun, verifyExisting, format, string.Empty);
+        public static PackageParseResult Ok(string projectPath, string? outputDirectory, string? summaryPath, string target, bool dryRun, bool verifyExisting, string format) =>
+            new(true, projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, format, string.Empty);
 
         public static PackageParseResult Fail(string format, string message) =>
-            new(false, string.Empty, null, McmJsonGenerator.Target, false, false, format, message);
+            new(false, string.Empty, null, null, McmJsonGenerator.Target, false, false, format, message);
     }
 
     private sealed record PackageEvidencePaths(

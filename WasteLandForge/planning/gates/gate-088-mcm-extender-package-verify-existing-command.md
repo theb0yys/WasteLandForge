@@ -77,9 +77,14 @@ The command now:
 
 ## Validation Results
 
-- `dotnet build --no-restore` passed with 0 warnings and 0 errors before
-  documentation updates.
-- `dotnet test tests/WastelandForge.GoldenTests/WastelandForge.GoldenTests.csproj --no-build --no-restore` passed 33 tests before documentation updates.
+- `dotnet build --no-restore` passed with 0 warnings and 0 errors.
+- `dotnet test tests/WastelandForge.GoldenTests/WastelandForge.GoldenTests.csproj --no-build --no-restore` passed 33 tests.
+- `dotnet test WastelandForge.sln --no-build --no-restore -m:1` passed 297 tests.
+- `git diff --check` passed with Git line-ending normalization warnings only.
+- Targeted trailing-whitespace scan over changed files returned no matches.
+- Stale current-Gate-87 wording scan returned no matches.
+- Protected-file scan for Tales from the Age of Men / Age of Men / overhaul
+  terms returned no matches outside ignored build output trees.
 
 ## Open Checks
 

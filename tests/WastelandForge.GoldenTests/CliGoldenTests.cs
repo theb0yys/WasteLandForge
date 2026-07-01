@@ -717,6 +717,144 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void PackageVerifyExistingSarifReportsEditedPayload()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var packageResult = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, packageResult.ExitCode);
+        File.AppendAllText(Path.Combine(projectRoot, "dist", "mcm-json", "MCM", "ExampleMod.json"), Environment.NewLine);
+
+        var result = RunCli("package", projectRoot, "--verify-existing", "--format", "sarif", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Package verification SARIF did not parse.");
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Equal("2.1.0", (string?)json["version"]);
+        Assert.Equal("WastelandForge", (string?)json["runs"]?[0]?["tool"]?["driver"]?["name"]);
+        Assert.Equal("package verify-existing", (string?)json["runs"]?[0]?["properties"]?["command"]);
+        Assert.Equal("WF-BUILD-006", (string?)json["runs"]?[0]?["tool"]?["driver"]?["rules"]?[0]?["id"]);
+        Assert.Equal("WF-BUILD-006", (string?)json["runs"]?[0]?["results"]?[0]?["ruleId"]);
+        Assert.Equal("error", (string?)json["runs"]?[0]?["results"]?[0]?["level"]);
+        Assert.Equal("dist/mcm-json/MCM/ExampleMod.json", (string?)json["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["artifactLocation"]?["uri"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void PackageVerifyExistingGithubAnnotationsMapDiagnostics()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var packageResult = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, packageResult.ExitCode);
+        File.AppendAllText(Path.Combine(projectRoot, "dist", "mcm-json", "MCM", "ExampleMod.json"), Environment.NewLine);
+
+        var result = RunCli("package", projectRoot, "--verify-existing", "--format", "github", "--no-input");
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Contains("::error file=dist/mcm-json/MCM/ExampleMod.json,title=WF-BUILD-006 MCM package payload digest does not match package manifest::", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Expected 'dist/mcm-json/MCM/ExampleMod.json' to have SHA-256", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void PackageVerifyExistingGithubFormatAppendsGitHubStepSummary()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var packageResult = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, packageResult.ExitCode);
+        File.AppendAllText(Path.Combine(projectRoot, "dist", "mcm-json", "MCM", "ExampleMod.json"), Environment.NewLine);
+        var summaryPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "package-step-summary.md");
+        var originalStepSummary = Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY");
+        Environment.SetEnvironmentVariable("GITHUB_STEP_SUMMARY", summaryPath);
+
+        try
+        {
+            var result = RunCli("package", projectRoot, "--verify-existing", "--format", "github", "--no-input");
+            var markdown = File.ReadAllText(summaryPath);
+
+            Assert.Equal(1, result.ExitCode);
+            Assert.Contains("::error file=dist/mcm-json/MCM/ExampleMod.json,title=WF-BUILD-006 MCM package payload digest does not match package manifest::", result.Stdout, StringComparison.Ordinal);
+            Assert.Contains("# WastelandForge Diagnostics", markdown, StringComparison.Ordinal);
+            Assert.Contains("Summary: 1 error(s), 0 warning(s), 0 note(s)", markdown, StringComparison.Ordinal);
+            Assert.Contains("`WF-BUILD-006`", markdown, StringComparison.Ordinal);
+            Assert.Contains("`dist/mcm-json/MCM/ExampleMod.json#`", markdown, StringComparison.Ordinal);
+            Assert.Contains("MCM package payload digest does not match package manifest", markdown, StringComparison.Ordinal);
+            Assert.Equal(string.Empty, result.Stderr);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("GITHUB_STEP_SUMMARY", originalStepSummary);
+        }
+    }
+
+    [Fact]
+    public void PackageVerifyExistingCanWriteMarkdownSummary()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var packageResult = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, packageResult.ExitCode);
+        var summaryPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "package-summary.md");
+
+        var result = RunCli("package", projectRoot, "--verify-existing", "--format", "json", "--summary", summaryPath, "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Package verification JSON did not parse.");
+        var markdown = File.ReadAllText(summaryPath);
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.Contains("# WastelandForge Diagnostics", markdown, StringComparison.Ordinal);
+        Assert.Contains("Command: `package verify-existing`", markdown, StringComparison.Ordinal);
+        Assert.Contains("Summary: 0 error(s), 0 warning(s), 0 note(s)", markdown, StringComparison.Ordinal);
+        Assert.Contains("No diagnostics.", markdown, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PackageVerifyExistingMarkdownSummaryReportsEditedPayload()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var packageResult = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, packageResult.ExitCode);
+        File.AppendAllText(Path.Combine(projectRoot, "dist", "mcm-json", "MCM", "ExampleMod.json"), Environment.NewLine);
+        var summaryPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "package-summary.md");
+
+        var result = RunCli("package", projectRoot, "--verify-existing", "--format", "json", "--summary", summaryPath, "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Package verification JSON did not parse.");
+        var markdown = File.ReadAllText(summaryPath);
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Equal("failed", (string?)json["status"]);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.Contains("Summary: 1 error(s), 0 warning(s), 0 note(s)", markdown, StringComparison.Ordinal);
+        Assert.Contains("`WF-BUILD-006`", markdown, StringComparison.Ordinal);
+        Assert.Contains("`dist/mcm-json/MCM/ExampleMod.json#`", markdown, StringComparison.Ordinal);
+        Assert.Contains("MCM package payload digest does not match package manifest", markdown, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PackageMcmJsonRejectsSummaryWithoutVerifyExisting()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var summaryPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "package-summary.md");
+
+        var result = RunCli("package", projectRoot, "--summary", summaryPath, "--no-input");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Equal("--summary is only available for package verify-existing diagnostics in the current gate.", Normalize(result.Stderr).TrimEnd());
+        Assert.False(File.Exists(summaryPath));
+    }
+
+    [Fact]
+    public void PackageMcmJsonRejectsSarifWithoutVerifyExisting()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli("package", projectRoot, "--format", "sarif", "--no-input");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Equal("--format sarif is only available for diagnostic commands in the current gate.", Normalize(result.Stderr).TrimEnd());
+    }
+
+    [Fact]
     public void ReleaseVerifyJsonWritesDryRunEvidence()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");

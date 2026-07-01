@@ -117,3 +117,15 @@ Gate 88 adds golden CLI tests that generate package evidence in temp-only
 copies of the synthetic `ExampleMod` fixture. It still adds no generated
 package verification reports, summaries, archives, manifests, or package
 command output trees to the committed fixture corpus.
+
+Gate 89 adds golden CLI tests for verify-existing SARIF, GitHub annotations,
+and GitHub step-summary behavior using temp-only copies of the synthetic
+`ExampleMod` fixture. It still adds no generated package verification reports,
+summaries, archives, manifests, or package command output trees to the
+committed fixture corpus.
+
+Gate 90 adds golden CLI tests for verify-existing Markdown summary output
+using temp-only copies of the synthetic `ExampleMod` fixture and temp-only
+summary files. It still adds no generated package verification reports,
+summaries, archives, manifests, or package command output trees to the
+committed fixture corpus.

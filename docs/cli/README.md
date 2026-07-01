@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 88 MCM Extender package verify-existing command baseline
+Status: Gate 90 MCM Extender package verify-existing Markdown summary output
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -276,6 +276,11 @@ forge --version
   the flag, add commands, or add aliases.
 - Gate 88 implements `forge package --target mcm-json --verify-existing` for
   existing generated package evidence; it does not add commands or aliases.
+- Gate 89 adds `--format sarif` and `--format github` to that verify-existing
+  diagnostic mode; normal package generation still rejects SARIF and GitHub
+  formats.
+- Gate 90 adds `--summary <path>` to that verify-existing diagnostic mode;
+  normal package generation still rejects Markdown diagnostic summaries.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.
 - `forge validate --format sarif --output <path>` writes SARIF to a file.
 - `forge validate --format github` emits GitHub workflow-command annotations.
@@ -363,6 +368,9 @@ forge --version
 - `--format human`
 - `--format plain`
 - `--format json`
+- `--format sarif` for verify-existing diagnostics only
+- `--format github` for verify-existing diagnostics only
+- `--summary <path>` for verify-existing diagnostics only
 - `--project <path>`
 - `--target mcm-json`
 - `--output <path>`
@@ -371,11 +379,14 @@ forge --version
 
 Unimplemented reserved skeleton commands support human/plain text and JSON status output.
 SARIF and GitHub formats are available only for diagnostic commands in the
-current gate.
+current gate. For `forge package`, that means `--verify-existing` must also be
+specified.
 
 ## SARIF Output
 
-`forge validate --format sarif` writes SARIF 2.1.0 with:
+`forge validate --format sarif`, `forge release verify --format sarif`, and
+`forge package --target mcm-json --verify-existing --format sarif` write SARIF
+2.1.0 with:
 
 - `tool.driver.name` set to `WastelandForge`,
 - WastelandForge rule IDs in `tool.driver.rules[].id` and `results[].ruleId`,
@@ -386,8 +397,9 @@ current gate.
 
 ## GitHub Annotation Output
 
-`forge validate --format github` writes GitHub workflow-command annotations
-with:
+`forge validate --format github`, `forge release verify --format github`, and
+`forge package --target mcm-json --verify-existing --format github` write
+GitHub workflow-command annotations with:
 
 - diagnostic severity mapped to `error`, `warning`, or `notice`,
 - source file paths from canonical locations,
@@ -404,9 +416,10 @@ map the normalized JSON Pointer back to the YAML source node.
 ## Markdown Summary Output
 
 `--summary <path>` writes a Markdown diagnostic summary beside the selected
-primary output format. Markdown is not a `--format` value because ADR-010/R006
-defines the current format set as `human`, `plain`, `json`, `sarif`, and
-`github`.
+primary output format for `forge validate`, `forge release verify`, and
+`forge package --target mcm-json --verify-existing`. Markdown is not a
+`--format` value because ADR-010/R006 defines the current format set as
+`human`, `plain`, `json`, `sarif`, and `github`.
 
 ## Release Verify Evidence
 
@@ -621,6 +634,20 @@ human/plain/json output, returns exit code `0` when no blocking diagnostics
 are found, and returns exit code `1` when package evidence diagnostics are
 found. It does not regenerate package outputs, install files, invoke MO2,
 inspect VFS conflicts, or launch the game.
+
+Gate 89 adds SARIF and GitHub diagnostic output for that verify-existing mode.
+`forge package --target mcm-json --verify-existing --format sarif` emits SARIF
+2.1.0 with command property `package verify-existing`.
+`forge package --target mcm-json --verify-existing --format github` emits
+GitHub workflow-command annotations and appends a Markdown summary when
+`GITHUB_STEP_SUMMARY` is present. Normal package generation still rejects
+SARIF and GitHub formats unless `--verify-existing` is specified.
+
+Gate 90 adds Markdown summary file output for that verify-existing mode.
+`forge package --target mcm-json --verify-existing --summary <path>` writes a
+Markdown diagnostic summary beside the selected primary output format. Normal
+package generation still rejects `--summary <path>` unless `--verify-existing`
+is specified.
 
 ## Exit Codes
 

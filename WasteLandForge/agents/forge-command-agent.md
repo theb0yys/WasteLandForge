@@ -65,11 +65,13 @@ Gate 45 adds option-level dispatch for
 It validates a user-saved GECK dialogue export text file only; do not control,
 automate, import into, or mutate an open GECK session.
 
-Gate 88 implements existing package evidence verification through
+Gate 90 implements existing package evidence verification through
 `/forge package --target mcm-json --verify-existing`. Route it to the real CLI
 behavior when available; do not invent `/forge verify-package`,
 `/forge package verify`, or other verifier aliases. The current MCM JSON
-command surface still includes package archive entry-name revalidation
+command surface supports `--format sarif` and `--format github` for package
+evidence diagnostics, supports `--summary <path>` for Markdown diagnostic
+summaries, and still includes package archive entry-name revalidation
 coverage on top of package archive digest verification,
 package-verification human summary evidence, package-verification report
 schema validation, package-verification report evidence, install-preview human
@@ -82,7 +84,7 @@ checkbox, string-toggle, runtime requirements pass-through, and
 translation-file output for `/forge generate --target mcm-json`,
 `/forge build --target mcm-json`, and `/forge package --target mcm-json`.
 Route them to the real CLI behavior when available and describe the output as
-the Gate 88 MCM Extender JSON subset under `MCM/<menu>.json`, plus
+the Gate 90 MCM Extender JSON subset under `MCM/<menu>.json`, plus
 `MCM/Translations/<modName>.ini` when translations are declared, and staged
 referenced texture assets under their game-relative target paths. Build and
 package output also include `package-manifest.json`, `package.zip`,

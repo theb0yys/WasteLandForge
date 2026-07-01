@@ -2,9 +2,9 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 88 implements
-`forge package --target mcm-json --verify-existing` for existing MCM Extender
-package evidence verification while preserving the CLI command surface.
+The project is currently in gated v0.1 implementation. Gate 90 adds Markdown
+summary output for `forge package --target mcm-json --verify-existing` while
+preserving the CLI command surface.
 
 ## Architecture Spine
 
@@ -17,7 +17,7 @@ package evidence verification while preserving the CLI command surface.
 
 ## Current Gate
 
-Gate 88 advances the first game-facing generator path. It keeps
+Gate 90 advances the first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -189,12 +189,24 @@ package-verification verifier. It emits human/plain/json output and returns
 exit code `1` when blocking `WF-BUILD-006` package evidence diagnostics are
 found. It does not regenerate package outputs.
 
+Gate 89 adds `--format sarif` and `--format github` to that verify-existing
+mode. SARIF uses the existing canonical SARIF 2.1.0 diagnostic projection, and
+GitHub format emits workflow-command annotations and appends a Markdown summary
+when `GITHUB_STEP_SUMMARY` is present. Normal `forge package --format sarif`
+and `forge package --format github` remain rejected unless `--verify-existing`
+is set.
+
+Gate 90 adds `--summary <path>` to that verify-existing mode. The summary uses
+the same canonical Markdown diagnostic projection as validation and release
+verification. Normal `forge package --summary <path>` remains rejected unless
+`--verify-existing` is set.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
 `unknown` in this gate because their safe file-marker policy remains open.
 
-Gate 88 does not inspect an MO2 profile, launch through MO2 VFS, probe a
+Gate 90 does not inspect an MO2 profile, launch through MO2 VFS, probe a
 runtime, parse provider versions, emit `WF-CAP-*` diagnostics, generate
 in-game-verified MCM Extender files, generate JIP text scripts, package
 archives as FOMOD installers, or compile plugin records. Remaining advanced
@@ -426,6 +438,10 @@ implementing the flag yet.
 Gate 88 implements that verify-existing package command skeleton with
 human/plain/json output and keeps the same generate/build/package command
 surface.
+Gate 89 adds SARIF and GitHub diagnostic projections to that verify-existing
+mode and keeps normal package generation on human/plain/json output only.
+Gate 90 adds Markdown diagnostic summary output to that verify-existing mode
+and keeps normal package generation from accepting diagnostic summary files.
 
 It intentionally does not create:
 
