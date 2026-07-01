@@ -427,3 +427,20 @@ before delegating to the reusable validator. Archive files that differ from
 `package-manifest.json` archive digest evidence emit `WF-BUILD-006`. It still
 adds no CLI command, source schema, installer behavior, MO2 inspection,
 runtime probe, or plugin-record output.
+
+Gate 86 teaches `McmPackageVerificationEvidenceFileVerifier` to re-open
+generated `package.zip` files and compare normalized file entry names against
+`package-manifest.json` entries. Missing or undeclared archive entries emit
+`WF-BUILD-006`. It still adds no CLI command, source schema, installer
+behavior, MO2 inspection, runtime probe, or plugin-record output.
+
+Gate 87 records that the future public entrypoint for that verifier should be
+`forge package --target mcm-json --verify-existing`. It changes no product
+code, adds no CLI flag yet, and still adds no source schema, installer
+behavior, MO2 inspection, runtime probe, or plugin-record output.
+
+Gate 88 implements that entrypoint under `forge package`. The CLI now parses
+`--verify-existing`, resolves existing package evidence under project `dist/`,
+runs `McmPackageVerificationEvidenceFileVerifier`, and renders human/plain/json
+verification output. It still adds no source schema, installer behavior, MO2
+inspection, runtime probe, or plugin-record output.

@@ -104,3 +104,11 @@ dependencies.
 Gate 85 adds only local SHA-256 recomputation over Forge-generated package
 archives; it still does not add, download, rehost, or require third-party
 runtime dependencies.
+Gate 86 adds only local ZIP entry-name inspection over Forge-generated package
+archives; it still does not add, download, rehost, or require third-party
+runtime dependencies.
+Gate 87 is a command-surface decision checkpoint only; it still does not add,
+download, rehost, or require third-party runtime dependencies.
+Gate 88 adds only local file-based verification over Forge-generated package
+evidence; it still does not add, download, rehost, or require third-party
+runtime dependencies.

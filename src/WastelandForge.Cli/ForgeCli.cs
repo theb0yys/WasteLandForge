@@ -258,6 +258,11 @@ internal static class ForgeCli
             return (int)CliExitCode.Usage;
         }
 
+        if (parse.VerifyExisting)
+        {
+            return RunPackageVerifyExisting(parse);
+        }
+
         var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
             "package",
             parse.ProjectPath,
@@ -268,6 +273,42 @@ internal static class ForgeCli
         var payload = CliConstants.IsMachineFormat(parse.Format)
             ? McmJsonGeneratorJsonSerializer.Serialize(result)
             : McmJsonGeneratorTextRenderer.Render(result);
+        Console.Write(payload);
+
+        return result.HasErrors
+            ? (int)CliExitCode.BlockingDiagnostics
+            : (int)CliExitCode.Success;
+    }
+
+    private static int RunPackageVerifyExisting(PackageParseResult parse)
+    {
+        if (!TryResolvePackageEvidencePaths(parse.ProjectPath, parse.OutputDirectory, out var paths, out var error))
+        {
+            WriteUsage(parse.Format, "package", error);
+            return (int)CliExitCode.Usage;
+        }
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(new McmPackageVerificationEvidenceFileVerificationRequest(
+            paths.ProjectRoot,
+            paths.PackageManifest,
+            paths.InstallPreview,
+            paths.PackageVerification,
+            paths.PackageVerificationSummary,
+            null));
+        var result = new McmPackageVerificationCliResult(
+            paths.ProjectRoot,
+            paths.Root,
+            paths.PackageManifest,
+            paths.InstallPreview,
+            paths.InstallPreviewSummary,
+            paths.PackageVerification,
+            paths.PackageVerificationSummary,
+            paths.PackageArchive,
+            new DiagnosticReport(null, issues));
+
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? McmPackageVerificationJsonSerializer.Serialize(result)
+            : McmPackageVerificationTextRenderer.Render(result);
         Console.Write(payload);
 
         return result.HasErrors
@@ -735,13 +776,14 @@ internal static class ForgeCli
         return MetadataReportParseResult.Ok(projectPath, outputDirectory, target, dryRun, format);
     }
 
-    private static MetadataReportParseResult ParsePackageOptions(string[] args)
+    private static PackageParseResult ParsePackageOptions(string[] args)
     {
         var format = "human";
         var projectPath = ".";
         var target = McmJsonGenerator.Target;
         string? outputDirectory = null;
         var dryRun = false;
+        var verifyExisting = false;
         var projectWasSet = false;
 
         for (var index = 0; index < args.Length; index++)
@@ -751,18 +793,18 @@ internal static class ForgeCli
             {
                 if (!TryReadValue(args, ref index, out format))
                 {
-                    return MetadataReportParseResult.Fail(format, "Missing value for --format.");
+                    return PackageParseResult.Fail(format, "Missing value for --format.");
                 }
 
                 if (!CliConstants.IsKnownFormat(format))
                 {
-                    return MetadataReportParseResult.Fail(format, $"Unsupported format '{format}'.");
+                    return PackageParseResult.Fail(format, $"Unsupported format '{format}'.");
                 }
 
                 if (StringComparer.Ordinal.Equals(format, "sarif") ||
                     StringComparer.Ordinal.Equals(format, "github"))
                 {
-                    return MetadataReportParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
+                    return PackageParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
                 }
 
                 continue;
@@ -772,12 +814,12 @@ internal static class ForgeCli
             {
                 if (!TryReadValue(args, ref index, out var explicitProjectPath))
                 {
-                    return MetadataReportParseResult.Fail(format, "Missing value for --project.");
+                    return PackageParseResult.Fail(format, "Missing value for --project.");
                 }
 
                 if (projectWasSet)
                 {
-                    return MetadataReportParseResult.Fail(format, "Project root was specified more than once.");
+                    return PackageParseResult.Fail(format, "Project root was specified more than once.");
                 }
 
                 projectPath = explicitProjectPath;
@@ -789,12 +831,12 @@ internal static class ForgeCli
             {
                 if (!TryReadValue(args, ref index, out target))
                 {
-                    return MetadataReportParseResult.Fail(format, "Missing value for --target.");
+                    return PackageParseResult.Fail(format, "Missing value for --target.");
                 }
 
                 if (!StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target))
                 {
-                    return MetadataReportParseResult.Fail(format, $"Only target '{McmJsonGenerator.Target}' is implemented for forge package in the current gate.");
+                    return PackageParseResult.Fail(format, $"Only target '{McmJsonGenerator.Target}' is implemented for forge package in the current gate.");
                 }
 
                 continue;
@@ -805,7 +847,7 @@ internal static class ForgeCli
             {
                 if (!TryReadValue(args, ref index, out var explicitOutputDirectory))
                 {
-                    return MetadataReportParseResult.Fail(format, "Missing value for --output.");
+                    return PackageParseResult.Fail(format, "Missing value for --output.");
                 }
 
                 outputDirectory = explicitOutputDirectory;
@@ -818,6 +860,17 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--verify-existing"))
+            {
+                if (verifyExisting)
+                {
+                    return PackageParseResult.Fail(format, "Package verify-existing mode was specified more than once.");
+                }
+
+                verifyExisting = true;
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--no-input"))
             {
                 continue;
@@ -825,19 +878,57 @@ internal static class ForgeCli
 
             if (arg.StartsWith("-", StringComparison.Ordinal))
             {
-                return MetadataReportParseResult.Fail(format, $"Unsupported package option '{arg}'.");
+                return PackageParseResult.Fail(format, $"Unsupported package option '{arg}'.");
             }
 
             if (projectWasSet)
             {
-                return MetadataReportParseResult.Fail(format, "Project root was specified more than once.");
+                return PackageParseResult.Fail(format, "Project root was specified more than once.");
             }
 
             projectPath = arg;
             projectWasSet = true;
         }
 
-        return MetadataReportParseResult.Ok(projectPath, outputDirectory, target, dryRun, format);
+        if (verifyExisting && dryRun)
+        {
+            return PackageParseResult.Fail(format, "Cannot combine --verify-existing with --dry-run.");
+        }
+
+        return PackageParseResult.Ok(projectPath, outputDirectory, target, dryRun, verifyExisting, format);
+    }
+
+    private static bool TryResolvePackageEvidencePaths(
+        string projectPath,
+        string? outputDirectory,
+        out PackageEvidencePaths paths,
+        out string message)
+    {
+        var projectRoot = Path.GetFullPath(projectPath);
+        var allowedRoot = Path.GetFullPath(Path.Combine(projectRoot, "dist"));
+        var outputRoot = string.IsNullOrWhiteSpace(outputDirectory)
+            ? Path.Combine(allowedRoot, McmJsonGenerator.Target)
+            : Path.GetFullPath(Path.Combine(projectRoot, outputDirectory));
+
+        if (!IsInsideOrEqual(allowedRoot, outputRoot))
+        {
+            paths = default!;
+            message = "Package verification output must stay under dist.";
+            return false;
+        }
+
+        var packageArchivePath = Path.Combine(outputRoot, "package.zip");
+        paths = new PackageEvidencePaths(
+            projectRoot,
+            ToDisplayPath(projectRoot, outputRoot),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-manifest.json")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-preview.json")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-preview.md")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-verification.json")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-verification.md")),
+            File.Exists(packageArchivePath) ? ToDisplayPath(projectRoot, packageArchivePath) : null);
+        message = string.Empty;
+        return true;
     }
 
     private static CapabilitiesListParseResult ParseCapabilitiesListOptions(string[] args)
@@ -1278,6 +1369,18 @@ internal static class ForgeCli
         StringComparer.Ordinal.Equals(kind, "capabilities") ||
         StringComparer.Ordinal.Equals(kind, "providers");
 
+    private static string ToDisplayPath(string root, string path) =>
+        Path.GetRelativePath(root, path).Replace('\\', '/');
+
+    private static bool IsInsideOrEqual(string root, string candidate)
+    {
+        var normalizedRoot = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var normalizedCandidate = Path.GetFullPath(candidate).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return StringComparer.OrdinalIgnoreCase.Equals(normalizedRoot, normalizedCandidate) ||
+            normalizedCandidate.StartsWith(normalizedRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+            normalizedCandidate.StartsWith(normalizedRoot + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+    }
+
     private sealed record CommandResolution(
         CommandResolutionKind Kind,
         string CommandPath,
@@ -1347,6 +1450,33 @@ internal static class ForgeCli
         public static MetadataReportParseResult Fail(string format, string message) =>
             new(false, string.Empty, null, "reports", false, format, message);
     }
+
+    private sealed record PackageParseResult(
+        bool Success,
+        string ProjectPath,
+        string? OutputDirectory,
+        string Target,
+        bool DryRun,
+        bool VerifyExisting,
+        string Format,
+        string Message)
+    {
+        public static PackageParseResult Ok(string projectPath, string? outputDirectory, string target, bool dryRun, bool verifyExisting, string format) =>
+            new(true, projectPath, outputDirectory, target, dryRun, verifyExisting, format, string.Empty);
+
+        public static PackageParseResult Fail(string format, string message) =>
+            new(false, string.Empty, null, McmJsonGenerator.Target, false, false, format, message);
+    }
+
+    private sealed record PackageEvidencePaths(
+        string ProjectRoot,
+        string Root,
+        string PackageManifest,
+        string InstallPreview,
+        string InstallPreviewSummary,
+        string PackageVerification,
+        string PackageVerificationSummary,
+        string? PackageArchive);
 
     private sealed record CapabilitiesListParseResult(
         bool Success,

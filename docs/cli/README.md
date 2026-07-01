@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 85 MCM Extender package archive digest verification baseline
+Status: Gate 88 MCM Extender package verify-existing command baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -268,6 +268,14 @@ forge --version
 - Gate 85 makes that internal verifier recompute package archive SHA-256 and
   length values from generated `package.zip`; it does not add new commands or
   aliases.
+- Gate 86 makes that internal verifier open generated `package.zip` files and
+  compare archive entry names against `package-manifest.json` entries; it does
+  not add new commands or aliases.
+- Gate 87 records the future public command shape as
+  `forge package --target mcm-json --verify-existing`; it does not implement
+  the flag, add commands, or add aliases.
+- Gate 88 implements `forge package --target mcm-json --verify-existing` for
+  existing generated package evidence; it does not add commands or aliases.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.
 - `forge validate --format sarif --output <path>` writes SARIF to a file.
 - `forge validate --format github` emits GitHub workflow-command annotations.
@@ -359,6 +367,7 @@ forge --version
 - `--target mcm-json`
 - `--output <path>`
 - `--dry-run`
+- `--verify-existing`
 
 Unimplemented reserved skeleton commands support human/plain text and JSON status output.
 SARIF and GitHub formats are available only for diagnostic commands in the
@@ -587,8 +596,31 @@ the game.
 Gate 85 makes that internal verifier recompute package archive SHA-256 and
 length values for generated `package.zip` files recorded by
 `package-manifest.json`. Mismatches are blocking `WF-BUILD-006` diagnostics.
+
+Gate 86 makes that internal verifier re-open generated `package.zip` files and
+compare normalized file entry names against `package-manifest.json` entries.
+Missing or undeclared entries are blocking `WF-BUILD-006` diagnostics.
 It still does not add a standalone verifier command, install files, invoke
 MO2, inspect VFS conflicts, or launch the game.
+
+Gate 87 decides that future public existing-package evidence verification
+belongs under `forge package --target mcm-json --verify-existing`. The planned
+mode will read existing generated evidence from `dist/mcm-json` by default,
+or from a `--output <path>` root under project `dist/`, then run the internal
+file-based verifier. Gate 87 does not implement that flag. It rejects
+standalone verifier commands such as `forge verify-package`, `forge package
+verify`, and `/forge verify-package`.
+
+Gate 88 implements `forge package --target mcm-json --verify-existing`. The
+mode reads existing `package-manifest.json`, `install-preview.json`,
+`install-preview.md`, `package-verification.json`,
+`package-verification.md`, and optional `package.zip` evidence from
+`dist/mcm-json` by default, or from a `--output <path>` root under project
+`dist/`. It runs the file-based package-verification verifier, emits
+human/plain/json output, returns exit code `0` when no blocking diagnostics
+are found, and returns exit code `1` when package evidence diagnostics are
+found. It does not regenerate package outputs, install files, invoke MO2,
+inspect VFS conflicts, or launch the game.
 
 ## Exit Codes
 

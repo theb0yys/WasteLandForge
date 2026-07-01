@@ -504,3 +504,17 @@ Gate 85 uses the same temp-only generated output to test archive digest
 recomputation after editing generated `package.zip`. It still adds no
 generated package verification reports, summaries, archives, manifests, or
 package command output trees to the committed fixture corpus.
+
+Gate 86 uses the same temp-only generated output to test archive entry-name
+revalidation after adding an undeclared generated `package.zip` entry. It
+still adds no generated package verification reports, summaries, archives,
+manifests, or package command output trees to the committed fixture corpus.
+
+Gate 87 adds no committed fixture changes. It only records the future
+`forge package --target mcm-json --verify-existing` command shape for
+existing generated package evidence verification.
+
+Gate 88 uses temp-only copies of the synthetic `ExampleMod` fixture to test
+`forge package --target mcm-json --verify-existing`. It still adds no
+generated package verification reports, summaries, archives, manifests, or
+package command output trees to the committed fixture corpus.

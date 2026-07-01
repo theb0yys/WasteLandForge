@@ -143,6 +143,18 @@ Gate 85 adds no new diagnostic rule family or rule ID. Its file-based verifier
 uses `WF-BUILD-006` when recomputed package archive SHA-256 or length values
 do not match `package-manifest.json` archive digest evidence.
 
+Gate 86 adds no new diagnostic rule family or rule ID. Its file-based verifier
+uses `WF-BUILD-006` when generated `package.zip` entry names do not match
+`package-manifest.json` entries.
+
+Gate 87 adds no new diagnostic rule family or rule ID. It records the future
+`forge package --target mcm-json --verify-existing` command shape for
+surfacing existing `WF-BUILD-006` package evidence diagnostics.
+
+Gate 88 adds no new diagnostic rule family or rule ID. It exposes existing
+`WF-BUILD-006` package evidence diagnostics through
+`forge package --target mcm-json --verify-existing`.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

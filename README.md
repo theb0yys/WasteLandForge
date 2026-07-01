@@ -2,9 +2,9 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 85 adds archive
-digest recomputation to the internal file-based MCM Extender
-package-verification verifier while preserving the CLI command surface.
+The project is currently in gated v0.1 implementation. Gate 88 implements
+`forge package --target mcm-json --verify-existing` for existing MCM Extender
+package evidence verification while preserving the CLI command surface.
 
 ## Architecture Spine
 
@@ -17,7 +17,7 @@ package-verification verifier while preserving the CLI command surface.
 
 ## Current Gate
 
-Gate 85 advances the first game-facing generator path. It keeps
+Gate 88 advances the first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -170,12 +170,31 @@ longer match manifest archive digest evidence produce blocking
 `WF-BUILD-006` diagnostics. This remains an internal verifier step and does
 not add a standalone command.
 
+Gate 86 makes the same file-based verifier open generated `package.zip` files
+and compare their normalized file entry names against `package-manifest.json`
+entries when the manifest records a created archive. Missing or undeclared ZIP
+entries produce blocking `WF-BUILD-006` diagnostics. This remains an internal
+verifier step and does not add a standalone command.
+
+Gate 87 records the command-surface decision for making that internal verifier
+public later: use `forge package --target mcm-json --verify-existing` under
+the canonical `forge package` command. It rejects standalone verifier aliases
+such as `forge verify-package` and `/forge verify-package`, and it does not
+implement the flag yet.
+
+Gate 88 implements `forge package --target mcm-json --verify-existing`. The
+mode reads existing package evidence from `dist/mcm-json` by default, or from
+a `--output <path>` root under project `dist/`, then runs the file-based
+package-verification verifier. It emits human/plain/json output and returns
+exit code `1` when blocking `WF-BUILD-006` package evidence diagnostics are
+found. It does not regenerate package outputs.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
 `unknown` in this gate because their safe file-marker policy remains open.
 
-Gate 85 does not inspect an MO2 profile, launch through MO2 VFS, probe a
+Gate 88 does not inspect an MO2 profile, launch through MO2 VFS, probe a
 runtime, parse provider versions, emit `WF-CAP-*` diagnostics, generate
 in-game-verified MCM Extender files, generate JIP text scripts, package
 archives as FOMOD installers, or compile plugin records. Remaining advanced
@@ -399,6 +418,14 @@ Gate 84 adds package payload digest recomputation to that file-based verifier
 and keeps the same generate/build/package command surface.
 Gate 85 adds package archive digest recomputation to that file-based verifier
 and keeps the same generate/build/package command surface.
+Gate 86 adds package archive entry-name revalidation to that file-based
+verifier and keeps the same generate/build/package command surface.
+Gate 87 records `forge package --target mcm-json --verify-existing` as the
+future command shape for existing package evidence verification, without
+implementing the flag yet.
+Gate 88 implements that verify-existing package command skeleton with
+human/plain/json output and keeps the same generate/build/package command
+surface.
 
 It intentionally does not create:
 

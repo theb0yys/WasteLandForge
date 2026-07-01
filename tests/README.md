@@ -360,6 +360,19 @@ case. The file-based verifier recomputes the archive SHA-256 and length and
 reports a blocking `WF-BUILD-006` mismatch against `package-manifest.json`
 evidence.
 
+Gate 86 extends that coverage with an edited generated `package.zip` archive
+entry case. The file-based verifier compares ZIP entry names against
+`package-manifest.json` entries and reports a blocking `WF-BUILD-006`
+mismatch for undeclared archive entries.
+
+Gate 87 is documentation-only. It records the future command skeleton target
+for existing package evidence verification and does not add test cases.
+
+Gate 88 adds `WastelandForge.GoldenTests` coverage for
+`forge package --target mcm-json --verify-existing`. The tests cover a clean
+existing package evidence verification and an edited generated payload file
+that returns blocking `WF-BUILD-006`.
+
 Run the full local suite serially:
 
 ```text

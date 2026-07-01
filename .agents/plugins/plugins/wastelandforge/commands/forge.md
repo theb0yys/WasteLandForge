@@ -92,11 +92,11 @@ Gate 45 option routing:
   file only. Do not control, automate, import into, or mutate an open GECK
   session.
 
-Gate 85 option routing:
+Gate 88 option routing:
 
 - `/forge generate --target mcm-json`, `/forge build --target mcm-json`, and
   `/forge package --target mcm-json` route to the real `forge` CLI behavior
-  when available. Treat the output as the Gate 85 validated MCM Extender JSON
+  when available. Treat the output as the Gate 88 validated MCM Extender JSON
   runtime subset under `MCM/<menu>.json`, plus
   `MCM/Translations/<modName>.ini` when translations are declared, and staged
   referenced texture assets under their game-relative target paths. Build and
@@ -117,8 +117,9 @@ Gate 85 option routing:
   Markdown summary before final local manifests and checksums are written.
   Successful runs record `packageVerification.crossChecks`; mismatches are
   blocking `WF-BUILD-006` diagnostics through reusable validator,
-  file-based verifier, payload digest verification, and archive digest
-  verification code. These remain reports only:
+  file-based verifier, payload digest verification, archive digest
+  verification, and archive entry-name revalidation code. These remain
+  reports only:
   they list Data-relative would-copy paths and do not install into Data or MO2. It
   supports header, image, toggle, keybind, checkbox,
   string-toggle, slider, choice, and text settings. MCM image filenames are
@@ -127,6 +128,12 @@ Gate 85 option routing:
   FOMOD package creation, capability-derived runtime requirements, MO2
   installation, or in-game verification exist until later gates implement
   them.
+
+- `/forge package --target mcm-json --verify-existing` routes to the real
+  `forge package --target mcm-json --verify-existing` CLI behavior when
+  available. It verifies existing generated package evidence without
+  regenerating outputs. Do not invent `/forge verify-package`,
+  `/forge package verify`, or other verifier aliases.
 
 ## Verification
 

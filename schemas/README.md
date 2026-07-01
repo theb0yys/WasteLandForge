@@ -236,3 +236,15 @@ schema. The package-verification evidence schema remains
 Gate 85 adds archive digest recomputation to that verifier but still adds no
 schema. The package-verification evidence schema remains
 `package-verification/0.1.0`.
+
+Gate 86 adds archive entry-name revalidation to that verifier but still adds
+no schema. The package-verification evidence schema remains
+`package-verification/0.1.0`.
+
+Gate 87 records the future package-verification command shape but still adds
+no schema. The package-verification evidence schema remains
+`package-verification/0.1.0`.
+
+Gate 88 implements that package-verification command skeleton but still adds
+no schema. The package-verification evidence schema remains
+`package-verification/0.1.0`.

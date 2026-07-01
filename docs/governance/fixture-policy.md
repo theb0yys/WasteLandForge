@@ -103,3 +103,17 @@ Gate 85 validates archive digest recomputation with temp-only generated files
 from synthetic fixtures. Public committed fixtures still exclude generated
 package verification reports, summaries, manifests, generated package
 archives, and package command output trees.
+
+Gate 86 validates archive entry-name revalidation with temp-only generated
+files from synthetic fixtures. Public committed fixtures still exclude
+generated package verification reports, summaries, manifests, generated
+package archives, and package command output trees.
+
+Gate 87 adds no fixture corpus changes. It records the future command shape
+for verifying existing generated package evidence while preserving the
+synthetic-fixture-only policy.
+
+Gate 88 adds golden CLI tests that generate package evidence in temp-only
+copies of the synthetic `ExampleMod` fixture. It still adds no generated
+package verification reports, summaries, archives, manifests, or package
+command output trees to the committed fixture corpus.
