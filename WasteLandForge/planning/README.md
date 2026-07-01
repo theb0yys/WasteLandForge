@@ -83,9 +83,11 @@ Gate status:
 - `gates/gate-076-mcm-extender-install-preview-schema-validation.md` - Gate 76, MCM Extender install-preview report schema and validation skeleton.
 - `gates/gate-077-mcm-extender-install-preview-human-summary.md` - Gate 77, MCM Extender install-preview human summary skeleton.
 - `gates/gate-078-mcm-extender-package-verification-report.md` - Gate 78, MCM Extender package verification report skeleton.
+- `gates/gate-079-mcm-extender-package-verification-schema-validation.md` - Gate 79, MCM Extender package verification schema and validation skeleton.
+- `gates/gate-080-mcm-extender-package-verification-human-summary.md` - Gate 80, MCM Extender package verification human summary skeleton.
 
 Next gate:
 
-- Gate 79 - MCM Extender package verification schema skeleton.
+- Gate 81 - MCM Extender package verification evidence cross-check skeleton.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

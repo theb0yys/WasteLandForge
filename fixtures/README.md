@@ -471,3 +471,11 @@ command output trees to the committed fixture corpus.
 Gate 78 uses the same fixture to test generated package-verification reports.
 It still adds no generated package verification reports, archives, or package
 command output trees to the committed fixture corpus.
+
+Gate 79 uses the same fixture to test package-verification schema validation.
+It still adds no generated package verification reports, archives, or package
+command output trees to the committed fixture corpus.
+
+Gate 80 uses the same fixture to test generated package-verification Markdown
+summaries. It still adds no generated package verification reports, summaries,
+archives, or package command output trees to the committed fixture corpus.

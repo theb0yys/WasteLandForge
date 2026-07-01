@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 78 MCM Extender package verification report baseline
+Status: Gate 80 MCM Extender package verification human summary baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -244,16 +244,17 @@ forge --version
 - `forge generate --target mcm-json` writes deterministic MCM Extender JSON
   files, translation INI files when declared, a schema-validated package
   manifest, a schema-validated install-preview report, a human summary, and
-  `package-verification.json` under project `generated/mcm-json`.
+  schema-validated `package-verification.json` plus
+  `package-verification.md` under project `generated/mcm-json`.
 - `forge build --target mcm-json` writes deterministic MCM Extender JSON
   files, translation INI files when declared, a schema-validated package
   manifest, a schema-validated install-preview report, a human summary,
-  `package-verification.json`, a build manifest, and checksums under project
-  `dist/mcm-json`.
+  schema-validated `package-verification.json`, `package-verification.md`, a
+  build manifest, and checksums under project `dist/mcm-json`.
 - `forge package --target mcm-json` assembles the deterministic MCM Extender
   package tree, schema-validated `install-preview.json`,
-  `install-preview.md`, `package-verification.json`, and `package.zip` under
-  project `dist/mcm-json`.
+  `install-preview.md`, schema-validated `package-verification.json`,
+  `package-verification.md`, and `package.zip` under project `dist/mcm-json`.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.
 - `forge validate --format sarif --output <path>` writes SARIF to a file.
 - `forge validate --format github` emits GitHub workflow-command annotations.
@@ -440,6 +441,7 @@ generated/mcm-json/package-manifest.json
 generated/mcm-json/install-preview.json
 generated/mcm-json/install-preview.md
 generated/mcm-json/package-verification.json
+generated/mcm-json/package-verification.md
 generated/mcm-json/generation-manifest.json
 ```
 
@@ -453,6 +455,7 @@ dist/mcm-json/package-manifest.json
 dist/mcm-json/install-preview.json
 dist/mcm-json/install-preview.md
 dist/mcm-json/package-verification.json
+dist/mcm-json/package-verification.md
 dist/mcm-json/package.zip
 dist/mcm-json/build-manifest.json
 dist/mcm-json/checksums.sha256
@@ -469,6 +472,7 @@ dist/mcm-json/package-manifest.json
 dist/mcm-json/install-preview.json
 dist/mcm-json/install-preview.md
 dist/mcm-json/package-verification.json
+dist/mcm-json/package-verification.md
 dist/mcm-json/package.zip
 dist/mcm-json/build-manifest.json
 dist/mcm-json/checksums.sha256
@@ -530,6 +534,17 @@ evidence files, payload digest status, archive status, and archive entry
 validation in CLI JSON output, local manifests, output digests, human CLI
 output, and build/package checksums. It still does not install files, invoke
 MO2, inspect VFS conflicts, or launch the game.
+
+Gate 79 adds `package-verification/0.1.0` schema validation for that report and
+records the schema ID in generation/build manifest package-verification
+evidence. It still does not install files, invoke MO2, inspect VFS conflicts,
+or launch the game.
+
+Gate 80 adds `package-verification.md` as a human-readable summary beside the
+validated JSON report. It records the summary in CLI JSON output, local
+manifests, output digests, human CLI output, and build/package checksums. It
+still does not install files, invoke MO2, inspect VFS conflicts, or launch the
+game.
 
 ## Exit Codes
 

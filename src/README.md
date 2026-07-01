@@ -375,6 +375,18 @@ the package manifest and install-preview evidence. The report summarizes
 package entry counts, schema-validated evidence files, payload digest
 recording, archive status, and archive entry validation, then records the
 report in manifests, output digests, CLI output, and build/package checksums.
-Formal package-verification schema validation, actual Data/MO2 installation,
-runtime probes, in-game verification, plugin records, and external tool
-execution remain future work.
+Actual Data/MO2 installation, runtime probes, in-game verification, plugin
+records, and external tool execution remain future work.
+
+Gate 79 teaches `McmJsonGenerator` to validate generated package-verification
+reports against `package-verification/0.1.0` before writing them and to record
+that schema in generation/build manifest package-verification evidence. Actual
+Data/MO2 installation, runtime probes, in-game verification, plugin records,
+and external tool execution remain future work.
+
+Gate 80 teaches `McmJsonGenerator` to write `package-verification.md` beside
+the validated JSON report. The deterministic Markdown summary is generated
+evidence for human review and is recorded in manifests, output digests, CLI
+JSON output, human CLI output, and build/package checksums. Actual Data/MO2
+installation, runtime probes, in-game verification, plugin records, and
+external tool execution remain future work.

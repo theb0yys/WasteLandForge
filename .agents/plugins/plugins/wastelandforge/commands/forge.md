@@ -92,25 +92,28 @@ Gate 45 option routing:
   file only. Do not control, automate, import into, or mutate an open GECK
   session.
 
-Gate 78 option routing:
+Gate 80 option routing:
 
 - `/forge generate --target mcm-json`, `/forge build --target mcm-json`, and
   `/forge package --target mcm-json` route to the real `forge` CLI behavior
-  when available. Treat the output as the Gate 78 validated MCM Extender JSON
+  when available. Treat the output as the Gate 80 validated MCM Extender JSON
   runtime subset under `MCM/<menu>.json`, plus
   `MCM/Translations/<modName>.ini` when translations are declared, and staged
   referenced texture assets under their game-relative target paths. Build and
   package output also include `package-manifest.json`, `package.zip`,
   `install-preview.json`, `install-preview.md`,
-  `package-verification.json`, `build-manifest.json`, and `checksums.sha256`
-  under `dist/mcm-json`. The package manifest is validated against
+  `package-verification.json`, `package-verification.md`,
+  `build-manifest.json`, and `checksums.sha256` under `dist/mcm-json`. The
+  package manifest is validated against
   `package-manifest/0.1.0`, and build/package ZIP entries are checked against
   the deterministic package payload. `install-preview.json` is validated
   against `install-preview/0.1.0`; `install-preview.md` is a human-readable
   summary of the same preview intent; `package-verification.json` summarizes
-  local package evidence, package counts, and archive validation status. These
-  remain reports only: they list Data-relative would-copy paths and do not
-  install into Data or MO2. It
+  local package evidence, package counts, and archive validation status and is
+  validated against `package-verification/0.1.0`; `package-verification.md`
+  is a human-readable summary of that local package verification evidence.
+  These remain reports only:
+  they list Data-relative would-copy paths and do not install into Data or MO2. It
   supports header, image, toggle, keybind, checkbox,
   string-toggle, slider, choice, and text settings. MCM image filenames are
   validated against required texture asset targets and existing DDS

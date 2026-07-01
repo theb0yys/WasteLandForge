@@ -68,3 +68,13 @@ Gate 78 validates generated package-verification reports using the same
 synthetic fixture. Public committed fixtures still exclude generated package
 verification reports, generated package archives, and package command output
 trees.
+
+Gate 79 validates generated package-verification reports against an embedded
+schema using the same synthetic fixture. Public committed fixtures still
+exclude generated package verification reports, generated package archives,
+and package command output trees.
+
+Gate 80 validates generated package-verification Markdown summaries using the
+same synthetic fixture. Public committed fixtures still exclude generated
+package verification reports, generated package verification summaries,
+generated package archives, and package command output trees.

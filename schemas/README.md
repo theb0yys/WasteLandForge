@@ -33,6 +33,7 @@ Do not overwrite a released schema in place. Schema migrations are explicit tool
 - `mcm-extender-output/0.1.0/schema.json` - minimal MCM Extender runtime JSON output schema emitted by Forge.
 - `package-manifest/0.1.0/schema.json` - deterministic generated package manifest schema for the first MCM Extender loose-file package target.
 - `install-preview/0.1.0/schema.json` - deterministic generated install-preview report schema for the first MCM Extender loose-file package target.
+- `package-verification/0.1.0/schema.json` - deterministic generated package-verification report schema for the first MCM Extender loose-file package target.
 - `quests/0.1.0/schema.json` - quest registry schema.
 - `quests/0.2.0/schema.json` - quest registry schema with stage and objective skeletons.
 - `quests/0.3.0/schema.json` - quest registry schema with transition skeletons.
@@ -204,6 +205,13 @@ evidence schema, not a source registry schema. Forge uses it to validate the
 install-preview report emitted by `forge generate --target mcm-json`, `forge
 build --target mcm-json`, and `forge package --target mcm-json`.
 
-Gate 78 adds generated `package-verification.json` output but no schema. A
-formal package-verification report schema remains open for the next generated
-evidence schema gate.
+Gate 78 adds generated `package-verification.json` output but no schema. Gate
+79 adds `package-verification/0.1.0/schema.json` as generated
+package-verification evidence schema, not a source registry schema. Forge uses
+it to validate the package-verification report emitted by `forge generate
+--target mcm-json`, `forge build --target mcm-json`, and `forge package
+--target mcm-json`.
+
+Gate 80 adds generated `package-verification.md` summary output but no schema.
+The Markdown summary is human review evidence derived from the validated JSON
+report path and local package evidence.

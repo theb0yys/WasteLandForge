@@ -79,6 +79,7 @@ internal static class McmJsonGeneratorJsonSerializer
             ["installPreview"] = outputs.InstallPreview,
             ["installPreviewSummary"] = outputs.InstallPreviewSummary,
             ["packageVerification"] = outputs.PackageVerification,
+            ["packageVerificationSummary"] = outputs.PackageVerificationSummary,
             ["manifest"] = outputs.Manifest
         };
         if (outputs.PackageArchive is not null)

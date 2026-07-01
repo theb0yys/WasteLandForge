@@ -23,6 +23,7 @@ public sealed class McmJsonGenerator
     private static readonly Lazy<JsonSchema> McmExtenderOutputSchema = new(LoadMcmExtenderOutputSchema);
     private static readonly Lazy<JsonSchema> PackageManifestSchema = new(LoadPackageManifestSchema);
     private static readonly Lazy<JsonSchema> InstallPreviewSchema = new(LoadInstallPreviewSchema);
+    private static readonly Lazy<JsonSchema> PackageVerificationSchema = new(LoadPackageVerificationSchema);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -196,6 +197,20 @@ public sealed class McmJsonGenerator
             packageManifestPath,
             installPreviewPath,
             installPreviewSummaryPath);
+        ValidatePackageVerificationJson(projectRoot, packageVerificationPath, packageVerificationJson, issues, projectId);
+        var packageVerificationSummaryPath = Path.Combine(outputRoot, "package-verification.md");
+        var packageVerificationSummary = CreatePackageVerificationSummary(
+            options,
+            projectRoot,
+            outputRoot,
+            projectId,
+            menuOutputs,
+            stagedAssets,
+            packageArchiveDigest,
+            packagePayloadDigests,
+            packageManifestPath,
+            installPreviewPath,
+            installPreviewSummaryPath);
 
         if (issues.Any(issue => issue.Severity == DiagnosticSeverity.Error))
         {
@@ -218,9 +233,13 @@ public sealed class McmJsonGenerator
             packageVerificationPath,
             packageVerificationJson.ToJsonString(JsonOptions) + Environment.NewLine);
 
+        WriteUtf8NoBom(
+            packageVerificationSummaryPath,
+            packageVerificationSummary);
+
         var generatedEvidenceFiles = packageArchivePath is null
-            ? generatedFiles.Append(packageManifestPath).Append(installPreviewPath).Append(installPreviewSummaryPath).Append(packageVerificationPath).ToArray()
-            : generatedFiles.Append(packageManifestPath).Append(installPreviewPath).Append(installPreviewSummaryPath).Append(packageVerificationPath).Append(packageArchivePath).ToArray();
+            ? generatedFiles.Append(packageManifestPath).Append(installPreviewPath).Append(installPreviewSummaryPath).Append(packageVerificationPath).Append(packageVerificationSummaryPath).ToArray()
+            : generatedFiles.Append(packageManifestPath).Append(installPreviewPath).Append(installPreviewSummaryPath).Append(packageVerificationPath).Append(packageVerificationSummaryPath).Append(packageArchivePath).ToArray();
         var outputDigestsBeforeManifest = generatedEvidenceFiles
             .Select(path => ComputeDigest(projectRoot, path))
             .OrderBy(digest => digest.Path, StringComparer.Ordinal)
@@ -244,7 +263,8 @@ public sealed class McmJsonGenerator
                 stagedAssets,
                 installPreviewPath,
                 installPreviewSummaryPath,
-                packageVerificationPath).ToJsonString(JsonOptions) + Environment.NewLine);
+                packageVerificationPath,
+                packageVerificationSummaryPath).ToJsonString(JsonOptions) + Environment.NewLine);
 
         string? checksumsPath = null;
         var outputFiles = generatedEvidenceFiles.Append(manifestPath).ToArray();
@@ -479,6 +499,7 @@ public sealed class McmJsonGenerator
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-preview.json")),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-preview.md")),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-verification.json")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-verification.md")),
             IsDistributionCommand(command)
                 ? ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package.zip"))
                 : null,
@@ -1030,6 +1051,17 @@ public sealed class McmJsonGenerator
         return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource));
     }
 
+    private static JsonSchema LoadPackageVerificationSchema()
+    {
+        if (!WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.PackageVerification010, out var resource) ||
+            resource is null)
+        {
+            throw new InvalidOperationException($"Built-in schema '{WastelandForgeSchemaIds.PackageVerification010}' was not found.");
+        }
+
+        return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource));
+    }
+
     private static void ValidatePackageManifestJson(
         string projectRoot,
         string packageManifestPath,
@@ -1092,6 +1124,37 @@ public sealed class McmJsonGenerator
         }
     }
 
+    private static void ValidatePackageVerificationJson(
+        string projectRoot,
+        string packageVerificationPath,
+        JsonObject packageVerificationJson,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        using var jsonDocument = JsonDocument.Parse(packageVerificationJson.ToJsonString());
+        var results = PackageVerificationSchema.Value.Evaluate(
+            jsonDocument.RootElement,
+            new EvaluationOptions
+            {
+                OutputFormat = OutputFormat.Hierarchical
+            });
+        if (results.IsValid)
+        {
+            return;
+        }
+
+        foreach (var failure in EnumerateSchemaFailures(results))
+        {
+            issues.Add(CreateIssue(
+                "WF-BUILD-005",
+                "Package verification validation failed",
+                FormatSchemaErrors(failure),
+                new SourceLocation(ToDisplayPath(projectRoot, packageVerificationPath), JsonPointer.Parse(NormalizeJsonPointer(failure.InstanceLocation.ToString()))),
+                projectId,
+                "Fix the generated package verification contract or package metadata so it matches the package verification schema."));
+        }
+    }
+
     private static void ValidatePackageArchive(
         string projectRoot,
         string outputRoot,
@@ -1135,7 +1198,8 @@ public sealed class McmJsonGenerator
         IReadOnlyList<StagedAsset> stagedAssets,
         string installPreviewPath,
         string installPreviewSummaryPath,
-        string packageVerificationPath)
+        string packageVerificationPath,
+        string packageVerificationSummaryPath)
     {
         var timestamp = ResolveReproducibleTimestamp();
         return new JsonObject
@@ -1188,8 +1252,10 @@ public sealed class McmJsonGenerator
             },
             ["packageVerification"] = new JsonObject
             {
+                ["schema"] = WastelandForgeSchemaIds.PackageVerification010,
                 ["status"] = "written",
-                ["report"] = ToDisplayPath(projectRoot, packageVerificationPath)
+                ["report"] = ToDisplayPath(projectRoot, packageVerificationPath),
+                ["summary"] = ToDisplayPath(projectRoot, packageVerificationSummaryPath)
             },
             ["generators"] = new JsonArray
             {
@@ -1449,6 +1515,85 @@ public sealed class McmJsonGenerator
                 "Verification does not prove runtime MCM Extender visibility."
             }
         };
+    }
+
+    private static string CreatePackageVerificationSummary(
+        McmJsonGeneratorOptions options,
+        string projectRoot,
+        string outputRoot,
+        LogicalId? projectId,
+        IReadOnlyList<MenuOutput> menuOutputs,
+        IReadOnlyList<StagedAsset> stagedAssets,
+        FileDigest? packageArchiveDigest,
+        IReadOnlyList<FileDigest> packagePayloadDigests,
+        string packageManifestPath,
+        string installPreviewPath,
+        string installPreviewSummaryPath)
+    {
+        var translationCount = menuOutputs.Count(output => output.TranslationPath is not null);
+        var entryCount = menuOutputs.Count + translationCount + stagedAssets.Count;
+        var builder = new StringBuilder();
+        builder.AppendLine("# WastelandForge MCM Package Verification");
+        builder.AppendLine();
+        builder.AppendLine("Generated by WastelandForge. Do not edit; regenerate from source contracts.");
+        builder.AppendLine();
+        builder.Append("Project: ");
+        builder.AppendLine(projectId?.ToString() ?? "unknown");
+        builder.Append("Command: ");
+        builder.AppendLine(options.Command);
+        builder.Append("Target: ");
+        builder.AppendLine(Target);
+        builder.Append("Package root: ");
+        builder.AppendLine(ToDisplayPath(projectRoot, outputRoot));
+        builder.AppendLine("Layout: fallout-new-vegas-data-loose-files");
+        builder.Append("Entries: ");
+        builder.AppendLine(entryCount.ToString(CultureInfo.InvariantCulture));
+        builder.Append("Menus: ");
+        builder.AppendLine(menuOutputs.Count.ToString(CultureInfo.InvariantCulture));
+        builder.Append("Translations: ");
+        builder.AppendLine(translationCount.ToString(CultureInfo.InvariantCulture));
+        builder.Append("Assets: ");
+        builder.AppendLine(stagedAssets.Count.ToString(CultureInfo.InvariantCulture));
+        builder.AppendLine("Result: passed");
+        builder.Append("Archive: ");
+        if (packageArchiveDigest is null)
+        {
+            builder.AppendLine("not-created");
+            builder.AppendLine("Archive validation: not-applicable");
+        }
+        else
+        {
+            builder.Append(packageArchiveDigest.Path);
+            builder.AppendLine(" (created)");
+            builder.AppendLine("Archive validation: entries-matched");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("## Checks");
+        builder.Append("- package-manifest-schema: passed (");
+        builder.Append(ToDisplayPath(projectRoot, packageManifestPath));
+        builder.AppendLine(")");
+        builder.Append("- install-preview-schema: passed (");
+        builder.Append(ToDisplayPath(projectRoot, installPreviewPath));
+        builder.AppendLine(")");
+        builder.Append("- install-preview-summary: written (");
+        builder.Append(ToDisplayPath(projectRoot, installPreviewSummaryPath));
+        builder.AppendLine(")");
+        builder.Append("- package-payload-digests: recorded (count: ");
+        builder.Append(packagePayloadDigests.Count.ToString(CultureInfo.InvariantCulture));
+        builder.AppendLine(")");
+        builder.Append("- package-archive: ");
+        builder.Append(packageArchiveDigest is null ? "not-created" : "created");
+        builder.Append(" (validation: ");
+        builder.Append(packageArchiveDigest is null ? "not-applicable" : "entries-matched");
+        builder.AppendLine(")");
+
+        builder.AppendLine();
+        builder.AppendLine("## Limitations");
+        builder.AppendLine("- Verification is local package evidence only; Forge did not install files into Data or MO2.");
+        builder.AppendLine("- Verification does not launch the game or inspect MO2 VFS/profile conflicts.");
+        builder.AppendLine("- Verification does not prove runtime MCM Extender visibility.");
+        return builder.ToString();
     }
 
     private static JsonObject CreatePackageArchiveJson(FileDigest? packageArchiveDigest)

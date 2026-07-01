@@ -115,6 +115,14 @@ Gate 78 adds no new diagnostic rule family or rule ID. It writes
 install-preview validation, and optional archive-entry validation succeed,
 and before local manifest/checksum evidence is finalized.
 
+Gate 79 adds no new diagnostic rule family. It reserves `WF-BUILD-005` for
+generated package-verification schema failures before local manifest/checksum
+evidence is finalized.
+
+Gate 80 adds no new diagnostic rule family or rule ID. It writes
+`package-verification.md` only after the generated package-verification JSON
+validates and before local manifest/checksum evidence is finalized.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

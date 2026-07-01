@@ -60,6 +60,11 @@ public static class WastelandForgeSchemaCatalog
             "0.1.0",
             "schemas/install-preview/0.1.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.PackageVerification010,
+            "package-verification",
+            "0.1.0",
+            "schemas/package-verification/0.1.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.Quest010,
             "quest",
             "0.1.0",

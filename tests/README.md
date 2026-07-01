@@ -328,6 +328,15 @@ Gate 78 updates unit and golden CLI tests to assert
 verification status, manifest report evidence, output digests, CLI output, and
 build/package checksum coverage.
 
+Gate 79 updates schema and back-compat tests for
+`package-verification/0.1.0`, and updates unit and golden CLI tests to assert
+package-verification schema evidence in generated MCM JSON manifests.
+
+Gate 80 updates unit and golden CLI tests to assert `package-verification.md`,
+human-readable package evidence checks, manifest summary evidence, output
+digests, CLI JSON output, human CLI output, and build/package checksum
+coverage.
+
 Run the full local suite serially:
 
 ```text

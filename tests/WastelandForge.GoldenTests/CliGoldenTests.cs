@@ -525,6 +525,7 @@ public sealed class CliGoldenTests
         Assert.Equal("generated/mcm-json/install-preview.json", (string?)json["outputs"]?["installPreview"]);
         Assert.Equal("generated/mcm-json/install-preview.md", (string?)json["outputs"]?["installPreviewSummary"]);
         Assert.Equal("generated/mcm-json/package-verification.json", (string?)json["outputs"]?["packageVerification"]);
+        Assert.Equal("generated/mcm-json/package-verification.md", (string?)json["outputs"]?["packageVerificationSummary"]);
         Assert.Null(json["outputs"]?["packageArchive"]);
         Assert.Equal("generated/mcm-json/generation-manifest.json", (string?)json["outputs"]?["manifest"]);
         Assert.Equal(string.Empty, result.Stderr);
@@ -555,6 +556,7 @@ public sealed class CliGoldenTests
         Assert.True(File.Exists(Path.Combine(projectRoot, "generated", "mcm-json", "package-manifest.json")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "generated", "mcm-json", "install-preview.md")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "generated", "mcm-json", "package-verification.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "generated", "mcm-json", "package-verification.md")));
         var installPreview = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "generated", "mcm-json", "install-preview.json")))
             ?? throw new InvalidOperationException("Generated install preview did not parse.");
         Assert.Equal("wastelandforge.install-preview", (string?)installPreview["kind"]);
@@ -566,6 +568,8 @@ public sealed class CliGoldenTests
             ?? throw new InvalidOperationException("Generated package verification did not parse.");
         Assert.Equal("wastelandforge.package-verification", (string?)packageVerification["kind"]);
         Assert.Equal("not-created", (string?)packageVerification["archive"]?["status"]);
+        var packageVerificationSummary = File.ReadAllText(Path.Combine(projectRoot, "generated", "mcm-json", "package-verification.md"));
+        Assert.Contains("Package root: generated/mcm-json", packageVerificationSummary, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -587,6 +591,7 @@ public sealed class CliGoldenTests
         Assert.Equal("dist/mcm-json/install-preview.json", (string?)json["outputs"]?["installPreview"]);
         Assert.Equal("dist/mcm-json/install-preview.md", (string?)json["outputs"]?["installPreviewSummary"]);
         Assert.Equal("dist/mcm-json/package-verification.json", (string?)json["outputs"]?["packageVerification"]);
+        Assert.Equal("dist/mcm-json/package-verification.md", (string?)json["outputs"]?["packageVerificationSummary"]);
         Assert.Equal("dist/mcm-json/package.zip", (string?)json["outputs"]?["packageArchive"]);
         Assert.Equal("dist/mcm-json/build-manifest.json", (string?)json["outputs"]?["manifest"]);
         Assert.Equal("dist/mcm-json/checksums.sha256", (string?)json["outputs"]?["checksums"]);
@@ -595,6 +600,7 @@ public sealed class CliGoldenTests
         Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "install-preview.json")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "install-preview.md")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "package-verification.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "package-verification.md")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "package.zip")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "build-manifest.json")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mcm-json", "checksums.sha256")));
@@ -618,6 +624,7 @@ public sealed class CliGoldenTests
         Assert.Equal("dist/mcm-json/install-preview.json", (string?)json["outputs"]?["installPreview"]);
         Assert.Equal("dist/mcm-json/install-preview.md", (string?)json["outputs"]?["installPreviewSummary"]);
         Assert.Equal("dist/mcm-json/package-verification.json", (string?)json["outputs"]?["packageVerification"]);
+        Assert.Equal("dist/mcm-json/package-verification.md", (string?)json["outputs"]?["packageVerificationSummary"]);
         Assert.Equal("dist/mcm-json/package.zip", (string?)json["outputs"]?["packageArchive"]);
         Assert.Equal("dist/mcm-json/build-manifest.json", (string?)json["outputs"]?["manifest"]);
         Assert.Equal("dist/mcm-json/checksums.sha256", (string?)json["outputs"]?["checksums"]);
@@ -640,6 +647,8 @@ public sealed class CliGoldenTests
             ?? throw new InvalidOperationException("Package verification did not parse.");
         Assert.Equal("package", (string?)packageVerification["command"]);
         Assert.Equal("entries-matched", (string?)packageVerification["archive"]?["validation"]);
+        var packageVerificationSummary = File.ReadAllText(Path.Combine(projectRoot, "dist", "mcm-json", "package-verification.md"));
+        Assert.Contains("Command: package", packageVerificationSummary, StringComparison.Ordinal);
 
         var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "mcm-json", "build-manifest.json")))
             ?? throw new InvalidOperationException("Package build manifest did not parse.");
@@ -647,7 +656,9 @@ public sealed class CliGoldenTests
         Assert.Equal("wastelandforge/package-mcm-json/v1", (string?)manifest["buildType"]);
         Assert.Equal(WastelandForgeSchemaIds.InstallPreview010, (string?)manifest["installPreview"]?["schema"]);
         Assert.Equal("dist/mcm-json/install-preview.md", (string?)manifest["installPreview"]?["summary"]);
+        Assert.Equal(WastelandForgeSchemaIds.PackageVerification010, (string?)manifest["packageVerification"]?["schema"]);
         Assert.Equal("dist/mcm-json/package-verification.json", (string?)manifest["packageVerification"]?["report"]);
+        Assert.Equal("dist/mcm-json/package-verification.md", (string?)manifest["packageVerification"]?["summary"]);
     }
 
     [Fact]

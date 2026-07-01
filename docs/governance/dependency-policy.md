@@ -81,3 +81,11 @@ third-party runtime dependencies.
 Gate 78 writes only local package verification report evidence; it still does
 not copy files into a game install, create an MO2 mod, inspect MO2 VFS
 visibility, launch the game, or bundle third-party runtime dependencies.
+Gate 79 validates only that generated package verification report against an
+embedded schema; it still does not copy files into a game install, create an
+MO2 mod, inspect MO2 VFS visibility, launch the game, or bundle third-party
+runtime dependencies.
+Gate 80 writes only a human-readable summary of that local package
+verification report; it still does not copy files into a game install, create
+an MO2 mod, inspect MO2 VFS visibility, launch the game, or bundle
+third-party runtime dependencies.

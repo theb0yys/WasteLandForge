@@ -2,8 +2,9 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 78 adds a
-deterministic package-verification report for the MCM Extender JSON package path.
+The project is currently in gated v0.1 implementation. Gate 80 adds a
+human-readable package-verification summary beside the schema-validated MCM
+Extender JSON package-verification report.
 
 ## Architecture Spine
 
@@ -16,7 +17,7 @@ deterministic package-verification report for the MCM Extender JSON package path
 
 ## Current Gate
 
-Gate 78 advances the first game-facing generator path. It keeps
+Gate 80 advances the first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -124,12 +125,24 @@ and build/package checksums include the report. It is local package evidence
 only and does not claim installation, MO2 VFS visibility, or in-game runtime
 visibility.
 
+Gate 79 adds immutable package-verification schema
+`package-verification/0.1.0/schema.json`, validates generated
+`package-verification.json` before writing it, and records that schema ID in
+local generation/build manifest package-verification evidence.
+
+Gate 80 adds `package-verification.md` beside the validated JSON report. The
+summary records the package root, command, entry counts, archive status,
+schema-backed evidence checks, payload digest count, and local verification
+limitations for human review. Generation/build manifests, output digests, CLI
+JSON output, human CLI output, and build/package checksums include the
+summary.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
 `unknown` in this gate because their safe file-marker policy remains open.
 
-Gate 78 does not inspect an MO2 profile, launch through MO2 VFS, probe a
+Gate 80 does not inspect an MO2 profile, launch through MO2 VFS, probe a
 runtime, parse provider versions, emit `WF-CAP-*` diagnostics, generate
 in-game-verified MCM Extender files, generate JIP text scripts, package
 archives as FOMOD installers, or compile plugin records. Remaining advanced
@@ -336,6 +349,11 @@ and build/package checksums.
 Gate 78 adds `package-verification.json` package evidence and records that
 report in generation/build manifests, output digests, CLI JSON output, human
 CLI output, and build/package checksums.
+Gate 79 adds `package-verification/0.1.0` generated evidence validation and
+records that schema in manifest package-verification evidence.
+Gate 80 adds `package-verification.md` human summary evidence and records that
+summary in manifest package-verification evidence, output digests, CLI JSON
+output, human CLI output, and build/package checksums.
 
 It intentionally does not create:
 

@@ -9,6 +9,7 @@ public sealed record McmJsonGeneratorOutputs(
     string InstallPreview,
     string InstallPreviewSummary,
     string PackageVerification,
+    string PackageVerificationSummary,
     string? PackageArchive,
     string Manifest,
     string? Checksums);
