@@ -97,11 +97,11 @@ Gate 45 option routing:
   export text file and do not control, automate, import into, or mutate an
   open GECK session.
 
-Gate 99 option routing:
+Gate 101 option routing:
 
 - `/forge generate --target mcm-json`, `/forge build --target mcm-json`, and
   `/forge package --target mcm-json` map to the real `forge` CLI behavior when
-  available. The output is the Gate 99 validated MCM Extender JSON runtime
+  available. The output is the Gate 101 validated MCM Extender JSON runtime
   subset under `MCM/<menu>.json`, plus `MCM/Translations/<modName>.ini` when
   translations are declared, and staged referenced texture assets under their
   game-relative target paths. Build and package output also include
@@ -129,7 +129,9 @@ Gate 99 option routing:
   package-verification JSON check content revalidation, plus
   package-verification JSON metadata content revalidation and
   package-verification archive detail content revalidation and
-  install-preview archive detail content revalidation.
+  install-preview archive detail content revalidation and package-manifest
+  archive detail content revalidation plus archive detail cross-report
+  consistency revalidation.
   These remain
   reports only:
   they list Data-relative would-copy paths and do not install into Data or
@@ -153,7 +155,10 @@ Gate 99 option routing:
   entries against `package-manifest.json` entries. It also revalidates
   `package-verification.md` against `package-verification.json` and
   revalidates `package-verification.json` check objects and metadata fields
-  against package evidence. Do not invent `/forge verify-package`,
+  against package evidence, plus archive detail content in
+  `package-verification.json`, `install-preview.json`, and
+  `package-manifest.json`, and cross-report consistency between those archive
+  details. Do not invent `/forge verify-package`,
   `/forge package verify`, or other verifier aliases.
 
 ## Safety gates

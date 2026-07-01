@@ -145,3 +145,9 @@ download, rehost, or require third-party runtime dependencies.
 Gate 99 adds only install-preview archive detail content revalidation over the
 same local package evidence diagnostics; it still does not add, download,
 rehost, or require third-party runtime dependencies.
+Gate 100 adds only package-manifest archive detail content revalidation over
+the same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.
+Gate 101 adds only archive detail cross-report consistency revalidation over
+the same local package evidence diagnostics; it still does not add, download,
+rehost, or require third-party runtime dependencies.

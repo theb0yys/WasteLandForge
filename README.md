@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 99 adds
-install-preview archive detail content revalidation for
+The project is currently in gated v0.1 implementation. Gate 101 adds archive
+detail cross-report consistency revalidation for
 `forge package --target mcm-json --verify-existing` while preserving the CLI
 command surface.
 
@@ -18,7 +18,7 @@ command surface.
 
 ## Current Gate
 
-Gate 99 advances the first game-facing generator path. It keeps
+Gate 101 advances the first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -262,12 +262,26 @@ checks no-archive reason text and created archive media type, compression,
 SHA-256, and length recorded in `install-preview.json` against generated
 package evidence without regenerating package outputs.
 
+Gate 100 adds package-manifest archive detail content revalidation to that
+verify-existing mode. The reusable package-verification evidence validator now
+checks no-archive reason text and created archive media type and compression
+recorded in `package-manifest.json` against generated package evidence without
+regenerating package outputs. Package-manifest archive SHA-256 and length
+continue to be covered by the existing archive digest recomputation check.
+
+Gate 101 adds archive detail cross-report consistency revalidation to that
+verify-existing mode. When `package-manifest.json` archive digest evidence is
+already stale against the actual archive, the reusable validator now also
+checks SHA-256 and length agreement across `package-manifest.json`,
+`install-preview.json`, and `package-verification.json` without regenerating
+package outputs.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
 `unknown` in this gate because their safe file-marker policy remains open.
 
-Gate 99 does not inspect an MO2 profile, launch through MO2 VFS, probe a
+Gate 101 does not inspect an MO2 profile, launch through MO2 VFS, probe a
 runtime, parse provider versions, emit `WF-CAP-*` diagnostics, generate
 in-game-verified MCM Extender files, generate JIP text scripts, package
 archives as FOMOD installers, or compile plugin records. Remaining advanced
@@ -526,6 +540,12 @@ Gate 98 adds package-verification archive detail content revalidation to that
 verify-existing mode without adding package-verifier behavior to normal
 package generation.
 Gate 99 adds install-preview archive detail content revalidation to that
+verify-existing mode without adding package-verifier behavior to normal
+package generation.
+Gate 100 adds package-manifest archive detail content revalidation to that
+verify-existing mode without adding package-verifier behavior to normal
+package generation.
+Gate 101 adds archive detail cross-report consistency revalidation to that
 verify-existing mode without adding package-verifier behavior to normal
 package generation.
 

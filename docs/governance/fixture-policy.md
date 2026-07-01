@@ -184,3 +184,15 @@ temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
 package outputs. It still adds no generated package verification reports,
 build manifests, checksum files, archives, or package command output trees to
 the committed fixture corpus.
+
+Gate 100 adds package-manifest archive detail content revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports,
+build manifests, checksum files, archives, or package command output trees to
+the committed fixture corpus.
+
+Gate 101 adds archive detail cross-report consistency revalidation tests using
+temp-only copies of the synthetic `ExampleMod` fixture and temp-only generated
+package outputs. It still adds no generated package verification reports,
+build manifests, checksum files, archives, or package command output trees to
+the committed fixture corpus.

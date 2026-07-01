@@ -104,9 +104,11 @@ Gate status:
 - `gates/gate-097-mcm-extender-package-verify-existing-package-verification-json-metadata-content-revalidation.md` - Gate 97, MCM Extender package verify-existing package-verification JSON metadata content revalidation.
 - `gates/gate-098-mcm-extender-package-verify-existing-package-verification-archive-detail-content-revalidation.md` - Gate 98, MCM Extender package verify-existing package-verification archive detail content revalidation.
 - `gates/gate-099-mcm-extender-package-verify-existing-install-preview-archive-detail-content-revalidation.md` - Gate 99, MCM Extender package verify-existing install-preview archive detail content revalidation.
+- `gates/gate-100-mcm-extender-package-verify-existing-package-manifest-archive-detail-content-revalidation.md` - Gate 100, MCM Extender package verify-existing package-manifest archive detail content revalidation.
+- `gates/gate-101-mcm-extender-package-verify-existing-archive-detail-cross-report-consistency-revalidation.md` - Gate 101, MCM Extender package verify-existing archive detail cross-report consistency revalidation.
 
 Next gate:
 
-- Gate 100 - MCM Extender package verify-existing package-manifest archive detail content revalidation.
+- Gate 102 - MCM Extender package verify-existing package archive presence revalidation.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

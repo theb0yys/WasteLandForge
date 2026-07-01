@@ -199,6 +199,14 @@ Gate 99 adds no new diagnostic rule family or rule ID. Install-preview archive
 detail content revalidation failures for existing package evidence continue
 to use `WF-BUILD-006`.
 
+Gate 100 adds no new diagnostic rule family or rule ID. Package-manifest
+archive detail content revalidation failures for existing package evidence
+continue to use `WF-BUILD-006`.
+
+Gate 101 adds no new diagnostic rule family or rule ID. Archive detail
+cross-report consistency failures for existing package evidence continue to
+use `WF-BUILD-006`.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

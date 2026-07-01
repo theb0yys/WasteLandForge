@@ -511,3 +511,17 @@ verify-existing package evidence path. The reusable package-verification
 evidence validator now checks generated `install-preview.json` archive reason
 text, media type, compression, SHA-256, and length against generated package
 evidence without regenerating package outputs.
+
+Gate 100 adds package-manifest archive detail content revalidation to that
+verify-existing package evidence path. The reusable package-verification
+evidence validator now checks generated `package-manifest.json` archive reason
+text, media type, and compression against generated package evidence without
+regenerating package outputs. Archive SHA-256 and length remain covered by the
+file-based archive digest recomputation path.
+
+Gate 101 adds archive detail cross-report consistency revalidation to that
+verify-existing package evidence path. When `package-manifest.json` archive
+SHA-256 or length is already stale against the actual archive, the reusable
+validator now compares the archive SHA-256 and length fields across
+`package-manifest.json`, `install-preview.json`, and
+`package-verification.json` without regenerating package outputs.

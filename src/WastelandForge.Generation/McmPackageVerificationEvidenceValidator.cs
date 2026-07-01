@@ -347,6 +347,13 @@ public static class McmPackageVerificationEvidenceValidator
 
         if (request.PackageArchiveDigest is null)
         {
+            AddPackageManifestMismatch(
+                request,
+                "/archive/reason",
+                "Package manifest archive reason does not match expected package evidence",
+                ExpectedArchiveNotCreatedReason,
+                GetRequiredString(manifestArchive ?? new JsonObject(), "reason"),
+                issues);
             AddInstallPreviewMismatch(
                 request,
                 "/archive/reason",
@@ -364,6 +371,28 @@ public static class McmPackageVerificationEvidenceValidator
         }
         else
         {
+            AddPackageManifestMismatch(
+                request,
+                "/archive/outputFile",
+                "Package manifest archive file does not match archive evidence",
+                JoinDisplayPath(manifestRoot, "package.zip"),
+                GetRequiredString(manifestArchive ?? new JsonObject(), "outputFile"),
+                issues);
+            AddPackageManifestMismatch(
+                request,
+                "/archive/mediaType",
+                "Package manifest archive media type does not match expected package evidence",
+                ExpectedArchiveMediaType,
+                GetRequiredString(manifestArchive ?? new JsonObject(), "mediaType"),
+                issues);
+            AddPackageManifestMismatch(
+                request,
+                "/archive/compression",
+                "Package manifest archive compression does not match expected package evidence",
+                ExpectedArchiveCompression,
+                GetRequiredString(manifestArchive ?? new JsonObject(), "compression"),
+                issues);
+
             AddInstallPreviewMismatch(
                 request,
                 "/archive/outputFile",
@@ -386,7 +415,8 @@ public static class McmPackageVerificationEvidenceValidator
                 GetRequiredString(installPreviewArchive ?? new JsonObject(), "compression"),
                 issues);
 
-            if (ArchiveDigestMatchesComputed(manifestArchive, request.PackageArchiveDigest))
+            var manifestArchiveMatchesComputed = ArchiveDigestMatchesComputed(manifestArchive, request.PackageArchiveDigest);
+            if (manifestArchiveMatchesComputed)
             {
                 AddInstallPreviewMismatch(
                     request,
@@ -401,6 +431,15 @@ public static class McmPackageVerificationEvidenceValidator
                     "Install preview archive length does not match archive evidence",
                     request.PackageArchiveDigest.Length.ToString(CultureInfo.InvariantCulture),
                     GetOptionalLong(installPreviewArchive?["length"]).ToString(CultureInfo.InvariantCulture),
+                    issues);
+            }
+            else
+            {
+                ValidateArchiveCrossReportConsistency(
+                    request,
+                    manifestArchive,
+                    installPreviewArchive,
+                    verificationArchive,
                     issues);
             }
 
@@ -433,7 +472,7 @@ public static class McmPackageVerificationEvidenceValidator
                 GetRequiredString(verificationArchive ?? new JsonObject(), "compression"),
                 issues);
 
-            if (ArchiveDigestMatchesComputed(manifestArchive, request.PackageArchiveDigest))
+            if (manifestArchiveMatchesComputed)
             {
                 AddMismatch(
                     request,
@@ -588,6 +627,135 @@ public static class McmPackageVerificationEvidenceValidator
         StringComparer.OrdinalIgnoreCase.Equals(GetRequiredString(archive ?? new JsonObject(), "sha256"), computedDigest.Sha256) &&
         GetOptionalLong(archive?["length"]) == computedDigest.Length;
 
+    private static void ValidateArchiveCrossReportConsistency(
+        McmPackageVerificationEvidenceValidationRequest request,
+        JsonObject? manifestArchive,
+        JsonObject? installPreviewArchive,
+        JsonObject? verificationArchive,
+        List<DiagnosticIssue> issues)
+    {
+        var manifestSha256 = GetRequiredString(manifestArchive ?? new JsonObject(), "sha256");
+        var installPreviewSha256 = GetRequiredString(installPreviewArchive ?? new JsonObject(), "sha256");
+        var verificationSha256 = GetRequiredString(verificationArchive ?? new JsonObject(), "sha256");
+        var manifestLength = GetOptionalLong(manifestArchive?["length"]).ToString(CultureInfo.InvariantCulture);
+        var installPreviewLength = GetOptionalLong(installPreviewArchive?["length"]).ToString(CultureInfo.InvariantCulture);
+        var verificationLength = GetOptionalLong(verificationArchive?["length"]).ToString(CultureInfo.InvariantCulture);
+
+        AddCrossReportMismatch(
+            request,
+            request.InstallPreviewPath,
+            "/archive/sha256",
+            "Install preview archive digest does not match package manifest",
+            "package-manifest",
+            manifestSha256,
+            "install-preview",
+            installPreviewSha256,
+            issues);
+        AddCrossReportMismatch(
+            request,
+            request.InstallPreviewPath,
+            "/archive/length",
+            "Install preview archive length does not match package manifest",
+            "package-manifest",
+            manifestLength,
+            "install-preview",
+            installPreviewLength,
+            issues);
+        AddCrossReportMismatch(
+            request,
+            request.PackageVerificationPath,
+            "/archive/sha256",
+            "Package verification archive digest does not match package manifest",
+            "package-manifest",
+            manifestSha256,
+            "package-verification",
+            verificationSha256,
+            issues);
+        AddCrossReportMismatch(
+            request,
+            request.PackageVerificationPath,
+            "/archive/length",
+            "Package verification archive length does not match package manifest",
+            "package-manifest",
+            manifestLength,
+            "package-verification",
+            verificationLength,
+            issues);
+        AddCrossReportMismatch(
+            request,
+            request.PackageVerificationPath,
+            "/archive/sha256",
+            "Package verification archive digest does not match install preview",
+            "install-preview",
+            installPreviewSha256,
+            "package-verification",
+            verificationSha256,
+            issues);
+        AddCrossReportMismatch(
+            request,
+            request.PackageVerificationPath,
+            "/archive/length",
+            "Package verification archive length does not match install preview",
+            "install-preview",
+            installPreviewLength,
+            "package-verification",
+            verificationLength,
+            issues);
+    }
+
+    private static void AddCrossReportMismatch(
+        McmPackageVerificationEvidenceValidationRequest request,
+        string path,
+        string pointer,
+        string title,
+        string expectedEvidenceName,
+        string expected,
+        string actualEvidenceName,
+        string actual,
+        List<DiagnosticIssue> issues)
+    {
+        if (StringComparer.Ordinal.Equals(expected, actual))
+        {
+            return;
+        }
+
+        issues.Add(new DiagnosticIssue(
+            WastelandForge.Core.RuleId.Parse(RuleId),
+            DiagnosticSeverity.Error,
+            "build",
+            title,
+            $"Expected archive field to match {expectedEvidenceName} evidence '{expected}', but {actualEvidenceName} evidence recorded '{actual}'.",
+            new SourceLocation(ToDisplayPath(request.ProjectRoot, path), JsonPointer.Parse(pointer)),
+            request.ProjectId,
+            suggestedFix: "Regenerate package evidence so package manifest, install preview, and package verification archive details agree.",
+            docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{RuleId}")));
+    }
+
+    private static void AddPackageManifestMismatch(
+        McmPackageVerificationEvidenceValidationRequest request,
+        string pointer,
+        string title,
+        string expected,
+        string actual,
+        List<DiagnosticIssue> issues)
+    {
+        if (StringComparer.Ordinal.Equals(expected, actual))
+        {
+            return;
+        }
+
+        issues.Add(new DiagnosticIssue(
+            WastelandForge.Core.RuleId.Parse(RuleId),
+            DiagnosticSeverity.Error,
+            "build",
+            title,
+            $"Expected '{expected}', but package-manifest evidence recorded '{actual}'.",
+            new SourceLocation(ToDisplayPath(request.ProjectRoot, request.PackageManifestPath), JsonPointer.Parse(pointer)),
+            request.ProjectId,
+            suggestedFix: "Regenerate package manifest evidence from the same package payload and archive inputs.",
+            docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{RuleId}")));
+    }
+
     private static void AddInstallPreviewMismatch(
         McmPackageVerificationEvidenceValidationRequest request,
         string pointer,
@@ -706,4 +874,12 @@ public static class McmPackageVerificationEvidenceValidator
 
     private static string ToDisplayPath(string root, string path) =>
         Path.GetRelativePath(root, path).Replace('\\', '/');
+
+    private static string JoinDisplayPath(string root, string fileName)
+    {
+        var normalizedRoot = root.Replace('\\', '/').TrimEnd('/');
+        return string.IsNullOrWhiteSpace(normalizedRoot)
+            ? fileName
+            : $"{normalizedRoot}/{fileName}";
+    }
 }

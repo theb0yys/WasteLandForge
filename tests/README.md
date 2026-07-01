@@ -445,6 +445,21 @@ coverage for install-preview archive detail content revalidation in
 checksum/build-manifest digest evidence, and assert a single blocking
 `WF-BUILD-006` archive-detail diagnostic.
 
+Gate 100 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for package-manifest archive detail content revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit
+`package-manifest.json` archive metadata, refresh checksum/build-manifest
+digest evidence, and assert a single blocking `WF-BUILD-006` archive-detail
+diagnostic.
+
+Gate 101 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for archive detail cross-report consistency revalidation in
+`forge package --target mcm-json --verify-existing`. The tests make
+`package-manifest.json` archive digest evidence stale, make
+`install-preview.json` and `package-verification.json` disagree with it,
+refresh checksum/build-manifest digest evidence, and assert blocking
+`WF-BUILD-006` cross-report diagnostics.
+
 Run the full local suite serially:
 
 ```text

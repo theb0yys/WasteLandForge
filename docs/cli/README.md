@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 99 MCM Extender package verify-existing install-preview archive detail content revalidation
+Status: Gate 101 MCM Extender package verify-existing archive detail cross-report consistency revalidation
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -306,6 +306,12 @@ forge --version
   that verify-existing diagnostic mode; normal package generation still does
   not run diagnostic package verification.
 - Gate 99 adds install-preview archive detail content revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not
+  run diagnostic package verification.
+- Gate 100 adds package-manifest archive detail content revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not
+  run diagnostic package verification.
+- Gate 101 adds archive detail cross-report consistency revalidation to that
   verify-existing diagnostic mode; normal package generation still does not
   run diagnostic package verification.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.
@@ -725,6 +731,18 @@ Gate 99 adds install-preview archive detail content revalidation for that
 verify-existing mode. `install-preview.json` archive fields are compared
 against expected generated evidence for no-archive reason text and created
 archive media type, compression, SHA-256, and length.
+
+Gate 100 adds package-manifest archive detail content revalidation for that
+verify-existing mode. `package-manifest.json` archive fields are compared
+against expected generated evidence for no-archive reason text and created
+archive media type and compression. Archive SHA-256 and length in
+`package-manifest.json` remain covered by archive digest recomputation.
+
+Gate 101 adds archive detail cross-report consistency revalidation for that
+verify-existing mode. When `package-manifest.json` archive SHA-256 or length
+is already stale against the actual archive, `install-preview.json` and
+`package-verification.json` archive SHA-256 and length fields are also checked
+for consistency with `package-manifest.json` and with each other.
 
 ## Exit Codes
 

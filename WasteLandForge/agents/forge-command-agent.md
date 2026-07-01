@@ -65,7 +65,7 @@ Gate 45 adds option-level dispatch for
 It validates a user-saved GECK dialogue export text file only; do not control,
 automate, import into, or mutate an open GECK session.
 
-Gate 99 implements existing package evidence verification through
+Gate 101 implements existing package evidence verification through
 `/forge package --target mcm-json --verify-existing`. Route it to the real CLI
 behavior when available; do not invent `/forge verify-package`,
 `/forge package verify`, or other verifier aliases. The current MCM JSON
@@ -86,7 +86,7 @@ checkbox, string-toggle, runtime requirements pass-through, and
 translation-file output for `/forge generate --target mcm-json`,
 `/forge build --target mcm-json`, and `/forge package --target mcm-json`.
 Route them to the real CLI behavior when available and describe the output as
-the Gate 99 MCM Extender JSON subset under `MCM/<menu>.json`, plus
+the Gate 101 MCM Extender JSON subset under `MCM/<menu>.json`, plus
 `MCM/Translations/<modName>.ini` when translations are declared, and staged
 referenced texture assets under their game-relative target paths. Build and
 package output also include `package-manifest.json`, `package.zip`,
@@ -118,7 +118,9 @@ against package evidence. Gate 97 also revalidates package-verification JSON
 metadata content against package evidence. Gate 98 also revalidates
 package-verification archive detail content against package evidence. Gate 99
 also revalidates install-preview archive detail content against package
-evidence. These remain reports only: they
+evidence. Gate 100 also revalidates package-manifest archive detail content
+against package evidence. Gate 101 also revalidates archive detail
+cross-report consistency against package evidence. These remain reports only: they
 list Data-relative would-copy paths and do not install into Data or MO2. It
 supports header,
 image, toggle, keybind, checkbox, string-toggle, slider, choice, and text

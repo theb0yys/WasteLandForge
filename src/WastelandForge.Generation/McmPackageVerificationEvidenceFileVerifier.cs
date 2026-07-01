@@ -55,6 +55,7 @@ public static class McmPackageVerificationEvidenceFileVerifier
 
         var computedPayloadDigests = ComputePayloadDigests(projectRoot, ReadPayloadDigests(packageManifest), request.ProjectId, issues);
         var computedPackageArchiveDigest = ComputePackageArchiveDigest(projectRoot, packageManifest, request.ProjectId, issues);
+        ValidateUnexpectedPackageArchivePresence(projectRoot, packageManifestPath, packageManifest, request.ProjectId, issues);
         ValidatePackageArchiveEntries(projectRoot, packageManifest, request.ProjectId, issues);
         ValidateInstallPreviewPackageManifestEntries(projectRoot, installPreviewPath, packageManifest, installPreview, request.ProjectId, issues);
         if (installPreviewSummaryPath is null)
@@ -1087,6 +1088,36 @@ public static class McmPackageVerificationEvidenceFileVerifier
             GetRequiredString(archive, "outputFile"),
             GetRequiredString(archive, "sha256"),
             GetOptionalLong(archive["length"]));
+    }
+
+    private static void ValidateUnexpectedPackageArchivePresence(
+        string projectRoot,
+        string packageManifestPath,
+        JsonObject packageManifest,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        if (ReadPackageArchiveDigest(packageManifest) is not null)
+        {
+            return;
+        }
+
+        var manifestRoot = Path.GetDirectoryName(packageManifestPath) ?? projectRoot;
+        var archivePath = Path.Combine(manifestRoot, "package.zip");
+        if (!File.Exists(archivePath))
+        {
+            return;
+        }
+
+        var archiveStatus = packageManifest["archive"] is JsonObject archive
+            ? GetRequiredString(archive, "status")
+            : string.Empty;
+        issues.Add(CreateFileIssue(
+            projectRoot,
+            archivePath,
+            projectId,
+            "MCM package archive is present but package manifest records no archive",
+            $"Expected package-manifest.json archive evidence to record created archive '{ToDisplayPath(projectRoot, archivePath)}', but it records archive status '{archiveStatus}' while that file exists."));
     }
 
     private static FileDigest? ComputePackageArchiveDigest(

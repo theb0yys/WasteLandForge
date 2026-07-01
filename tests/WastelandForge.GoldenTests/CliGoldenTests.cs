@@ -1079,6 +1079,152 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void PackageVerifyExistingMcmJsonReportsEditedPackageManifestArchiveMediaType()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var packageResult = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, packageResult.ExitCode);
+        var packageManifestPath = Path.Combine(projectRoot, "dist", "mcm-json", "package-manifest.json");
+        var packageManifest = JsonNode.Parse(File.ReadAllText(packageManifestPath)) as JsonObject
+            ?? throw new InvalidOperationException("Package manifest did not parse.");
+        var archive = packageManifest["archive"] as JsonObject
+            ?? throw new InvalidOperationException("Package manifest archive evidence did not parse.");
+        archive["mediaType"] = "application/octet-stream";
+        File.WriteAllText(packageManifestPath, packageManifest.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+
+        var buildManifestPath = Path.Combine(projectRoot, "dist", "mcm-json", "build-manifest.json");
+        RefreshBuildManifestOutputDigest(buildManifestPath, "dist/mcm-json/package-manifest.json", packageManifestPath);
+        RefreshChecksumEntrySha256(
+            Path.Combine(projectRoot, "dist", "mcm-json", "checksums.sha256"),
+            "package-manifest.json",
+            packageManifestPath);
+        RefreshChecksumEntrySha256(
+            Path.Combine(projectRoot, "dist", "mcm-json", "checksums.sha256"),
+            "build-manifest.json",
+            buildManifestPath);
+
+        var result = RunCli("package", projectRoot, "--verify-existing", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Package verification JSON did not parse.");
+        var issues = json["issues"] as JsonArray ?? throw new InvalidOperationException("Package verification issues did not parse.");
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Equal("failed", (string?)json["status"]);
+        Assert.Equal(1, (int?)json["summary"]?["errors"]);
+        var issue = Assert.Single(issues);
+        Assert.Equal("WF-BUILD-006", (string?)issue?["ruleId"]);
+        Assert.Equal("Package manifest archive media type does not match expected package evidence", (string?)issue?["title"]);
+        Assert.Equal("dist/mcm-json/package-manifest.json", (string?)issue?["primaryLocation"]?["file"]);
+        Assert.Equal("/archive/mediaType", (string?)issue?["primaryLocation"]?["pointer"]);
+        Assert.Contains("application/zip", (string?)issue?["message"], StringComparison.Ordinal);
+        Assert.Contains("application/octet-stream", (string?)issue?["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void PackageVerifyExistingMcmJsonReportsArchiveDigestCrossReportMismatchWhenManifestDigestIsStale()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var packageResult = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, packageResult.ExitCode);
+        var packageManifestPath = Path.Combine(projectRoot, "dist", "mcm-json", "package-manifest.json");
+        var installPreviewPath = Path.Combine(projectRoot, "dist", "mcm-json", "install-preview.json");
+        var packageVerificationPath = Path.Combine(projectRoot, "dist", "mcm-json", "package-verification.json");
+        RewriteArchiveSha256(packageManifestPath, new string('0', 64));
+        RewriteArchiveSha256(installPreviewPath, new string('1', 64));
+        RewriteArchiveSha256(packageVerificationPath, new string('1', 64));
+
+        var buildManifestPath = Path.Combine(projectRoot, "dist", "mcm-json", "build-manifest.json");
+        RefreshBuildManifestOutputDigest(buildManifestPath, "dist/mcm-json/package-manifest.json", packageManifestPath);
+        RefreshBuildManifestOutputDigest(buildManifestPath, "dist/mcm-json/install-preview.json", installPreviewPath);
+        RefreshBuildManifestOutputDigest(buildManifestPath, "dist/mcm-json/package-verification.json", packageVerificationPath);
+        RefreshChecksumEntrySha256(
+            Path.Combine(projectRoot, "dist", "mcm-json", "checksums.sha256"),
+            "package-manifest.json",
+            packageManifestPath);
+        RefreshChecksumEntrySha256(
+            Path.Combine(projectRoot, "dist", "mcm-json", "checksums.sha256"),
+            "install-preview.json",
+            installPreviewPath);
+        RefreshChecksumEntrySha256(
+            Path.Combine(projectRoot, "dist", "mcm-json", "checksums.sha256"),
+            "package-verification.json",
+            packageVerificationPath);
+        RefreshChecksumEntrySha256(
+            Path.Combine(projectRoot, "dist", "mcm-json", "checksums.sha256"),
+            "build-manifest.json",
+            buildManifestPath);
+
+        var result = RunCli("package", projectRoot, "--verify-existing", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Package verification JSON did not parse.");
+        var issues = json["issues"] as JsonArray ?? throw new InvalidOperationException("Package verification issues did not parse.");
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Equal("failed", (string?)json["status"]);
+        Assert.Equal(3, (int?)json["summary"]?["errors"]);
+        Assert.Contains(issues, issue => (string?)issue?["title"] == "MCM package archive digest does not match package manifest");
+        var installPreviewIssue = Assert.Single(issues, issue => (string?)issue?["title"] == "Install preview archive digest does not match package manifest");
+        Assert.Equal("WF-BUILD-006", (string?)installPreviewIssue?["ruleId"]);
+        Assert.Equal("dist/mcm-json/install-preview.json", (string?)installPreviewIssue?["primaryLocation"]?["file"]);
+        Assert.Equal("/archive/sha256", (string?)installPreviewIssue?["primaryLocation"]?["pointer"]);
+        Assert.Contains(new string('0', 64), (string?)installPreviewIssue?["message"], StringComparison.Ordinal);
+        Assert.Contains(new string('1', 64), (string?)installPreviewIssue?["message"], StringComparison.Ordinal);
+        var packageVerificationIssue = Assert.Single(issues, issue => (string?)issue?["title"] == "Package verification archive digest does not match package manifest");
+        Assert.Equal("WF-BUILD-006", (string?)packageVerificationIssue?["ruleId"]);
+        Assert.Equal("dist/mcm-json/package-verification.json", (string?)packageVerificationIssue?["primaryLocation"]?["file"]);
+        Assert.Equal("/archive/sha256", (string?)packageVerificationIssue?["primaryLocation"]?["pointer"]);
+        Assert.Contains(new string('0', 64), (string?)packageVerificationIssue?["message"], StringComparison.Ordinal);
+        Assert.Contains(new string('1', 64), (string?)packageVerificationIssue?["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void PackageVerifyExistingMcmJsonReportsUnexpectedArchiveWhenEvidenceRecordsNoArchive()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var packageResult = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, packageResult.ExitCode);
+        var packageManifestPath = Path.Combine(projectRoot, "dist", "mcm-json", "package-manifest.json");
+        var installPreviewPath = Path.Combine(projectRoot, "dist", "mcm-json", "install-preview.json");
+        var installPreviewSummaryPath = Path.Combine(projectRoot, "dist", "mcm-json", "install-preview.md");
+        var packageVerificationPath = Path.Combine(projectRoot, "dist", "mcm-json", "package-verification.json");
+        var packageVerificationSummaryPath = Path.Combine(projectRoot, "dist", "mcm-json", "package-verification.md");
+        var buildManifestPath = Path.Combine(projectRoot, "dist", "mcm-json", "build-manifest.json");
+        var checksumsPath = Path.Combine(projectRoot, "dist", "mcm-json", "checksums.sha256");
+        RewriteArchiveEvidenceAsNotCreated(packageManifestPath, includeValidation: false);
+        RewriteArchiveEvidenceAsNotCreated(installPreviewPath, includeValidation: true);
+        RewriteArchiveEvidenceAsNotCreated(packageVerificationPath, includeValidation: true);
+        RewritePackageArchiveCheckAsNotCreated(packageVerificationPath);
+        RewriteArchiveSummaryAsNotCreated(installPreviewSummaryPath);
+        RewriteArchiveSummaryAsNotCreated(packageVerificationSummaryPath);
+        RewriteBuildManifestArchiveAsNotCreated(buildManifestPath);
+        RefreshBuildManifestOutputDigest(buildManifestPath, "dist/mcm-json/package-manifest.json", packageManifestPath);
+        RefreshBuildManifestOutputDigest(buildManifestPath, "dist/mcm-json/install-preview.json", installPreviewPath);
+        RefreshBuildManifestOutputDigest(buildManifestPath, "dist/mcm-json/install-preview.md", installPreviewSummaryPath);
+        RefreshBuildManifestOutputDigest(buildManifestPath, "dist/mcm-json/package-verification.json", packageVerificationPath);
+        RefreshBuildManifestOutputDigest(buildManifestPath, "dist/mcm-json/package-verification.md", packageVerificationSummaryPath);
+        RefreshChecksumEntrySha256(checksumsPath, "package-manifest.json", packageManifestPath);
+        RefreshChecksumEntrySha256(checksumsPath, "install-preview.json", installPreviewPath);
+        RefreshChecksumEntrySha256(checksumsPath, "install-preview.md", installPreviewSummaryPath);
+        RefreshChecksumEntrySha256(checksumsPath, "package-verification.json", packageVerificationPath);
+        RefreshChecksumEntrySha256(checksumsPath, "package-verification.md", packageVerificationSummaryPath);
+        RefreshChecksumEntrySha256(checksumsPath, "build-manifest.json", buildManifestPath);
+
+        var result = RunCli("package", projectRoot, "--verify-existing", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Package verification JSON did not parse.");
+        var issues = json["issues"] as JsonArray ?? throw new InvalidOperationException("Package verification issues did not parse.");
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Equal("failed", (string?)json["status"]);
+        Assert.Equal(1, (int?)json["summary"]?["errors"]);
+        var issue = Assert.Single(issues);
+        Assert.Equal("WF-BUILD-006", (string?)issue?["ruleId"]);
+        Assert.Equal("MCM package archive is present but package manifest records no archive", (string?)issue?["title"]);
+        Assert.Equal("dist/mcm-json/package.zip", (string?)issue?["primaryLocation"]?["file"]);
+        Assert.Contains("archive status 'not-created'", (string?)issue?["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void PackageVerifyExistingSarifReportsEditedPayload()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");
@@ -1394,6 +1540,81 @@ public sealed class CliGoldenTests
         outputDigest["sha256"] = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stream)).ToLowerInvariant();
         outputDigest["length"] = stream.Length;
         File.WriteAllText(buildManifestPath, buildManifest.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static void RewriteArchiveSha256(string path, string sha256)
+    {
+        var json = JsonNode.Parse(File.ReadAllText(path)) as JsonObject
+            ?? throw new InvalidOperationException($"Archive evidence '{path}' did not parse.");
+        var archive = json["archive"] as JsonObject
+            ?? throw new InvalidOperationException($"Archive evidence '{path}' did not include archive metadata.");
+        archive["sha256"] = sha256;
+        File.WriteAllText(path, json.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static void RewriteArchiveEvidenceAsNotCreated(string path, bool includeValidation)
+    {
+        var json = JsonNode.Parse(File.ReadAllText(path)) as JsonObject
+            ?? throw new InvalidOperationException($"Archive evidence '{path}' did not parse.");
+        var archive = new JsonObject
+        {
+            ["status"] = "not-created"
+        };
+        if (includeValidation)
+        {
+            archive["validation"] = "not-applicable";
+        }
+
+        archive["reason"] = "ZIP archive creation is only written by build/package commands.";
+        json["archive"] = archive;
+        File.WriteAllText(path, json.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static void RewritePackageArchiveCheckAsNotCreated(string path)
+    {
+        var json = JsonNode.Parse(File.ReadAllText(path)) as JsonObject
+            ?? throw new InvalidOperationException($"Package verification evidence '{path}' did not parse.");
+        var archiveCheck = json["checks"]?.AsArray()
+            .OfType<JsonObject>()
+            .Single(check => StringComparer.Ordinal.Equals("package-archive", check["id"]?.GetValue<string>()))
+            ?? throw new InvalidOperationException("Package archive check did not parse.");
+        archiveCheck["status"] = "not-created";
+        archiveCheck["validation"] = "not-applicable";
+        File.WriteAllText(path, json.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static void RewriteArchiveSummaryAsNotCreated(string path)
+    {
+        var summary = File.ReadAllText(path)
+            .Replace("Archive: dist/mcm-json/package.zip (created)", "Archive: not-created", StringComparison.Ordinal)
+            .Replace("Archive validation: entries-matched", "Archive validation: not-applicable", StringComparison.Ordinal)
+            .Replace("- package-archive: created (validation: entries-matched)", "- package-archive: not-created (validation: not-applicable)", StringComparison.Ordinal);
+        File.WriteAllText(path, summary);
+    }
+
+    private static void RewriteBuildManifestArchiveAsNotCreated(string path)
+    {
+        var buildManifest = JsonNode.Parse(File.ReadAllText(path)) as JsonObject
+            ?? throw new InvalidOperationException("Build manifest did not parse.");
+        var packageValidation = buildManifest["packageValidation"] as JsonObject
+            ?? throw new InvalidOperationException("Build manifest package validation evidence did not parse.");
+        packageValidation["archiveStatus"] = "not-created";
+        var packageVerification = buildManifest["packageVerification"] as JsonObject
+            ?? throw new InvalidOperationException("Build manifest package verification evidence did not parse.");
+        var crossChecks = packageVerification["crossChecks"] as JsonObject
+            ?? throw new InvalidOperationException("Build manifest package verification cross-checks did not parse.");
+        crossChecks["archive"] = "not-created-matched";
+        var outputs = buildManifest["outputs"]?.AsArray()
+            ?? throw new InvalidOperationException("Build manifest outputs did not parse.");
+        for (var index = outputs.Count - 1; index >= 0; index--)
+        {
+            if (StringComparer.Ordinal.Equals("dist/mcm-json/package.zip", outputs[index]?["path"]?.GetValue<string>()))
+            {
+                outputs.RemoveAt(index);
+            }
+        }
+
+        File.WriteAllText(path, buildManifest.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
     }
 
     private static string ProviderStatus(JsonArray providers, string providerId) =>

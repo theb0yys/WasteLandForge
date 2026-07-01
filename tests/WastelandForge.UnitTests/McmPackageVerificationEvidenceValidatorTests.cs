@@ -126,6 +126,22 @@ public sealed class McmPackageVerificationEvidenceValidatorTests
     }
 
     [Fact]
+    public void ValidateReportsPackageManifestArchiveReasonMismatch()
+    {
+        var request = CreateRequest();
+        ((JsonObject?)request.PackageManifest["archive"])!["reason"] = "stale reason";
+
+        var issues = McmPackageVerificationEvidenceValidator.Validate(request);
+
+        var issue = Assert.Single(issues, issue => issue.Title == "Package manifest archive reason does not match expected package evidence");
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-manifest.json", issue.PrimaryLocation.File);
+        Assert.Equal("/archive/reason", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("ZIP archive creation is only written by build/package commands.", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("stale reason", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidateReportsSummaryMismatch()
     {
         var request = CreateRequest() with
