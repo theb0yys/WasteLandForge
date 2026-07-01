@@ -443,3 +443,31 @@ adds no generated outputs to the committed fixture corpus.
 Gate 71 uses the same fixture to test package-manifest metadata generated
 during local runs. It still adds no generated package manifests or archives to
 the committed fixture corpus.
+
+Gate 72 uses the same fixture to test generated ZIP archive output during
+local build runs. It still adds no generated ZIP archives to the committed
+fixture corpus.
+
+Gate 73 uses the same fixture to test canonical `forge package` output during
+local package runs. It still adds no generated package outputs or archives to
+the committed fixture corpus.
+
+Gate 74 uses the same fixture to test package-manifest schema validation and
+archive entry validation. It still adds no generated package manifests,
+archives, or package command output trees to the committed fixture corpus.
+
+Gate 75 uses the same fixture to test generated install-preview JSON reports.
+It still adds no generated install previews, archives, or package command
+output trees to the committed fixture corpus.
+
+Gate 76 uses the same fixture to test install-preview schema validation. It
+still adds no generated install previews, archives, or package command output
+trees to the committed fixture corpus.
+
+Gate 77 uses the same fixture to test generated install-preview Markdown
+summaries. It still adds no generated install previews, archives, or package
+command output trees to the committed fixture corpus.
+
+Gate 78 uses the same fixture to test generated package-verification reports.
+It still adds no generated package verification reports, archives, or package
+command output trees to the committed fixture corpus.

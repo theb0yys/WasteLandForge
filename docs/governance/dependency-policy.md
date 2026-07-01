@@ -61,3 +61,23 @@ or dist output trees; it still does not bundle MCM Extender, MCM, or any
 third-party runtime dependency.
 Gate 71 writes package metadata for those generated loose files; it still does
 not bundle MCM Extender, MCM, or any third-party runtime dependency.
+Gate 72 packages only Forge-generated project output files into a ZIP archive;
+it still does not bundle MCM Extender, MCM, or any third-party runtime
+dependency.
+Gate 73 exposes that package path through `forge package`; it still packages
+only Forge-generated project output files and adds no external runtime
+dependency.
+Gate 74 validates only Forge-generated package metadata and archive entries;
+it still does not download, rehost, or require third-party runtime binaries.
+Gate 75 writes only a preview report for package install intent; it still does
+not copy files into a game install, create an MO2 mod, or bundle third-party
+runtime dependencies.
+Gate 76 validates only that generated preview report against an embedded
+schema; it still does not copy files into a game install, create an MO2 mod,
+or bundle third-party runtime dependencies.
+Gate 77 writes only a human-readable summary of that preview report; it still
+does not copy files into a game install, create an MO2 mod, or bundle
+third-party runtime dependencies.
+Gate 78 writes only local package verification report evidence; it still does
+not copy files into a game install, create an MO2 mod, inspect MO2 VFS
+visibility, launch the game, or bundle third-party runtime dependencies.

@@ -11,7 +11,7 @@ internal static class McmJsonGeneratorTextRenderer
 
         var builder = new StringBuilder();
         builder.Append("WastelandForge ");
-        builder.AppendLine(StringComparer.Ordinal.Equals(result.Command, "build") ? "Build" : "Generate");
+        builder.AppendLine(ResolveCommandTitle(result.Command));
         builder.Append("Project: ");
         builder.AppendLine(result.ProjectId?.ToString() ?? "unknown");
         builder.Append("Target: ");
@@ -60,6 +60,9 @@ internal static class McmJsonGeneratorTextRenderer
             }
 
             builder.AppendLine(result.DryRun ? "  PLAN package-manifest.json" : "  OK   package-manifest.json written");
+            builder.AppendLine(result.DryRun ? "  PLAN install-preview.json" : "  OK   install-preview.json written");
+            builder.AppendLine(result.DryRun ? "  PLAN install-preview.md" : "  OK   install-preview.md written");
+            builder.AppendLine(result.DryRun ? "  PLAN package-verification.json" : "  OK   package-verification.json written");
             if (result.Outputs.PackageArchive is not null)
             {
                 builder.Append(result.DryRun ? "  PLAN " : "  OK   ");
@@ -96,5 +99,17 @@ internal static class McmJsonGeneratorTextRenderer
         builder.AppendLine(" note(s)");
 
         return builder.ToString();
+    }
+
+    private static string ResolveCommandTitle(string command)
+    {
+        if (StringComparer.Ordinal.Equals(command, "build"))
+        {
+            return "Build";
+        }
+
+        return StringComparer.Ordinal.Equals(command, "package")
+            ? "Package"
+            : "Generate";
     }
 }

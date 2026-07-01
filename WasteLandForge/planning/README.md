@@ -76,9 +76,16 @@ Gate status:
 - `gates/gate-069-mcm-extender-image-asset-validation-skeleton.md` - Gate 69, MCM Extender image asset validation skeleton.
 - `gates/gate-070-mcm-extender-loose-file-staging-skeleton.md` - Gate 70, MCM Extender loose-file staging skeleton.
 - `gates/gate-071-mcm-extender-package-manifest-skeleton.md` - Gate 71, MCM Extender package manifest skeleton.
+- `gates/gate-072-mcm-extender-zip-package-skeleton.md` - Gate 72, MCM Extender ZIP package skeleton.
+- `gates/gate-073-mcm-extender-package-command-skeleton.md` - Gate 73, MCM Extender package command skeleton.
+- `gates/gate-074-mcm-extender-package-manifest-schema-archive-validation.md` - Gate 74, MCM Extender package manifest schema and archive validation skeleton.
+- `gates/gate-075-mcm-extender-package-install-preview-report.md` - Gate 75, MCM Extender package install-preview report skeleton.
+- `gates/gate-076-mcm-extender-install-preview-schema-validation.md` - Gate 76, MCM Extender install-preview report schema and validation skeleton.
+- `gates/gate-077-mcm-extender-install-preview-human-summary.md` - Gate 77, MCM Extender install-preview human summary skeleton.
+- `gates/gate-078-mcm-extender-package-verification-report.md` - Gate 78, MCM Extender package verification report skeleton.
 
 Next gate:
 
-- Gate 72 - MCM Extender ZIP package skeleton.
+- Gate 79 - MCM Extender package verification schema skeleton.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

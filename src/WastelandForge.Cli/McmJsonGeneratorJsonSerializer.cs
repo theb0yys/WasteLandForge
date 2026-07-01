@@ -76,6 +76,9 @@ internal static class McmJsonGeneratorJsonSerializer
             ["translations"] = new JsonArray(outputs.Translations.Select(translation => JsonValue.Create(translation)).ToArray()),
             ["assets"] = new JsonArray(outputs.Assets.Select(asset => JsonValue.Create(asset)).ToArray()),
             ["packageManifest"] = outputs.PackageManifest,
+            ["installPreview"] = outputs.InstallPreview,
+            ["installPreviewSummary"] = outputs.InstallPreviewSummary,
+            ["packageVerification"] = outputs.PackageVerification,
             ["manifest"] = outputs.Manifest
         };
         if (outputs.PackageArchive is not null)

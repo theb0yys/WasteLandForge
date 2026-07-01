@@ -39,3 +39,32 @@ fixture source truth.
 Gate 71 uses disposable local package-manifest outputs generated from the same
 synthetic fixture. Public committed fixtures still exclude generated outputs
 and archives.
+
+Gate 72 uses disposable local ZIP outputs generated from the same synthetic
+fixture. Public committed fixtures still exclude generated archives.
+
+Gate 73 uses disposable local `forge package` outputs generated from the same
+synthetic fixture. Public committed fixtures still exclude generated package
+archives and package command output trees.
+
+Gate 74 validates generated package manifests and archive entries from the same
+synthetic fixture. Public committed fixtures still exclude generated package
+manifests, generated archives, and package command output trees.
+
+Gate 75 validates generated install-preview reports from the same synthetic
+fixture. Public committed fixtures still exclude generated install previews,
+generated package archives, and package command output trees.
+
+Gate 76 validates generated install-preview reports against an embedded schema
+using the same synthetic fixture. Public committed fixtures still exclude
+generated install previews, generated package archives, and package command
+output trees.
+
+Gate 77 validates generated install-preview Markdown summaries using the same
+synthetic fixture. Public committed fixtures still exclude generated install
+previews, generated package archives, and package command output trees.
+
+Gate 78 validates generated package-verification reports using the same
+synthetic fixture. Public committed fixtures still exclude generated package
+verification reports, generated package archives, and package command output
+trees.

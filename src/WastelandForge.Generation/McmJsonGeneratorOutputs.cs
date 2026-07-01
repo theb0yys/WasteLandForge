@@ -6,6 +6,9 @@ public sealed record McmJsonGeneratorOutputs(
     IReadOnlyList<string> Translations,
     IReadOnlyList<string> Assets,
     string PackageManifest,
+    string InstallPreview,
+    string InstallPreviewSummary,
+    string PackageVerification,
     string? PackageArchive,
     string Manifest,
     string? Checksums);

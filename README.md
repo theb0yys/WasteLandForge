@@ -2,9 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 71 implements
-an MCM Extender package-manifest skeleton on top of the validated loose-file
-MCM JSON generator output.
+The project is currently in gated v0.1 implementation. Gate 78 adds a
+deterministic package-verification report for the MCM Extender JSON package path.
 
 ## Architecture Spine
 
@@ -17,7 +16,7 @@ MCM JSON generator output.
 
 ## Current Gate
 
-Gate 71 advances the first game-facing generator path. It keeps
+Gate 78 advances the first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -83,16 +82,58 @@ manifest records the loose-file package root, package layout, menu,
 translation, and asset entries, and payload digests. Build manifests and build
 checksums include the package manifest as generated evidence.
 
+Gate 72 adds deterministic ZIP archive creation for
+`forge build --target mcm-json`. Build output now includes
+`dist/mcm-json/package.zip`, the package manifest records its digest, and build
+manifests/checksums include the archive. ZIP entries are sorted and use
+normalized timestamps.
+
+Gate 73 exposes the same deterministic MCM Extender package tree and ZIP
+evidence through the canonical `forge package` command. `forge package` defaults
+to `--target mcm-json`, writes under project `dist/mcm-json`, records
+`wastelandforge/package-mcm-json/v1` in the local build manifest, and supports
+human/plain/json output plus `--dry-run`.
+
+Gate 74 adds immutable package manifest schema
+`package-manifest/0.1.0/schema.json`, validates generated
+`package-manifest.json`, validates build/package ZIP entry names against the
+deterministic package payload, and records `packageValidation` evidence in
+generation/build manifests.
+
+Gate 75 adds `install-preview.json` beside generated/package outputs. The
+report lists Data-relative package entries, generated source files,
+would-copy install paths, archive evidence, and explicit preview-only
+limitations. It is generated evidence only; Forge still does not install into
+Data or MO2.
+
+Gate 76 adds immutable install-preview schema
+`install-preview/0.1.0/schema.json`, validates generated
+`install-preview.json` before writing it, and records that schema ID in local
+generation/build manifest install-preview evidence.
+
+Gate 77 adds `install-preview.md` beside the validated JSON report. The
+summary lists the package root, preview-only install flags, archive status,
+would-copy Data paths, declared asset sources, and preview limitations for
+human review.
+
+Gate 78 adds `package-verification.json` beside the package and install-preview
+evidence. The report summarizes local package checks, package entry counts,
+package/preview evidence files, archive status, and archive entry validation.
+Generation/build manifests, output digests, CLI JSON output, human CLI output,
+and build/package checksums include the report. It is local package evidence
+only and does not claim installation, MO2 VFS visibility, or in-game runtime
+visibility.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
 `unknown` in this gate because their safe file-marker policy remains open.
 
-Gate 71 does not inspect an MO2 profile, launch through MO2 VFS, probe a
+Gate 78 does not inspect an MO2 profile, launch through MO2 VFS, probe a
 runtime, parse provider versions, emit `WF-CAP-*` diagnostics, generate
 in-game-verified MCM Extender files, generate JIP text scripts, package
-archives, or compile plugin records. Remaining advanced MCM Extender option
-types, ZIP/FOMOD package creation, actual `forge package` execution,
+archives as FOMOD installers, or compile plugin records. Remaining advanced
+MCM Extender option types, FOMOD package creation,
 capability-to-runtime requirement inference, callbacks, and in-game runtime
 verification remain later work.
 
@@ -275,12 +316,32 @@ digests, and build checksums.
 Gate 71 adds `package-manifest.json` for the `mcm-json` loose-file output
 tree and records it in generation/build manifests, output digests, and build
 checksums.
+Gate 72 adds `dist/mcm-json/package.zip` for `forge build --target mcm-json`
+and records it in the package manifest, build manifest, output digests, and
+build checksums.
+Gate 73 adds canonical `forge package --target mcm-json` execution for that
+same deterministic MCM Extender package tree and records package-specific
+provenance in `build-manifest.json`.
+Gate 74 adds `package-manifest/0.1.0` package evidence validation, checks
+build/package ZIP entries against the package payload, and records
+`packageValidation` in generation/build manifests.
+Gate 75 adds `install-preview.json` for the `mcm-json` output tree and records
+that report in manifests, output digests, CLI JSON output, and build/package
+checksums.
+Gate 76 adds `install-preview/0.1.0` generated evidence validation and records
+that schema in manifest install-preview evidence.
+Gate 77 adds `install-preview.md` human summary evidence and records that
+summary in manifest install-preview evidence, output digests, CLI JSON output,
+and build/package checksums.
+Gate 78 adds `package-verification.json` package evidence and records that
+report in generation/build manifests, output digests, CLI JSON output, human
+CLI output, and build/package checksums.
 
 It intentionally does not create:
 
 - VS Code problem matchers,
 - release publishing,
-- ZIP/FOMOD package creation,
+- FOMOD package creation,
 - deep NIF, DDS, WAV, OGG, LIP, KF, RDT, or BSA validation,
 - WAV/OGG sample-rate, bitrate, channel, or codec validation,
 - validation that voice filenames correspond to dialogue records in a master file,
@@ -333,9 +394,9 @@ It intentionally does not create:
 - automatic provider discovery without explicit paths,
 - runtime provider confirmation, MO2 VFS/profile inspection, provider version
   parsing, wrong-scope diagnostics, and `WF-CAP-*` diagnostic projection,
-- in-game-verified MCM Extender output, package archives,
-  release prepare/publish, binary plugin generation, JIP text scripts, or
-  external tool execution.
+- in-game-verified MCM Extender output, FOMOD installers, release
+  prepare/publish, binary plugin generation, JIP text scripts, or external
+  tool execution.
 
 Those belong to later gates recorded in `WasteLandForge/planning/`.
 

@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -20,6 +21,8 @@ public sealed class McmJsonGenerator
     private const string GeneratorId = "wf.mcm_extender_json";
 
     private static readonly Lazy<JsonSchema> McmExtenderOutputSchema = new(LoadMcmExtenderOutputSchema);
+    private static readonly Lazy<JsonSchema> PackageManifestSchema = new(LoadPackageManifestSchema);
+    private static readonly Lazy<JsonSchema> InstallPreviewSchema = new(LoadInstallPreviewSchema);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -91,8 +94,8 @@ public sealed class McmJsonGenerator
             .Select(path => ComputeDigest(projectRoot, path))
             .OrderBy(digest => digest.Path, StringComparer.Ordinal)
             .ToArray();
-        var isBuild = StringComparer.Ordinal.Equals(options.Command, "build");
-        var outputs = CreateOutputs(projectRoot, outputRoot, menuOutputs, stagedAssets, options.Command, checksums: isBuild);
+        var isDistribution = IsDistributionCommand(options.Command);
+        var outputs = CreateOutputs(projectRoot, outputRoot, menuOutputs, stagedAssets, options.Command, checksums: isDistribution);
 
         if (options.DryRun)
         {
@@ -135,7 +138,7 @@ public sealed class McmJsonGenerator
             .Select(path => ComputeDigest(projectRoot, path))
             .OrderBy(digest => digest.Path, StringComparer.Ordinal)
             .ToArray();
-        var packageArchivePath = isBuild
+        var packageArchivePath = isDistribution
             ? Path.Combine(outputRoot, "package.zip")
             : null;
         FileDigest? packageArchiveDigest = null;
@@ -146,27 +149,84 @@ public sealed class McmJsonGenerator
         }
 
         var packageManifestPath = Path.Combine(outputRoot, "package-manifest.json");
+        var packageManifestJson = CreatePackageManifestJson(
+            options,
+            projectRoot,
+            outputRoot,
+            projectId,
+            menuOutputs,
+            stagedAssets,
+            packageArchiveDigest,
+            packagePayloadDigests);
+        ValidatePackageManifestJson(projectRoot, packageManifestPath, packageManifestJson, issues, projectId);
+        if (packageArchivePath is not null)
+        {
+            ValidatePackageArchive(projectRoot, outputRoot, packageArchivePath, generatedFiles, issues, projectId);
+        }
+
+        var installPreviewPath = Path.Combine(outputRoot, "install-preview.json");
+        var installPreviewJson = CreateInstallPreviewJson(
+            options,
+            projectRoot,
+            outputRoot,
+            projectId,
+            menuOutputs,
+            stagedAssets,
+            packageArchiveDigest);
+        ValidateInstallPreviewJson(projectRoot, installPreviewPath, installPreviewJson, issues, projectId);
+        var installPreviewSummaryPath = Path.Combine(outputRoot, "install-preview.md");
+        var installPreviewSummary = CreateInstallPreviewSummary(
+            options,
+            projectRoot,
+            outputRoot,
+            projectId,
+            menuOutputs,
+            stagedAssets,
+            packageArchiveDigest);
+        var packageVerificationPath = Path.Combine(outputRoot, "package-verification.json");
+        var packageVerificationJson = CreatePackageVerificationJson(
+            options,
+            projectRoot,
+            outputRoot,
+            projectId,
+            menuOutputs,
+            stagedAssets,
+            packageArchiveDigest,
+            packagePayloadDigests,
+            packageManifestPath,
+            installPreviewPath,
+            installPreviewSummaryPath);
+
+        if (issues.Any(issue => issue.Severity == DiagnosticSeverity.Error))
+        {
+            return CreateResult(options, projectRoot, "failed", projectId, issues, outputs, sourceDigests, []);
+        }
+
         WriteUtf8NoBom(
             packageManifestPath,
-            CreatePackageManifestJson(
-                options,
-                projectRoot,
-                outputRoot,
-                projectId,
-                menuOutputs,
-                stagedAssets,
-                packageArchiveDigest,
-                packagePayloadDigests).ToJsonString(JsonOptions) + Environment.NewLine);
+            packageManifestJson.ToJsonString(JsonOptions) + Environment.NewLine);
+
+        WriteUtf8NoBom(
+            installPreviewPath,
+            installPreviewJson.ToJsonString(JsonOptions) + Environment.NewLine);
+
+        WriteUtf8NoBom(
+            installPreviewSummaryPath,
+            installPreviewSummary);
+
+        WriteUtf8NoBom(
+            packageVerificationPath,
+            packageVerificationJson.ToJsonString(JsonOptions) + Environment.NewLine);
 
         var generatedEvidenceFiles = packageArchivePath is null
-            ? generatedFiles.Append(packageManifestPath).ToArray()
-            : generatedFiles.Append(packageManifestPath).Append(packageArchivePath).ToArray();
+            ? generatedFiles.Append(packageManifestPath).Append(installPreviewPath).Append(installPreviewSummaryPath).Append(packageVerificationPath).ToArray()
+            : generatedFiles.Append(packageManifestPath).Append(installPreviewPath).Append(installPreviewSummaryPath).Append(packageVerificationPath).Append(packageArchivePath).ToArray();
         var outputDigestsBeforeManifest = generatedEvidenceFiles
             .Select(path => ComputeDigest(projectRoot, path))
             .OrderBy(digest => digest.Path, StringComparer.Ordinal)
             .ToArray();
 
-        var manifestFileName = StringComparer.Ordinal.Equals(options.Command, "build")
+        var manifestFileName = IsDistributionCommand(options.Command)
             ? "build-manifest.json"
             : "generation-manifest.json";
         var manifestPath = Path.Combine(outputRoot, manifestFileName);
@@ -181,11 +241,14 @@ public sealed class McmJsonGenerator
                 validationReport,
                 requirementRead.Requirements,
                 menuOutputs,
-                stagedAssets).ToJsonString(JsonOptions) + Environment.NewLine);
+                stagedAssets,
+                installPreviewPath,
+                installPreviewSummaryPath,
+                packageVerificationPath).ToJsonString(JsonOptions) + Environment.NewLine);
 
         string? checksumsPath = null;
         var outputFiles = generatedEvidenceFiles.Append(manifestPath).ToArray();
-        if (StringComparer.Ordinal.Equals(options.Command, "build"))
+        if (IsDistributionCommand(options.Command))
         {
             checksumsPath = Path.Combine(outputRoot, "checksums.sha256");
             WriteChecksums(outputRoot, checksumsPath, outputFiles);
@@ -393,7 +456,7 @@ public sealed class McmJsonGenerator
         string command,
         bool checksums)
     {
-        var manifestFileName = StringComparer.Ordinal.Equals(command, "build")
+        var manifestFileName = IsDistributionCommand(command)
             ? "build-manifest.json"
             : "generation-manifest.json";
         return new McmJsonGeneratorOutputs(
@@ -413,7 +476,10 @@ public sealed class McmJsonGenerator
                 .Order(StringComparer.Ordinal)
                 .ToArray(),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-manifest.json")),
-            StringComparer.Ordinal.Equals(command, "build")
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-preview.json")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-preview.md")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-verification.json")),
+            IsDistributionCommand(command)
                 ? ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package.zip"))
                 : null,
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, manifestFileName)),
@@ -426,8 +492,9 @@ public sealed class McmJsonGenerator
         LogicalId? projectId,
         List<DiagnosticIssue> issues)
     {
-        var isBuild = StringComparer.Ordinal.Equals(options.Command, "build");
-        var rootName = isBuild ? "dist" : "generated";
+        var isDistribution = IsDistributionCommand(options.Command);
+        var isPackage = StringComparer.Ordinal.Equals(options.Command, "package");
+        var rootName = isDistribution ? "dist" : "generated";
         var allowedRoot = Path.GetFullPath(Path.Combine(projectRoot, rootName));
         var outputRoot = string.IsNullOrWhiteSpace(options.OutputDirectory)
             ? Path.Combine(allowedRoot, Target)
@@ -435,16 +502,20 @@ public sealed class McmJsonGenerator
 
         if (!IsInsideOrEqual(allowedRoot, outputRoot))
         {
-            var ruleId = isBuild ? "WF-BUILD-001" : "WF-GEN-001";
+            var ruleId = isDistribution ? "WF-BUILD-001" : "WF-GEN-001";
             issues.Add(CreateIssue(
                 ruleId,
-                isBuild ? "Build output must stay under dist" : "Generated output must stay under generated",
-                isBuild
-                    ? "Build output is disposable build evidence and must resolve under the project dist/ directory."
+                isDistribution
+                    ? isPackage ? "Package output must stay under dist" : "Build output must stay under dist"
+                    : "Generated output must stay under generated",
+                isDistribution
+                    ? isPackage
+                        ? "Package output is disposable package evidence and must resolve under the project dist/ directory."
+                        : "Build output is disposable build evidence and must resolve under the project dist/ directory."
                     : "Generated output is disposable generated evidence and must resolve under the project generated/ directory.",
                 new SourceLocation(string.IsNullOrWhiteSpace(options.OutputDirectory) ? $"{rootName}/{Target}" : options.OutputDirectory),
                 projectId,
-                isBuild ? "Use --output dist/<name> or omit --output for dist/mcm-json." : "Use --output generated/<name> or omit --output for generated/mcm-json."));
+                isDistribution ? "Use --output dist/<name> or omit --output for dist/mcm-json." : "Use --output generated/<name> or omit --output for generated/mcm-json."));
             return null;
         }
 
@@ -937,6 +1008,121 @@ public sealed class McmJsonGenerator
         return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource));
     }
 
+    private static JsonSchema LoadPackageManifestSchema()
+    {
+        if (!WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.PackageManifest010, out var resource) ||
+            resource is null)
+        {
+            throw new InvalidOperationException($"Built-in schema '{WastelandForgeSchemaIds.PackageManifest010}' was not found.");
+        }
+
+        return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource));
+    }
+
+    private static JsonSchema LoadInstallPreviewSchema()
+    {
+        if (!WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.InstallPreview010, out var resource) ||
+            resource is null)
+        {
+            throw new InvalidOperationException($"Built-in schema '{WastelandForgeSchemaIds.InstallPreview010}' was not found.");
+        }
+
+        return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource));
+    }
+
+    private static void ValidatePackageManifestJson(
+        string projectRoot,
+        string packageManifestPath,
+        JsonObject packageManifestJson,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        using var jsonDocument = JsonDocument.Parse(packageManifestJson.ToJsonString());
+        var results = PackageManifestSchema.Value.Evaluate(
+            jsonDocument.RootElement,
+            new EvaluationOptions
+            {
+                OutputFormat = OutputFormat.Hierarchical
+            });
+        if (results.IsValid)
+        {
+            return;
+        }
+
+        foreach (var failure in EnumerateSchemaFailures(results))
+        {
+            issues.Add(CreateIssue(
+                "WF-BUILD-002",
+                "Package manifest validation failed",
+                FormatSchemaErrors(failure),
+                new SourceLocation(ToDisplayPath(projectRoot, packageManifestPath), JsonPointer.Parse(NormalizeJsonPointer(failure.InstanceLocation.ToString()))),
+                projectId,
+                "Fix the generated package manifest contract or package metadata so it matches the package manifest schema."));
+        }
+    }
+
+    private static void ValidateInstallPreviewJson(
+        string projectRoot,
+        string installPreviewPath,
+        JsonObject installPreviewJson,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        using var jsonDocument = JsonDocument.Parse(installPreviewJson.ToJsonString());
+        var results = InstallPreviewSchema.Value.Evaluate(
+            jsonDocument.RootElement,
+            new EvaluationOptions
+            {
+                OutputFormat = OutputFormat.Hierarchical
+            });
+        if (results.IsValid)
+        {
+            return;
+        }
+
+        foreach (var failure in EnumerateSchemaFailures(results))
+        {
+            issues.Add(CreateIssue(
+                "WF-BUILD-004",
+                "Install preview validation failed",
+                FormatSchemaErrors(failure),
+                new SourceLocation(ToDisplayPath(projectRoot, installPreviewPath), JsonPointer.Parse(NormalizeJsonPointer(failure.InstanceLocation.ToString()))),
+                projectId,
+                "Fix the generated install preview contract or package metadata so it matches the install preview schema."));
+        }
+    }
+
+    private static void ValidatePackageArchive(
+        string projectRoot,
+        string outputRoot,
+        string packageArchivePath,
+        IReadOnlyList<string> generatedFiles,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        using var archive = ZipFile.OpenRead(packageArchivePath);
+        var expectedEntries = generatedFiles
+            .Select(path => ToDisplayPath(outputRoot, path))
+            .OrderBy(path => path, StringComparer.Ordinal)
+            .ToArray();
+        var actualEntries = archive.Entries
+            .Select(entry => entry.FullName)
+            .ToArray();
+
+        if (expectedEntries.SequenceEqual(actualEntries, StringComparer.Ordinal))
+        {
+            return;
+        }
+
+        issues.Add(CreateIssue(
+            "WF-BUILD-003",
+            "Package archive entries do not match package payload",
+            $"Package archive '{ToDisplayPath(projectRoot, packageArchivePath)}' contains {actualEntries.Length} entries, but the package payload declares {expectedEntries.Length}.",
+            new SourceLocation(ToDisplayPath(projectRoot, packageArchivePath), JsonPointer.Parse(string.Empty)),
+            projectId,
+            "Regenerate the package archive from the package payload list."));
+    }
+
     private static JsonObject CreateManifestJson(
         McmJsonGeneratorOptions options,
         string projectRoot,
@@ -946,16 +1132,17 @@ public sealed class McmJsonGenerator
         DiagnosticReport validationReport,
         IReadOnlyList<CapabilityRequirementDefinition> requirements,
         IReadOnlyList<MenuOutput> menuOutputs,
-        IReadOnlyList<StagedAsset> stagedAssets)
+        IReadOnlyList<StagedAsset> stagedAssets,
+        string installPreviewPath,
+        string installPreviewSummaryPath,
+        string packageVerificationPath)
     {
         var timestamp = ResolveReproducibleTimestamp();
         return new JsonObject
         {
             ["formatVersion"] = "0.1",
             ["kind"] = "wastelandforge.build-manifest",
-            ["buildType"] = StringComparer.Ordinal.Equals(options.Command, "build")
-                ? "wastelandforge/build-mcm-json/v1"
-                : "wastelandforge/generate-mcm-json/v1",
+            ["buildType"] = ResolveManifestBuildType(options.Command),
             ["tool"] = CreateToolJson(options.ToolVersion),
             ["command"] = options.Command,
             ["target"] = Target,
@@ -983,6 +1170,26 @@ public sealed class McmJsonGenerator
             {
                 ["schema"] = WastelandForgeSchemaIds.McmExtenderOutput010,
                 ["status"] = "passed"
+            },
+            ["packageValidation"] = new JsonObject
+            {
+                ["schema"] = WastelandForgeSchemaIds.PackageManifest010,
+                ["status"] = "passed",
+                ["archiveStatus"] = IsDistributionCommand(options.Command)
+                    ? "entries-matched"
+                    : "not-created"
+            },
+            ["installPreview"] = new JsonObject
+            {
+                ["schema"] = WastelandForgeSchemaIds.InstallPreview010,
+                ["status"] = "written",
+                ["report"] = ToDisplayPath(projectRoot, installPreviewPath),
+                ["summary"] = ToDisplayPath(projectRoot, installPreviewSummaryPath)
+            },
+            ["packageVerification"] = new JsonObject
+            {
+                ["status"] = "written",
+                ["report"] = ToDisplayPath(projectRoot, packageVerificationPath)
             },
             ["generators"] = new JsonArray
             {
@@ -1019,6 +1226,86 @@ public sealed class McmJsonGenerator
         };
     }
 
+    private static string CreateInstallPreviewSummary(
+        McmJsonGeneratorOptions options,
+        string projectRoot,
+        string outputRoot,
+        LogicalId? projectId,
+        IReadOnlyList<MenuOutput> menuOutputs,
+        IReadOnlyList<StagedAsset> stagedAssets,
+        FileDigest? packageArchiveDigest)
+    {
+        var entries = CreateInstallPreviewEntryJsons(projectRoot, outputRoot, menuOutputs, stagedAssets).ToArray();
+        var builder = new StringBuilder();
+        builder.AppendLine("# WastelandForge MCM Install Preview");
+        builder.AppendLine();
+        builder.AppendLine("Generated by WastelandForge. Do not edit; regenerate from source contracts.");
+        builder.AppendLine();
+        builder.Append("Project: ");
+        builder.AppendLine(projectId?.ToString() ?? "unknown");
+        builder.Append("Command: ");
+        builder.AppendLine(options.Command);
+        builder.Append("Target: ");
+        builder.AppendLine(Target);
+        builder.Append("Package root: ");
+        builder.AppendLine(ToDisplayPath(projectRoot, outputRoot));
+        builder.AppendLine("Install root: Data");
+        builder.AppendLine("Mode: preview-only");
+        builder.AppendLine("Writes to game Data: no");
+        builder.AppendLine("Writes to MO2 profile: no");
+        builder.AppendLine("Launches game: no");
+        builder.Append("Entries: ");
+        builder.AppendLine(entries.Length.ToString(CultureInfo.InvariantCulture));
+        builder.Append("Archive: ");
+        if (packageArchiveDigest is null)
+        {
+            builder.AppendLine("not-created");
+            builder.AppendLine("Archive validation: not-applicable");
+        }
+        else
+        {
+            builder.Append(packageArchiveDigest.Path);
+            builder.AppendLine(" (created)");
+            builder.AppendLine("Archive validation: entries-matched");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("## Would Copy");
+        foreach (var entry in entries)
+        {
+            builder.Append("- ");
+            builder.Append(GetRequiredString(entry, "installPath"));
+            builder.Append(" <- ");
+            builder.Append(GetRequiredString(entry, "sourceFile"));
+            builder.Append(" (");
+            builder.Append(GetRequiredString(entry, "kind"));
+            builder.Append(": ");
+            builder.Append(GetRequiredString(entry, "id"));
+            builder.AppendLine(")");
+
+            var declaredSourceFile = GetOptionalString(entry, "declaredSourceFile");
+            if (declaredSourceFile is not null)
+            {
+                builder.Append("  Declared source: ");
+                builder.AppendLine(declaredSourceFile);
+            }
+
+            var targetFile = GetOptionalString(entry, "targetFile");
+            if (targetFile is not null)
+            {
+                builder.Append("  Target file: ");
+                builder.AppendLine(targetFile);
+            }
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("## Limitations");
+        builder.AppendLine("- Preview only; Forge did not copy files into a game Data folder or MO2 profile.");
+        builder.AppendLine("- Preview only; Forge did not launch the game or verify runtime MCM Extender visibility.");
+        builder.AppendLine("- Preview only; runtime provider versions and MO2 VFS conflicts remain outside this report.");
+        return builder.ToString();
+    }
+
     private static JsonObject CreatePackageManifestJson(
         McmJsonGeneratorOptions options,
         string projectRoot,
@@ -1046,6 +1333,124 @@ public sealed class McmJsonGenerator
         };
     }
 
+    private static JsonObject CreateInstallPreviewJson(
+        McmJsonGeneratorOptions options,
+        string projectRoot,
+        string outputRoot,
+        LogicalId? projectId,
+        IReadOnlyList<MenuOutput> menuOutputs,
+        IReadOnlyList<StagedAsset> stagedAssets,
+        FileDigest? packageArchiveDigest)
+    {
+        return new JsonObject
+        {
+            ["formatVersion"] = "0.1",
+            ["kind"] = "wastelandforge.install-preview",
+            ["previewType"] = "wastelandforge/mcm-json-loose-file-install-preview/v1",
+            ["command"] = options.Command,
+            ["target"] = Target,
+            ["dryRun"] = options.DryRun,
+            ["project"] = CreateProjectJson(projectId),
+            ["package"] = new JsonObject
+            {
+                ["packageType"] = "wastelandforge/mcm-json-loose-files/v1",
+                ["root"] = ToDisplayPath(projectRoot, outputRoot),
+                ["layout"] = "fallout-new-vegas-data-loose-files",
+                ["installRoot"] = "Data",
+                ["mode"] = "preview-only",
+                ["writesToGameData"] = false,
+                ["writesToMo2Profile"] = false,
+                ["launchesGame"] = false
+            },
+            ["archive"] = CreateInstallPreviewArchiveJson(packageArchiveDigest),
+            ["entries"] = new JsonArray(CreateInstallPreviewEntryJsons(projectRoot, outputRoot, menuOutputs, stagedAssets).ToArray()),
+            ["limitations"] = new JsonArray
+            {
+                "Preview only; Forge did not copy files into a game Data folder or MO2 profile.",
+                "Preview only; Forge did not launch the game or verify runtime MCM Extender visibility.",
+                "Preview only; runtime provider versions and MO2 VFS conflicts remain outside this report."
+            }
+        };
+    }
+
+    private static JsonObject CreatePackageVerificationJson(
+        McmJsonGeneratorOptions options,
+        string projectRoot,
+        string outputRoot,
+        LogicalId? projectId,
+        IReadOnlyList<MenuOutput> menuOutputs,
+        IReadOnlyList<StagedAsset> stagedAssets,
+        FileDigest? packageArchiveDigest,
+        IReadOnlyList<FileDigest> packagePayloadDigests,
+        string packageManifestPath,
+        string installPreviewPath,
+        string installPreviewSummaryPath)
+    {
+        var translationCount = menuOutputs.Count(output => output.TranslationPath is not null);
+        var entryCount = menuOutputs.Count + translationCount + stagedAssets.Count;
+        return new JsonObject
+        {
+            ["formatVersion"] = "0.1",
+            ["kind"] = "wastelandforge.package-verification",
+            ["verificationType"] = "wastelandforge/mcm-json-loose-file-package-verification/v1",
+            ["command"] = options.Command,
+            ["target"] = Target,
+            ["dryRun"] = options.DryRun,
+            ["project"] = CreateProjectJson(projectId),
+            ["package"] = new JsonObject
+            {
+                ["packageType"] = "wastelandforge/mcm-json-loose-files/v1",
+                ["root"] = ToDisplayPath(projectRoot, outputRoot),
+                ["layout"] = "fallout-new-vegas-data-loose-files",
+                ["entries"] = entryCount,
+                ["menus"] = menuOutputs.Count,
+                ["translations"] = translationCount,
+                ["assets"] = stagedAssets.Count
+            },
+            ["checks"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["id"] = "package-manifest-schema",
+                    ["status"] = "passed",
+                    ["evidence"] = ToDisplayPath(projectRoot, packageManifestPath)
+                },
+                new JsonObject
+                {
+                    ["id"] = "install-preview-schema",
+                    ["status"] = "passed",
+                    ["evidence"] = ToDisplayPath(projectRoot, installPreviewPath)
+                },
+                new JsonObject
+                {
+                    ["id"] = "install-preview-summary",
+                    ["status"] = "written",
+                    ["evidence"] = ToDisplayPath(projectRoot, installPreviewSummaryPath)
+                },
+                new JsonObject
+                {
+                    ["id"] = "package-payload-digests",
+                    ["status"] = "recorded",
+                    ["count"] = packagePayloadDigests.Count
+                },
+                new JsonObject
+                {
+                    ["id"] = "package-archive",
+                    ["status"] = packageArchiveDigest is null ? "not-created" : "created",
+                    ["validation"] = packageArchiveDigest is null ? "not-applicable" : "entries-matched"
+                }
+            },
+            ["archive"] = CreatePackageVerificationArchiveJson(packageArchiveDigest),
+            ["result"] = "passed",
+            ["limitations"] = new JsonArray
+            {
+                "Verification is local package evidence only; Forge did not install files into Data or MO2.",
+                "Verification does not launch the game or inspect MO2 VFS/profile conflicts.",
+                "Verification does not prove runtime MCM Extender visibility."
+            }
+        };
+    }
+
     private static JsonObject CreatePackageArchiveJson(FileDigest? packageArchiveDigest)
     {
         if (packageArchiveDigest is null)
@@ -1053,13 +1458,61 @@ public sealed class McmJsonGenerator
             return new JsonObject
             {
                 ["status"] = "not-created",
-                ["reason"] = "ZIP archive creation is build-only in Gate 72."
+                ["reason"] = "ZIP archive creation is only written by build/package commands."
             };
         }
 
         return new JsonObject
         {
             ["status"] = "created",
+            ["outputFile"] = packageArchiveDigest.Path,
+            ["mediaType"] = "application/zip",
+            ["compression"] = "store",
+            ["sha256"] = packageArchiveDigest.Sha256,
+            ["length"] = packageArchiveDigest.Length
+        };
+    }
+
+    private static JsonObject CreatePackageVerificationArchiveJson(FileDigest? packageArchiveDigest)
+    {
+        if (packageArchiveDigest is null)
+        {
+            return new JsonObject
+            {
+                ["status"] = "not-created",
+                ["validation"] = "not-applicable",
+                ["reason"] = "ZIP archive creation is only written by build/package commands."
+            };
+        }
+
+        return new JsonObject
+        {
+            ["status"] = "created",
+            ["validation"] = "entries-matched",
+            ["outputFile"] = packageArchiveDigest.Path,
+            ["mediaType"] = "application/zip",
+            ["compression"] = "store",
+            ["sha256"] = packageArchiveDigest.Sha256,
+            ["length"] = packageArchiveDigest.Length
+        };
+    }
+
+    private static JsonObject CreateInstallPreviewArchiveJson(FileDigest? packageArchiveDigest)
+    {
+        if (packageArchiveDigest is null)
+        {
+            return new JsonObject
+            {
+                ["status"] = "not-created",
+                ["validation"] = "not-applicable",
+                ["reason"] = "ZIP archive creation is only written by build/package commands."
+            };
+        }
+
+        return new JsonObject
+        {
+            ["status"] = "created",
+            ["validation"] = "entries-matched",
             ["outputFile"] = packageArchiveDigest.Path,
             ["mediaType"] = "application/zip",
             ["compression"] = "store",
@@ -1122,6 +1575,73 @@ public sealed class McmJsonGenerator
             .OrderBy(entry => entry.Path, StringComparer.Ordinal)
             .Select(entry => entry.Json);
     }
+
+    private static IEnumerable<JsonObject> CreateInstallPreviewEntryJsons(
+        string projectRoot,
+        string outputRoot,
+        IReadOnlyList<MenuOutput> menuOutputs,
+        IReadOnlyList<StagedAsset> stagedAssets)
+    {
+        var entries = new List<(string Path, JsonObject Json)>();
+        foreach (var output in menuOutputs)
+        {
+            var path = ToDisplayPath(outputRoot, output.Path);
+            entries.Add((path, new JsonObject
+            {
+                ["kind"] = "mcm-menu",
+                ["id"] = output.Menu.Id,
+                ["dataPath"] = path,
+                ["sourceFile"] = ToDisplayPath(projectRoot, output.Path),
+                ["installPath"] = $"Data/{path}",
+                ["mediaType"] = "application/json",
+                ["action"] = "would-copy-loose-file"
+            }));
+
+            if (output.TranslationPath is null)
+            {
+                continue;
+            }
+
+            var translationPath = ToDisplayPath(outputRoot, output.TranslationPath);
+            entries.Add((translationPath, new JsonObject
+            {
+                ["kind"] = "mcm-translation",
+                ["id"] = output.Menu.Id,
+                ["dataPath"] = translationPath,
+                ["sourceFile"] = ToDisplayPath(projectRoot, output.TranslationPath),
+                ["installPath"] = $"Data/{translationPath}",
+                ["mediaType"] = "text/plain",
+                ["action"] = "would-copy-loose-file"
+            }));
+        }
+
+        foreach (var asset in stagedAssets)
+        {
+            var path = ToDisplayPath(outputRoot, asset.OutputPath);
+            entries.Add((path, new JsonObject
+            {
+                ["kind"] = "asset",
+                ["id"] = asset.Id,
+                ["dataPath"] = path,
+                ["sourceFile"] = ToDisplayPath(projectRoot, asset.OutputPath),
+                ["declaredSourceFile"] = ToDisplayPath(projectRoot, asset.SourcePath),
+                ["targetFile"] = asset.Target,
+                ["installPath"] = $"Data/{path}",
+                ["mediaType"] = "image/vnd-ms.dds",
+                ["action"] = "would-copy-loose-file"
+            }));
+        }
+
+        return entries
+            .OrderBy(entry => entry.Path, StringComparer.Ordinal)
+            .Select(entry => entry.Json);
+    }
+
+    private static string GetRequiredString(JsonObject json, string propertyName) =>
+        json[propertyName]?.GetValue<string>() ?? string.Empty;
+
+    private static string? GetOptionalString(JsonObject json, string propertyName) =>
+        json[propertyName]?.GetValue<string>();
 
     private static JsonObject ToRequirementJson(CapabilityRequirementDefinition requirement)
     {
@@ -1255,6 +1775,22 @@ public sealed class McmJsonGenerator
             using var output = entry.Open();
             input.CopyTo(output);
         }
+    }
+
+    private static bool IsDistributionCommand(string command) =>
+        StringComparer.Ordinal.Equals(command, "build") ||
+        StringComparer.Ordinal.Equals(command, "package");
+
+    private static string ResolveManifestBuildType(string command)
+    {
+        if (StringComparer.Ordinal.Equals(command, "build"))
+        {
+            return "wastelandforge/build-mcm-json/v1";
+        }
+
+        return StringComparer.Ordinal.Equals(command, "package")
+            ? "wastelandforge/package-mcm-json/v1"
+            : "wastelandforge/generate-mcm-json/v1";
     }
 
     private static void WriteUtf8NoBom(string path, string content)

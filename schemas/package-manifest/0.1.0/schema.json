@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/package-manifest/0.1.0/schema.json",
+  "title": "WastelandForge Package Manifest",
+  "description": "Deterministic package manifest for generated WastelandForge MCM Extender loose-file packages.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion",
+    "kind",
+    "packageType",
+    "command",
+    "target",
+    "dryRun",
+    "project",
+    "root",
+    "layout",
+    "archive",
+    "entries",
+    "payloadDigests"
+  ],
+  "properties": {
+    "formatVersion": {
+      "const": "0.1"
+    },
+    "kind": {
+      "const": "wastelandforge.package-manifest"
+    },
+    "packageType": {
+      "const": "wastelandforge/mcm-json-loose-files/v1"
+    },
+    "command": {
+      "enum": [
+        "generate",
+        "build",
+        "package"
+      ]
+    },
+    "target": {
+      "const": "mcm-json"
+    },
+    "dryRun": {
+      "type": "boolean"
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "root": {
+      "$ref": "#/$defs/relativePath"
+    },
+    "layout": {
+      "const": "fallout-new-vegas-data-loose-files"
+    },
+    "archive": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/archiveNotCreated"
+        },
+        {
+          "$ref": "#/$defs/archiveCreated"
+        }
+      ]
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/packageEntry"
+      }
+    },
+    "payloadDigests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/fileDigest"
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "^(?:[a-zA-Z]:|/|\\\\\\\\)"
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "archiveNotCreated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "not-created"
+        },
+        "reason": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "archiveCreated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "outputFile",
+        "mediaType",
+        "compression",
+        "sha256",
+        "length"
+      ],
+      "properties": {
+        "status": {
+          "const": "created"
+        },
+        "outputFile": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "mediaType": {
+          "const": "application/zip"
+        },
+        "compression": {
+          "const": "store"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "packageEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "path",
+        "outputFile",
+        "mediaType"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "mcm-menu",
+            "mcm-translation",
+            "asset"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "sourceFile": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "targetFile": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "outputFile": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "mediaType": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "mcm-menu"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "mediaType": {
+                "const": "application/json"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "mcm-translation"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "mediaType": {
+                "const": "text/plain"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "asset"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "sourceFile",
+              "targetFile"
+            ],
+            "properties": {
+              "mediaType": {
+                "const": "image/vnd-ms.dds"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "fileDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "length"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

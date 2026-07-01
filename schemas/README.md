@@ -31,6 +31,8 @@ Do not overwrite a released schema in place. Schema migrations are explicit tool
 - `assets/0.1.0/schema.json` - asset registry schema.
 - `mcm/0.1.0/schema.json` - MCM menu source registry schema.
 - `mcm-extender-output/0.1.0/schema.json` - minimal MCM Extender runtime JSON output schema emitted by Forge.
+- `package-manifest/0.1.0/schema.json` - deterministic generated package manifest schema for the first MCM Extender loose-file package target.
+- `install-preview/0.1.0/schema.json` - deterministic generated install-preview report schema for the first MCM Extender loose-file package target.
 - `quests/0.1.0/schema.json` - quest registry schema.
 - `quests/0.2.0/schema.json` - quest registry schema with stage and objective skeletons.
 - `quests/0.3.0/schema.json` - quest registry schema with transition skeletons.
@@ -184,3 +186,24 @@ not introduce a new schema ID or change the published source contract shape.
 
 Gate 71 adds generated package-manifest metadata only. It does not introduce a
 new source schema ID; a formal package-manifest schema remains future work.
+
+Gate 72 adds ZIP archive output and archive digest evidence only. It does not
+introduce a new source schema ID or a formal package/archive schema.
+
+Gate 73 adds canonical `forge package --target mcm-json` execution only. It
+does not introduce a new source schema ID or a formal package/archive schema.
+
+Gate 74 adds `package-manifest/0.1.0/schema.json` as a generated package
+evidence schema, not a source registry schema. Forge uses it to validate the
+package manifest emitted by `forge generate --target mcm-json`, `forge build
+--target mcm-json`, and `forge package --target mcm-json`.
+
+Gate 75 adds generated `install-preview.json` output but no schema. Gate 76
+adds `install-preview/0.1.0/schema.json` as generated install-preview
+evidence schema, not a source registry schema. Forge uses it to validate the
+install-preview report emitted by `forge generate --target mcm-json`, `forge
+build --target mcm-json`, and `forge package --target mcm-json`.
+
+Gate 78 adds generated `package-verification.json` output but no schema. A
+formal package-verification report schema remains open for the next generated
+evidence schema gate.

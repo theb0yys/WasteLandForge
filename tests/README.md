@@ -298,6 +298,36 @@ outputs, manifest asset evidence, output digests, and build checksums.
 Gate 71 updates unit and golden CLI tests to assert `package-manifest.json`,
 loose-file package entries, payload digests, and build checksum coverage.
 
+Gate 72 updates unit and golden CLI tests to assert build-time
+`package.zip`, sorted ZIP entries, normalized ZIP timestamps, package-manifest
+archive digest evidence, output digests, and build checksum coverage.
+
+Gate 73 updates unit and golden CLI tests to assert canonical `forge package`
+execution for `--target mcm-json`, package-specific provenance, package archive
+output, package manifest archive evidence, and checksum coverage.
+
+Gate 74 updates schema and back-compat tests for
+`package-manifest/0.1.0`, and updates unit and golden CLI tests to assert
+package validation evidence for generated MCM Extender package manifests and
+ZIP entry checks.
+
+Gate 75 updates unit and golden CLI tests to assert `install-preview.json`,
+Data-relative install paths, preview-only flags, archive evidence, manifest
+evidence, output digests, and build/package checksum coverage.
+
+Gate 76 updates schema and back-compat tests for
+`install-preview/0.1.0`, and updates unit and golden CLI tests to assert
+install-preview schema evidence in generated MCM JSON manifests.
+
+Gate 77 updates unit and golden CLI tests to assert `install-preview.md`,
+human-readable would-copy paths, manifest summary evidence, output digests,
+CLI JSON output, and build/package checksum coverage.
+
+Gate 78 updates unit and golden CLI tests to assert
+`package-verification.json`, package counts, evidence check status, archive
+verification status, manifest report evidence, output digests, CLI output, and
+build/package checksum coverage.
+
 Run the full local suite serially:
 
 ```text

@@ -11,7 +11,6 @@ internal static class ForgeCli
     private static readonly string[] TopLevelReservedCommands =
     [
         "init",
-        "package",
         "docs",
         "graph",
         "explain",
@@ -83,6 +82,11 @@ internal static class ForgeCli
             StringComparer.Ordinal.Equals(resolution.CommandPath, "build"))
         {
             return RunMetadataReportCommand(resolution.CommandPath, resolution.RemainingArgs);
+        }
+
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "package"))
+        {
+            return RunPackageCommand(resolution.RemainingArgs);
         }
 
         if (StringComparer.Ordinal.Equals(resolution.CommandPath, "capabilities list"))
@@ -245,6 +249,32 @@ internal static class ForgeCli
             : (int)CliExitCode.Success;
     }
 
+    private static int RunPackageCommand(string[] args)
+    {
+        var parse = ParsePackageOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "package", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "package",
+            parse.ProjectPath,
+            parse.OutputDirectory,
+            CliConstants.Version,
+            parse.DryRun));
+
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? McmJsonGeneratorJsonSerializer.Serialize(result)
+            : McmJsonGeneratorTextRenderer.Render(result);
+        Console.Write(payload);
+
+        return result.HasErrors
+            ? (int)CliExitCode.BlockingDiagnostics
+            : (int)CliExitCode.Success;
+    }
+
     private static int RunCapabilitiesList(string[] args)
     {
         var parse = ParseCapabilitiesListOptions(args);
@@ -374,7 +404,8 @@ internal static class ForgeCli
         }
 
         if (StringComparer.Ordinal.Equals(command, "generate") ||
-            StringComparer.Ordinal.Equals(command, "build"))
+            StringComparer.Ordinal.Equals(command, "build") ||
+            StringComparer.Ordinal.Equals(command, "package"))
         {
             return CommandResolution.Command(command, args[1..]);
         }
@@ -690,6 +721,111 @@ internal static class ForgeCli
             if (arg.StartsWith("-", StringComparison.Ordinal))
             {
                 return MetadataReportParseResult.Fail(format, $"Unsupported {commandPath} option '{arg}'.");
+            }
+
+            if (projectWasSet)
+            {
+                return MetadataReportParseResult.Fail(format, "Project root was specified more than once.");
+            }
+
+            projectPath = arg;
+            projectWasSet = true;
+        }
+
+        return MetadataReportParseResult.Ok(projectPath, outputDirectory, target, dryRun, format);
+    }
+
+    private static MetadataReportParseResult ParsePackageOptions(string[] args)
+    {
+        var format = "human";
+        var projectPath = ".";
+        var target = McmJsonGenerator.Target;
+        string? outputDirectory = null;
+        var dryRun = false;
+        var projectWasSet = false;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return MetadataReportParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return MetadataReportParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return MetadataReportParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return MetadataReportParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectWasSet)
+                {
+                    return MetadataReportParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                projectWasSet = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--target"))
+            {
+                if (!TryReadValue(args, ref index, out target))
+                {
+                    return MetadataReportParseResult.Fail(format, "Missing value for --target.");
+                }
+
+                if (!StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target))
+                {
+                    return MetadataReportParseResult.Fail(format, $"Only target '{McmJsonGenerator.Target}' is implemented for forge package in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputDirectory))
+                {
+                    return MetadataReportParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputDirectory = explicitOutputDirectory;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--dry-run"))
+            {
+                dryRun = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return MetadataReportParseResult.Fail(format, $"Unsupported package option '{arg}'.");
             }
 
             if (projectWasSet)

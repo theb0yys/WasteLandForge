@@ -86,6 +86,35 @@ validation result before staging loose texture files.
 Gate 71 adds no new diagnostic rule family or rule ID; it records package
 metadata after validation, output validation, and loose-file staging succeed.
 
+Gate 72 adds no new diagnostic rule family or rule ID; it writes a ZIP archive
+only after validation, output validation, loose-file staging, and package
+metadata generation succeed.
+
+Gate 73 adds no new diagnostic rule family or rule ID; `forge package` reuses
+the same validation, output validation, loose-file staging, package metadata,
+ZIP archive, and dist-boundary diagnostics as the MCM build path.
+
+Gate 74 adds no new diagnostic rule family. It reserves `WF-BUILD-002` for
+generated package manifest schema failures and `WF-BUILD-003` for package ZIP
+entry mismatches against the deterministic package payload.
+
+Gate 75 adds no new diagnostic rule family or rule ID. It writes
+`install-preview.json` only after the existing validation, package manifest
+validation, and optional archive-entry validation path succeeds.
+
+Gate 76 adds no new diagnostic rule family. It reserves `WF-BUILD-004` for
+generated install-preview schema failures before local manifest/checksum
+evidence is finalized.
+
+Gate 77 adds no new diagnostic rule family or rule ID. It writes
+`install-preview.md` only after the generated install-preview JSON validates
+and before local manifest/checksum evidence is finalized.
+
+Gate 78 adds no new diagnostic rule family or rule ID. It writes
+`package-verification.json` only after package manifest validation,
+install-preview validation, and optional archive-entry validation succeed,
+and before local manifest/checksum evidence is finalized.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

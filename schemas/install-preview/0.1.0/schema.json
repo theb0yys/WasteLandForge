@@ -1,0 +1,308 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/install-preview/0.1.0/schema.json",
+  "title": "WastelandForge Install Preview",
+  "description": "Preview-only install intent report for generated WastelandForge MCM Extender loose-file packages.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion",
+    "kind",
+    "previewType",
+    "command",
+    "target",
+    "dryRun",
+    "project",
+    "package",
+    "archive",
+    "entries",
+    "limitations"
+  ],
+  "properties": {
+    "formatVersion": {
+      "const": "0.1"
+    },
+    "kind": {
+      "const": "wastelandforge.install-preview"
+    },
+    "previewType": {
+      "const": "wastelandforge/mcm-json-loose-file-install-preview/v1"
+    },
+    "command": {
+      "enum": [
+        "generate",
+        "build",
+        "package"
+      ]
+    },
+    "target": {
+      "const": "mcm-json"
+    },
+    "dryRun": {
+      "type": "boolean"
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "package": {
+      "$ref": "#/$defs/packagePreview"
+    },
+    "archive": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/archiveNotCreated"
+        },
+        {
+          "$ref": "#/$defs/archiveCreated"
+        }
+      ]
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/installPreviewEntry"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "^(?:[a-zA-Z]:|/|\\\\\\\\)"
+      }
+    },
+    "dataInstallPath": {
+      "type": "string",
+      "pattern": "^Data/[^\\\\]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "packagePreview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packageType",
+        "root",
+        "layout",
+        "installRoot",
+        "mode",
+        "writesToGameData",
+        "writesToMo2Profile",
+        "launchesGame"
+      ],
+      "properties": {
+        "packageType": {
+          "const": "wastelandforge/mcm-json-loose-files/v1"
+        },
+        "root": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "layout": {
+          "const": "fallout-new-vegas-data-loose-files"
+        },
+        "installRoot": {
+          "const": "Data"
+        },
+        "mode": {
+          "const": "preview-only"
+        },
+        "writesToGameData": {
+          "const": false
+        },
+        "writesToMo2Profile": {
+          "const": false
+        },
+        "launchesGame": {
+          "const": false
+        }
+      }
+    },
+    "archiveNotCreated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "validation",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "const": "not-created"
+        },
+        "validation": {
+          "const": "not-applicable"
+        },
+        "reason": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "archiveCreated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "validation",
+        "outputFile",
+        "mediaType",
+        "compression",
+        "sha256",
+        "length"
+      ],
+      "properties": {
+        "status": {
+          "const": "created"
+        },
+        "validation": {
+          "const": "entries-matched"
+        },
+        "outputFile": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "mediaType": {
+          "const": "application/zip"
+        },
+        "compression": {
+          "const": "store"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "installPreviewEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id",
+        "dataPath",
+        "sourceFile",
+        "installPath",
+        "mediaType",
+        "action"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "mcm-menu",
+            "mcm-translation",
+            "asset"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "dataPath": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "sourceFile": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "declaredSourceFile": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "targetFile": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "installPath": {
+          "$ref": "#/$defs/dataInstallPath"
+        },
+        "mediaType": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "action": {
+          "const": "would-copy-loose-file"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "mcm-menu"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "mediaType": {
+                "const": "application/json"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "mcm-translation"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "mediaType": {
+                "const": "text/plain"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "asset"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "declaredSourceFile",
+              "targetFile"
+            ],
+            "properties": {
+              "mediaType": {
+                "const": "image/vnd-ms.dds"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

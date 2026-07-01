@@ -321,11 +321,60 @@ Gate 70 teaches `McmJsonGenerator` to stage referenced MCM texture assets as
 loose files under their game-relative target paths and to include those staged
 paths in outputs, manifests, output digests, and build checksums. Multi-slider,
 color picker, callbacks, capability-to-runtime requirement inference, in-game
-runtime probes, ZIP/FOMOD package archives, plugin records, and external tool
+runtime probes, FOMOD package archives, plugin records, and external tool
 execution remain future work.
 
 Gate 71 teaches `McmJsonGenerator` to write `package-manifest.json` beside the
 loose-file MCM output tree. The package manifest records menu, translation,
-and asset entries plus payload digests, while ZIP/FOMOD archive creation,
-actual `forge package` execution, plugin records, and external tool execution
-remain future work.
+and asset entries plus payload digests. Later gates add ZIP archive creation
+and canonical package command execution; FOMOD archive creation, plugin
+records, and external tool execution remain future work.
+
+Gate 72 teaches `McmJsonGenerator` to write `dist/mcm-json/package.zip` during
+`forge build --target mcm-json`. ZIP entries come from the package payload
+list, are sorted, and use normalized timestamps. FOMOD archive creation,
+plugin records, and external tool execution remain future work.
+
+Gate 73 implements the canonical `forge package` command skeleton for
+`--target mcm-json`. It reuses `McmJsonGenerator` package output under
+`dist/mcm-json`, writes `package.zip`, `package-manifest.json`,
+`build-manifest.json`, and `checksums.sha256`, and records
+`wastelandforge/package-mcm-json/v1` provenance. FOMOD installers, MO2/VFS
+installation, runtime probes, in-game verification, plugin records, and
+external tool execution remain future work.
+
+Gate 74 teaches `McmJsonGenerator` to validate generated package manifests
+against `package-manifest/0.1.0` and to check build/package ZIP entries against
+the deterministic package payload before recording package validation evidence
+in generation and build manifests. Standalone package verification, FOMOD
+installers, MO2/VFS installation, runtime probes, in-game verification, plugin
+records, and external tool execution remain future work.
+
+Gate 75 teaches `McmJsonGenerator` to write `install-preview.json` beside MCM
+JSON package outputs. The report lists Data-relative package entries, generated
+source files, would-copy install paths, archive evidence, and preview-only
+limitations, and it is included in manifests, output digests, CLI output, and
+build/package checksums. Actual Data/MO2 installation, runtime probes, in-game
+verification, plugin records, and external tool execution remain future work.
+
+Gate 76 teaches `McmJsonGenerator` to validate generated install-preview
+reports against `install-preview/0.1.0` before writing them and to record that
+schema in generation/build manifest install-preview evidence. Actual Data/MO2
+installation, runtime probes, in-game verification, plugin records, and
+external tool execution remain future work.
+
+Gate 77 teaches `McmJsonGenerator` to write `install-preview.md` beside the
+validated JSON report. The Markdown summary is deterministic generated
+evidence for human review and is recorded in manifests, output digests, CLI
+JSON output, and build/package checksums. Actual Data/MO2 installation,
+runtime probes, in-game verification, plugin records, and external tool
+execution remain future work.
+
+Gate 78 teaches `McmJsonGenerator` to write `package-verification.json` beside
+the package manifest and install-preview evidence. The report summarizes
+package entry counts, schema-validated evidence files, payload digest
+recording, archive status, and archive entry validation, then records the
+report in manifests, output digests, CLI output, and build/package checksums.
+Formal package-verification schema validation, actual Data/MO2 installation,
+runtime probes, in-game verification, plugin records, and external tool
+execution remain future work.

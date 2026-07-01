@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 71 MCM Extender package manifest baseline
+Status: Gate 78 MCM Extender package verification report baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -242,11 +242,18 @@ forge --version
 - `forge build --target reports` writes deterministic metadata reports, a
   build manifest, and checksums under project `dist/build`.
 - `forge generate --target mcm-json` writes deterministic MCM Extender JSON
-  files, plus translation INI files when declared, under project
-  `generated/mcm-json`.
+  files, translation INI files when declared, a schema-validated package
+  manifest, a schema-validated install-preview report, a human summary, and
+  `package-verification.json` under project `generated/mcm-json`.
 - `forge build --target mcm-json` writes deterministic MCM Extender JSON
-  files, translation INI files when declared, a build manifest, and checksums
-  under project `dist/mcm-json`.
+  files, translation INI files when declared, a schema-validated package
+  manifest, a schema-validated install-preview report, a human summary,
+  `package-verification.json`, a build manifest, and checksums under project
+  `dist/mcm-json`.
+- `forge package --target mcm-json` assembles the deterministic MCM Extender
+  package tree, schema-validated `install-preview.json`,
+  `install-preview.md`, `package-verification.json`, and `package.zip` under
+  project `dist/mcm-json`.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.
 - `forge validate --format sarif --output <path>` writes SARIF to a file.
 - `forge validate --format github` emits GitHub workflow-command annotations.
@@ -254,7 +261,8 @@ forge --version
 - `forge release verify --format github` emits GitHub workflow-command
   annotations for release diagnostics.
 - `forge release verify --summary <path>` writes a Markdown diagnostic summary.
-- Other canonical commands remain reserved and return stable skeleton output.
+- Remaining unimplemented canonical commands remain reserved and return stable
+  skeleton output.
 - Non-canonical aliases such as `forge scan` are rejected.
 
 ## Implemented Formats
@@ -328,6 +336,16 @@ forge --version
 - `--output <path>`
 - `--dry-run`
 
+`forge package` supports:
+
+- `--format human`
+- `--format plain`
+- `--format json`
+- `--project <path>`
+- `--target mcm-json`
+- `--output <path>`
+- `--dry-run`
+
 Unimplemented reserved skeleton commands support human/plain text and JSON status output.
 SARIF and GitHub formats are available only for diagnostic commands in the
 current gate.
@@ -382,7 +400,7 @@ dist/release-dry-run/checksums.sha256
 `--output` is accepted only when the resolved path stays under project `dist/`.
 `release prepare` and `release publish` remain reserved.
 
-## Generate And Build Evidence
+## Generate, Build, And Package Evidence
 
 `forge generate --target reports` writes:
 
@@ -406,8 +424,8 @@ dist/build/checksums.sha256
 ```
 
 `--output` is accepted for `forge generate` only when the resolved path stays
-under project `generated/`. `--output` is accepted for `forge build` only when
-the resolved path stays under project `dist/`.
+under project `generated/`. `--output` is accepted for `forge build` and
+`forge package` only when the resolved path stays under project `dist/`.
 
 The current `reports` target does not emit MCM Extender JSON, JIP text
 scripts, package archives, plugin records, or external tool output.
@@ -419,6 +437,9 @@ generated/mcm-json/MCM/<menu>.json
 generated/mcm-json/MCM/Translations/<modName>.ini
 generated/mcm-json/<asset-target>
 generated/mcm-json/package-manifest.json
+generated/mcm-json/install-preview.json
+generated/mcm-json/install-preview.md
+generated/mcm-json/package-verification.json
 generated/mcm-json/generation-manifest.json
 ```
 
@@ -429,6 +450,26 @@ dist/mcm-json/MCM/<menu>.json
 dist/mcm-json/MCM/Translations/<modName>.ini
 dist/mcm-json/<asset-target>
 dist/mcm-json/package-manifest.json
+dist/mcm-json/install-preview.json
+dist/mcm-json/install-preview.md
+dist/mcm-json/package-verification.json
+dist/mcm-json/package.zip
+dist/mcm-json/build-manifest.json
+dist/mcm-json/checksums.sha256
+```
+
+`forge package --target mcm-json` writes the same package tree and ZIP evidence
+under `dist/mcm-json` by default:
+
+```text
+dist/mcm-json/MCM/<menu>.json
+dist/mcm-json/MCM/Translations/<modName>.ini
+dist/mcm-json/<asset-target>
+dist/mcm-json/package-manifest.json
+dist/mcm-json/install-preview.json
+dist/mcm-json/install-preview.md
+dist/mcm-json/package-verification.json
+dist/mcm-json/package.zip
 dist/mcm-json/build-manifest.json
 dist/mcm-json/checksums.sha256
 ```
@@ -453,8 +494,42 @@ Gate 70 stages validated referenced texture assets under their game-relative
 target paths and records those staged files in outputs, manifests, output
 digests, and build checksums.
 Gate 71 writes `package-manifest.json` for the loose-file MCM package root,
-including menu, translation, asset entries, and payload digests. It does not
-create ZIP or FOMOD archives.
+including menu, translation, asset entries, and payload digests. It did not
+create archives by itself.
+Gate 72 writes `dist/mcm-json/package.zip` for build output, records the ZIP
+digest in `package-manifest.json`, and includes the archive in build manifests
+and checksums.
+Gate 73 implements the canonical `forge package` command skeleton for
+`--target mcm-json`, reusing the Gate 72 deterministic package tree and ZIP
+evidence with package-specific provenance. It does not implement FOMOD
+archives, MO2/VFS installation, or in-game verification.
+
+Gate 74 adds package manifest schema validation for
+`package-manifest/0.1.0`, ZIP entry validation against the deterministic
+package payload, and `packageValidation` evidence in generation/build
+manifests. It still does not implement FOMOD archives, MO2/VFS installation,
+or in-game verification.
+
+Gate 75 adds `install-preview.json` for MCM JSON generate/build/package
+commands. It reports Data-relative entries, generated source files, would-copy
+install paths, archive evidence, and preview-only limitations without
+installing files, invoking MO2, or launching the game.
+
+Gate 76 adds `install-preview/0.1.0` schema validation for that report and
+records the schema ID in generation/build manifest install-preview evidence.
+It still does not install files, invoke MO2, or launch the game.
+
+Gate 77 adds `install-preview.md` as a human-readable summary beside the
+validated JSON report. It records the summary in CLI JSON output, local
+manifests, output digests, and build/package checksums. It still does not
+install files, invoke MO2, or launch the game.
+
+Gate 78 adds `package-verification.json` as local package evidence beside the
+package manifest and install-preview reports. It records package counts,
+evidence files, payload digest status, archive status, and archive entry
+validation in CLI JSON output, local manifests, output digests, human CLI
+output, and build/package checksums. It still does not install files, invoke
+MO2, inspect VFS conflicts, or launch the game.
 
 ## Exit Codes
 

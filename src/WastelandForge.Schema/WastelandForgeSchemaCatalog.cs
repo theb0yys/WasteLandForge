@@ -50,6 +50,16 @@ public static class WastelandForgeSchemaCatalog
             "0.1.0",
             "schemas/mcm-extender-output/0.1.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.PackageManifest010,
+            "package-manifest",
+            "0.1.0",
+            "schemas/package-manifest/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.InstallPreview010,
+            "install-preview",
+            "0.1.0",
+            "schemas/install-preview/0.1.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.Quest010,
             "quest",
             "0.1.0",
