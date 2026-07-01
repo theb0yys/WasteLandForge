@@ -215,3 +215,24 @@ it to validate the package-verification report emitted by `forge generate
 Gate 80 adds generated `package-verification.md` summary output but no schema.
 The Markdown summary is human review evidence derived from the validated JSON
 report path and local package evidence.
+
+Gate 81 adds package-verification evidence cross-checks but no schema. The
+checks compare generated package-verification evidence against existing
+package manifest, install-preview, payload digest, archive, and summary
+evidence before local manifests and checksums are finalized.
+
+Gate 82 extracts those checks into reusable validator code but still adds no
+schema. The package-verification evidence schema remains
+`package-verification/0.1.0`.
+
+Gate 83 adds a file-based verifier over existing generated evidence files but
+still adds no schema. The package-verification evidence schema remains
+`package-verification/0.1.0`.
+
+Gate 84 adds payload digest recomputation to that verifier but still adds no
+schema. The package-verification evidence schema remains
+`package-verification/0.1.0`.
+
+Gate 85 adds archive digest recomputation to that verifier but still adds no
+schema. The package-verification evidence schema remains
+`package-verification/0.1.0`.

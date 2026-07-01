@@ -85,9 +85,14 @@ Gate status:
 - `gates/gate-078-mcm-extender-package-verification-report.md` - Gate 78, MCM Extender package verification report skeleton.
 - `gates/gate-079-mcm-extender-package-verification-schema-validation.md` - Gate 79, MCM Extender package verification schema and validation skeleton.
 - `gates/gate-080-mcm-extender-package-verification-human-summary.md` - Gate 80, MCM Extender package verification human summary skeleton.
+- `gates/gate-081-mcm-extender-package-verification-evidence-cross-check.md` - Gate 81, MCM Extender package verification evidence cross-check skeleton.
+- `gates/gate-082-mcm-extender-package-verification-reusable-validator.md` - Gate 82, MCM Extender package verification reusable validator skeleton.
+- `gates/gate-083-mcm-extender-package-verification-file-based-verifier.md` - Gate 83, MCM Extender package verification file-based verifier skeleton.
+- `gates/gate-084-mcm-extender-package-payload-digest-verification.md` - Gate 84, MCM Extender package payload digest verification skeleton.
+- `gates/gate-085-mcm-extender-package-archive-digest-verification.md` - Gate 85, MCM Extender package archive digest verification skeleton.
 
 Next gate:
 
-- Gate 81 - MCM Extender package verification evidence cross-check skeleton.
+- Gate 86 - MCM Extender package archive entry revalidation skeleton.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

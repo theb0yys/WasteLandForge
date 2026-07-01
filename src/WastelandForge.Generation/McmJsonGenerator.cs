@@ -211,6 +211,19 @@ public sealed class McmJsonGenerator
             packageManifestPath,
             installPreviewPath,
             installPreviewSummaryPath);
+        issues.AddRange(McmPackageVerificationEvidenceValidator.Validate(new McmPackageVerificationEvidenceValidationRequest(
+            projectRoot,
+            packageManifestPath,
+            packageManifestJson,
+            installPreviewPath,
+            installPreviewJson,
+            packageVerificationPath,
+            packageVerificationJson,
+            packageVerificationSummaryPath,
+            packageVerificationSummary,
+            packagePayloadDigests,
+            packageArchiveDigest,
+            projectId)));
 
         if (issues.Any(issue => issue.Severity == DiagnosticSeverity.Error))
         {
@@ -1255,7 +1268,8 @@ public sealed class McmJsonGenerator
                 ["schema"] = WastelandForgeSchemaIds.PackageVerification010,
                 ["status"] = "written",
                 ["report"] = ToDisplayPath(projectRoot, packageVerificationPath),
-                ["summary"] = ToDisplayPath(projectRoot, packageVerificationSummaryPath)
+                ["summary"] = ToDisplayPath(projectRoot, packageVerificationSummaryPath),
+                ["crossChecks"] = McmPackageVerificationEvidenceValidator.CreateCrossChecksJson(IsDistributionCommand(options.Command))
             },
             ["generators"] = new JsonArray
             {
@@ -1587,6 +1601,7 @@ public sealed class McmJsonGenerator
         builder.Append(" (validation: ");
         builder.Append(packageArchiveDigest is null ? "not-applicable" : "entries-matched");
         builder.AppendLine(")");
+        builder.AppendLine("- package-verification-cross-checks: passed (manifest, install-preview, payload-digests, archive, summary)");
 
         builder.AppendLine();
         builder.AppendLine("## Limitations");

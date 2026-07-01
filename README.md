@@ -2,9 +2,9 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 80 adds a
-human-readable package-verification summary beside the schema-validated MCM
-Extender JSON package-verification report.
+The project is currently in gated v0.1 implementation. Gate 85 adds archive
+digest recomputation to the internal file-based MCM Extender
+package-verification verifier while preserving the CLI command surface.
 
 ## Architecture Spine
 
@@ -17,7 +17,7 @@ Extender JSON package-verification report.
 
 ## Current Gate
 
-Gate 80 advances the first game-facing generator path. It keeps
+Gate 85 advances the first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -137,12 +137,45 @@ limitations for human review. Generation/build manifests, output digests, CLI
 JSON output, human CLI output, and build/package checksums include the
 summary.
 
+Gate 81 cross-checks package-verification evidence before final manifests and
+checksums are written. The generated verification report and summary must
+agree with the package manifest, install-preview report, payload digest count,
+and optional archive evidence. Successful generation records
+`packageVerification.crossChecks` in local manifests; mismatches are blocking
+`WF-BUILD-006` diagnostics.
+
+Gate 82 extracts those package-verification evidence checks into reusable
+`McmPackageVerificationEvidenceValidator` code. The validator is covered by
+targeted mismatch tests for package root, payload digest count, and Markdown
+summary mismatches while keeping `forge generate`, `forge build`, and
+`forge package` behavior unchanged.
+
+Gate 83 adds `McmPackageVerificationEvidenceFileVerifier` and a file-based
+request type. The verifier reads generated `package-manifest.json`,
+`install-preview.json`, `package-verification.json`, and
+`package-verification.md`, reconstructs payload/archive digest evidence from
+the package manifest, and reuses the Gate 82 validator. It is internal
+reusable code only; no new `forge` command or alias is introduced.
+
+Gate 84 makes that file-based verifier recompute package payload SHA-256 and
+length values from generated files on disk. Payload files that no longer match
+`package-manifest.json` payload digest evidence produce blocking
+`WF-BUILD-006` diagnostics. This remains an internal verifier step and does
+not add a standalone command.
+
+Gate 85 makes the same file-based verifier recompute package archive SHA-256
+and length values for generated `package.zip` files when
+`package-manifest.json` records a created archive. Archive files that no
+longer match manifest archive digest evidence produce blocking
+`WF-BUILD-006` diagnostics. This remains an internal verifier step and does
+not add a standalone command.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
 `unknown` in this gate because their safe file-marker policy remains open.
 
-Gate 80 does not inspect an MO2 profile, launch through MO2 VFS, probe a
+Gate 85 does not inspect an MO2 profile, launch through MO2 VFS, probe a
 runtime, parse provider versions, emit `WF-CAP-*` diagnostics, generate
 in-game-verified MCM Extender files, generate JIP text scripts, package
 archives as FOMOD installers, or compile plugin records. Remaining advanced
@@ -354,6 +387,18 @@ records that schema in manifest package-verification evidence.
 Gate 80 adds `package-verification.md` human summary evidence and records that
 summary in manifest package-verification evidence, output digests, CLI JSON
 output, human CLI output, and build/package checksums.
+Gate 81 adds deterministic package-verification evidence cross-checks and
+records passed cross-check status in manifest package-verification evidence.
+Gate 82 extracts package-verification evidence checks into a reusable
+validator and adds focused mismatch tests while preserving the same
+generate/build/package command surface.
+Gate 83 adds an internal file-based package-verification verifier and
+generated-file tests while preserving the same generate/build/package command
+surface.
+Gate 84 adds package payload digest recomputation to that file-based verifier
+and keeps the same generate/build/package command surface.
+Gate 85 adds package archive digest recomputation to that file-based verifier
+and keeps the same generate/build/package command surface.
 
 It intentionally does not create:
 

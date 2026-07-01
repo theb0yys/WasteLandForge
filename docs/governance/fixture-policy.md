@@ -78,3 +78,28 @@ Gate 80 validates generated package-verification Markdown summaries using the
 same synthetic fixture. Public committed fixtures still exclude generated
 package verification reports, generated package verification summaries,
 generated package archives, and package command output trees.
+
+Gate 81 validates package-verification cross-check evidence using the same
+synthetic fixture. Public committed fixtures still exclude generated package
+verification reports, summaries, manifests, generated package archives, and
+package command output trees.
+
+Gate 82 validates the reusable package-verification evidence validator with
+synthetic in-memory JSON evidence. Public committed fixtures still exclude
+generated package verification reports, summaries, manifests, generated
+package archives, and package command output trees.
+
+Gate 83 validates the file-based package-verification verifier with temp-only
+generated files from synthetic fixtures. Public committed fixtures still
+exclude generated package verification reports, summaries, manifests,
+generated package archives, and package command output trees.
+
+Gate 84 validates payload digest recomputation with temp-only generated files
+from synthetic fixtures. Public committed fixtures still exclude generated
+package verification reports, summaries, manifests, generated package
+archives, and package command output trees.
+
+Gate 85 validates archive digest recomputation with temp-only generated files
+from synthetic fixtures. Public committed fixtures still exclude generated
+package verification reports, summaries, manifests, generated package
+archives, and package command output trees.

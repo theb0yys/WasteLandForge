@@ -92,11 +92,11 @@ Gate 45 option routing:
   file only. Do not control, automate, import into, or mutate an open GECK
   session.
 
-Gate 80 option routing:
+Gate 85 option routing:
 
 - `/forge generate --target mcm-json`, `/forge build --target mcm-json`, and
   `/forge package --target mcm-json` route to the real `forge` CLI behavior
-  when available. Treat the output as the Gate 80 validated MCM Extender JSON
+  when available. Treat the output as the Gate 85 validated MCM Extender JSON
   runtime subset under `MCM/<menu>.json`, plus
   `MCM/Translations/<modName>.ini` when translations are declared, and staged
   referenced texture assets under their game-relative target paths. Build and
@@ -112,7 +112,13 @@ Gate 80 option routing:
   local package evidence, package counts, and archive validation status and is
   validated against `package-verification/0.1.0`; `package-verification.md`
   is a human-readable summary of that local package verification evidence.
-  These remain reports only:
+  Package-verification evidence is cross-checked against the package manifest,
+  install-preview report, payload digest count, optional archive evidence, and
+  Markdown summary before final local manifests and checksums are written.
+  Successful runs record `packageVerification.crossChecks`; mismatches are
+  blocking `WF-BUILD-006` diagnostics through reusable validator,
+  file-based verifier, payload digest verification, and archive digest
+  verification code. These remain reports only:
   they list Data-relative would-copy paths and do not install into Data or MO2. It
   supports header, image, toggle, keybind, checkbox,
   string-toggle, slider, choice, and text settings. MCM image filenames are

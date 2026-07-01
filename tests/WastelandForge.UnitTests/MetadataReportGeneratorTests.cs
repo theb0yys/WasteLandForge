@@ -273,6 +273,7 @@ public sealed class MetadataReportGeneratorTests
             Assert.Contains("Archive: not-created", packageVerificationSummary, StringComparison.Ordinal);
             Assert.Contains("- package-manifest-schema: passed (generated/mcm-json/package-manifest.json)", packageVerificationSummary, StringComparison.Ordinal);
             Assert.Contains("- package-payload-digests: recorded (count: 3)", packageVerificationSummary, StringComparison.Ordinal);
+            Assert.Contains("- package-verification-cross-checks: passed (manifest, install-preview, payload-digests, archive, summary)", packageVerificationSummary, StringComparison.Ordinal);
             Assert.Contains("Verification does not prove runtime MCM Extender visibility.", packageVerificationSummary, StringComparison.Ordinal);
 
             var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, result.Outputs.Manifest)))
@@ -293,6 +294,12 @@ public sealed class MetadataReportGeneratorTests
             Assert.Equal("written", (string?)manifest["packageVerification"]?["status"]);
             Assert.Equal("generated/mcm-json/package-verification.json", (string?)manifest["packageVerification"]?["report"]);
             Assert.Equal("generated/mcm-json/package-verification.md", (string?)manifest["packageVerification"]?["summary"]);
+            Assert.Equal("passed", (string?)manifest["packageVerification"]?["crossChecks"]?["status"]);
+            Assert.Equal("matched", (string?)manifest["packageVerification"]?["crossChecks"]?["packageManifest"]);
+            Assert.Equal("matched", (string?)manifest["packageVerification"]?["crossChecks"]?["installPreview"]);
+            Assert.Equal("matched", (string?)manifest["packageVerification"]?["crossChecks"]?["payloadDigests"]);
+            Assert.Equal("not-created-matched", (string?)manifest["packageVerification"]?["crossChecks"]?["archive"]);
+            Assert.Equal("matched", (string?)manifest["packageVerification"]?["crossChecks"]?["summary"]);
             Assert.Equal("generated/mcm-json/MCM/ExampleMod.json", (string?)manifest["menus"]?[0]?["outputFile"]);
             Assert.Equal("generated/mcm-json/MCM/Translations/io.github.theboyyss.examplemod.mcm.main.ini", (string?)manifest["menus"]?[0]?["translationFile"]);
             Assert.Equal("io.github.theboyyss.examplemod.assets.texture.mcm.logo", (string?)manifest["assets"]?[0]?["id"]);
@@ -401,6 +408,7 @@ public sealed class MetadataReportGeneratorTests
             Assert.Contains("Archive: dist/mcm-json/package.zip (created)", packageVerificationSummary, StringComparison.Ordinal);
             Assert.Contains("Archive validation: entries-matched", packageVerificationSummary, StringComparison.Ordinal);
             Assert.Contains("- package-archive: created (validation: entries-matched)", packageVerificationSummary, StringComparison.Ordinal);
+            Assert.Contains("- package-verification-cross-checks: passed (manifest, install-preview, payload-digests, archive, summary)", packageVerificationSummary, StringComparison.Ordinal);
 
             var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, result.Outputs.Manifest)))
                 ?? throw new InvalidOperationException("Build manifest did not parse.");
@@ -414,6 +422,7 @@ public sealed class MetadataReportGeneratorTests
             Assert.Equal(WastelandForgeSchemaIds.PackageVerification010, (string?)manifest["packageVerification"]?["schema"]);
             Assert.Equal("dist/mcm-json/package-verification.json", (string?)manifest["packageVerification"]?["report"]);
             Assert.Equal("dist/mcm-json/package-verification.md", (string?)manifest["packageVerification"]?["summary"]);
+            Assert.Equal("created-matched", (string?)manifest["packageVerification"]?["crossChecks"]?["archive"]);
             Assert.Equal("dist/mcm-json/textures/interface/ExampleMod/Logo.dds", (string?)manifest["assets"]?[0]?["outputFile"]);
             Assert.Contains(result.OutputDigests, digest => digest.Path == "dist/mcm-json/package-manifest.json");
             Assert.Contains(result.OutputDigests, digest => digest.Path == "dist/mcm-json/install-preview.json");
@@ -501,6 +510,7 @@ public sealed class MetadataReportGeneratorTests
             Assert.Contains("Command: package", packageVerificationSummary, StringComparison.Ordinal);
             Assert.Contains("Archive: dist/mcm-json/package.zip (created)", packageVerificationSummary, StringComparison.Ordinal);
             Assert.Contains("Result: passed", packageVerificationSummary, StringComparison.Ordinal);
+            Assert.Contains("- package-verification-cross-checks: passed (manifest, install-preview, payload-digests, archive, summary)", packageVerificationSummary, StringComparison.Ordinal);
 
             var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, result.Outputs.Manifest)))
                 ?? throw new InvalidOperationException("Package build manifest did not parse.");
@@ -515,6 +525,8 @@ public sealed class MetadataReportGeneratorTests
             Assert.Equal(WastelandForgeSchemaIds.PackageVerification010, (string?)manifest["packageVerification"]?["schema"]);
             Assert.Equal("dist/mcm-json/package-verification.json", (string?)manifest["packageVerification"]?["report"]);
             Assert.Equal("dist/mcm-json/package-verification.md", (string?)manifest["packageVerification"]?["summary"]);
+            Assert.Equal("passed", (string?)manifest["packageVerification"]?["crossChecks"]?["status"]);
+            Assert.Equal("created-matched", (string?)manifest["packageVerification"]?["crossChecks"]?["archive"]);
 
             var checksums = File.ReadAllText(Path.Combine(projectRoot, result.Outputs.Checksums!));
             Assert.Contains("package.zip", checksums, StringComparison.Ordinal);

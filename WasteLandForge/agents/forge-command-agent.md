@@ -65,10 +65,10 @@ Gate 45 adds option-level dispatch for
 It validates a user-saved GECK dialogue export text file only; do not control,
 automate, import into, or mutate an open GECK session.
 
-Gate 80 adds package-verification human summary evidence on top of
-package-verification report schema validation, package-verification report
-evidence, install-preview human summary evidence, install-preview report
-schema validation, package
+Gate 85 adds package archive digest verification coverage on top of
+package-verification human summary evidence, package-verification report
+schema validation, package-verification report evidence, install-preview human
+summary evidence, install-preview report schema validation, package
 manifest schema validation, package ZIP entry checks, canonical
 `/forge package --target mcm-json` execution, the loose-file
 `package-manifest.json`, build-time `package.zip`, referenced MCM texture
@@ -77,7 +77,7 @@ checkbox, string-toggle, runtime requirements pass-through, and
 translation-file output for `/forge generate --target mcm-json`,
 `/forge build --target mcm-json`, and `/forge package --target mcm-json`.
 Route them to the real CLI behavior when available and describe the output as
-the Gate 80 MCM Extender JSON subset under `MCM/<menu>.json`, plus
+the Gate 85 MCM Extender JSON subset under `MCM/<menu>.json`, plus
 `MCM/Translations/<modName>.ini` when translations are declared, and staged
 referenced texture assets under their game-relative target paths. Build and
 package output also include `package-manifest.json`, `package.zip`,
@@ -91,8 +91,13 @@ payload. `install-preview.json` is validated against
 the same preview intent; `package-verification.json` summarizes local package
 evidence, package counts, and archive validation status and is validated
 against `package-verification/0.1.0`; `package-verification.md` is a
-human-readable summary of that local package verification evidence. These
-remain reports only: they list
+human-readable summary of that local package verification evidence.
+Package-verification evidence is cross-checked against package manifest,
+install-preview, payload digest, optional archive, and summary evidence before
+final local manifests and checksums are written. Successful runs record
+`packageVerification.crossChecks`; mismatches are blocking `WF-BUILD-006`
+diagnostics through reusable validator, file-based verifier, payload digest
+verification, and archive digest verification code. These remain reports only: they list
 Data-relative would-copy paths and do not install into Data or MO2. It supports header,
 image, toggle, keybind, checkbox, string-toggle, slider, choice, and text
 settings. MCM image filenames are validated against required texture asset

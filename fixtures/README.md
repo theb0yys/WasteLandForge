@@ -479,3 +479,28 @@ command output trees to the committed fixture corpus.
 Gate 80 uses the same fixture to test generated package-verification Markdown
 summaries. It still adds no generated package verification reports, summaries,
 archives, or package command output trees to the committed fixture corpus.
+
+Gate 81 uses the same fixture to test package-verification evidence
+cross-checks. It still adds no generated package verification reports,
+summaries, archives, manifests, or package command output trees to the
+committed fixture corpus.
+
+Gate 82 adds reusable validator tests with synthetic in-memory JSON evidence.
+It still adds no Bethesda assets, third-party MCM/MCM Extender files,
+generated package verification reports, summaries, archives, manifests, or
+package command output trees to the committed fixture corpus.
+
+Gate 83 uses temp-only generated output from the synthetic `ExampleMod`
+fixture to test the file-based package-verification verifier. It still adds no
+generated package verification reports, summaries, archives, manifests, or
+package command output trees to the committed fixture corpus.
+
+Gate 84 uses the same temp-only generated output to test payload digest
+recomputation after editing a generated MCM JSON payload file. It still adds
+no generated package verification reports, summaries, archives, manifests, or
+package command output trees to the committed fixture corpus.
+
+Gate 85 uses the same temp-only generated output to test archive digest
+recomputation after editing generated `package.zip`. It still adds no
+generated package verification reports, summaries, archives, manifests, or
+package command output trees to the committed fixture corpus.

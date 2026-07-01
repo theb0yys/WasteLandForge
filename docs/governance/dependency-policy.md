@@ -89,3 +89,18 @@ Gate 80 writes only a human-readable summary of that local package
 verification report; it still does not copy files into a game install, create
 an MO2 mod, inspect MO2 VFS visibility, launch the game, or bundle
 third-party runtime dependencies.
+Gate 81 cross-checks only Forge-generated local package verification
+evidence; it still does not copy files into a game install, create an MO2 mod,
+inspect MO2 VFS visibility, launch the game, or bundle third-party runtime
+dependencies.
+Gate 82 extracts those checks into reusable local validator code; it still
+does not add, download, rehost, or require third-party runtime dependencies.
+Gate 83 adds only local file-reading verifier code over Forge-generated
+evidence; it still does not add, download, rehost, or require third-party
+runtime dependencies.
+Gate 84 adds only local SHA-256 recomputation over Forge-generated payload
+files; it still does not add, download, rehost, or require third-party runtime
+dependencies.
+Gate 85 adds only local SHA-256 recomputation over Forge-generated package
+archives; it still does not add, download, rehost, or require third-party
+runtime dependencies.

@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 80 MCM Extender package verification human summary baseline
+Status: Gate 85 MCM Extender package archive digest verification baseline
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -255,6 +255,19 @@ forge --version
   package tree, schema-validated `install-preview.json`,
   `install-preview.md`, schema-validated `package-verification.json`,
   `package-verification.md`, and `package.zip` under project `dist/mcm-json`.
+- `forge generate|build|package --target mcm-json` cross-checks
+  package-verification evidence against the package manifest, install-preview
+  report, payload digest count, archive evidence, and Markdown summary before
+  final local manifests and checksums are written.
+- The package-verification evidence checks are implemented through reusable
+  validator code; Gate 82 does not add new commands or aliases.
+- Gate 83 adds an internal file-based verifier for generated package evidence;
+  it does not add new commands or aliases.
+- Gate 84 makes that internal verifier recompute package payload SHA-256 and
+  length values from generated files; it does not add new commands or aliases.
+- Gate 85 makes that internal verifier recompute package archive SHA-256 and
+  length values from generated `package.zip`; it does not add new commands or
+  aliases.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.
 - `forge validate --format sarif --output <path>` writes SARIF to a file.
 - `forge validate --format github` emits GitHub workflow-command annotations.
@@ -545,6 +558,37 @@ validated JSON report. It records the summary in CLI JSON output, local
 manifests, output digests, human CLI output, and build/package checksums. It
 still does not install files, invoke MO2, inspect VFS conflicts, or launch the
 game.
+
+Gate 81 adds package-verification evidence cross-checks before final local
+manifest and checksum evidence is written. It records passed cross-checks in
+`packageVerification.crossChecks` and emits blocking `WF-BUILD-006`
+diagnostics if the generated verification report or summary disagrees with the
+package manifest, install-preview report, payload digest count, or archive
+evidence. It still does not install files, invoke MO2, inspect VFS conflicts,
+or launch the game.
+
+Gate 82 extracts those checks into reusable package-verification evidence
+validator code and adds focused mismatch coverage. It keeps the same
+`forge generate`, `forge build`, and `forge package` command surface and still
+does not install files, invoke MO2, inspect VFS conflicts, or launch the game.
+
+Gate 83 adds an internal file-based verifier that reads generated package
+manifest, install-preview, package-verification JSON, and
+package-verification Markdown evidence, then reuses the same validator. It
+does not add a standalone verifier command, install files, invoke MO2, inspect
+VFS conflicts, or launch the game.
+
+Gate 84 makes that internal verifier recompute package payload SHA-256 and
+length values from files listed in `package-manifest.json`. Mismatches are
+blocking `WF-BUILD-006` diagnostics. It still does not add a standalone
+verifier command, install files, invoke MO2, inspect VFS conflicts, or launch
+the game.
+
+Gate 85 makes that internal verifier recompute package archive SHA-256 and
+length values for generated `package.zip` files recorded by
+`package-manifest.json`. Mismatches are blocking `WF-BUILD-006` diagnostics.
+It still does not add a standalone verifier command, install files, invoke
+MO2, inspect VFS conflicts, or launch the game.
 
 ## Exit Codes
 

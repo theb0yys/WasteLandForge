@@ -337,6 +337,29 @@ human-readable package evidence checks, manifest summary evidence, output
 digests, CLI JSON output, human CLI output, and build/package checksum
 coverage.
 
+Gate 81 updates unit and golden CLI tests to assert
+`packageVerification.crossChecks` manifest evidence and package-verification
+Markdown cross-check summary lines for generate/build/package MCM JSON output.
+
+Gate 82 adds focused `WastelandForge.UnitTests` coverage for the reusable
+package-verification evidence validator, including consistent evidence,
+package-root mismatch, payload-digest count mismatch, and Markdown summary
+mismatch cases.
+
+Gate 83 adds `WastelandForge.UnitTests` coverage for the file-based
+package-verification verifier using generated MCM JSON evidence files. It
+covers generate output without an archive, build output with an archive, and
+an edited package-verification JSON mismatch.
+
+Gate 84 extends that coverage with an edited generated payload file case. The
+file-based verifier recomputes the payload SHA-256 and length and reports a
+blocking `WF-BUILD-006` mismatch against `package-manifest.json` evidence.
+
+Gate 85 extends that coverage with an edited generated `package.zip` archive
+case. The file-based verifier recomputes the archive SHA-256 and length and
+reports a blocking `WF-BUILD-006` mismatch against `package-manifest.json`
+evidence.
+
 Run the full local suite serially:
 
 ```text

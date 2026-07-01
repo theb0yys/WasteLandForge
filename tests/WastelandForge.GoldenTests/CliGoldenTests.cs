@@ -570,6 +570,7 @@ public sealed class CliGoldenTests
         Assert.Equal("not-created", (string?)packageVerification["archive"]?["status"]);
         var packageVerificationSummary = File.ReadAllText(Path.Combine(projectRoot, "generated", "mcm-json", "package-verification.md"));
         Assert.Contains("Package root: generated/mcm-json", packageVerificationSummary, StringComparison.Ordinal);
+        Assert.Contains("- package-verification-cross-checks: passed (manifest, install-preview, payload-digests, archive, summary)", packageVerificationSummary, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -649,6 +650,7 @@ public sealed class CliGoldenTests
         Assert.Equal("entries-matched", (string?)packageVerification["archive"]?["validation"]);
         var packageVerificationSummary = File.ReadAllText(Path.Combine(projectRoot, "dist", "mcm-json", "package-verification.md"));
         Assert.Contains("Command: package", packageVerificationSummary, StringComparison.Ordinal);
+        Assert.Contains("- package-verification-cross-checks: passed (manifest, install-preview, payload-digests, archive, summary)", packageVerificationSummary, StringComparison.Ordinal);
 
         var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "mcm-json", "build-manifest.json")))
             ?? throw new InvalidOperationException("Package build manifest did not parse.");
@@ -659,6 +661,8 @@ public sealed class CliGoldenTests
         Assert.Equal(WastelandForgeSchemaIds.PackageVerification010, (string?)manifest["packageVerification"]?["schema"]);
         Assert.Equal("dist/mcm-json/package-verification.json", (string?)manifest["packageVerification"]?["report"]);
         Assert.Equal("dist/mcm-json/package-verification.md", (string?)manifest["packageVerification"]?["summary"]);
+        Assert.Equal("passed", (string?)manifest["packageVerification"]?["crossChecks"]?["status"]);
+        Assert.Equal("created-matched", (string?)manifest["packageVerification"]?["crossChecks"]?["archive"]);
     }
 
     [Fact]

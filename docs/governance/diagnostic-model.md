@@ -123,6 +123,26 @@ Gate 80 adds no new diagnostic rule family or rule ID. It writes
 `package-verification.md` only after the generated package-verification JSON
 validates and before local manifest/checksum evidence is finalized.
 
+Gate 81 adds no new diagnostic rule family. It reserves `WF-BUILD-006` for
+package-verification evidence cross-check failures before local
+manifest/checksum evidence is finalized.
+
+Gate 82 adds no new diagnostic rule family or rule ID. It routes the same
+`WF-BUILD-006` package-verification evidence mismatches through reusable
+validator code.
+
+Gate 83 adds no new diagnostic rule family or rule ID. Its file-based verifier
+uses `WF-BUILD-006` for unreadable or invalid package-verification evidence
+files and for mismatches reported by the reusable validator.
+
+Gate 84 adds no new diagnostic rule family or rule ID. Its file-based verifier
+uses `WF-BUILD-006` when recomputed package payload SHA-256 or length values
+do not match `package-manifest.json` payload digest evidence.
+
+Gate 85 adds no new diagnostic rule family or rule ID. Its file-based verifier
+uses `WF-BUILD-006` when recomputed package archive SHA-256 or length values
+do not match `package-manifest.json` archive digest evidence.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

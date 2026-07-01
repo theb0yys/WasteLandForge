@@ -390,3 +390,40 @@ evidence for human review and is recorded in manifests, output digests, CLI
 JSON output, human CLI output, and build/package checksums. Actual Data/MO2
 installation, runtime probes, in-game verification, plugin records, and
 external tool execution remain future work.
+
+Gate 81 teaches `McmJsonGenerator` to cross-check package-verification
+evidence before final manifests and checksums are written. The generated JSON
+report and Markdown summary must agree with package manifest, install-preview,
+payload digest, and optional archive evidence. Successful runs record
+`packageVerification.crossChecks`; mismatches emit `WF-BUILD-006`. Actual
+Data/MO2 installation, runtime probes, in-game verification, plugin records,
+and external tool execution remain future work.
+
+Gate 82 extracts those package-verification evidence checks into
+`McmPackageVerificationEvidenceValidator` and adds
+`McmPackageVerificationEvidenceValidationRequest` so the generated-evidence
+comparison can be reused outside `McmJsonGenerator`. It does not add a new CLI
+command, source schema, installer behavior, MO2 inspection, runtime probe, or
+plugin-record output.
+
+Gate 83 adds `McmPackageVerificationEvidenceFileVerifier` and
+`McmPackageVerificationEvidenceFileVerificationRequest`. The verifier loads
+the generated package manifest, install-preview report, package-verification
+JSON, and package-verification Markdown summary from disk, reconstructs
+payload and archive digest evidence from the package manifest, and delegates
+to the reusable validator. It still adds no CLI command, source schema,
+installer behavior, MO2 inspection, runtime probe, or plugin-record output.
+
+Gate 84 teaches `McmPackageVerificationEvidenceFileVerifier` to recompute
+package payload SHA-256 and length values from generated files on disk before
+delegating to the reusable validator. Payload files that differ from
+`package-manifest.json` payload digest evidence emit `WF-BUILD-006`. It still
+adds no CLI command, source schema, installer behavior, MO2 inspection,
+runtime probe, or plugin-record output.
+
+Gate 85 teaches `McmPackageVerificationEvidenceFileVerifier` to recompute
+package archive SHA-256 and length values for generated `package.zip` files
+before delegating to the reusable validator. Archive files that differ from
+`package-manifest.json` archive digest evidence emit `WF-BUILD-006`. It still
+adds no CLI command, source schema, installer behavior, MO2 inspection,
+runtime probe, or plugin-record output.
