@@ -75,12 +75,10 @@ internal sealed record DoctorExportIndex(
     IReadOnlyList<DoctorExportProviderStatusIndexEntry> ProviderStatuses,
     IReadOnlyList<DoctorExportCapabilityStatusIndexEntry> CapabilityStatuses,
     IReadOnlyList<DoctorExportActionIndexEntry> Actions,
+    CapabilityDoctorActionSummary ActionSummary,
     IReadOnlyList<DoctorExportRequirementIndexEntry> Requirements,
     IReadOnlyList<DoctorExportDiagnosticIndexEntry> Diagnostics,
-    IReadOnlyList<DoctorExportCataloguePolicyIndexEntry> CataloguePolicy,
-    IReadOnlyList<DoctorExportOpenQuestionIndexEntry> OpenQuestionDetails,
-    DoctorExportCataloguePolicyDiagnosticHandoff CataloguePolicyDiagnosticHandoff,
-    IReadOnlyList<string> OpenQuestions);
+    CapabilityCataloguePolicyView CataloguePolicy);
 
 internal sealed record DoctorExportDoctorAreaIndexEntry(
     string Id,
@@ -129,28 +127,6 @@ internal sealed record DoctorExportDiagnosticIndexEntry(
     string SourceFile,
     string? SourcePointer,
     string? SuggestedFix);
-
-internal sealed record DoctorExportCataloguePolicyIndexEntry(
-    string SourceType,
-    int Count,
-    IReadOnlyList<string> QuestionIds);
-
-internal sealed record DoctorExportOpenQuestionIndexEntry(
-    string Id,
-    string SourceType,
-    string Question);
-
-internal sealed record DoctorExportCataloguePolicyDiagnosticHandoff(
-    int Questions,
-    IReadOnlyList<DoctorExportCataloguePolicyDiagnosticHandoffEntry> Items);
-
-internal sealed record DoctorExportCataloguePolicyDiagnosticHandoffEntry(
-    string QuestionId,
-    string SourceType,
-    string Status,
-    string Title,
-    string Message,
-    string SuggestedAction);
 
 internal static class DoctorExportRedactor
 {
@@ -257,19 +233,9 @@ internal static class DoctorExportRedactor
         CapabilityScanReport report,
         DiagnosticReport diagnostics)
     {
-        var openQuestionDetails = report.Doctor.OpenQuestions
-            .Select(CreateOpenQuestionIndexEntry)
-            .ToArray();
-        var cataloguePolicyDiagnosticHandoff = CapabilityCataloguePolicyIndex
-            .CreateDiagnosticHandoff(report.Doctor.OpenQuestions)
-            .Select(item => new DoctorExportCataloguePolicyDiagnosticHandoffEntry(
-                item.QuestionId,
-                item.SourceType,
-                item.Status,
-                item.Title,
-                item.Message,
-                item.SuggestedAction))
-            .ToArray();
+        var cataloguePolicy = CapabilityCataloguePolicyIndex.CreateView(report.Doctor.OpenQuestions);
+
+        var actionSummary = CapabilityDoctorActionSummaryIndex.Create(report.Doctor);
 
         return new DoctorExportIndex(
             report.Doctor.Areas
@@ -320,9 +286,10 @@ internal static class DoctorExportRedactor
                     area.Id,
                     area.Title,
                     area.Status,
-                    ResolveActionSourceType(area.Id),
+                    CapabilityDoctorActionSummaryIndex.ResolveActionSourceType(area.Id),
                     area.Actions))
                 .ToArray(),
+            actionSummary,
             report.Requirements is null
                 ? []
                 : report.Requirements.Requirements
@@ -347,44 +314,11 @@ internal static class DoctorExportRedactor
                     issue.PrimaryLocation.Pointer?.ToString(),
                     issue.SuggestedFix))
                 .ToArray(),
-            openQuestionDetails
-                .GroupBy(question => question.SourceType)
-                .OrderBy(group => group.Key, StringComparer.Ordinal)
-                .Select(group => new DoctorExportCataloguePolicyIndexEntry(
-                    group.Key,
-                    group.Count(),
-                    group.Select(question => question.Id)
-                        .Order(StringComparer.Ordinal)
-                        .ToArray()))
-                .ToArray(),
-            openQuestionDetails,
-            new DoctorExportCataloguePolicyDiagnosticHandoff(
-                cataloguePolicyDiagnosticHandoff.Length,
-                cataloguePolicyDiagnosticHandoff),
-            report.Doctor.OpenQuestions.ToArray());
+            cataloguePolicy);
     }
 
     private static string FormatSeverity(DiagnosticSeverity severity) =>
         severity.ToString().ToLowerInvariant();
-
-    private static string ResolveActionSourceType(string areaId) =>
-        StringComparer.Ordinal.Equals(areaId, "project-requirements")
-            ? "project-requirement"
-            : "capability-scan";
-
-    private static DoctorExportOpenQuestionIndexEntry CreateOpenQuestionIndexEntry(string question)
-    {
-        var id = question switch
-        {
-            var value when value.StartsWith("JIP PP LN alias", StringComparison.Ordinal) =>
-                "catalogue-policy.jip-pp-ln-alias",
-            var value when value.StartsWith("GECK Extender", StringComparison.Ordinal) =>
-                "catalogue-policy.geck-extender-marker",
-            _ => "catalogue-policy.unspecified"
-        };
-
-        return new DoctorExportOpenQuestionIndexEntry(id, "catalogue-policy", question);
-    }
 
     private static CapabilityRequirementResolutionReport RedactRequirements(
         CapabilityRequirementResolutionReport requirements,
@@ -635,12 +569,13 @@ internal static class DoctorExportJsonSerializer
             ["providerStatuses"] = new JsonArray(index.ProviderStatuses.Select(ToJson).ToArray()),
             ["capabilityStatuses"] = new JsonArray(index.CapabilityStatuses.Select(ToJson).ToArray()),
             ["actions"] = new JsonArray(index.Actions.Select(ToJson).ToArray()),
+            ["actionSummary"] = CapabilityDoctorActionSummaryIndex.ToJson(index.ActionSummary),
             ["requirements"] = new JsonArray(index.Requirements.Select(ToJson).ToArray()),
             ["diagnostics"] = new JsonArray(index.Diagnostics.Select(ToJson).ToArray()),
-            ["cataloguePolicy"] = new JsonArray(index.CataloguePolicy.Select(ToJson).ToArray()),
-            ["openQuestionDetails"] = new JsonArray(index.OpenQuestionDetails.Select(ToJson).ToArray()),
-            ["cataloguePolicyDiagnosticHandoff"] = ToJson(index.CataloguePolicyDiagnosticHandoff),
-            ["openQuestions"] = new JsonArray(index.OpenQuestions.Select(question => JsonValue.Create(question)).ToArray())
+            ["cataloguePolicy"] = CapabilityCataloguePolicyOpenQuestionRenderer.ToSourceTypeIndexJson(index.CataloguePolicy),
+            ["openQuestionDetails"] = CapabilityCataloguePolicyOpenQuestionRenderer.ToOpenQuestionDetailsJson(index.CataloguePolicy),
+            ["cataloguePolicyDiagnosticHandoff"] = CapabilityCataloguePolicyHandoffRenderer.ToJson(index.CataloguePolicy),
+            ["openQuestions"] = new JsonArray(index.CataloguePolicy.OpenQuestions.Select(question => JsonValue.Create(question)).ToArray())
         };
 
     private static JsonObject ToJson(DoctorExportDoctorAreaIndexEntry area) =>
@@ -705,40 +640,6 @@ internal static class DoctorExportJsonSerializer
                 ["pointer"] = requirement.SourcePointer
             },
             ["message"] = requirement.Message
-        };
-
-    private static JsonObject ToJson(DoctorExportOpenQuestionIndexEntry openQuestion) =>
-        new()
-        {
-            ["id"] = openQuestion.Id,
-            ["sourceType"] = openQuestion.SourceType,
-            ["question"] = openQuestion.Question
-        };
-
-    private static JsonObject ToJson(DoctorExportCataloguePolicyDiagnosticHandoff handoff) =>
-        new()
-        {
-            ["questions"] = handoff.Questions,
-            ["items"] = new JsonArray(handoff.Items.Select(ToJson).ToArray())
-        };
-
-    private static JsonObject ToJson(DoctorExportCataloguePolicyDiagnosticHandoffEntry handoff) =>
-        new()
-        {
-            ["questionId"] = handoff.QuestionId,
-            ["sourceType"] = handoff.SourceType,
-            ["status"] = handoff.Status,
-            ["title"] = handoff.Title,
-            ["message"] = handoff.Message,
-            ["suggestedAction"] = handoff.SuggestedAction
-        };
-
-    private static JsonObject ToJson(DoctorExportCataloguePolicyIndexEntry cataloguePolicy) =>
-        new()
-        {
-            ["sourceType"] = cataloguePolicy.SourceType,
-            ["count"] = cataloguePolicy.Count,
-            ["questionIds"] = new JsonArray(cataloguePolicy.QuestionIds.Select(questionId => JsonValue.Create(questionId)).ToArray())
         };
 
     private static JsonObject ToJson(DoctorExportDiagnosticIndexEntry diagnostic)
@@ -864,6 +765,13 @@ internal static class DoctorExportTextRenderer
             }
         }
 
+        CapabilityDoctorActionSummaryIndex.AppendText(
+            builder,
+            report.Index.ActionSummary,
+            "  ",
+            "    ",
+            "      ");
+
         if (report.Index.Requirements.Count > 0)
         {
             builder.AppendLine("  Requirements:");
@@ -888,40 +796,31 @@ internal static class DoctorExportTextRenderer
             }
         }
 
-        if (report.Index.CataloguePolicy.Count > 0)
-        {
-            builder.AppendLine("  Catalogue policy:");
-            foreach (var policy in report.Index.CataloguePolicy)
-            {
-                builder.AppendLine($"    {policy.SourceType}: {policy.Count} open question(s)");
-                builder.AppendLine($"      Questions: {JoinOrNone(policy.QuestionIds)}");
-            }
-        }
+        CapabilityCataloguePolicyOpenQuestionRenderer.AppendSourceTypeIndexText(
+            builder,
+            report.Index.CataloguePolicy,
+            "  ",
+            "    ",
+            "      ",
+            "Catalogue policy:");
+        CapabilityCataloguePolicyOpenQuestionRenderer.AppendOpenQuestionDetailsText(
+            builder,
+            report.Index.CataloguePolicy,
+            "  ",
+            "    ",
+            "Open question details:");
 
-        if (report.Index.OpenQuestionDetails.Count > 0)
-        {
-            builder.AppendLine("  Open question details:");
-            foreach (var question in report.Index.OpenQuestionDetails)
-            {
-                builder.AppendLine($"    {question.Id} ({question.SourceType}): {question.Question}");
-            }
-        }
+        CapabilityCataloguePolicyHandoffRenderer.AppendText(
+            builder,
+            report.Index.CataloguePolicy,
+            "  ",
+            "    ",
+            "      ");
 
-        if (report.Index.CataloguePolicyDiagnosticHandoff.Items.Count > 0)
-        {
-            builder.AppendLine("  Catalogue policy diagnostic handoff:");
-            foreach (var item in report.Index.CataloguePolicyDiagnosticHandoff.Items)
-            {
-                builder.AppendLine($"    {item.QuestionId}: {item.Status} - {item.Title}");
-                builder.AppendLine($"      {item.Message}");
-                builder.AppendLine($"      Suggested action: {item.SuggestedAction}");
-            }
-        }
-
-        if (report.Index.OpenQuestions.Count > 0)
+        if (report.Index.CataloguePolicy.OpenQuestions.Count > 0)
         {
             builder.AppendLine("  Open questions:");
-            foreach (var question in report.Index.OpenQuestions)
+            foreach (var question in report.Index.CataloguePolicy.OpenQuestions)
             {
                 builder.AppendLine($"    {question}");
             }

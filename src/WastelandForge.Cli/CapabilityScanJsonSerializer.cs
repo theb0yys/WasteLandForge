@@ -75,8 +75,12 @@ internal static class CapabilityScanJsonSerializer
             ["wrongScopeCapabilities"] = summary.WrongScopeCapabilities
         };
 
-    private static JsonObject ToIndex(CapabilityScanReport report) =>
-        new()
+    private static JsonObject ToIndex(CapabilityScanReport report)
+    {
+        var cataloguePolicy = CapabilityCataloguePolicyIndex.CreateView(report.Doctor.OpenQuestions);
+        var actionSummary = CapabilityDoctorActionSummaryIndex.Create(report.Doctor);
+
+        return new()
         {
             ["providerStatuses"] = new JsonArray(report.Providers
                 .GroupBy(provider => (provider.Status, provider.Provider.InstallScope))
@@ -119,23 +123,20 @@ internal static class CapabilityScanJsonSerializer
                         ["title"] = area.Title,
                         ["status"] = area.Status
                     },
-                    ["sourceType"] = ResolveActionSourceType(area.Id),
+                    ["sourceType"] = CapabilityDoctorActionSummaryIndex.ResolveActionSourceType(area.Id),
                     ["actions"] = new JsonArray(area.Actions
                         .Select(action => JsonValue.Create(action))
                         .ToArray())
                 })
                 .ToArray()),
+            ["actionSummary"] = CapabilityDoctorActionSummaryIndex.ToJson(actionSummary),
             ["requirements"] = ToRequirementIndex(report.Requirements),
             ["diagnostics"] = ToDiagnosticIndex(CapabilityDiagnosticProjector.Project(report)),
-            ["cataloguePolicy"] = ToCataloguePolicyIndex(report.Doctor.OpenQuestions),
-            ["openQuestionDetails"] = ToOpenQuestionDetails(report.Doctor.OpenQuestions),
-            ["cataloguePolicyDiagnosticHandoff"] = ToCataloguePolicyDiagnosticHandoff(report.Doctor.OpenQuestions)
+            ["cataloguePolicy"] = CapabilityCataloguePolicyOpenQuestionRenderer.ToSourceTypeIndexJson(cataloguePolicy),
+            ["openQuestionDetails"] = CapabilityCataloguePolicyOpenQuestionRenderer.ToOpenQuestionDetailsJson(cataloguePolicy),
+            ["cataloguePolicyDiagnosticHandoff"] = CapabilityCataloguePolicyHandoffRenderer.ToJson(cataloguePolicy)
         };
-
-    private static string ResolveActionSourceType(string areaId) =>
-        StringComparer.Ordinal.Equals(areaId, "project-requirements")
-            ? "project-requirement"
-            : "capability-scan";
+    }
 
     private static JsonArray ToRequirementIndex(CapabilityRequirementResolutionReport? requirements) =>
         requirements is null
@@ -179,57 +180,6 @@ internal static class CapabilityScanJsonSerializer
 
     private static string FormatSeverity(DiagnosticSeverity severity) =>
         severity.ToString().ToLowerInvariant();
-
-    private static JsonArray ToCataloguePolicyIndex(IReadOnlyList<string> openQuestions)
-    {
-        var openQuestionDetails = CapabilityCataloguePolicyIndex.Create(openQuestions);
-
-        return new JsonArray(openQuestionDetails
-            .GroupBy(question => question.SourceType)
-            .OrderBy(group => group.Key, StringComparer.Ordinal)
-            .Select(group => new JsonObject
-            {
-                ["sourceType"] = group.Key,
-                ["count"] = group.Count(),
-                ["questionIds"] = new JsonArray(group
-                    .Select(question => question.Id)
-                    .Order(StringComparer.Ordinal)
-                    .Select(questionId => JsonValue.Create(questionId))
-                    .ToArray())
-            })
-            .ToArray());
-    }
-
-    private static JsonArray ToOpenQuestionDetails(IReadOnlyList<string> openQuestions) =>
-        new(CapabilityCataloguePolicyIndex.Create(openQuestions)
-            .Select(question => new JsonObject
-            {
-                ["id"] = question.Id,
-                ["sourceType"] = question.SourceType,
-                ["question"] = question.Question
-            })
-            .ToArray());
-
-    private static JsonObject ToCataloguePolicyDiagnosticHandoff(IReadOnlyList<string> openQuestions)
-    {
-        var handoff = CapabilityCataloguePolicyIndex.CreateDiagnosticHandoff(openQuestions);
-
-        return new JsonObject
-        {
-            ["questions"] = handoff.Count,
-            ["items"] = new JsonArray(handoff
-                .Select(item => new JsonObject
-                {
-                    ["questionId"] = item.QuestionId,
-                    ["sourceType"] = item.SourceType,
-                    ["status"] = item.Status,
-                    ["title"] = item.Title,
-                    ["message"] = item.Message,
-                    ["suggestedAction"] = item.SuggestedAction
-                })
-                .ToArray())
-        };
-    }
 
     private static JsonObject ToJson(CapabilityDoctorReport doctor) =>
         new()

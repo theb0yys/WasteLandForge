@@ -815,3 +815,23 @@ handoff entries derived from existing Doctor open-question output.
 `forge capabilities scan` JSON now includes
 `index.cataloguePolicyDiagnosticHandoff`, and text output prints matching
 handoff entries under `Scan status index`.
+
+Gate 155 extracts shared catalogue-policy diagnostic handoff rendering helpers
+for `forge capabilities explain`, `forge capabilities scan`, and
+`forge doctor export`. The JSON shapes and text sections stay unchanged.
+
+Gate 156 extracts shared catalogue-policy open-question detail and source-type
+index rendering helpers for `forge capabilities explain`,
+`forge capabilities scan`, and `forge doctor export`. The JSON shapes and text
+sections stay unchanged.
+
+Gate 157 extracts a shared catalogue-policy view model for the same command
+family. The view carries raw open questions, structured details, source-type
+indexes, and diagnostic handoff entries while preserving the JSON shapes and
+text sections.
+
+Gate 158 extracts a shared Doctor action summary helper for
+`forge capabilities scan` and `forge doctor export`. JSON output now includes
+`index.actionSummary`, and text output prints an `Action summary:` section
+that summarizes existing non-ready Doctor area actions by source type and
+area status.

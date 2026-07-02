@@ -183,16 +183,25 @@ Gate 126 option routing:
   installation, or in-game verification exist until later gates implement
   them.
 
-Gate 154 option routing:
+Gate 158 option routing:
+
+Gate 158 keeps the Gate 157 command behavior and adds compact
+`index.actionSummary` metadata to scan and Doctor export output. Treat it as a
+summary of existing non-ready Doctor area actions, not new provider detection,
+provider-version evidence, Doctor planning, runtime confirmation, or
+catalogue-policy resolution.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider
   evidence plus compact `index.providerStatuses`,
-  `index.capabilityStatuses`, `index.actions`, `index.requirements`,
-  `index.diagnostics`, `index.cataloguePolicy`, `index.openQuestionDetails`,
-  `index.cataloguePolicyDiagnosticHandoff`, `doctor.index.areaStatuses`,
-  derived Doctor readiness areas, and next actions. Treat `index.actions` as existing non-ready Doctor area actions
+  `index.capabilityStatuses`, `index.actions`, `index.actionSummary`,
+  `index.requirements`, `index.diagnostics`, `index.cataloguePolicy`,
+  `index.openQuestionDetails`, `index.cataloguePolicyDiagnosticHandoff`,
+  `doctor.index.areaStatuses`, derived Doctor readiness areas, and next
+  actions. Treat `index.actions` as existing non-ready Doctor area actions
   grouped by area and source type before the full Doctor area list. Treat
+  `index.actionSummary` as a source-type and area-status summary of those
+  same existing actions. Treat
   `index.requirements` as unavailable project requirement entries before the
   full requirement report. Treat `index.diagnostics` as already-projected
   `WF-CAP-*` issues before the full diagnostics report. Treat
@@ -228,7 +237,8 @@ Gate 154 option routing:
   `index.doctorAreaStatuses` groups by Doctor area readiness status,
   `index.providerStatuses` groups by provider status and install scope,
   compact `index.capabilityStatuses` groups by capability status,
-  `index.actions` entries for non-ready Doctor area actions, compact
+  `index.actions` entries for non-ready Doctor area actions,
+  `index.actionSummary` metadata for those existing action groups, compact
   `index.requirements` entries for unavailable project requirements, compact
   `index.diagnostics` entries for already-projected `WF-CAP-*` issues,
   compact `index.cataloguePolicy` groups by open-question source type,

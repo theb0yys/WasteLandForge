@@ -646,6 +646,33 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CapabilitiesScanJsonIncludesActionSummaryIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var actions = json["index"]?["actions"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan index did not include actions.");
+        var actionSummary = json["index"]?["actionSummary"] ??
+            throw new InvalidOperationException("Capability scan index did not include action summary.");
+        var sourceTypes = actionSummary["sourceTypes"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan action summary did not include source types.");
+        var areaStatuses = actionSummary["areaStatuses"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan action summary did not include area statuses.");
+        var expectedActions = actions.Sum(action => action?["actions"]?.AsArray().Count ?? 0);
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(actions.Count, (int?)actionSummary["areasWithActions"]);
+        Assert.Equal(expectedActions, (int?)actionSummary["actions"]);
+        Assert.Single(sourceTypes);
+        Assert.Equal("capability-scan", (string?)sourceTypes[0]?["sourceType"]);
+        Assert.Equal(actions.Count, (int?)sourceTypes[0]?["areasWithActions"]);
+        Assert.True((int?)sourceTypes[0]?["actions"] > 0);
+        Assert.Single(areaStatuses);
+        Assert.Equal("unknown", (string?)areaStatuses[0]?["status"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void CapabilitiesScanJsonIncludesCataloguePolicyIndex()
     {
         var result = RunCli("capabilities", "scan", "--format", "json");
@@ -862,6 +889,20 @@ public sealed class CliGoldenTests
             StringComparison.Ordinal);
         Assert.Contains("mcm-json-stack (capability-scan, unknown):", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Doctor readiness index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanPlainIncludesActionSummaryIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("  Action summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Actions:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Source capability-scan:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status unknown:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Areas: authoring-tools, base-game, mcm-json-stack, script-extender-stack", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1611,6 +1652,31 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void DoctorExportJsonIncludesCompactActionSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("doctor", "export", projectRoot, "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var actions = json["index"]?["actions"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export index did not include actions.");
+        var actionSummary = json["index"]?["actionSummary"] ??
+            throw new InvalidOperationException("Doctor export index did not include action summary.");
+        var sourceTypes = actionSummary["sourceTypes"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export action summary did not include source types.");
+        var expectedActions = actions.Sum(action => action?["actions"]?.AsArray().Count ?? 0);
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(actions.Count, (int?)actionSummary["areasWithActions"]);
+        Assert.Equal(expectedActions, (int?)actionSummary["actions"]);
+        Assert.Equal(2, sourceTypes.Count);
+        Assert.Equal("capability-scan", (string?)sourceTypes[0]?["sourceType"]);
+        Assert.Equal("project-requirement", (string?)sourceTypes[1]?["sourceType"]);
+        Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void DoctorExportJsonIncludesCompactRequirementsIndex()
     {
         var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
@@ -1822,6 +1888,22 @@ public sealed class CliGoldenTests
             "Next: Resolve required project capability runtime.scripting.xnvse: The current scan does not have enough evidence to resolve this capability.",
             result.Stdout,
             StringComparison.Ordinal);
+        Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportPlainIncludesCompactActionSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("doctor", "export", projectRoot, "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("  Action summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Source capability-scan:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Source project-requirement:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status unknown:", result.Stdout, StringComparison.Ordinal);
         Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(string.Empty, result.Stderr);
     }

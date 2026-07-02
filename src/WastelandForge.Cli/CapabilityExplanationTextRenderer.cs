@@ -9,6 +9,7 @@ internal static class CapabilityExplanationTextRenderer
     public static string Render(CapabilityExplanationReport report)
     {
         var builder = new StringBuilder();
+        var cataloguePolicy = CapabilityCataloguePolicyIndex.CreateView(report.OpenQuestions);
         builder.AppendLine($"Capability explanation: {report.Target.Id}");
         builder.AppendLine($"Kind: {report.Target.Kind}");
         builder.AppendLine($"Title: {report.Target.Title}");
@@ -25,28 +26,21 @@ internal static class CapabilityExplanationTextRenderer
         builder.AppendLine("Runtime probes: disabled");
         builder.AppendLine("MO2 VFS: disabled");
 
-        var openQuestionDetails = CapabilityCataloguePolicyIndex.Create(report.OpenQuestions);
-        if (openQuestionDetails.Count > 0)
+        if (cataloguePolicy.OpenQuestionDetails.Count > 0)
         {
             builder.AppendLine();
-            builder.AppendLine("Catalogue policy open questions:");
-            foreach (var question in openQuestionDetails)
-            {
-                builder.AppendLine($"  {question.Id} ({question.SourceType}): {question.Question}");
-            }
+            CapabilityCataloguePolicyOpenQuestionRenderer.AppendOpenQuestionDetailsText(
+                builder,
+                cataloguePolicy,
+                string.Empty,
+                "  ",
+                "Catalogue policy open questions:");
         }
 
-        var cataloguePolicyHandoff = CapabilityCataloguePolicyIndex.CreateDiagnosticHandoff(report.OpenQuestions);
-        if (cataloguePolicyHandoff.Count > 0)
+        if (cataloguePolicy.DiagnosticHandoff.Count > 0)
         {
             builder.AppendLine();
-            builder.AppendLine("Catalogue policy diagnostic handoff:");
-            foreach (var item in cataloguePolicyHandoff)
-            {
-                builder.AppendLine($"  {item.QuestionId}: {item.Status} - {item.Title}");
-                builder.AppendLine($"    {item.Message}");
-                builder.AppendLine($"    Suggested action: {item.SuggestedAction}");
-            }
+            CapabilityCataloguePolicyHandoffRenderer.AppendText(builder, cataloguePolicy, string.Empty, "  ", "    ");
         }
 
         if (report.EvidenceGroups.Count > 0)

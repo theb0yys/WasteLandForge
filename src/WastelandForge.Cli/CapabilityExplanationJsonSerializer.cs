@@ -15,6 +15,7 @@ internal static class CapabilityExplanationJsonSerializer
 
     public static string Serialize(CapabilityExplanationReport report)
     {
+        var cataloguePolicy = CapabilityCataloguePolicyIndex.CreateView(report.OpenQuestions);
         var payload = new JsonObject
         {
             ["formatVersion"] = CliConstants.JsonFormatVersion,
@@ -33,8 +34,8 @@ internal static class CapabilityExplanationJsonSerializer
             ["target"] = ToJson(report.Target),
             ["cataloguePolicy"] = new JsonObject
             {
-                ["openQuestionDetails"] = ToOpenQuestionDetails(report.OpenQuestions),
-                ["diagnosticHandoff"] = ToCataloguePolicyDiagnosticHandoff(report.OpenQuestions)
+                ["openQuestionDetails"] = CapabilityCataloguePolicyOpenQuestionRenderer.ToOpenQuestionDetailsJson(cataloguePolicy),
+                ["diagnosticHandoff"] = CapabilityCataloguePolicyHandoffRenderer.ToJson(cataloguePolicy)
             },
             ["evidenceGroups"] = new JsonArray(report.EvidenceGroups.Select(ToJson).ToArray()),
             ["providers"] = new JsonArray(report.Providers.Select(ToJson).ToArray()),
@@ -69,37 +70,6 @@ internal static class CapabilityExplanationJsonSerializer
             ["description"] = target.Description,
             ["actions"] = new JsonArray(target.Actions.Select(action => JsonValue.Create(action)).ToArray())
         };
-
-    private static JsonArray ToOpenQuestionDetails(IReadOnlyList<string> openQuestions) =>
-        new(CapabilityCataloguePolicyIndex.Create(openQuestions)
-            .Select(question => new JsonObject
-            {
-                ["id"] = question.Id,
-                ["sourceType"] = question.SourceType,
-                ["question"] = question.Question
-            })
-            .ToArray());
-
-    private static JsonObject ToCataloguePolicyDiagnosticHandoff(IReadOnlyList<string> openQuestions)
-    {
-        var handoff = CapabilityCataloguePolicyIndex.CreateDiagnosticHandoff(openQuestions);
-
-        return new JsonObject
-        {
-            ["questions"] = handoff.Count,
-            ["items"] = new JsonArray(handoff
-                .Select(item => new JsonObject
-                {
-                    ["questionId"] = item.QuestionId,
-                    ["sourceType"] = item.SourceType,
-                    ["status"] = item.Status,
-                    ["title"] = item.Title,
-                    ["message"] = item.Message,
-                    ["suggestedAction"] = item.SuggestedAction
-                })
-                .ToArray())
-        };
-    }
 
     private static JsonObject ToJson(CapabilityExplanationEvidenceGroup group) =>
         new()

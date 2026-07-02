@@ -9,6 +9,8 @@ internal static class CapabilityScanTextRenderer
     public static string Render(CapabilityScanReport report)
     {
         var builder = new StringBuilder();
+        var cataloguePolicy = CapabilityCataloguePolicyIndex.CreateView(report.Doctor.OpenQuestions);
+        var actionSummary = CapabilityDoctorActionSummaryIndex.Create(report.Doctor);
         builder.AppendLine($"Capability scan: {report.Catalog.CatalogId} {report.Catalog.Version}");
         builder.AppendLine($"Game root: {report.Inputs.GameRoot ?? "(not provided)"}");
         builder.AppendLine($"Data root: {report.Inputs.DataRoot ?? "(not provided)"}");
@@ -60,13 +62,15 @@ internal static class CapabilityScanTextRenderer
             builder.AppendLine("  Actions:");
             foreach (var actionGroup in actionGroups)
             {
-                builder.AppendLine($"    {actionGroup.Id} ({ResolveActionSourceType(actionGroup.Id)}, {actionGroup.Status}):");
+                builder.AppendLine($"    {actionGroup.Id} ({CapabilityDoctorActionSummaryIndex.ResolveActionSourceType(actionGroup.Id)}, {actionGroup.Status}):");
                 foreach (var action in actionGroup.Actions)
                 {
                     builder.AppendLine($"      Next: {action}");
                 }
             }
         }
+
+        CapabilityDoctorActionSummaryIndex.AppendText(builder, actionSummary, "  ", "    ", "      ");
 
         var unavailableRequirements = report.Requirements is null
             ? []
@@ -100,45 +104,26 @@ internal static class CapabilityScanTextRenderer
             }
         }
 
-        var cataloguePolicy = CapabilityCataloguePolicyIndex.Create(report.Doctor.OpenQuestions)
-            .GroupBy(question => question.SourceType)
-            .OrderBy(group => group.Key, StringComparer.Ordinal)
-            .ToArray();
-        if (cataloguePolicy.Length > 0)
-        {
-            builder.AppendLine("  Catalogue policy:");
-            foreach (var policy in cataloguePolicy)
-            {
-                var questionIds = policy
-                    .Select(question => question.Id)
-                    .Order(StringComparer.Ordinal)
-                    .ToArray();
-                builder.AppendLine($"    {policy.Key}: {questionIds.Length} open question(s)");
-                builder.AppendLine($"      Questions: {JoinOrNone(questionIds)}");
-            }
-        }
+        CapabilityCataloguePolicyOpenQuestionRenderer.AppendSourceTypeIndexText(
+            builder,
+            cataloguePolicy,
+            "  ",
+            "    ",
+            "      ",
+            "Catalogue policy:");
+        CapabilityCataloguePolicyOpenQuestionRenderer.AppendOpenQuestionDetailsText(
+            builder,
+            cataloguePolicy,
+            "  ",
+            "    ",
+            "Open question details:");
 
-        var openQuestionDetails = CapabilityCataloguePolicyIndex.Create(report.Doctor.OpenQuestions);
-        if (openQuestionDetails.Count > 0)
-        {
-            builder.AppendLine("  Open question details:");
-            foreach (var question in openQuestionDetails)
-            {
-                builder.AppendLine($"    {question.Id} ({question.SourceType}): {question.Question}");
-            }
-        }
-
-        var cataloguePolicyHandoff = CapabilityCataloguePolicyIndex.CreateDiagnosticHandoff(report.Doctor.OpenQuestions);
-        if (cataloguePolicyHandoff.Count > 0)
-        {
-            builder.AppendLine("  Catalogue policy diagnostic handoff:");
-            foreach (var item in cataloguePolicyHandoff)
-            {
-                builder.AppendLine($"    {item.QuestionId}: {item.Status} - {item.Title}");
-                builder.AppendLine($"      {item.Message}");
-                builder.AppendLine($"      Suggested action: {item.SuggestedAction}");
-            }
-        }
+        CapabilityCataloguePolicyHandoffRenderer.AppendText(
+            builder,
+            cataloguePolicy,
+            "  ",
+            "    ",
+            "      ");
 
         builder.AppendLine();
         builder.AppendLine("Doctor readiness index:");
@@ -237,11 +222,6 @@ internal static class CapabilityScanTextRenderer
 
     private static string JoinOrNone(IReadOnlyList<string> values) =>
         values.Count == 0 ? "(none)" : string.Join(", ", values);
-
-    private static string ResolveActionSourceType(string areaId) =>
-        StringComparer.Ordinal.Equals(areaId, "project-requirements")
-            ? "project-requirement"
-            : "capability-scan";
 
     private static string FormatRequirementKind(CapabilityRequirementResolution requirement) =>
         requirement.Optional ? "optional" : "required";

@@ -159,9 +159,13 @@ Gate status:
 - `gates/gate-152-capability-explain-catalogue-policy-handoff.md` - Gate 152, capability explain catalogue-policy diagnostic handoff.
 - `gates/gate-153-doctor-export-catalogue-policy-handoff.md` - Gate 153, Doctor export catalogue-policy diagnostic handoff.
 - `gates/gate-154-capability-scan-catalogue-policy-handoff.md` - Gate 154, capability scan catalogue-policy diagnostic handoff.
+- `gates/gate-155-catalogue-policy-handoff-rendering-helpers.md` - Gate 155, shared catalogue-policy handoff rendering helpers.
+- `gates/gate-156-catalogue-policy-open-question-rendering-helpers.md` - Gate 156, shared catalogue-policy open-question rendering helpers.
+- `gates/gate-157-catalogue-policy-view-model-helper.md` - Gate 157, shared catalogue-policy view model helper.
+- `gates/gate-158-doctor-action-summary-index.md` - Gate 158, Doctor action summary index.
 
 Next gate:
 
-- Gate 155 - Add provider-version evidence only if documented file/runtime/parser evidence is ready; otherwise extract shared catalogue-policy handoff serialization helpers without changing output.
+- Gate 159 - Add provider-version evidence only if documented file/runtime/parser evidence is ready; otherwise move to the next documented capability/Doctor value slice that does not resolve open provider policy questions.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

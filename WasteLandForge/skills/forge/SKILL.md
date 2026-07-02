@@ -187,23 +187,30 @@ Gate 126 option routing:
   picker, FOMOD package creation, capability-derived runtime requirements, MO2
   installation, or in-game verification exist until later gates implement them.
 
-Gate 154 option routing:
+Gate 158 option routing:
+
+Gate 158 keeps the Gate 157 command behavior and adds compact
+`index.actionSummary` metadata to capability scan and Doctor export. Treat
+the summary as derived from existing non-ready Doctor area actions, not as new
+Doctor planning, provider detection, provider-version evidence, runtime
+confirmation, or catalogue-policy resolution.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a
   compact top-level scan index with `index.providerStatuses` and
-  `index.capabilityStatuses`, `index.actions`, `index.requirements`, and
-  `index.diagnostics`, `index.cataloguePolicy`,
+  `index.capabilityStatuses`, `index.actions`, `index.actionSummary`,
+  `index.requirements`, and `index.diagnostics`, `index.cataloguePolicy`,
   `index.openQuestionDetails`, and
   `index.cataloguePolicyDiagnosticHandoff`, plus a derived Doctor-style
   readiness section with compact `doctor.index.areaStatuses`
   groups plus base game, xNVSE stack, MCM JSON stack, authoring/tooling, and
   project requirement areas. `index.actions`
   groups existing non-ready Doctor area actions by area and source type before
-  the full Doctor area list. `index.requirements` lists unavailable project
-  requirement entries before the full requirement report. `index.diagnostics`
-  lists already-projected `WF-CAP-*` issues before the full diagnostics
-  report. `index.cataloguePolicy` groups existing Doctor open-question IDs by
+  the full Doctor area list. `index.actionSummary` summarizes those existing
+  actions by derived source type and Doctor area status.
+  `index.requirements` lists unavailable project requirement entries before
+  the full requirement report. `index.diagnostics` lists already-projected
+  `WF-CAP-*` issues before the full diagnostics report. `index.cataloguePolicy` groups existing Doctor open-question IDs by
   source type before the full open-question text. `index.openQuestionDetails`
   maps those IDs to existing question text before the full open-question
   list. `index.cataloguePolicyDiagnosticHandoff` maps those IDs to open
@@ -236,7 +243,8 @@ Gate 154 option routing:
   `index.doctorAreaStatuses` groups by Doctor area readiness status,
   `index.providerStatuses` groups by provider status and install scope,
   compact `index.capabilityStatuses` groups by capability status,
-  `index.actions` entries for non-ready Doctor area actions, compact
+  `index.actions` entries for non-ready Doctor area actions,
+  `index.actionSummary` metadata for those existing action groups, compact
   `index.requirements` entries for unavailable project requirements, compact
   `index.diagnostics` entries for already-projected `WF-CAP-*` issues,
   compact `index.cataloguePolicy` groups by open-question source type,

@@ -2,8 +2,9 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 154 adds a
-catalogue-policy diagnostic handoff summary to `forge capabilities scan`.
+The project is currently in gated v0.1 implementation. Gate 158 adds compact
+Doctor action summary indexes to capability scan and Doctor export output,
+derived from existing non-ready Doctor area actions.
 
 ## Architecture Spine
 
@@ -16,7 +17,7 @@ catalogue-policy diagnostic handoff summary to `forge capabilities scan`.
 
 ## Current Gate
 
-Gate 154 builds on the closed first game-facing generator path. It keeps
+Gate 158 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -124,6 +125,21 @@ diagnostics.
 Gate 154 adds `index.cataloguePolicyDiagnosticHandoff` to `forge capabilities
 scan`. It carries the same open catalogue-policy handoff entries in the
 scan-side top-level index, without turning them into `WF-CAP-*` diagnostics.
+Gate 155 moves the catalogue-policy handoff JSON and text rendering used by
+`forge capabilities explain`, `forge capabilities scan`, and
+`forge doctor export` into shared CLI helpers. It preserves the existing JSON
+field names and text sections.
+Gate 156 moves the catalogue-policy open-question detail JSON, source-type
+index JSON, and matching text rendering used by the same command family into
+shared CLI helpers. It preserves the existing JSON field names and text
+sections.
+Gate 157 moves those derived catalogue-policy pieces behind one shared view
+model so scan, explain, and Doctor export consume the same derived metadata.
+It preserves the existing JSON field names and text sections.
+Gate 158 adds `index.actionSummary` to `forge capabilities scan` and
+`forge doctor export`. It summarizes existing non-ready Doctor area actions by
+derived source type and area status, and prints matching `Action summary:`
+sections under the scan status index and Doctor index.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under
@@ -722,6 +738,30 @@ projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
 rule IDs, or add SARIF/GitHub output for capability scan. It only exposes a
 compact catalogue-policy diagnostic handoff summary derived from existing
 open-question details in `capabilities scan`.
+Gate 155 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or add SARIF/GitHub output. It only consolidates existing
+catalogue-policy handoff rendering.
+Gate 156 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or add SARIF/GitHub output. It only consolidates existing
+catalogue-policy open-question and source-type index rendering.
+Gate 157 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or add SARIF/GitHub output. It only consolidates existing
+catalogue-policy derived metadata behind a shared view model.
+Gate 158 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or add SARIF/GitHub output. It only summarizes existing non-ready
+Doctor area actions by source type and area status.
 
 The current response route baseline still includes:
 
@@ -1138,6 +1178,22 @@ Gate 154 adds compact capability scan catalogue-policy diagnostic handoff
 metadata without adding new detectors, rule IDs, aliases, runtime probes, MO2
 VFS checks, provider version checks, catalogue-policy decisions, SARIF/GitHub
 scan changes, or external tool execution.
+Gate 155 adds shared catalogue-policy handoff rendering helpers without
+adding new detectors, rule IDs, aliases, runtime probes, MO2 VFS checks,
+provider version checks, catalogue-policy decisions, SARIF/GitHub changes, or
+external tool execution.
+Gate 156 adds shared catalogue-policy open-question rendering helpers without
+adding new detectors, rule IDs, aliases, runtime probes, MO2 VFS checks,
+provider version checks, catalogue-policy decisions, SARIF/GitHub changes, or
+external tool execution.
+Gate 157 adds a shared catalogue-policy view model without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, SARIF/GitHub changes, or external
+tool execution.
+Gate 158 adds a shared Doctor action summary helper without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, SARIF/GitHub changes, or external
+tool execution.
 
 It intentionally does not create:
 

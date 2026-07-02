@@ -430,6 +430,18 @@ Gate 154 adds no new diagnostic rule ID. `forge capabilities scan` now
 exposes `index.cataloguePolicyDiagnosticHandoff` entries derived from existing
 Doctor open-question output and stable catalogue-policy question IDs;
 canonical `WF-CAP-*` issue projection remains unchanged.
+Gate 155 adds no new diagnostic rule ID. It moves existing catalogue-policy
+diagnostic handoff JSON and text rendering into shared CLI helpers while
+preserving the existing handoff metadata fields.
+Gate 156 adds no new diagnostic rule ID. It moves existing catalogue-policy
+open-question detail and source-type index rendering into shared CLI helpers
+while preserving the existing metadata fields.
+Gate 157 adds no new diagnostic rule ID. It moves existing catalogue-policy
+derived metadata behind a shared CLI view model while preserving the existing
+metadata fields.
+Gate 158 adds no new diagnostic rule ID. It summarizes existing non-ready
+Doctor area actions by source type and area status without changing canonical
+`WF-CAP-*` issue projection.
 
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose

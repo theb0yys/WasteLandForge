@@ -175,7 +175,7 @@ multi-slider, color picker, FOMOD package creation, capability-derived runtime
 requirements, MO2 installation, or in-game verification exist until later
 gates implement them.
 
-Gate 154 continues Doctor-style environment reporting under the canonical
+Gate 158 continues Doctor-style environment reporting under the canonical
 `/forge capabilities scan`, `/forge capabilities explain`, and
 `/forge doctor export` command surface. Route scan, explain, and Doctor export
 requests to the real CLI when available. Describe Doctor export as a redacted
@@ -184,7 +184,8 @@ summary/index sections, compact `index.doctorAreaStatuses` groups by Doctor
 area readiness status, compact `index.providerStatuses` groups by provider
 status and install scope, compact `index.capabilityStatuses` groups by
 capability status, compact `index.actions` entries for non-ready Doctor area
-actions, compact `index.requirements` entries for unavailable project
+actions, compact `index.actionSummary` metadata for those existing actions,
+compact `index.requirements` entries for unavailable project
 requirements, compact `index.diagnostics` entries for already-projected
 `WF-CAP-*` issues, compact `index.cataloguePolicy` groups by open-question
 source type, structured `index.openQuestionDetails` for current catalogue
@@ -193,10 +194,11 @@ open catalogue-policy evidence handoff, and redacted nested project
 requirement provider evidence, not as runtime/session proof. For scan
 requests, describe compact top-level
 `index.providerStatuses`, `index.capabilityStatuses`, `index.actions`, and
-`index.requirements`, `index.diagnostics`, `index.cataloguePolicy`, and
-`index.openQuestionDetails`, and `index.cataloguePolicyDiagnosticHandoff`
-groups plus compact `doctor.index.areaStatuses` readiness groups before the
-full provider, capability, Doctor, project requirement, diagnostics,
+`index.actionSummary`, `index.requirements`, `index.diagnostics`,
+`index.cataloguePolicy`, `index.openQuestionDetails`, and
+`index.cataloguePolicyDiagnosticHandoff` groups plus compact
+`doctor.index.areaStatuses` readiness groups before the full provider,
+capability, Doctor, project requirement, diagnostics,
 catalogue-policy handoff, and open-question arrays; for scan requests with
 `--project`,
 describe `WF-CAP-001`, `WF-CAP-002`, and `WF-CAP-003` diagnostic projection
@@ -212,6 +214,21 @@ runtime probes, MO2 VFS launch, provider version checks, mixed-scope GECK
 Extender checks, GECK automation, network checks, AI explanation, new rule
 IDs, SARIF/GitHub explain output, or Doctor export SARIF/GitHub mode exist
 yet.
+
+Gate 155 shares catalogue-policy diagnostic handoff rendering across the scan,
+explain, and Doctor export outputs. Do not describe a new command or output
+shape for this gate.
+Gate 156 shares catalogue-policy open-question detail and source-type index
+rendering across the scan, explain, and Doctor export outputs. Do not describe
+a new command or output shape for this gate.
+Gate 157 derives catalogue-policy open-question detail, source-type index, and
+diagnostic handoff metadata through one shared view model across the scan,
+explain, and Doctor export outputs. Do not describe a new command or output
+shape for this gate.
+Gate 158 adds compact action summary metadata across scan and Doctor export
+output. Treat it as a summary of existing non-ready Doctor area actions, not a
+new command, detector, diagnostic rule, provider-version policy, or runtime
+probe.
 
 ## Required output
 

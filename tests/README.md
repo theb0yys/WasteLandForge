@@ -692,6 +692,21 @@ output-file JSON.
 Gate 154 extends `WastelandForge.GoldenTests` coverage for capability scan
 catalogue-policy diagnostic handoff entries in JSON, plain output, and
 output-file JSON.
+Gate 155 adds focused `WastelandForge.GoldenTests` coverage for the shared
+catalogue-policy diagnostic handoff renderer JSON shape and text indentation,
+and keeps existing scan, explain, and Doctor export handoff coverage as the
+output-contract guard.
+Gate 156 adds focused `WastelandForge.GoldenTests` coverage for the shared
+catalogue-policy open-question renderer JSON shape, source-type grouping, and
+text indentation, and keeps existing scan, explain, and Doctor export
+coverage as the output-contract guard.
+Gate 157 adds focused `WastelandForge.GoldenTests` coverage for shared
+catalogue-policy view derivation, copied open-question inputs, and empty
+input behavior, and keeps existing scan, explain, and Doctor export coverage
+as the output-contract guard.
+Gate 158 adds focused `WastelandForge.GoldenTests` coverage for Doctor action
+summary grouping, JSON shape, text indentation, and empty output behavior,
+plus scan and Doctor export golden coverage for JSON/plain action summaries.
 
 Run the full local suite serially:
 

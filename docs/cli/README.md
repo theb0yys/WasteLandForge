@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 154 capability scan catalogue-policy diagnostic handoff
+Status: Gate 158 Doctor action summary index
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -156,8 +156,9 @@ forge --version
   built-in catalogue plus scan evidence.
 - `forge capabilities scan --format human|plain|json` selects text or
   machine-readable scan output. JSON scan output includes top-level
-  `index.providerStatuses`, `index.capabilityStatuses`, `index.actions`, and
-  `index.requirements`, `index.diagnostics`, `index.cataloguePolicy`, and
+  `index.providerStatuses`, `index.capabilityStatuses`, `index.actions`,
+  `index.actionSummary`, `index.requirements`, `index.diagnostics`,
+  `index.cataloguePolicy`, and
   `index.openQuestionDetails`, and
   `index.cataloguePolicyDiagnosticHandoff` entries, plus a nested
   `diagnostics` object with canonical `WF-CAP-*` issue data when project requirements are
@@ -244,8 +245,8 @@ forge --version
   diagnostic counts. The index lists Doctor areas, Doctor area status groups
   by readiness status, provider status groups by scan status and install
   scope, capability status groups by scan status, grouped next actions,
-  unavailable project requirements with phases and source pointers, compact
-  `WF-CAP-*` diagnostics with source files and JSON pointers,
+  a compact next-action summary, unavailable project requirements with phases
+  and source pointers, compact `WF-CAP-*` diagnostics with source files and JSON pointers,
   catalogue-policy open-question groups, structured open-question details,
   catalogue-policy diagnostic handoff metadata, and open capability questions
   so handoff bundles can be scanned without opening the nested `capabilities`
@@ -1243,6 +1244,35 @@ plain output print matching catalogue-policy diagnostic handoff entries under
 does not add runtime probes, MO2 VFS checks, provider version checks,
 catalogue-policy decisions, new rule IDs, SARIF/GitHub scan output, or AI
 behavior.
+
+Gate 155 keeps the same command surface and output contracts while moving the
+catalogue-policy handoff JSON and text rendering used by
+`forge capabilities explain`, `forge capabilities scan`, and
+`forge doctor export` into shared CLI helpers. It still does not add runtime
+probes, MO2 VFS checks, provider version checks, catalogue-policy decisions,
+new rule IDs, SARIF/GitHub output, or AI behavior.
+
+Gate 156 keeps the same command surface and output contracts while moving the
+catalogue-policy open-question detail JSON, source-type index JSON, and text
+rendering used by `forge capabilities explain`, `forge capabilities scan`,
+and `forge doctor export` into shared CLI helpers. It still does not add
+runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
+decisions, new rule IDs, SARIF/GitHub output, or AI behavior.
+
+Gate 157 keeps the same command surface and output contracts while deriving
+catalogue-policy open questions, detail entries, source-type indexes, and
+diagnostic handoff entries through one shared view model. It still does not
+add runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, new rule IDs, SARIF/GitHub output, or AI
+behavior.
+
+Gate 158 keeps the same command surface while adding compact
+`index.actionSummary` metadata to `forge capabilities scan` and
+`forge doctor export`. JSON output summarizes existing non-ready Doctor area
+actions by derived source type and area status; human/plain output prints a
+matching `Action summary:` section. It still does not add runtime probes, MO2
+VFS checks, provider version checks, catalogue-policy decisions, new rule IDs,
+SARIF/GitHub output, or AI behavior.
 
 ## Exit Codes
 

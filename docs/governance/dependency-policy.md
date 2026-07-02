@@ -354,3 +354,24 @@ IDs. It adds no third-party dependency, download, rehosted runtime binary,
 network call, runtime probe, MO2/GECK integration, provider-version parser,
 capability resolver dependency, Doctor planner dependency, catalogue-policy
 decision dependency, or AI requirement.
+Gate 155 derives the same catalogue-policy diagnostic handoff metadata through
+shared rendering helpers. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, capability resolver dependency, Doctor planner
+dependency, catalogue-policy decision dependency, or AI requirement.
+Gate 156 derives the same catalogue-policy open-question detail and
+source-type index metadata through shared rendering helpers. It adds no
+third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, provider-version parser, capability
+resolver dependency, Doctor planner dependency, catalogue-policy decision
+dependency, or AI requirement.
+Gate 157 derives the same catalogue-policy metadata through a shared view
+model. It adds no third-party dependency, download, rehosted runtime binary,
+network call, runtime probe, MO2/GECK integration, provider-version parser,
+capability resolver dependency, Doctor planner dependency, catalogue-policy
+decision dependency, or AI requirement.
+Gate 158 derives compact Doctor action summary metadata from existing Doctor
+area actions. It adds no third-party dependency, download, rehosted runtime
+binary, network call, runtime probe, MO2/GECK integration, provider-version
+parser, capability resolver dependency, Doctor planner dependency,
+catalogue-policy decision dependency, or AI requirement.

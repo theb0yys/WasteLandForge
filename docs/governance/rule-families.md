@@ -222,6 +222,16 @@ changes.
 Gate 154 adds no new rule ID. `forge capabilities scan` displays compact
 catalogue-policy diagnostic handoff metadata derived from existing Doctor open
 questions, but it does not add new rules or SARIF/GitHub scan output changes.
+Gate 155 adds no new rule ID. It only shares existing catalogue-policy
+diagnostic handoff rendering across scan, explain, and Doctor export output.
+Gate 156 adds no new rule ID. It only shares existing catalogue-policy
+open-question detail and source-type index rendering across scan, explain,
+and Doctor export output.
+Gate 157 adds no new rule ID. It only shares existing catalogue-policy
+derived metadata through one view model across scan, explain, and Doctor
+export output.
+Gate 158 adds no new rule ID. It only shares Doctor action summary rendering
+across scan and Doctor export output.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths
