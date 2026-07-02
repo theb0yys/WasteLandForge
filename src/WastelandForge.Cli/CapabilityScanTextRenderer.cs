@@ -22,6 +22,20 @@ internal static class CapabilityScanTextRenderer
         builder.AppendLine(
             $"Doctor: {report.Doctor.Summary.ReadyAreas} ready area(s), {report.Doctor.Summary.ActionNeededAreas} action-needed area(s), {report.Doctor.Summary.UnknownAreas} unknown area(s)");
         builder.AppendLine();
+        builder.AppendLine("Doctor readiness index:");
+        foreach (var areaStatus in report.Doctor.Areas
+            .GroupBy(area => area.Status)
+            .OrderBy(group => group.Key, StringComparer.Ordinal))
+        {
+            var areaIds = areaStatus
+                .Select(area => area.Id)
+                .Order(StringComparer.Ordinal)
+                .ToArray();
+            builder.AppendLine($"  {areaStatus.Key}: {areaIds.Length} area(s)");
+            builder.AppendLine($"    Areas: {JoinOrNone(areaIds)}");
+        }
+
+        builder.AppendLine();
         builder.AppendLine("Doctor areas:");
         foreach (var area in report.Doctor.Areas)
         {

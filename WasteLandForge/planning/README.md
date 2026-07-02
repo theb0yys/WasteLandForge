@@ -146,9 +146,12 @@ Gate status:
 - `gates/gate-139-doctor-export-open-question-details.md` - Gate 139, Doctor export open-question details.
 - `gates/gate-140-doctor-export-provider-status-index.md` - Gate 140, Doctor export provider-status index.
 - `gates/gate-141-doctor-export-capability-status-index.md` - Gate 141, Doctor export capability-status index.
+- `gates/gate-142-doctor-export-area-status-index.md` - Gate 142, Doctor export area-status index.
+- `gates/gate-143-doctor-export-catalogue-policy-index.md` - Gate 143, Doctor export catalogue-policy index.
+- `gates/gate-144-capability-scan-doctor-readiness-index.md` - Gate 144, capability scan Doctor readiness index.
 
 Next gate:
 
-- Gate 142 - Continue local capability/Doctor ergonomics unless provider-version evidence is documented.
+- Gate 145 - Add broader scan-side provider/capability status index value unless provider-version evidence is documented.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

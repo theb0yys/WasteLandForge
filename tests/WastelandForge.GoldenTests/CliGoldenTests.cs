@@ -465,6 +465,9 @@ public sealed class CliGoldenTests
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["areas"]);
         Assert.Equal(0, (int?)json["doctor"]?["summary"]?["readyAreas"]);
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["unknownAreas"]);
+        Assert.Equal(1, json["doctor"]?["index"]?["areaStatuses"]?.AsArray().Count);
+        Assert.Equal("unknown", (string?)json["doctor"]?["index"]?["areaStatuses"]?[0]?["status"]);
+        Assert.Equal(4, (int?)json["doctor"]?["index"]?["areaStatuses"]?[0]?["count"]);
         Assert.Equal("unknown", (string?)DoctorArea(json, "base-game")["status"]);
         Assert.Contains("--game-root", (string?)DoctorArea(json, "base-game")["actions"]?[0], StringComparison.Ordinal);
         Assert.Equal(false, (bool?)json["inputs"]?["runtimeProbesEnabled"]);
@@ -499,6 +502,9 @@ public sealed class CliGoldenTests
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["areas"]);
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["readyAreas"]);
         Assert.Equal(0, (int?)json["doctor"]?["summary"]?["actionNeededAreas"]);
+        Assert.Equal(1, json["doctor"]?["index"]?["areaStatuses"]?.AsArray().Count);
+        Assert.Equal("ready", (string?)json["doctor"]?["index"]?["areaStatuses"]?[0]?["status"]);
+        Assert.Equal(4, (int?)json["doctor"]?["index"]?["areaStatuses"]?[0]?["count"]);
         Assert.Equal("ready", (string?)DoctorArea(json, "mcm-json-stack")["status"]);
         Assert.Contains("JIP PP LN", (string?)json["doctor"]?["openQuestions"]?[0], StringComparison.Ordinal);
         Assert.Equal("probable", ProviderStatus(providers, "provider.runtime.xnvse"));
@@ -540,6 +546,40 @@ public sealed class CliGoldenTests
         Assert.Equal("wrong-scope", (string?)xnvseProvider["evidence"]?[1]?["status"]);
         Assert.Equal("data-managed", (string?)xnvseProvider["evidence"]?[1]?["scope"]);
         Assert.Contains("expects root scope", (string?)xnvseProvider["evidence"]?[1]?["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanJsonIncludesDoctorReadinessIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var areaStatuses = json["doctor"]?["index"]?["areaStatuses"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan Doctor index did not include area statuses.");
+        var unknownAreas = areaStatuses[0]?["areas"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan Doctor area status did not include area IDs.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Single(areaStatuses);
+        Assert.Equal("unknown", (string?)areaStatuses[0]?["status"]);
+        Assert.Equal(4, (int?)areaStatuses[0]?["count"]);
+        Assert.Contains(unknownAreas, area =>
+            StringComparer.Ordinal.Equals("base-game", (string?)area));
+        Assert.Contains(unknownAreas, area =>
+            StringComparer.Ordinal.Equals("mcm-json-stack", (string?)area));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanPlainIncludesDoctorReadinessIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Doctor readiness index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("unknown: 4 area(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Areas: authoring-tools, base-game, mcm-json-stack, script-extender-stack", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Doctor areas:", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -827,6 +867,7 @@ public sealed class CliGoldenTests
         Assert.Equal(string.Empty, result.Stdout);
         Assert.Equal("capabilities scan", (string?)json["command"]);
         Assert.Equal(15, (int?)json["summary"]?["unknownProviders"]);
+        Assert.Equal(1, json["doctor"]?["index"]?["areaStatuses"]?.AsArray().Count);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -871,8 +912,10 @@ public sealed class CliGoldenTests
         Assert.Equal(0, json["index"]?["actions"]?.AsArray().Count);
         Assert.Equal(0, json["index"]?["requirements"]?.AsArray().Count);
         Assert.Equal(0, json["index"]?["diagnostics"]?.AsArray().Count);
+        Assert.True(json["index"]?["doctorAreaStatuses"]?.AsArray().Count > 0);
         Assert.True(json["index"]?["providerStatuses"]?.AsArray().Count > 0);
         Assert.True(json["index"]?["capabilityStatuses"]?.AsArray().Count > 0);
+        Assert.True(json["index"]?["cataloguePolicy"]?.AsArray().Count > 0);
         Assert.Equal("base-game", (string?)json["index"]?["doctorAreas"]?[0]?["id"]);
         Assert.Equal("ready", (string?)json["index"]?["doctorAreas"]?[0]?["status"]);
         Assert.Equal("project-requirements", (string?)json["index"]?["doctorAreas"]?[4]?["id"]);
@@ -899,6 +942,27 @@ public sealed class CliGoldenTests
         Assert.DoesNotContain(EscapeJsonPath(layout.GameRoot), result.Stdout, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(layout.XEditPath, result.Stdout, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(EscapeJsonPath(layout.XEditPath), result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportJsonIncludesCompactDoctorAreaStatusIndex()
+    {
+        var result = RunCli("doctor", "export", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var areaStatuses = json["index"]?["doctorAreaStatuses"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export index did not include Doctor area statuses.");
+        var unknownAreas = areaStatuses[0]?["areas"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export Doctor area status did not include unknown areas.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Single(areaStatuses);
+        Assert.Equal("unknown", (string?)areaStatuses[0]?["status"]);
+        Assert.Equal(4, (int?)areaStatuses[0]?["count"]);
+        Assert.Contains(unknownAreas, area =>
+            StringComparer.Ordinal.Equals("base-game", (string?)area));
+        Assert.Contains(unknownAreas, area =>
+            StringComparer.Ordinal.Equals("mcm-json-stack", (string?)area));
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -974,6 +1038,28 @@ public sealed class CliGoldenTests
             "GECK Extender has mixed-scope install evidence; a safe built-in file marker remains open.",
             (string?)openQuestions[1]?["question"]);
         Assert.Equal(2, json["index"]?["openQuestions"]?.AsArray().Count);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportJsonIncludesCompactCataloguePolicyIndex()
+    {
+        var result = RunCli("doctor", "export", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var cataloguePolicy = json["index"]?["cataloguePolicy"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export index did not include catalogue policy groups.");
+        var questionIds = cataloguePolicy[0]?["questionIds"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export catalogue policy group did not include question IDs.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Single(cataloguePolicy);
+        Assert.Equal("catalogue-policy", (string?)cataloguePolicy[0]?["sourceType"]);
+        Assert.Equal(2, (int?)cataloguePolicy[0]?["count"]);
+        Assert.Contains(questionIds, questionId =>
+            StringComparer.Ordinal.Equals("catalogue-policy.geck-extender-marker", (string?)questionId));
+        Assert.Contains(questionIds, questionId =>
+            StringComparer.Ordinal.Equals("catalogue-policy.jip-pp-ln-alias", (string?)questionId));
+        Assert.Equal(2, json["index"]?["openQuestionDetails"]?.AsArray().Count);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1088,12 +1174,28 @@ public sealed class CliGoldenTests
         Assert.Contains("Diagnostics: 0 error(s), 0 warning(s), 0 note(s)", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Doctor index:", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("project-requirements: ready", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Doctor area statuses:", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("  Provider statuses:", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("  Capability statuses:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Catalogue policy:", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Capability scan: wastelandforge.fnv.builtin 0.1.0", result.Stdout, StringComparison.Ordinal);
         Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(layout.GameRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(layout.XEditPath, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportPlainIncludesCompactDoctorAreaStatusIndex()
+    {
+        var result = RunCli("doctor", "export", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Doctor index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Doctor area statuses:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("unknown: 4 area(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("base-game", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("mcm-json-stack", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1141,6 +1243,22 @@ public sealed class CliGoldenTests
             StringComparison.Ordinal);
         Assert.Contains(
             "catalogue-policy.geck-extender-marker (catalogue-policy): GECK Extender has mixed-scope install evidence; a safe built-in file marker remains open.",
+            result.Stdout,
+            StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportPlainIncludesCompactCataloguePolicyIndex()
+    {
+        var result = RunCli("doctor", "export", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Doctor index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Catalogue policy:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("catalogue-policy: 2 open question(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(
+            "Questions: catalogue-policy.geck-extender-marker, catalogue-policy.jip-pp-ln-alias",
             result.Stdout,
             StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
@@ -1229,8 +1347,10 @@ public sealed class CliGoldenTests
         Assert.Equal(15, (int?)json["summary"]?["providers"]?["total"]);
         Assert.Equal(4, (int?)json["summary"]?["doctor"]?["unknown"]);
         Assert.Equal(4, json["index"]?["doctorAreas"]?.AsArray().Count);
+        Assert.Equal(1, json["index"]?["doctorAreaStatuses"]?.AsArray().Count);
         Assert.Equal(5, json["index"]?["providerStatuses"]?.AsArray().Count);
         Assert.Equal(1, json["index"]?["capabilityStatuses"]?.AsArray().Count);
+        Assert.Equal(1, json["index"]?["cataloguePolicy"]?.AsArray().Count);
         Assert.Equal(4, json["index"]?["actions"]?.AsArray().Count);
         Assert.Equal(0, json["index"]?["requirements"]?.AsArray().Count);
         Assert.Equal(0, json["index"]?["diagnostics"]?.AsArray().Count);

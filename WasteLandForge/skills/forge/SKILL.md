@@ -187,11 +187,12 @@ Gate 126 option routing:
   picker, FOMOD package creation, capability-derived runtime requirements, MO2
   installation, or in-game verification exist until later gates implement them.
 
-Gate 141 option routing:
+Gate 144 option routing:
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a
-  derived Doctor-style readiness section with base game, xNVSE stack, MCM JSON
+  derived Doctor-style readiness section with compact
+  `doctor.index.areaStatuses` groups plus base game, xNVSE stack, MCM JSON
   stack, authoring/tooling, and project requirement areas. With `--project`,
   it also projects unavailable capability requirements to `WF-CAP-001`,
   `WF-CAP-002`, `WF-CAP-003`, and `WF-CAP-004`, including provider evidence
@@ -213,11 +214,13 @@ Gate 141 option routing:
 - `/forge doctor export` maps to the real `forge doctor export` behavior when
   available. It writes a redacted local handoff bundle from capability scan
   evidence, including top-level summary/index sections, compact
+  `index.doctorAreaStatuses` groups by Doctor area readiness status,
   `index.providerStatuses` groups by provider status and install scope,
   compact `index.capabilityStatuses` groups by capability status,
   `index.actions` entries for non-ready Doctor area actions, compact
   `index.requirements` entries for unavailable project requirements, compact
   `index.diagnostics` entries for already-projected `WF-CAP-*` issues,
+  compact `index.cataloguePolicy` groups by open-question source type,
   structured `index.openQuestionDetails` for current catalogue policy gaps,
   and redacted nested project requirement provider evidence.
   It does not run runtime probes, MO2 VFS launch, provider version checks,

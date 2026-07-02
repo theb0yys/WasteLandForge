@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 141 Doctor export capability-status index
+Status: Gate 144 capability scan Doctor readiness index
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -177,8 +177,9 @@ forge --version
   launch, provider version checks, or mixed/effective-scope diagnostics.
 - `forge capabilities scan` includes a Doctor-style readiness report derived
   from local scan evidence. JSON output writes it under `doctor.summary`,
-  `doctor.areas`, and `doctor.openQuestions`; text output lists the same
-  readiness areas and next actions.
+  `doctor.index.areaStatuses`, `doctor.areas`, and `doctor.openQuestions`;
+  text output lists the same compact readiness index, readiness areas, and
+  next actions.
 - `forge capabilities explain <capability-or-provider-id>` explains one
   built-in capability or provider against the built-in catalogue and optional
   explicit local path scan evidence.
@@ -236,13 +237,14 @@ forge --version
 - `forge doctor export --format json` includes top-level `summary` and
   `index` sections derived from the redacted capability scan report. The
   summary lists catalogue, provider, capability, Doctor-area, requirement, and
-  diagnostic counts. The index lists Doctor areas, provider status groups by
-  scan status and install scope, capability status groups by scan status,
-  grouped next actions, unavailable project requirements with phases and
-  source pointers, compact `WF-CAP-*`
-  diagnostics with source files and JSON pointers, structured open-question
-  details, and open capability questions so handoff bundles can be scanned without opening the nested
-  `capabilities` report.
+  diagnostic counts. The index lists Doctor areas, Doctor area status groups
+  by readiness status, provider status groups by scan status and install
+  scope, capability status groups by scan status, grouped next actions,
+  unavailable project requirements with phases and source pointers, compact
+  `WF-CAP-*` diagnostics with source files and JSON pointers,
+  catalogue-policy open-question groups, structured open-question details,
+  and open capability questions so handoff bundles can be scanned without
+  opening the nested `capabilities` report.
 - Gate 56 still adds no CLI behavior; response route taxonomy, route
   selection, and GECK/plugin output mapping remain unimplemented pending an
   evidence pack.
@@ -1133,6 +1135,27 @@ print matching capability-status groups under `Doctor index`. It reuses the
 existing redacted capability scan report and still does not add runtime probes,
 MO2 VFS checks, provider version checks, new rule IDs, SARIF/GitHub output for
 Doctor export, or AI behavior.
+
+Gate 142 adds `index.doctorAreaStatuses` to `forge doctor export`. JSON output
+now groups Doctor area IDs by readiness status with counts; human and plain
+output print matching Doctor area status groups under `Doctor index`. It
+reuses the existing redacted Doctor report and still does not add runtime
+probes, MO2 VFS checks, provider version checks, new rule IDs, SARIF/GitHub
+output for Doctor export, or AI behavior.
+
+Gate 143 adds `index.cataloguePolicy` to `forge doctor export`. JSON output
+now groups structured open-question IDs by source type with counts; human and
+plain output print matching catalogue-policy groups under `Doctor index`. It
+reuses the existing open-question detail entries and still does not resolve
+catalogue policy gaps, add runtime probes, MO2 VFS checks, provider version
+checks, new rule IDs, SARIF/GitHub output for Doctor export, or AI behavior.
+
+Gate 144 adds `doctor.index.areaStatuses` to `forge capabilities scan`. JSON
+output now groups Doctor area IDs by readiness status with counts; human and
+plain output print a matching `Doctor readiness index` before full Doctor area
+details. It reuses the existing Doctor areas and still does not add runtime
+probes, MO2 VFS checks, provider version checks, new rule IDs, SARIF/GitHub
+scan changes, or AI behavior.
 
 ## Exit Codes
 

@@ -743,3 +743,18 @@ Gate 141 extends the Doctor export index with compact capability-status
 entries derived from existing redacted capability scan results. `forge doctor
 export` JSON now includes `index.capabilityStatuses`, and text output prints
 matching capability-status groups under `Doctor index`.
+
+Gate 142 extends the Doctor export index with compact Doctor area-status
+entries derived from existing redacted Doctor area results. `forge doctor
+export` JSON now includes `index.doctorAreaStatuses`, and text output prints
+matching Doctor area-status groups under `Doctor index`.
+
+Gate 143 extends the Doctor export index with compact catalogue-policy
+entries derived from existing structured open-question details. `forge doctor
+export` JSON now includes `index.cataloguePolicy`, and text output prints
+matching catalogue-policy groups under `Doctor index`.
+
+Gate 144 extends capability scan Doctor output with compact readiness index
+entries derived from existing Doctor area results. `forge capabilities scan`
+JSON now includes `doctor.index.areaStatuses`, and text output prints a
+matching `Doctor readiness index`.

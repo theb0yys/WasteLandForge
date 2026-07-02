@@ -376,6 +376,19 @@ compact `index.capabilityStatuses` list derived from existing redacted
 capability scan results; canonical `WF-CAP-*` issue projection remains
 unchanged.
 
+Gate 142 adds no new diagnostic rule ID. `forge doctor export` now exposes a
+compact `index.doctorAreaStatuses` list derived from existing redacted Doctor
+area results; canonical `WF-CAP-*` issue projection remains unchanged.
+
+Gate 143 adds no new diagnostic rule ID. `forge doctor export` now exposes a
+compact `index.cataloguePolicy` list derived from existing structured
+open-question details; canonical `WF-CAP-*` issue projection remains
+unchanged.
+
+Gate 144 adds no new diagnostic rule ID. `forge capabilities scan` now exposes
+a compact `doctor.index.areaStatuses` list derived from existing Doctor area
+results; canonical `WF-CAP-*` issue projection remains unchanged.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

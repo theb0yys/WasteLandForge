@@ -306,7 +306,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge capabilities scan [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
         writer.WriteLine();
         writer.WriteLine("Scans explicit local paths with root-file, data-file, and executable-tool detectors. When --project is supplied, resolves declared dependency capabilities against scan evidence.");
-        writer.WriteLine("Also emits a Doctor-style readiness report with environment areas, next actions, and known open catalogue questions.");
+        writer.WriteLine("Also emits a Doctor-style readiness report with a compact readiness index, environment areas, next actions, and known open catalogue questions.");
         writer.WriteLine("Reports probable, missing, unknown, and deterministic root-vs-Data wrong-scope evidence. Runtime probes, MO2 VFS launch, mixed-scope checks, and provider version checks are not used.");
         writer.WriteLine();
         writer.WriteLine("Examples:");

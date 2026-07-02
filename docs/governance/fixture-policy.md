@@ -403,3 +403,15 @@ synthetic fixtures and built-in catalogue provider scan results to exercise
 Gate 141 adds no committed provider fixtures. Golden CLI tests use existing
 synthetic fixtures and built-in catalogue capability scan results to exercise
 `forge doctor export` capability-status index output.
+
+Gate 142 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic fixtures and built-in Doctor area results to exercise `forge doctor
+export` Doctor area-status index output.
+
+Gate 143 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic fixtures and built-in catalogue open-question detail entries to
+exercise `forge doctor export` catalogue-policy index output.
+
+Gate 144 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic fixtures and built-in Doctor area results to exercise `forge
+capabilities scan` Doctor readiness index output.

@@ -71,11 +71,13 @@ internal sealed record DoctorExportDiagnosticSummary(
 
 internal sealed record DoctorExportIndex(
     IReadOnlyList<DoctorExportDoctorAreaIndexEntry> DoctorAreas,
+    IReadOnlyList<DoctorExportDoctorAreaStatusIndexEntry> DoctorAreaStatuses,
     IReadOnlyList<DoctorExportProviderStatusIndexEntry> ProviderStatuses,
     IReadOnlyList<DoctorExportCapabilityStatusIndexEntry> CapabilityStatuses,
     IReadOnlyList<DoctorExportActionIndexEntry> Actions,
     IReadOnlyList<DoctorExportRequirementIndexEntry> Requirements,
     IReadOnlyList<DoctorExportDiagnosticIndexEntry> Diagnostics,
+    IReadOnlyList<DoctorExportCataloguePolicyIndexEntry> CataloguePolicy,
     IReadOnlyList<DoctorExportOpenQuestionIndexEntry> OpenQuestionDetails,
     IReadOnlyList<string> OpenQuestions);
 
@@ -86,6 +88,11 @@ internal sealed record DoctorExportDoctorAreaIndexEntry(
     IReadOnlyList<string> Capabilities,
     IReadOnlyList<string> Providers,
     IReadOnlyList<string> Actions);
+
+internal sealed record DoctorExportDoctorAreaStatusIndexEntry(
+    string Status,
+    int Count,
+    IReadOnlyList<string> Areas);
 
 internal sealed record DoctorExportProviderStatusIndexEntry(
     string Status,
@@ -121,6 +128,11 @@ internal sealed record DoctorExportDiagnosticIndexEntry(
     string SourceFile,
     string? SourcePointer,
     string? SuggestedFix);
+
+internal sealed record DoctorExportCataloguePolicyIndexEntry(
+    string SourceType,
+    int Count,
+    IReadOnlyList<string> QuestionIds);
 
 internal sealed record DoctorExportOpenQuestionIndexEntry(
     string Id,
@@ -230,8 +242,13 @@ internal static class DoctorExportRedactor
 
     private static DoctorExportIndex CreateIndex(
         CapabilityScanReport report,
-        DiagnosticReport diagnostics) =>
-        new(
+        DiagnosticReport diagnostics)
+    {
+        var openQuestionDetails = report.Doctor.OpenQuestions
+            .Select(CreateOpenQuestionIndexEntry)
+            .ToArray();
+
+        return new DoctorExportIndex(
             report.Doctor.Areas
                 .Select(area => new DoctorExportDoctorAreaIndexEntry(
                     area.Id,
@@ -240,6 +257,16 @@ internal static class DoctorExportRedactor
                     area.CapabilityIds,
                     area.ProviderIds,
                     area.Actions))
+                .ToArray(),
+            report.Doctor.Areas
+                .GroupBy(area => area.Status)
+                .OrderBy(group => group.Key, StringComparer.Ordinal)
+                .Select(group => new DoctorExportDoctorAreaStatusIndexEntry(
+                    group.Key,
+                    group.Count(),
+                    group.Select(area => area.Id)
+                        .Order(StringComparer.Ordinal)
+                        .ToArray()))
                 .ToArray(),
             report.Providers
                 .GroupBy(provider => (provider.Status, provider.Provider.InstallScope))
@@ -297,10 +324,19 @@ internal static class DoctorExportRedactor
                     issue.PrimaryLocation.Pointer?.ToString(),
                     issue.SuggestedFix))
                 .ToArray(),
-            report.Doctor.OpenQuestions
-                .Select(CreateOpenQuestionIndexEntry)
+            openQuestionDetails
+                .GroupBy(question => question.SourceType)
+                .OrderBy(group => group.Key, StringComparer.Ordinal)
+                .Select(group => new DoctorExportCataloguePolicyIndexEntry(
+                    group.Key,
+                    group.Count(),
+                    group.Select(question => question.Id)
+                        .Order(StringComparer.Ordinal)
+                        .ToArray()))
                 .ToArray(),
+            openQuestionDetails,
             report.Doctor.OpenQuestions.ToArray());
+    }
 
     private static string FormatSeverity(DiagnosticSeverity severity) =>
         severity.ToString().ToLowerInvariant();
@@ -569,11 +605,13 @@ internal static class DoctorExportJsonSerializer
         new()
         {
             ["doctorAreas"] = new JsonArray(index.DoctorAreas.Select(ToJson).ToArray()),
+            ["doctorAreaStatuses"] = new JsonArray(index.DoctorAreaStatuses.Select(ToJson).ToArray()),
             ["providerStatuses"] = new JsonArray(index.ProviderStatuses.Select(ToJson).ToArray()),
             ["capabilityStatuses"] = new JsonArray(index.CapabilityStatuses.Select(ToJson).ToArray()),
             ["actions"] = new JsonArray(index.Actions.Select(ToJson).ToArray()),
             ["requirements"] = new JsonArray(index.Requirements.Select(ToJson).ToArray()),
             ["diagnostics"] = new JsonArray(index.Diagnostics.Select(ToJson).ToArray()),
+            ["cataloguePolicy"] = new JsonArray(index.CataloguePolicy.Select(ToJson).ToArray()),
             ["openQuestionDetails"] = new JsonArray(index.OpenQuestionDetails.Select(ToJson).ToArray()),
             ["openQuestions"] = new JsonArray(index.OpenQuestions.Select(question => JsonValue.Create(question)).ToArray())
         };
@@ -587,6 +625,14 @@ internal static class DoctorExportJsonSerializer
             ["capabilities"] = new JsonArray(area.Capabilities.Select(capability => JsonValue.Create(capability)).ToArray()),
             ["providers"] = new JsonArray(area.Providers.Select(provider => JsonValue.Create(provider)).ToArray()),
             ["actions"] = new JsonArray(area.Actions.Select(action => JsonValue.Create(action)).ToArray())
+        };
+
+    private static JsonObject ToJson(DoctorExportDoctorAreaStatusIndexEntry areaStatus) =>
+        new()
+        {
+            ["status"] = areaStatus.Status,
+            ["count"] = areaStatus.Count,
+            ["areas"] = new JsonArray(areaStatus.Areas.Select(area => JsonValue.Create(area)).ToArray())
         };
 
     private static JsonObject ToJson(DoctorExportProviderStatusIndexEntry providerStatus) =>
@@ -640,6 +686,14 @@ internal static class DoctorExportJsonSerializer
             ["id"] = openQuestion.Id,
             ["sourceType"] = openQuestion.SourceType,
             ["question"] = openQuestion.Question
+        };
+
+    private static JsonObject ToJson(DoctorExportCataloguePolicyIndexEntry cataloguePolicy) =>
+        new()
+        {
+            ["sourceType"] = cataloguePolicy.SourceType,
+            ["count"] = cataloguePolicy.Count,
+            ["questionIds"] = new JsonArray(cataloguePolicy.QuestionIds.Select(questionId => JsonValue.Create(questionId)).ToArray())
         };
 
     private static JsonObject ToJson(DoctorExportDiagnosticIndexEntry diagnostic)
@@ -718,6 +772,17 @@ internal static class DoctorExportTextRenderer
             }
         }
 
+        if (report.Index.DoctorAreaStatuses.Count > 0)
+        {
+            builder.AppendLine("  Doctor area statuses:");
+            foreach (var areaStatus in report.Index.DoctorAreaStatuses)
+            {
+                builder.AppendLine(
+                    $"    {areaStatus.Status}: {areaStatus.Count} area(s)");
+                builder.AppendLine($"      Areas: {JoinOrNone(areaStatus.Areas)}");
+            }
+        }
+
         if (report.Index.ProviderStatuses.Count > 0)
         {
             builder.AppendLine("  Provider statuses:");
@@ -775,6 +840,16 @@ internal static class DoctorExportTextRenderer
                 {
                     builder.AppendLine($"      Fix: {diagnostic.SuggestedFix}");
                 }
+            }
+        }
+
+        if (report.Index.CataloguePolicy.Count > 0)
+        {
+            builder.AppendLine("  Catalogue policy:");
+            foreach (var policy in report.Index.CataloguePolicy)
+            {
+                builder.AppendLine($"    {policy.SourceType}: {policy.Count} open question(s)");
+                builder.AppendLine($"      Questions: {JoinOrNone(policy.QuestionIds)}");
             }
         }
 

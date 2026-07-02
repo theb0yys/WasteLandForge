@@ -180,6 +180,15 @@ but it does not add new rules or SARIF/GitHub Doctor export output.
 Gate 141 adds no new rule ID. `forge doctor export` displays compact
 capability-status metadata derived from existing redacted capability scan
 results, but it does not add new rules or SARIF/GitHub Doctor export output.
+Gate 142 adds no new rule ID. `forge doctor export` displays compact Doctor
+area-status metadata derived from existing redacted Doctor area results, but
+it does not add new rules or SARIF/GitHub Doctor export output.
+Gate 143 adds no new rule ID. `forge doctor export` displays compact
+catalogue-policy metadata derived from existing structured open-question
+details, but it does not add new rules or SARIF/GitHub Doctor export output.
+Gate 144 adds no new rule ID. `forge capabilities scan` displays compact
+Doctor readiness metadata derived from existing Doctor area results, but it
+does not add new rules or SARIF/GitHub scan output changes.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths

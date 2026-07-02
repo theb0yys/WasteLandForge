@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 141 adds compact
-capability-status groups to `forge doctor export`.
+The project is currently in gated v0.1 implementation. Gate 144 adds a compact
+Doctor readiness index to `forge capabilities scan`.
 
 ## Architecture Spine
 
@@ -16,7 +16,7 @@ capability-status groups to `forge doctor export`.
 
 ## Current Gate
 
-Gate 141 builds on the closed first game-facing generator path. It keeps
+Gate 144 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -75,6 +75,18 @@ Gate 141 adds `index.capabilityStatuses` to the same redacted bundle. It
 groups existing capability IDs by scan status, with counts and stable
 capability ordering, so authors can scan capability readiness without opening
 the nested capability list.
+Gate 142 adds `index.doctorAreaStatuses` to the same redacted bundle. It
+groups existing Doctor area IDs by readiness status, with counts and stable
+area ordering, so authors can scan environment-readiness totals without
+opening the full Doctor area list.
+Gate 143 adds `index.cataloguePolicy` to the same redacted bundle. It groups
+existing structured open-question details by source type, with counts and
+stable question ID ordering, so authors can scan unresolved catalogue-policy
+work without opening the full question text.
+Gate 144 adds `doctor.index.areaStatuses` to `forge capabilities scan`. It
+groups existing Doctor area IDs by readiness status, with counts and stable
+area ordering, so authors can scan readiness totals directly from the scan
+command before opening the full Doctor area list or exporting a Doctor bundle.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under
@@ -587,6 +599,25 @@ AI, add new `WF-CAP-*` rule IDs, or create SARIF/GitHub output for Doctor
 export. It only groups existing scan-derived capability statuses in the
 redacted handoff index.
 
+Gate 142 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change Doctor readiness planning,
+call AI, add new `WF-CAP-*` rule IDs, or create SARIF/GitHub output for
+Doctor export. It only groups existing Doctor area readiness statuses in the
+redacted handoff index.
+
+Gate 143 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve JIP PP LN aliases, resolve
+mixed-scope GECK Extender markers, call AI, add new `WF-CAP-*` rule IDs, or
+create SARIF/GitHub output for Doctor export. It only groups existing
+open-question detail IDs by catalogue-policy source type in the redacted
+handoff index.
+
+Gate 144 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change capability resolution,
+change Doctor readiness planning, call AI, add new `WF-CAP-*` rule IDs, or
+change SARIF/GitHub output for capability scan. It only groups existing
+Doctor area readiness statuses under the scan-side `doctor.index`.
+
 The current response route baseline still includes:
 
 - `WF-SEM-036` for response route `targetTopicId` values that do not resolve
@@ -956,6 +987,15 @@ version checks, SARIF/GitHub Doctor export modes, or external tool execution.
 Gate 141 adds a compact Doctor export capability-status index without adding
 new detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
 version checks, SARIF/GitHub Doctor export modes, or external tool execution.
+Gate 142 adds a compact Doctor export area-status index without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
+checks, SARIF/GitHub Doctor export modes, or external tool execution.
+Gate 143 adds a compact Doctor export catalogue-policy index without adding
+new detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
+version checks, SARIF/GitHub Doctor export modes, or external tool execution.
+Gate 144 adds a compact capability scan Doctor readiness index without adding
+new detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
+version checks, SARIF/GitHub scan changes, or external tool execution.
 
 It intentionally does not create:
 

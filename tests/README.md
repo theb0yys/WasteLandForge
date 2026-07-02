@@ -661,6 +661,13 @@ Gate 140 extends `WastelandForge.GoldenTests` coverage for Doctor export
 provider-status groups in JSON, plain output, and output-file JSON.
 Gate 141 extends `WastelandForge.GoldenTests` coverage for Doctor export
 capability-status groups in JSON, plain output, and output-file JSON.
+Gate 142 extends `WastelandForge.GoldenTests` coverage for Doctor export
+Doctor area-status groups in JSON, plain output, and output-file JSON.
+Gate 143 extends `WastelandForge.GoldenTests` coverage for Doctor export
+catalogue-policy groups in JSON, plain output, redacted bundle JSON, and
+output-file JSON.
+Gate 144 extends `WastelandForge.GoldenTests` coverage for capability scan
+Doctor readiness groups in JSON, plain output, and output-file JSON.
 
 Run the full local suite serially:
 

@@ -85,6 +85,23 @@ internal static class CapabilityScanJsonSerializer
                 ["unknownAreas"] = doctor.Summary.UnknownAreas,
                 ["actions"] = doctor.Summary.Actions
             },
+            ["index"] = new JsonObject
+            {
+                ["areaStatuses"] = new JsonArray(doctor.Areas
+                    .GroupBy(area => area.Status)
+                    .OrderBy(group => group.Key, StringComparer.Ordinal)
+                    .Select(group => new JsonObject
+                    {
+                        ["status"] = group.Key,
+                        ["count"] = group.Count(),
+                        ["areas"] = new JsonArray(group
+                            .Select(area => area.Id)
+                            .Order(StringComparer.Ordinal)
+                            .Select(area => JsonValue.Create(area))
+                            .ToArray())
+                    })
+                    .ToArray())
+            },
             ["areas"] = new JsonArray(doctor.Areas.Select(ToJson).ToArray()),
             ["openQuestions"] = new JsonArray(doctor.OpenQuestions.Select(question => JsonValue.Create(question)).ToArray())
         };
