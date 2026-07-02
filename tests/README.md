@@ -616,6 +616,34 @@ Gate 126 adds no new test category. It closes the current MCM Extender test
 lane and points the next testing work at capability scanner and Doctor-style
 environment reporting coverage.
 
+Gate 127 extends `WastelandForge.GoldenTests` coverage for the capability
+Doctor report in `forge capabilities scan --format json` and target actions in
+`forge capabilities explain --format json`. The tests use temp-only synthetic
+provider marker files.
+
+Gate 128 extends `WastelandForge.GoldenTests` coverage for
+`forge doctor export --format json`, redacted path placeholders, embedded
+capability scan data, project requirement export, and output-file writing. The
+tests keep provider evidence temp-only and synthetic.
+
+Gate 129 extends `WastelandForge.GoldenTests` coverage for `WF-CAP-*`
+projection from `forge capabilities scan --project`, including nested JSON
+diagnostics, SARIF 2.1.0 output, and GitHub workflow-command annotations.
+Gate 130 extends `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for diagnostic evidence JSON, SARIF result evidence properties,
+GitHub annotation evidence text, project requirement provider evidence, and
+Doctor export redaction of nested requirement evidence paths.
+Gate 131 extends `WastelandForge.GoldenTests` coverage for grouped provider
+evidence in `forge capabilities explain` JSON and text output.
+Gate 132 extends `WastelandForge.GoldenTests` coverage for wrong-scope
+capability scan JSON, `WF-CAP-004` project diagnostics, SARIF projection, and
+GitHub workflow-command annotations.
+Gate 133 extends `WastelandForge.GoldenTests` coverage for capability explain
+project requirement context in JSON and plain output, provider-target
+requirement filtering, and project read failure diagnostics.
+Gate 134 extends `WastelandForge.GoldenTests` coverage for capability explain
+diagnostic handoff JSON and plain output for matching project requirements.
+
 Run the full local suite serially:
 
 ```text

@@ -36,12 +36,14 @@ public sealed class BuiltInFnvCapabilityExplainer
             capability.Id,
             capability.Title,
             capabilityResult.Status,
-            capability.Description);
+            capability.Description,
+            CapabilityDoctorPlanner.BuildCapabilityActions(capabilityResult, providers));
 
         return new CapabilityExplanationReport(
             scan.Catalog,
             scan.Inputs,
             target,
+            CreateEvidenceGroups(providers),
             providers,
             [capabilityResult]);
     }
@@ -61,13 +63,32 @@ public sealed class BuiltInFnvCapabilityExplainer
             provider.Id,
             provider.Title,
             providerResult.Status,
-            string.Join(" ", provider.Notes));
+            string.Join(" ", provider.Notes),
+            CapabilityDoctorPlanner.BuildProviderActions(providerResult));
 
         return new CapabilityExplanationReport(
             scan.Catalog,
             scan.Inputs,
             target,
+            CreateEvidenceGroups([providerResult]),
             [providerResult],
             capabilities);
+    }
+
+    private static IReadOnlyList<CapabilityExplanationEvidenceGroup> CreateEvidenceGroups(
+        IReadOnlyList<ProviderScanResult> providers)
+    {
+        return providers
+            .OrderBy(provider => provider.Provider.Id, StringComparer.Ordinal)
+            .Select(provider => new CapabilityExplanationEvidenceGroup(
+                "provider",
+                provider.Provider.Id,
+                provider.Provider.Title,
+                provider.Status,
+                provider.Provider.InstallScope,
+                provider.Provider.Capabilities,
+                CapabilityDoctorPlanner.BuildProviderActions(provider),
+                provider.Evidence))
+            .ToArray();
     }
 }

@@ -39,6 +39,7 @@ public static class DiagnosticIssueJsonSerializer
             issue.ProjectId?.ToString(),
             ToJsonLocation(issue.PrimaryLocation),
             issue.RelatedLocations.Count == 0 ? null : issue.RelatedLocations.Select(ToJsonLocation).ToArray(),
+            issue.Evidence.Count == 0 ? null : issue.Evidence.ToArray(),
             issue.SuggestedFix,
             issue.DocsUri?.ToString(),
             issue.Fingerprint);
@@ -70,6 +71,7 @@ public static class DiagnosticIssueJsonSerializer
         string? ProjectId,
         DiagnosticLocationJsonModel PrimaryLocation,
         IReadOnlyList<DiagnosticLocationJsonModel>? RelatedLocations,
+        IReadOnlyList<string>? Evidence,
         string? SuggestedFix,
         string? DocsUri,
         string? Fingerprint);

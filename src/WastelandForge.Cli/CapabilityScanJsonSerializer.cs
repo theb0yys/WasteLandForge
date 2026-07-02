@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using WastelandForge.Core;
 using WastelandForge.Registry;
 
 namespace WastelandForge.Cli;
@@ -30,6 +31,8 @@ internal static class CapabilityScanJsonSerializer
             },
             ["inputs"] = ToJson(report.Inputs),
             ["summary"] = ToJson(report.Summary),
+            ["doctor"] = ToJson(report.Doctor),
+            ["diagnostics"] = ToJson(CapabilityDiagnosticProjector.Project(report)),
             ["providers"] = new JsonArray(report.Providers.Select(ToJson).ToArray()),
             ["capabilities"] = new JsonArray(report.Capabilities.Select(ToJson).ToArray())
         };
@@ -40,6 +43,10 @@ internal static class CapabilityScanJsonSerializer
 
         return payload.ToJsonString(SerializerOptions);
     }
+
+    private static JsonNode ToJson(DiagnosticReport report) =>
+        JsonNode.Parse(DiagnosticReportJsonSerializer.Serialize(report, CliConstants.Version, "capabilities scan"))
+        ?? throw new InvalidOperationException("Capability diagnostics JSON serialization returned null.");
 
     private static JsonObject ToJson(CapabilityScanInputs inputs) =>
         new()
@@ -60,9 +67,37 @@ internal static class CapabilityScanJsonSerializer
             ["probableProviders"] = summary.ProbableProviders,
             ["missingProviders"] = summary.MissingProviders,
             ["unknownProviders"] = summary.UnknownProviders,
+            ["wrongScopeProviders"] = summary.WrongScopeProviders,
             ["probableCapabilities"] = summary.ProbableCapabilities,
             ["missingCapabilities"] = summary.MissingCapabilities,
-            ["unknownCapabilities"] = summary.UnknownCapabilities
+            ["unknownCapabilities"] = summary.UnknownCapabilities,
+            ["wrongScopeCapabilities"] = summary.WrongScopeCapabilities
+        };
+
+    private static JsonObject ToJson(CapabilityDoctorReport doctor) =>
+        new()
+        {
+            ["summary"] = new JsonObject
+            {
+                ["areas"] = doctor.Summary.Areas,
+                ["readyAreas"] = doctor.Summary.ReadyAreas,
+                ["actionNeededAreas"] = doctor.Summary.ActionNeededAreas,
+                ["unknownAreas"] = doctor.Summary.UnknownAreas,
+                ["actions"] = doctor.Summary.Actions
+            },
+            ["areas"] = new JsonArray(doctor.Areas.Select(ToJson).ToArray()),
+            ["openQuestions"] = new JsonArray(doctor.OpenQuestions.Select(question => JsonValue.Create(question)).ToArray())
+        };
+
+    private static JsonObject ToJson(CapabilityDoctorArea area) =>
+        new()
+        {
+            ["id"] = area.Id,
+            ["title"] = area.Title,
+            ["status"] = area.Status,
+            ["capabilities"] = new JsonArray(area.CapabilityIds.Select(id => JsonValue.Create(id)).ToArray()),
+            ["providers"] = new JsonArray(area.ProviderIds.Select(id => JsonValue.Create(id)).ToArray()),
+            ["actions"] = new JsonArray(area.Actions.Select(action => JsonValue.Create(action)).ToArray())
         };
 
     private static JsonObject ToJson(ProviderScanResult provider) =>
@@ -110,6 +145,7 @@ internal static class CapabilityScanJsonSerializer
                 ["satisfied"] = report.Summary.Satisfied,
                 ["missing"] = report.Summary.Missing,
                 ["unknown"] = report.Summary.Unknown,
+                ["wrongScope"] = report.Summary.WrongScope,
                 ["requiredUnavailable"] = report.Summary.RequiredUnavailable,
                 ["optionalUnavailable"] = report.Summary.OptionalUnavailable
             },
@@ -132,6 +168,17 @@ internal static class CapabilityScanJsonSerializer
             ["status"] = requirement.Status,
             ["capabilityStatus"] = requirement.CapabilityStatus,
             ["providerStatuses"] = new JsonArray(requirement.ProviderStatuses.Select(status => JsonValue.Create(status)).ToArray()),
+            ["providerEvidence"] = new JsonArray(requirement.ProviderEvidence.Select(ToJson).ToArray()),
             ["message"] = requirement.Message
+        };
+
+    private static JsonObject ToJson(CapabilityRequirementProviderEvidence provider) =>
+        new()
+        {
+            ["id"] = provider.ProviderId,
+            ["title"] = provider.ProviderTitle,
+            ["status"] = provider.ProviderStatus,
+            ["installScope"] = provider.InstallScope,
+            ["evidence"] = new JsonArray(provider.Evidence.Select(ToJson).ToArray())
         };
 }

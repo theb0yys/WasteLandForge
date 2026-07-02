@@ -227,9 +227,15 @@ public sealed class CliGoldenTests
         Assert.Equal("capability", (string?)json["target"]?["kind"]);
         Assert.Equal("runtime.ui.mcm_json", (string?)json["target"]?["id"]);
         Assert.Equal("probable", (string?)json["target"]?["status"]);
+        Assert.Contains("No action needed", (string?)json["target"]?["actions"]?[0], StringComparison.Ordinal);
         Assert.Equal("provider.runtime.mcm_extender", (string?)json["providers"]?[0]?["id"]);
         Assert.Equal("probable", (string?)json["providers"]?[0]?["status"]);
         Assert.Equal("probable", (string?)json["providers"]?[0]?["evidence"]?[0]?["status"]);
+        Assert.Equal("provider.runtime.mcm_extender", (string?)json["evidenceGroups"]?[0]?["id"]);
+        Assert.Equal("probable", (string?)json["evidenceGroups"]?[0]?["status"]);
+        Assert.Equal("data-managed", (string?)json["evidenceGroups"]?[0]?["installScope"]);
+        Assert.Contains("No action needed", (string?)json["evidenceGroups"]?[0]?["actions"]?[0], StringComparison.Ordinal);
+        Assert.Equal("data-file", (string?)json["evidenceGroups"]?[0]?["evidence"]?[0]?["detectorKind"]);
         Assert.Equal("runtime.ui.mcm_json", (string?)json["capabilities"]?[0]?["id"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
@@ -253,9 +259,165 @@ public sealed class CliGoldenTests
         Assert.Equal("provider", (string?)json["target"]?["kind"]);
         Assert.Equal("provider.runtime.xnvse", (string?)json["target"]?["id"]);
         Assert.Equal("probable", (string?)json["target"]?["status"]);
+        Assert.Contains("No action needed", (string?)json["target"]?["actions"]?[0], StringComparison.Ordinal);
         Assert.Equal("provider.runtime.xnvse", (string?)json["providers"]?[0]?["id"]);
+        Assert.Equal("provider.runtime.xnvse", (string?)json["evidenceGroups"]?[0]?["id"]);
+        Assert.Equal("root", (string?)json["evidenceGroups"]?[0]?["installScope"]);
+        Assert.Equal("runtime.scripting.xnvse", (string?)json["evidenceGroups"]?[0]?["capabilities"]?[0]);
+        Assert.Equal("root-file", (string?)json["evidenceGroups"]?[0]?["evidence"]?[0]?["detectorKind"]);
         Assert.Equal("runtime.scripting.xnvse", (string?)json["capabilities"]?[0]?["id"]);
         Assert.Equal("probable", (string?)json["capabilities"]?[0]?["status"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesExplainPlainIncludesProviderEvidenceGroups()
+    {
+        var result = RunCli(
+            "capabilities",
+            "explain",
+            "provider.runtime.xnvse",
+            "--format",
+            "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Provider evidence groups:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("provider.runtime.xnvse: unknown (root)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Next actions: Provide xNVSE evidence in root scope with --game-root.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("root-file/root: unknown", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesExplainProjectJsonIncludesMatchingRequirementContext()
+    {
+        var layout = CreateSyntheticCapabilityLayout();
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "explain",
+            "runtime.ui.mcm_json",
+            "--project",
+            projectRoot,
+            "--game-root",
+            layout.GameRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability explanation JSON did not parse.");
+        var requirement = json["projectRequirements"]?["items"]?[0] ??
+            throw new InvalidOperationException("Capability explanation did not include project requirement context.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(projectRoot, (string?)json["projectRequirements"]?["project"]?["root"]);
+        Assert.Equal("io.github.theboyyss.examplemod", (string?)json["projectRequirements"]?["project"]?["id"]);
+        Assert.Equal(1, (int?)json["projectRequirements"]?["matches"]);
+        Assert.Equal("runtime.ui.mcm_json", (string?)requirement["id"]);
+        Assert.Equal("satisfied", (string?)requirement["status"]);
+        Assert.Equal("generation", (string?)requirement["phases"]?[0]);
+        Assert.Equal("Generate deterministic MCM Extender JSON output.", (string?)requirement["reason"]);
+        Assert.Equal("src/registries/dependencies/main.json", (string?)requirement["source"]?["file"]);
+        Assert.Equal("/requires/capabilities/1", (string?)requirement["source"]?["pointer"]);
+        Assert.Equal("provider.runtime.mcm_extender:probable", (string?)requirement["providerStatuses"]?[0]);
+        Assert.Equal(0, (int?)json["projectRequirements"]?["diagnosticHandoff"]?["issues"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesExplainProjectJsonIncludesDiagnosticHandoffForUnavailableRequirement()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "explain",
+            "runtime.scripting.xnvse",
+            "--project",
+            projectRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability explanation JSON did not parse.");
+        var issue = json["projectRequirements"]?["diagnosticHandoff"]?["items"]?[0] ??
+            throw new InvalidOperationException("Capability explanation did not include diagnostic handoff.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(1, (int?)json["projectRequirements"]?["diagnosticHandoff"]?["issues"]);
+        Assert.Equal("WF-CAP-002", (string?)issue["ruleId"]);
+        Assert.Equal("error", (string?)issue["severity"]);
+        Assert.Equal("Required capability unverifiable from local evidence", (string?)issue["title"]);
+        Assert.Equal("src/registries/dependencies/main.json", (string?)issue["primaryLocation"]?["file"]);
+        Assert.Equal("/requires/capabilities/0", (string?)issue["primaryLocation"]?["pointer"]);
+        Assert.Contains("forge capabilities explain runtime.scripting.xnvse", (string?)issue["suggestedFix"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesExplainProviderProjectJsonFiltersProvidedCapabilityRequirements()
+    {
+        var layout = CreateSyntheticCapabilityLayout();
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "explain",
+            "provider.runtime.xnvse",
+            "--project",
+            projectRoot,
+            "--game-root",
+            layout.GameRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability explanation JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(1, (int?)json["projectRequirements"]?["matches"]);
+        Assert.Equal("runtime.scripting.xnvse", (string?)json["projectRequirements"]?["items"]?[0]?["id"]);
+        Assert.Equal("satisfied", (string?)json["projectRequirements"]?["items"]?[0]?["status"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesExplainProjectPlainIncludesRequirementContext()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "explain",
+            "runtime.scripting.xnvse",
+            "--project",
+            projectRoot,
+            "--format",
+            "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Project requirements:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("runtime.scripting.xnvse: unknown (required; all phases)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Source: src/registries/dependencies/main.json#/requires/capabilities/0", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Diagnostic handoff: WF-CAP-002 error - Required capability unverifiable from local evidence", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("The current scan does not have enough evidence", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesExplainProjectReadFailureReturnsDiagnostics()
+    {
+        var missingProjectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "missing-project");
+
+        var result = RunCli(
+            "capabilities",
+            "explain",
+            "runtime.scripting.xnvse",
+            "--project",
+            missingProjectRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability explanation diagnostic JSON did not parse.");
+
+        Assert.Equal(3, result.ExitCode);
+        Assert.Equal("capabilities explain", (string?)json["command"]);
+        Assert.Equal(1, (int?)json["summary"]?["errors"]);
+        Assert.Equal("WF-LOAD-001", (string?)json["issues"]?[0]?["ruleId"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -300,6 +462,11 @@ public sealed class CliGoldenTests
         Assert.Equal(15, (int?)json["summary"]?["unknownProviders"]);
         Assert.Equal(0, (int?)json["summary"]?["probableProviders"]);
         Assert.Equal(0, (int?)json["summary"]?["missingProviders"]);
+        Assert.Equal(4, (int?)json["doctor"]?["summary"]?["areas"]);
+        Assert.Equal(0, (int?)json["doctor"]?["summary"]?["readyAreas"]);
+        Assert.Equal(4, (int?)json["doctor"]?["summary"]?["unknownAreas"]);
+        Assert.Equal("unknown", (string?)DoctorArea(json, "base-game")["status"]);
+        Assert.Contains("--game-root", (string?)DoctorArea(json, "base-game")["actions"]?[0], StringComparison.Ordinal);
         Assert.Equal(false, (bool?)json["inputs"]?["runtimeProbesEnabled"]);
         Assert.Equal(false, (bool?)json["inputs"]?["mo2VfsEnabled"]);
         Assert.Equal(string.Empty, result.Stderr);
@@ -329,6 +496,11 @@ public sealed class CliGoldenTests
         Assert.Equal(13, (int?)json["summary"]?["probableProviders"]);
         Assert.Equal(0, (int?)json["summary"]?["missingProviders"]);
         Assert.Equal(2, (int?)json["summary"]?["unknownProviders"]);
+        Assert.Equal(4, (int?)json["doctor"]?["summary"]?["areas"]);
+        Assert.Equal(4, (int?)json["doctor"]?["summary"]?["readyAreas"]);
+        Assert.Equal(0, (int?)json["doctor"]?["summary"]?["actionNeededAreas"]);
+        Assert.Equal("ready", (string?)DoctorArea(json, "mcm-json-stack")["status"]);
+        Assert.Contains("JIP PP LN", (string?)json["doctor"]?["openQuestions"]?[0], StringComparison.Ordinal);
         Assert.Equal("probable", ProviderStatus(providers, "provider.runtime.xnvse"));
         Assert.Equal("probable", ProviderStatus(providers, "provider.runtime.mcm_extender"));
         Assert.Equal("probable", ProviderStatus(providers, "provider.tool.xedit"));
@@ -338,6 +510,36 @@ public sealed class CliGoldenTests
         Assert.Equal("probable", CapabilityStatus(capabilities, "runtime.ui.mcm_json"));
         Assert.Equal("probable", CapabilityStatus(capabilities, "tool.mo2.vfs_launch"));
         Assert.Equal("unknown", CapabilityStatus(capabilities, "runtime.scripting.jip_pp_ln"));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanJsonReportsWrongScopeEvidence()
+    {
+        var gameRoot = CreateWrongScopeXnvseLayout();
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--game-root",
+            gameRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var providers = json["providers"]?.AsArray() ?? throw new InvalidOperationException("Providers array missing.");
+        var capabilities = json["capabilities"]?.AsArray() ?? throw new InvalidOperationException("Capabilities array missing.");
+        var xnvseProvider = Provider(json, "provider.runtime.xnvse");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(1, (int?)json["summary"]?["wrongScopeProviders"]);
+        Assert.Equal(1, (int?)json["summary"]?["wrongScopeCapabilities"]);
+        Assert.Equal("wrong-scope", ProviderStatus(providers, "provider.runtime.xnvse"));
+        Assert.Equal("wrong-scope", CapabilityStatus(capabilities, "runtime.scripting.xnvse"));
+        Assert.Equal("action-needed", (string?)DoctorArea(json, "script-extender-stack")["status"]);
+        Assert.Equal("missing", (string?)xnvseProvider["evidence"]?[0]?["status"]);
+        Assert.Equal("wrong-scope", (string?)xnvseProvider["evidence"]?[1]?["status"]);
+        Assert.Equal("data-managed", (string?)xnvseProvider["evidence"]?[1]?["scope"]);
+        Assert.Contains("expects root scope", (string?)xnvseProvider["evidence"]?[1]?["message"], StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -365,6 +567,8 @@ public sealed class CliGoldenTests
         Assert.Equal(2, (int?)json["requirements"]?["summary"]?["requirements"]);
         Assert.Equal(2, (int?)json["requirements"]?["summary"]?["satisfied"]);
         Assert.Equal(0, (int?)json["requirements"]?["summary"]?["requiredUnavailable"]);
+        Assert.Equal(5, (int?)json["doctor"]?["summary"]?["areas"]);
+        Assert.Equal("ready", (string?)DoctorArea(json, "project-requirements")["status"]);
         Assert.Equal("satisfied", (string?)requirement["status"]);
         Assert.Equal("probable", (string?)requirement["capabilityStatus"]);
         Assert.Equal("src/registries/dependencies/main.json", (string?)requirement["source"]?["file"]);
@@ -394,9 +598,220 @@ public sealed class CliGoldenTests
         Assert.Equal(2, (int?)json["requirements"]?["summary"]?["requirements"]);
         Assert.Equal(2, (int?)json["requirements"]?["summary"]?["unknown"]);
         Assert.Equal(2, (int?)json["requirements"]?["summary"]?["requiredUnavailable"]);
+        Assert.Equal("unknown", (string?)DoctorArea(json, "project-requirements")["status"]);
+        Assert.Contains("runtime.scripting.xnvse", (string?)DoctorArea(json, "project-requirements")["actions"]?[0], StringComparison.Ordinal);
+        Assert.Equal(2, (int?)json["diagnostics"]?["summary"]?["errors"]);
+        Assert.Equal("WF-CAP-002", (string?)json["diagnostics"]?["issues"]?[0]?["ruleId"]);
+        Assert.Equal("capability", (string?)json["diagnostics"]?["issues"]?[0]?["category"]);
+        Assert.Equal("src/registries/dependencies/main.json", (string?)json["diagnostics"]?["issues"]?[0]?["primaryLocation"]?["file"]);
+        Assert.Equal("/requires/capabilities/0", (string?)json["diagnostics"]?["issues"]?[0]?["primaryLocation"]?["pointer"]);
+        Assert.Equal("provider.runtime.xnvse (unknown, installScope=root) root-file/root => unknown: No root path was provided.", (string?)json["diagnostics"]?["issues"]?[0]?["evidence"]?[0]);
         Assert.Equal("unknown", (string?)requirement["status"]);
         Assert.Equal("unknown", (string?)requirement["capabilityStatus"]);
+        Assert.Equal("provider.runtime.xnvse", (string?)requirement["providerEvidence"]?[0]?["id"]);
+        Assert.Equal("unknown", (string?)requirement["providerEvidence"]?[0]?["status"]);
+        Assert.Equal("root", (string?)requirement["providerEvidence"]?[0]?["installScope"]);
+        Assert.Equal("root-file", (string?)requirement["providerEvidence"]?[0]?["evidence"]?[0]?["detectorKind"]);
         Assert.Contains("not have enough evidence", (string?)requirement["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectJsonProjectsWrongScopeRequiredCapabilityDiagnostic()
+    {
+        var gameRoot = CreateWrongScopeXnvseLayout();
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--game-root",
+            gameRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var requirement = Requirement(json, "runtime.scripting.xnvse");
+        var issue = json["diagnostics"]?["issues"]?.AsArray()
+            .Single(item => StringComparer.Ordinal.Equals("WF-CAP-004", (string?)item?["ruleId"])) ??
+            throw new InvalidOperationException("Wrong-scope diagnostic was not emitted.");
+        var issueEvidence = issue["evidence"]?.AsArray()
+            .Select(item => item?.GetValue<string>() ?? string.Empty)
+            .ToArray() ?? [];
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Equal(1, (int?)json["requirements"]?["summary"]?["wrongScope"]);
+        Assert.Equal("action-needed", (string?)DoctorArea(json, "project-requirements")["status"]);
+        Assert.Equal("WF-CAP-004", (string?)issue["ruleId"]);
+        Assert.Equal("Capability provider installed in wrong scope", (string?)issue["title"]);
+        Assert.Contains("wrong-scope", (string?)issue["message"], StringComparison.Ordinal);
+        Assert.Contains(issueEvidence, item => item.Contains("root-file/data-managed => wrong-scope", StringComparison.Ordinal));
+        Assert.Contains("forge capabilities explain runtime.scripting.xnvse", (string?)issue["suggestedFix"], StringComparison.Ordinal);
+        Assert.Equal("wrong-scope", (string?)requirement["status"]);
+        Assert.Equal("wrong-scope", (string?)requirement["capabilityStatus"]);
+        Assert.Equal("provider.runtime.xnvse:wrong-scope", (string?)requirement["providerStatuses"]?[0]);
+        Assert.Equal("wrong-scope", (string?)requirement["providerEvidence"]?[0]?["status"]);
+        Assert.Equal("wrong-scope", (string?)requirement["providerEvidence"]?[0]?["evidence"]?[1]?["status"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectJsonProjectsMissingRequiredCapabilityDiagnostic()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+        var missingGameRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "missing-fnv");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--game-root",
+            missingGameRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Equal(2, (int?)json["diagnostics"]?["summary"]?["errors"]);
+        Assert.Equal("WF-CAP-001", (string?)json["diagnostics"]?["issues"]?[0]?["ruleId"]);
+        Assert.Equal("Missing required capability", (string?)json["diagnostics"]?["issues"]?[0]?["title"]);
+        Assert.Contains("Provider evidence", (string?)json["diagnostics"]?["issues"]?[0]?["message"], StringComparison.Ordinal);
+        Assert.Contains($"path={missingGameRoot}", (string?)json["diagnostics"]?["issues"]?[0]?["evidence"]?[0], StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("forge capabilities explain runtime.scripting.xnvse", (string?)json["diagnostics"]?["issues"]?[0]?["suggestedFix"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectJsonProjectsOptionalCapabilityWarningsWithoutFailing()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        MarkCapabilityRequirementsOptional(projectRoot);
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var requirement = Requirement(json, "runtime.scripting.xnvse");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(2, (int?)json["requirements"]?["summary"]?["optionalUnavailable"]);
+        Assert.Equal(0, (int?)json["requirements"]?["summary"]?["requiredUnavailable"]);
+        Assert.Equal(true, (bool?)requirement["optional"]);
+        Assert.Equal(0, (int?)json["diagnostics"]?["summary"]?["errors"]);
+        Assert.Equal(2, (int?)json["diagnostics"]?["summary"]?["warnings"]);
+        Assert.Equal("WF-CAP-003", (string?)json["diagnostics"]?["issues"]?[0]?["ruleId"]);
+        Assert.Equal("warning", (string?)json["diagnostics"]?["issues"]?[0]?["severity"]);
+        Assert.Equal("Optional capability unavailable", (string?)json["diagnostics"]?["issues"]?[0]?["title"]);
+        Assert.Contains("Optional capability 'runtime.scripting.xnvse'", (string?)json["diagnostics"]?["issues"]?[0]?["message"], StringComparison.Ordinal);
+        Assert.Contains("provider.runtime.xnvse", (string?)json["diagnostics"]?["issues"]?[0]?["evidence"]?[0], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectSarifProjectsWfCapDiagnostics()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--format",
+            "sarif");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan SARIF did not parse.");
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Equal("2.1.0", (string?)json["version"]);
+        Assert.Equal("capabilities scan", (string?)json["runs"]?[0]?["properties"]?["command"]);
+        Assert.Equal("WF-CAP-002", (string?)json["runs"]?[0]?["tool"]?["driver"]?["rules"]?[0]?["id"]);
+        Assert.Equal("WF-CAP-002", (string?)json["runs"]?[0]?["results"]?[0]?["ruleId"]);
+        Assert.Equal("capability", (string?)json["runs"]?[0]?["results"]?[0]?["properties"]?["category"]);
+        Assert.Equal("provider.runtime.xnvse (unknown, installScope=root) root-file/root => unknown: No root path was provided.", (string?)json["runs"]?[0]?["results"]?[0]?["properties"]?["evidence"]?[0]);
+        Assert.Equal("src/registries/dependencies/main.json", (string?)json["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["artifactLocation"]?["uri"]);
+        Assert.Equal("/requires/capabilities/0", (string?)json["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["properties"]?["jsonPointer"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectSarifProjectsWrongScopeDiagnostic()
+    {
+        var gameRoot = CreateWrongScopeXnvseLayout();
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--game-root",
+            gameRoot,
+            "--format",
+            "sarif");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan SARIF did not parse.");
+
+        Assert.Equal(4, result.ExitCode);
+        var resultItem = json["runs"]?[0]?["results"]?.AsArray()
+            .Single(item => StringComparer.Ordinal.Equals("WF-CAP-004", (string?)item?["ruleId"])) ??
+            throw new InvalidOperationException("Wrong-scope SARIF result was not emitted.");
+
+        Assert.Equal("WF-CAP-004", (string?)resultItem["ruleId"]);
+        Assert.Equal("Capability provider installed in wrong scope", (string?)resultItem["properties"]?["title"]);
+        Assert.Contains(
+            "root-file/data-managed => wrong-scope",
+            (string?)resultItem["properties"]?["evidence"]?[1],
+            StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectGithubProjectsWfCapDiagnostics()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--format",
+            "github");
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Contains("::error file=src/registries/dependencies/main.json,title=WF-CAP-002 Required capability unverifiable from local evidence::", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Required capability 'runtime.scripting.xnvse' is unknown", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Location: src/registries/dependencies/main.json#/requires/capabilities/0", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Fix: Run forge capabilities explain runtime.scripting.xnvse", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Evidence: provider.runtime.xnvse (unknown, installScope=root) root-file/root => unknown: No root path was provided.", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectGithubProjectsWrongScopeDiagnostic()
+    {
+        var gameRoot = CreateWrongScopeXnvseLayout();
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--game-root",
+            gameRoot,
+            "--format",
+            "github");
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Contains("::error file=src/registries/dependencies/main.json,title=WF-CAP-004 Capability provider installed in wrong scope::", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Required capability 'runtime.scripting.xnvse' is wrong-scope", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("root-file/data-managed => wrong-scope", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -412,6 +827,75 @@ public sealed class CliGoldenTests
         Assert.Equal(string.Empty, result.Stdout);
         Assert.Equal("capabilities scan", (string?)json["command"]);
         Assert.Equal(15, (int?)json["summary"]?["unknownProviders"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportJsonWritesRedactedCapabilityHandoffBundle()
+    {
+        var layout = CreateSyntheticCapabilityLayout();
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "doctor",
+            "export",
+            projectRoot,
+            "--game-root",
+            layout.GameRoot,
+            "--tool-path",
+            layout.XEditPath,
+            "--tool-path",
+            layout.Mo2Path,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var capabilities = json["capabilities"] ?? throw new InvalidOperationException("Doctor export did not include capability scan data.");
+        var providerEvidence = capabilities["providers"]?[0]?["evidence"]?[0] ??
+            throw new InvalidOperationException("Doctor export did not include provider evidence.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("1.0", (string?)json["formatVersion"]);
+        Assert.Equal("doctor export", (string?)json["command"]);
+        Assert.Equal("wastelandforge/doctor-handoff/v1", (string?)json["bundle"]?["kind"]);
+        Assert.Equal(true, (bool?)json["bundle"]?["offline"]);
+        Assert.Equal(true, (bool?)json["bundle"]?["aiOptional"]);
+        Assert.Equal("local-paths", (string?)json["redaction"]?["mode"]);
+        Assert.Equal("redacted", (string?)json["redaction"]?["paths"]);
+        Assert.Contains("<redacted:game-root>", RedactionTokens(json));
+        Assert.Contains("<redacted:project-root>", RedactionTokens(json));
+        Assert.Equal("<redacted:project-root>", (string?)capabilities["requirements"]?["project"]?["root"]);
+        Assert.Equal("capabilities scan", (string?)capabilities["command"]);
+        Assert.Equal("<redacted:game-root>", (string?)capabilities["inputs"]?["gameRoot"]);
+        Assert.Equal("<redacted:data-root>", (string?)capabilities["inputs"]?["dataRoot"]);
+        Assert.Equal("<redacted:tool-path:1>", (string?)capabilities["inputs"]?["toolPaths"]?[0]);
+        Assert.Equal("<redacted:tool-path:2>", (string?)capabilities["inputs"]?["toolPaths"]?[1]);
+        Assert.StartsWith("<redacted:", (string?)providerEvidence["path"], StringComparison.Ordinal);
+        Assert.StartsWith("<redacted:", (string?)capabilities["requirements"]?["items"]?[0]?["providerEvidence"]?[0]?["evidence"]?[0]?["path"], StringComparison.Ordinal);
+        Assert.Equal(5, (int?)capabilities["doctor"]?["summary"]?["areas"]);
+        Assert.Equal("ready", (string?)DoctorArea(capabilities, "project-requirements")["status"]);
+        Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(projectRoot), result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(layout.GameRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(layout.GameRoot), result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(layout.XEditPath, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(layout.XEditPath), result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportCanWriteToOutputFile()
+    {
+        var outputPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "doctor-handoff.json");
+
+        var result = RunCli("doctor", "export", "--format", "json", "--output", outputPath);
+        var json = JsonNode.Parse(File.ReadAllText(outputPath)) ?? throw new InvalidOperationException("Doctor export JSON file did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Equal("doctor export", (string?)json["command"]);
+        Assert.Equal("wastelandforge/doctor-handoff/v1", (string?)json["bundle"]?["kind"]);
+        Assert.Equal("capabilities scan", (string?)json["capabilities"]?["command"]);
+        Assert.Equal(15, (int?)json["capabilities"]?["summary"]?["unknownProviders"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -2277,6 +2761,17 @@ public sealed class CliGoldenTests
         return new SyntheticCapabilityLayout(root, xeditPath, mo2Path);
     }
 
+    private static string CreateWrongScopeXnvseLayout()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "fnv");
+        var data = Path.Combine(root, "Data");
+
+        Touch(Path.Combine(root, "FalloutNV.exe"));
+        Touch(Path.Combine(data, "nvse_loader.exe"));
+
+        return root;
+    }
+
     private static void Touch(string path)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? Path.GetTempPath());
@@ -2565,6 +3060,11 @@ public sealed class CliGoldenTests
         (string?)providers.Single(provider => StringComparer.Ordinal.Equals(providerId, (string?)provider?["id"]))?["status"] ??
         throw new InvalidOperationException($"Provider {providerId} did not include a status.");
 
+    private static JsonNode Provider(JsonNode json, string providerId) =>
+        json["providers"]?.AsArray()
+            .Single(provider => StringComparer.Ordinal.Equals(providerId, (string?)provider?["id"])) ??
+        throw new InvalidOperationException($"Provider {providerId} was not found.");
+
     private static string CapabilityStatus(JsonArray capabilities, string capabilityId) =>
         (string?)capabilities.Single(capability => StringComparer.Ordinal.Equals(capabilityId, (string?)capability?["id"]))?["status"] ??
         throw new InvalidOperationException($"Capability {capabilityId} did not include a status.");
@@ -2573,6 +3073,35 @@ public sealed class CliGoldenTests
         json["requirements"]?["items"]?.AsArray()
             .Single(requirement => StringComparer.Ordinal.Equals(capabilityId, (string?)requirement?["id"])) ??
         throw new InvalidOperationException($"Requirement {capabilityId} was not found.");
+
+    private static JsonNode DoctorArea(JsonNode json, string areaId) =>
+        json["doctor"]?["areas"]?.AsArray()
+            .Single(area => StringComparer.Ordinal.Equals(areaId, (string?)area?["id"])) ??
+        throw new InvalidOperationException($"Doctor area {areaId} was not found.");
+
+    private static IReadOnlyList<string> RedactionTokens(JsonNode json) =>
+        json["redaction"]?["tokens"]?.AsArray()
+            .Select(token => token?.GetValue<string>() ?? string.Empty)
+            .ToArray() ??
+        throw new InvalidOperationException("Doctor export redaction tokens were not found.");
+
+    private static string EscapeJsonPath(string path) =>
+        path.Replace("\\", "\\\\", StringComparison.Ordinal);
+
+    private static void MarkCapabilityRequirementsOptional(string projectRoot)
+    {
+        var path = Path.Combine(projectRoot, "src", "registries", "dependencies", "main.json");
+        var json = JsonNode.Parse(File.ReadAllText(path)) as JsonObject
+            ?? throw new InvalidOperationException("Dependency registry did not parse.");
+        var capabilities = json["requires"]?["capabilities"]?.AsArray()
+            ?? throw new InvalidOperationException("Dependency registry capability requirements did not parse.");
+        foreach (var capability in capabilities.OfType<JsonObject>())
+        {
+            capability["optional"] = true;
+        }
+
+        File.WriteAllText(path, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+    }
 
     private static void CopyDirectory(string source, string target)
     {

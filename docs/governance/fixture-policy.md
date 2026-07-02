@@ -342,3 +342,36 @@ trees to the committed fixture corpus.
 Gate 126 adds no new public fixture files. The MCM Extender fixture lane is
 parked; next fixture work should remain synthetic and redistributable while
 covering capability scanner and Doctor-style environment evidence.
+
+Gate 127 adds no committed provider fixtures. Golden CLI tests create temp-only
+synthetic Fallout: New Vegas roots and tool executables to exercise the Doctor
+readiness report.
+
+Gate 128 adds no committed provider fixtures. Golden CLI tests reuse temp-only
+synthetic provider markers and assert that Doctor export JSON redacts local
+paths before writing console or file output.
+
+Gate 129 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic project fixtures plus temp-only missing/unknown provider evidence to
+exercise `WF-CAP-*` JSON, SARIF, and GitHub diagnostic projection.
+
+Gate 130 adds no committed provider fixtures. Unit and golden CLI tests use
+existing synthetic project fixtures plus temp-only local provider evidence to
+exercise diagnostic evidence arrays, SARIF evidence properties, GitHub
+annotation evidence text, and Doctor export redaction of nested evidence paths.
+
+Gate 131 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic provider evidence and temp-only scan inputs to exercise grouped
+provider evidence in `forge capabilities explain` JSON and human/plain output.
+
+Gate 132 adds no committed provider fixtures. Golden CLI tests create
+temp-only synthetic Fallout: New Vegas roots with misplaced provider markers
+to exercise wrong-scope scan and `WF-CAP-004` diagnostic projection.
+
+Gate 133 adds no committed provider fixtures. Golden CLI tests use the
+existing synthetic `ExampleMod` fixture and temp-only scan inputs to exercise
+`forge capabilities explain --project` requirement context.
+
+Gate 134 adds no committed provider fixtures. Golden CLI tests use the
+existing synthetic `ExampleMod` fixture and temp-only scan inputs to exercise
+`forge capabilities explain --project` diagnostic handoff context.

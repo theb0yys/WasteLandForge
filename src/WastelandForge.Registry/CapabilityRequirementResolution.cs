@@ -23,8 +23,16 @@ public sealed record CapabilityRequirementResolutionSummary(
     int Satisfied,
     int Missing,
     int Unknown,
+    int WrongScope,
     int RequiredUnavailable,
     int OptionalUnavailable);
+
+public sealed record CapabilityRequirementProviderEvidence(
+    string ProviderId,
+    string ProviderTitle,
+    string ProviderStatus,
+    string InstallScope,
+    IReadOnlyList<CapabilityScanEvidence> Evidence);
 
 public sealed record CapabilityRequirementResolution(
     string Id,
@@ -36,6 +44,7 @@ public sealed record CapabilityRequirementResolution(
     string Status,
     string CapabilityStatus,
     IReadOnlyList<string> ProviderStatuses,
+    IReadOnlyList<CapabilityRequirementProviderEvidence> ProviderEvidence,
     string Message);
 
 public static class CapabilityRequirementResolutionStatuses
@@ -43,4 +52,5 @@ public static class CapabilityRequirementResolutionStatuses
     public const string Satisfied = "satisfied";
     public const string Missing = "missing";
     public const string Unknown = "unknown";
+    public const string WrongScope = "wrong-scope";
 }

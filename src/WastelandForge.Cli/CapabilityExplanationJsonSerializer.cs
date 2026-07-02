@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using WastelandForge.Core;
 using WastelandForge.Registry;
 
 namespace WastelandForge.Cli;
@@ -30,9 +31,14 @@ internal static class CapabilityExplanationJsonSerializer
             },
             ["inputs"] = ToJson(report.Inputs),
             ["target"] = ToJson(report.Target),
+            ["evidenceGroups"] = new JsonArray(report.EvidenceGroups.Select(ToJson).ToArray()),
             ["providers"] = new JsonArray(report.Providers.Select(ToJson).ToArray()),
             ["capabilities"] = new JsonArray(report.Capabilities.Select(ToJson).ToArray())
         };
+        if (report.ProjectRequirements is not null)
+        {
+            payload["projectRequirements"] = ToJson(report.ProjectRequirements);
+        }
 
         return payload.ToJsonString(SerializerOptions);
     }
@@ -55,7 +61,21 @@ internal static class CapabilityExplanationJsonSerializer
             ["id"] = target.Id,
             ["title"] = target.Title,
             ["status"] = target.Status,
-            ["description"] = target.Description
+            ["description"] = target.Description,
+            ["actions"] = new JsonArray(target.Actions.Select(action => JsonValue.Create(action)).ToArray())
+        };
+
+    private static JsonObject ToJson(CapabilityExplanationEvidenceGroup group) =>
+        new()
+        {
+            ["kind"] = group.Kind,
+            ["id"] = group.Id,
+            ["title"] = group.Title,
+            ["status"] = group.Status,
+            ["installScope"] = group.InstallScope,
+            ["capabilities"] = new JsonArray(group.Capabilities.Select(id => JsonValue.Create(id)).ToArray()),
+            ["actions"] = new JsonArray(group.Actions.Select(action => JsonValue.Create(action)).ToArray()),
+            ["evidence"] = new JsonArray(group.Evidence.Select(ToJson).ToArray())
         };
 
     private static JsonObject ToJson(ProviderScanResult provider) =>
@@ -91,5 +111,55 @@ internal static class CapabilityExplanationJsonSerializer
             ["status"] = capability.Status,
             ["satisfiedBy"] = new JsonArray(capability.Capability.SatisfiedBy.Select(id => JsonValue.Create(id)).ToArray()),
             ["providerStatuses"] = new JsonArray(capability.ProviderStatuses.Select(status => JsonValue.Create(status)).ToArray())
+        };
+
+    private static JsonObject ToJson(CapabilityExplanationProjectRequirements requirements) =>
+        new()
+        {
+            ["project"] = new JsonObject
+            {
+                ["root"] = requirements.ProjectRoot,
+                ["id"] = requirements.ProjectId
+            },
+            ["matches"] = requirements.Requirements.Count,
+            ["items"] = new JsonArray(requirements.Requirements.Select(ToJson).ToArray()),
+            ["diagnosticHandoff"] = new JsonObject
+            {
+                ["issues"] = requirements.DiagnosticHandoff.Count,
+                ["items"] = new JsonArray(requirements.DiagnosticHandoff.Select(ToJson).ToArray())
+            }
+        };
+
+    private static JsonNode ToJson(DiagnosticIssue issue) =>
+        DiagnosticIssueJsonSerializer.ToJsonNode(issue);
+
+    private static JsonObject ToJson(CapabilityRequirementResolution requirement) =>
+        new()
+        {
+            ["id"] = requirement.Id,
+            ["optional"] = requirement.Optional,
+            ["phases"] = new JsonArray(requirement.Phases.Select(phase => JsonValue.Create(phase)).ToArray()),
+            ["versionScheme"] = requirement.VersionScheme,
+            ["reason"] = requirement.Reason,
+            ["source"] = new JsonObject
+            {
+                ["file"] = requirement.Source.File,
+                ["pointer"] = requirement.Source.Pointer
+            },
+            ["status"] = requirement.Status,
+            ["capabilityStatus"] = requirement.CapabilityStatus,
+            ["providerStatuses"] = new JsonArray(requirement.ProviderStatuses.Select(status => JsonValue.Create(status)).ToArray()),
+            ["providerEvidence"] = new JsonArray(requirement.ProviderEvidence.Select(ToJson).ToArray()),
+            ["message"] = requirement.Message
+        };
+
+    private static JsonObject ToJson(CapabilityRequirementProviderEvidence provider) =>
+        new()
+        {
+            ["id"] = provider.ProviderId,
+            ["title"] = provider.ProviderTitle,
+            ["status"] = provider.ProviderStatus,
+            ["installScope"] = provider.InstallScope,
+            ["evidence"] = new JsonArray(provider.Evidence.Select(ToJson).ToArray())
         };
 }

@@ -16,6 +16,7 @@ WastelandForge diagnostic issue JSON is the canonical diagnostic model. Other ou
 - `projectId`: optional stable dotted lowercase project ID.
 - `primaryLocation`: required source location.
 - `relatedLocations`: optional supporting source locations.
+- `evidence`: optional stable evidence strings that support the diagnostic.
 - `suggestedFix`: optional remediation text.
 - `docsUri`: optional documentation URI for the rule.
 - `fingerprint`: optional stable identity for repeat diagnostics.
@@ -300,6 +301,48 @@ Gate 126 adds no new diagnostic rule family or rule ID. It closes the current
 MCM Extender diagnostics lane and points the next diagnostic work back toward
 capability and environment reporting, where future rule additions should use
 the reserved `WF-CAP-*` family.
+
+Gate 127 adds no new diagnostic rule family or rule ID. It extends the
+separate capability scan and explanation reports with Doctor-style readiness
+data and next actions; canonical `WF-CAP-*` diagnostics remain reserved for a
+later projection gate.
+
+Gate 128 adds no new diagnostic rule family or rule ID. `forge doctor export`
+wraps the existing capability scan report in a redacted handoff bundle; it
+does not project capability findings into canonical diagnostic JSON, SARIF, or
+GitHub annotations yet.
+
+Gate 129 adds the first canonical capability diagnostic projection. It emits
+`WF-CAP-001` for missing required capabilities, `WF-CAP-002` for required
+capabilities that cannot be verified from local evidence, and `WF-CAP-003`
+for optional capability unavailability. `forge capabilities scan --format json`
+keeps the scan report as the top-level payload and nests the canonical
+diagnostic report under `diagnostics`; `--format sarif` and `--format github`
+project the same issue data directly.
+
+Gate 130 adds provider evidence detail to capability diagnostics without
+adding new `WF-CAP-*` rule IDs. `DiagnosticIssue.evidence` carries compact
+scan-derived provider evidence strings, SARIF stores them under result
+properties, and GitHub annotations include them in the annotation message.
+`forge capabilities scan --project --format json` also exposes structured
+provider evidence under `requirements.items[].providerEvidence`, and
+`forge doctor export` redacts nested evidence paths before serialization.
+
+Gate 132 adds `WF-CAP-004` for wrong-scope capability providers detected from
+deterministic root-vs-Data marker evidence. The same canonical diagnostic is
+rendered through nested capability scan JSON, SARIF result properties, GitHub
+annotations, and text output. Runtime probes, MO2 effective visibility,
+provider version checks, and mixed-scope provider checks remain out of scope.
+
+Gate 133 adds no new diagnostic rule ID. It exposes matching project
+requirement context in `forge capabilities explain --project` so authors can
+see the source pointer and resolver status behind scan diagnostics, while
+leaving canonical `WF-CAP-*` projection under `forge capabilities scan`.
+
+Gate 134 adds no new diagnostic rule ID. It exposes a diagnostic handoff under
+`forge capabilities explain --project` by reusing the same `WF-CAP-*` issue
+projection that `forge capabilities scan --project` uses for matching
+unavailable requirements. SARIF and GitHub projection remain scan-only.
 
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose

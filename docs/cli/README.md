@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 126 MCM Extender slice closeout and Forge value transition
+Status: Gate 134 capability explain diagnostic handoff
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -155,18 +155,35 @@ forge --version
   capability requirements from the project and resolves them against the
   built-in catalogue plus scan evidence.
 - `forge capabilities scan --format human|plain|json` selects text or
-  machine-readable scan output. SARIF and GitHub formats remain
-  diagnostic-only and are rejected for capability scans.
+  machine-readable scan output. JSON scan output includes a nested
+  `diagnostics` object with canonical `WF-CAP-*` issue data when project
+  requirements are unavailable. With `--project`, JSON also includes
+  structured provider evidence under
+  `requirements.items[].providerEvidence`.
+- `forge capabilities scan --format sarif` emits SARIF 2.1.0 for canonical
+  `WF-CAP-*` diagnostics projected from project requirement resolution,
+  including provider evidence in result properties.
+- `forge capabilities scan --format github` emits GitHub workflow-command
+  annotations for the same canonical `WF-CAP-*` diagnostics, including
+  provider evidence in the annotation message.
 - `forge capabilities scan --output <path>` writes scan output to a file.
-- `forge capabilities scan` reports `probable`, `missing`, and `unknown`
+- `forge capabilities scan` reports `probable`, `missing`, `unknown`, and
+  `wrong-scope`
   evidence states. With `--project`, it also reports requirement
-  `satisfied`, `missing`, and `unknown` states and returns exit code `4` when
-  any non-optional project requirement is unavailable. It does not run runtime
-  probes, MO2 VFS launch, provider version checks, or `WF-CAP-*`
-  diagnostics.
+  `satisfied`, `missing`, `unknown`, and `wrong-scope` states and returns
+  exit code `4` when any non-optional project requirement is unavailable. It
+  projects unavailable requirements to `WF-CAP-001`, `WF-CAP-002`,
+  `WF-CAP-003`, and `WF-CAP-004`. It does not run runtime probes, MO2 VFS
+  launch, provider version checks, or mixed/effective-scope diagnostics.
+- `forge capabilities scan` includes a Doctor-style readiness report derived
+  from local scan evidence. JSON output writes it under `doctor.summary`,
+  `doctor.areas`, and `doctor.openQuestions`; text output lists the same
+  readiness areas and next actions.
 - `forge capabilities explain <capability-or-provider-id>` explains one
   built-in capability or provider against the built-in catalogue and optional
   explicit local path scan evidence.
+- `forge capabilities explain` includes target-level next actions for missing,
+  unknown, or wrong-scope local evidence.
 - `forge capabilities explain --game <path>` and
   `forge capabilities explain --game-root <path>` set the game root. When
   `--data-root` is omitted, explain derives it as `<game-root>/Data`.
@@ -174,15 +191,48 @@ forge --version
   used by data-file detectors.
 - `forge capabilities explain --tool-path <path>` may be repeated for
   external tool executables or directories.
+- `forge capabilities explain --project <path>` reads declared dependency
+  capability requirements and includes matching project requirement context in
+  the explanation output. JSON output also includes
+  `projectRequirements.diagnosticHandoff` for unavailable matching
+  requirements, using the same `WF-CAP-*` issue mapping as
+  `forge capabilities scan --project`.
 - `forge capabilities explain --format human|plain|json` selects text or
   machine-readable explanation output. SARIF and GitHub formats remain
   diagnostic-only and are rejected for capability explanations.
 - `forge capabilities explain --output <path>` writes explanation output to a
   file.
 - `forge capabilities explain` reports the target kind, target status,
-  related providers or capabilities, and scan evidence. It does not run
-  runtime probes, MO2 VFS launch, provider version checks, or project
-  requirement resolution.
+  related providers or capabilities, grouped provider evidence, provider
+  actions, scan evidence, optional matching project requirement context, and
+  optional diagnostic handoff context. It does not run runtime probes, MO2 VFS
+  launch, provider version checks, or SARIF/GitHub diagnostic projection
+  output.
+- `forge doctor export [project-root]` writes a redacted local Doctor handoff
+  bundle from the same deterministic path-based evidence used by
+  `forge capabilities scan`.
+- `forge doctor export --project <path>` reads declared dependency capability
+  requirements and embeds their redacted resolution report.
+- `forge doctor export --game <path>` and
+  `forge doctor export --game-root <path>` set the game root. When
+  `--data-root` is omitted, export derives it as `<game-root>/Data` before
+  redaction.
+- `forge doctor export --data-root <path>` overrides the Data folder used by
+  data-file detectors.
+- `forge doctor export --tool-path <path>` may be repeated for external tool
+  executables or directories.
+- `forge doctor export --format human|plain|json` selects text or
+  machine-readable output. SARIF and GitHub formats remain rejected for Doctor
+  export because Doctor export is currently a redacted bundle command, not a
+  diagnostic projection command.
+- `forge doctor export --output <path>` writes the bundle to a file.
+- `forge doctor export` replaces local game, data, tool, project, and
+  provider evidence paths with deterministic placeholders. It does not run
+  runtime probes, MO2 VFS launch, GECK automation, provider version checks,
+  network checks, or AI calls. Its embedded capability scan JSON includes the
+  redacted `diagnostics` object added by Gate 129 and the nested provider
+  evidence detail added by Gate 130, including Gate 132 wrong-scope status
+  when present.
 - Gate 56 still adds no CLI behavior; response route taxonomy, route
   selection, and GECK/plugin output mapping remain unimplemented pending an
   evidence pack.
@@ -403,6 +453,8 @@ forge --version
 - `--format human`
 - `--format plain`
 - `--format json`
+- `--format sarif`
+- `--format github`
 - `--game <path>`
 - `--game-root <path>`
 - `--data-root <path>`
@@ -418,8 +470,24 @@ forge --version
 - `--game <path>`
 - `--game-root <path>`
 - `--data-root <path>`
+- `--project <path>`
 - repeated `--tool-path <path>`
 - `--output <path>`
+
+`forge doctor export` supports:
+
+- positional `[project-root]`
+- `--format human`
+- `--format plain`
+- `--format json`
+- `--project <path>`
+- `--game <path>`
+- `--game-root <path>`
+- `--data-root <path>`
+- repeated `--tool-path <path>`
+- `--output <path>`
+- `-o <path>`
+- `--no-input`
 
 `forge generate` supports:
 
@@ -948,6 +1016,61 @@ canonical `forge` commands, but further MCM verifier micro-gates are deferred
 unless explicitly reopened. The next CLI value lane should improve
 `forge capabilities scan` and `forge capabilities explain` into a practical
 Doctor-style local environment report.
+
+Gate 127 implements that Doctor-style local environment report under
+`forge capabilities scan` and adds target-level next actions to
+`forge capabilities explain`.
+
+Gate 128 implements `forge doctor export` as a redacted local handoff bundle
+over the existing capability scan report. It does not implement runtime
+probes, MO2 VFS checks, provider version checks, AI explanation, or `WF-CAP-*`
+diagnostic projection.
+
+Gate 129 implements the first `WF-CAP-*` diagnostic projection for
+`forge capabilities scan --project`: `WF-CAP-001` for missing required
+capabilities, `WF-CAP-002` for required capabilities unverifiable from local
+evidence, and `WF-CAP-003` for optional capability unavailable. It adds SARIF
+and GitHub output for capability scans, but does not add runtime probes, MO2
+VFS checks, provider version checks, wrong-scope diagnostics, or Doctor export
+SARIF/GitHub mode.
+
+Gate 130 adds provider evidence detail to the same capability diagnostics.
+`requirements.items[].providerEvidence` records provider IDs, titles, scan
+statuses, install scopes, and detector evidence. The canonical diagnostic
+`evidence` array carries a compact provider-evidence summary, SARIF stores it
+under result properties, GitHub annotations include it in the message, and
+Doctor export redacts nested evidence paths before serialization. It still
+does not add runtime probes, MO2 VFS checks, provider version checks,
+wrong-scope diagnostics, or Doctor export SARIF/GitHub mode.
+
+Gate 131 adds grouped provider evidence to `forge capabilities explain`.
+JSON output includes `evidenceGroups`, and human/plain output includes a
+`Provider evidence groups` section with provider status, install scope,
+capabilities, next actions, and detector evidence. It still does not add
+runtime probes, MO2 VFS checks, provider version checks, wrong-scope
+diagnostics, or Doctor export SARIF/GitHub mode.
+
+Gate 132 adds wrong-scope diagnostics for deterministic root-vs-Data marker
+evidence. `forge capabilities scan` can now report `wrong-scope` providers and
+capabilities, and project scans emit `WF-CAP-004` through JSON, SARIF, GitHub,
+and text diagnostics. It still does not add runtime probes, MO2 VFS checks,
+provider version checks, mixed-scope GECK Extender resolution, or Doctor export
+SARIF/GitHub mode.
+
+Gate 133 adds `forge capabilities explain --project <path>`. Explanation JSON
+can now include `projectRequirements`, and human/plain output can include a
+`Project requirements` section for matching declared requirements. It reuses
+existing project loading and requirement resolution and still does not add
+runtime probes, MO2 VFS checks, provider version checks, new diagnostics, or
+Doctor export SARIF/GitHub mode.
+
+Gate 134 adds diagnostic handoff context to `forge capabilities explain
+--project`. Explanation JSON can now include
+`projectRequirements.diagnosticHandoff`, and human/plain output can include
+`Diagnostic handoff: WF-CAP-* ...` lines for unavailable matching project
+requirements. It reuses the existing scan diagnostic projector and still does
+not add runtime probes, MO2 VFS checks, provider version checks, new rule IDs,
+SARIF/GitHub output for explain, or Doctor export SARIF/GitHub mode.
 
 ## Exit Codes
 

@@ -668,3 +668,41 @@ annotation, and Markdown summary projections.
 Gate 126 closes the current MCM Extender implementation lane without changing
 verifier behavior. Next source work should return to broader Forge value in
 capability scanner and Doctor-style environment reporting code.
+
+Gate 127 adds `CapabilityDoctorPlanner` in `WastelandForge.Registry`, adds a
+derived Doctor readiness report to `CapabilityScanReport`, and surfaces
+target-level actions in `CapabilityExplanationTarget`. The CLI renders the
+Doctor report in JSON and text without adding runtime probes or new commands.
+
+Gate 128 adds CLI-side `DoctorExportReport`, redaction, JSON serialization,
+and text rendering for the canonical `forge doctor export` command. It reuses
+the capability scan report and project requirement resolver, then redacts
+local paths before output.
+
+Gate 129 adds `CapabilityDiagnosticProjector` in `WastelandForge.Registry` and
+wires `forge capabilities scan` JSON, SARIF, GitHub, and text output through
+the canonical diagnostic model for unavailable project capability
+requirements.
+
+Gate 130 adds optional evidence to `DiagnosticIssue`, carries scan-derived
+provider evidence through `CapabilityRequirementResolution`, serializes that
+evidence in capability scan JSON, SARIF, GitHub annotations, and text output,
+and redacts nested requirement evidence paths in `forge doctor export`.
+
+Gate 131 adds `CapabilityExplanationEvidenceGroup` and wires grouped provider
+evidence into `forge capabilities explain` JSON and text output, reusing
+existing scan evidence and Doctor planner actions.
+
+Gate 132 adds `wrong-scope` scan and requirement statuses for deterministic
+root-vs-Data marker evidence, projects wrong-scope project requirements as
+`WF-CAP-004`, and exposes wrong-scope counts in capability scan JSON and text
+output.
+
+Gate 133 adds optional `CapabilityExplanationProjectRequirements` to
+capability explanation reports and wires `forge capabilities explain
+--project` through existing project requirement loading and resolution.
+
+Gate 134 extends `CapabilityExplanationProjectRequirements` with diagnostic
+handoff issues projected by `CapabilityDiagnosticProjector`, so
+`forge capabilities explain --project` can show the scan `WF-CAP-*` rule that
+would apply to each unavailable matching requirement.

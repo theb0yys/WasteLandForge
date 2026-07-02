@@ -109,7 +109,7 @@ internal static class CliHelpWriter
                 WriteDoctorHelp(writer);
                 return true;
             case "doctor export":
-                WriteReservedCommandHelp(writer, commandPath, "Doctor export is reserved for redacted diagnostic handoff bundles.");
+                WriteDoctorExportHelp(writer);
                 return true;
             case "init":
             case "docs":
@@ -306,7 +306,8 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge capabilities scan [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
         writer.WriteLine();
         writer.WriteLine("Scans explicit local paths with root-file, data-file, and executable-tool detectors. When --project is supplied, resolves declared dependency capabilities against scan evidence.");
-        writer.WriteLine("Runtime probes, MO2 VFS launch, and provider version checks are not used.");
+        writer.WriteLine("Also emits a Doctor-style readiness report with environment areas, next actions, and known open catalogue questions.");
+        writer.WriteLine("Reports probable, missing, unknown, and deterministic root-vs-Data wrong-scope evidence. Runtime probes, MO2 VFS launch, mixed-scope checks, and provider version checks are not used.");
         writer.WriteLine();
         writer.WriteLine("Examples:");
         writer.WriteLine("  forge capabilities scan --game \"C:\\Games\\Fallout New Vegas\"");
@@ -326,13 +327,14 @@ internal static class CliHelpWriter
         writer.WriteLine("forge capabilities explain");
         writer.WriteLine();
         writer.WriteLine("Usage:");
-        writer.WriteLine("  forge capabilities explain <capability-or-provider-id> [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
+        writer.WriteLine("  forge capabilities explain <capability-or-provider-id> [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Explains a built-in capability or provider using catalogue data and the same path-based evidence as capabilities scan.");
-        writer.WriteLine("Runtime probes, MO2 VFS launch, provider versions, and project requirement resolution are not used.");
+        writer.WriteLine("Explains a built-in capability or provider using catalogue data and the same path-based evidence as capabilities scan, including target-level next actions.");
+        writer.WriteLine("When --project is supplied, includes matching declared project requirement context. Runtime probes, MO2 VFS launch, and provider versions are not used.");
         writer.WriteLine();
         writer.WriteLine("Examples:");
         writer.WriteLine("  forge capabilities explain runtime.ui.mcm_json");
+        writer.WriteLine("  forge capabilities explain runtime.ui.mcm_json --project fixtures/projects/ExampleMod --format json");
         writer.WriteLine("  forge capabilities explain provider.runtime.xnvse --game \"C:\\Games\\Fallout New Vegas\" --format json");
         writer.WriteLine("  forge capabilities explain tool.mo2 --tool-path tools/ModOrganizer.exe --format plain");
         writer.WriteLine();
@@ -387,7 +389,29 @@ internal static class CliHelpWriter
         writer.WriteLine("Usage:");
         writer.WriteLine("  forge doctor export [options]");
         writer.WriteLine();
-        writer.WriteLine("Doctor export is reserved for a later gate and must remain redacted and AI-optional.");
+        writer.WriteLine("Doctor export writes a redacted local handoff bundle from capability scan evidence. It remains offline-first and AI-optional.");
+    }
+
+    private static void WriteDoctorExportHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge doctor export");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge doctor export [project-root] [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Writes a redacted Doctor handoff bundle from the same deterministic path-based evidence used by capabilities scan.");
+        writer.WriteLine("Absolute local game, data, tool, project, and evidence paths are replaced with placeholders.");
+        writer.WriteLine("Runtime probes, MO2 VFS launch, GECK automation, network checks, and AI calls are not used.");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge doctor export fixtures/projects/ExampleMod --format json");
+        writer.WriteLine("  forge doctor export --project fixtures/projects/ExampleMod --game-root fnv --tool-path tools/FNVEdit.exe --format json");
+        writer.WriteLine("  forge doctor export . --output dist/doctor-handoff.json --format json --no-input");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 export written");
+        writer.WriteLine("  2 usage or unsupported format");
+        writer.WriteLine("  3 project discovery or source-load failure");
     }
 
     private static void WriteReservedCommandHelp(TextWriter writer, string commandPath, string note)

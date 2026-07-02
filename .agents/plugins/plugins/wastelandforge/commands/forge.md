@@ -68,8 +68,8 @@ Use this routing:
 | `/forge init` | v0.1 repository, solution, ADR, schema, C#, CLI, fixture, and CI setup planning or implementation |
 | `/forge validate` | layered validation pipeline, schema validation, semantic validation, capability/environment validation, output/package/release validation |
 | `/forge capabilities list` | capability catalogue and provider registry work |
-| `/forge capabilities scan` | local-first deterministic provider detection |
-| `/forge capabilities explain` | capability/provider diagnostics and explanation |
+| `/forge capabilities scan` | local-first deterministic provider detection and Doctor readiness reporting |
+| `/forge capabilities explain` | capability/provider diagnostics, explanation, and target actions |
 | `/forge generate` | deterministic generator planning and execution through the capability-aware build graph |
 | `/forge build` | validation-first build graph execution or implementation |
 | `/forge package` | deterministic staging, package manifest, checksums, and distribution preparation |
@@ -182,6 +182,34 @@ Gate 126 option routing:
   FOMOD package creation, capability-derived runtime requirements, MO2
   installation, or in-game verification exist until later gates implement
   them.
+
+Gate 134 option routing:
+
+- `/forge capabilities scan` routes to the real `forge capabilities scan`
+  behavior when available. Treat its output as local path-based provider
+  evidence plus derived Doctor readiness areas and next actions. With
+  `--project`, it also projects unavailable capability requirements to
+  `WF-CAP-001`, `WF-CAP-002`, `WF-CAP-003`, and `WF-CAP-004`, including
+  provider evidence detail in JSON, SARIF, GitHub, and text output.
+  `WF-CAP-004` is limited to deterministic root-vs-Data wrong-scope markers.
+  It does not run runtime probes, MO2 VFS launch, provider version checks,
+  mixed-scope GECK Extender checks, or effective-scope diagnostics.
+- `/forge capabilities explain <capability-or-provider-id>` routes to the real
+  `forge capabilities explain` behavior when available. Treat target actions
+  and grouped provider evidence as local-evidence guidance, not proof of
+  runtime/session readiness. JSON output includes `evidenceGroups`, and
+  human/plain output includes provider status, install scope, actions, and
+  detector evidence. With `--project`, it also includes matching declared
+  project requirement source, phase/reason metadata, resolution status,
+  provider statuses, resolver message, and diagnostic handoff metadata showing
+  the `WF-CAP-*` rule that `forge capabilities scan --project` would project
+  for unavailable matching requirements.
+- `/forge doctor export` routes to the real `forge doctor export` behavior
+  when available. Treat it as a redacted local handoff bundle over capability
+  scan evidence, including redacted nested project requirement provider
+  evidence, not as runtime/session proof. It does not run runtime probes, MO2
+  VFS launch, provider version checks, GECK automation, network checks, AI
+  calls, or SARIF/GitHub Doctor bundle mode.
 
 - `/forge package --target mcm-json --verify-existing` routes to the real
   `forge package --target mcm-json --verify-existing` CLI behavior when

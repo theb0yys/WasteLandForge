@@ -66,6 +66,12 @@ public static class DiagnosticReportGitHubAnnotationRenderer
             builder.Append(issue.SuggestedFix);
         }
 
+        if (issue.Evidence.Count > 0)
+        {
+            builder.Append(" Evidence: ");
+            builder.Append(string.Join(" | ", issue.Evidence));
+        }
+
         if (issue.DocsUri is not null)
         {
             builder.Append(" Docs: ");

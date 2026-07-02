@@ -133,6 +133,11 @@ public static class DiagnosticReportSarifSerializer
             result["properties"]!["projectId"] = issue.ProjectId.ToString();
         }
 
+        if (issue.Evidence.Count > 0)
+        {
+            result["properties"]!["evidence"] = new JsonArray(issue.Evidence.Select(item => JsonValue.Create(item)).ToArray());
+        }
+
         if (issue.RelatedLocations.Count > 0)
         {
             var relatedLocations = new JsonArray();

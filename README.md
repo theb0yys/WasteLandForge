@@ -2,9 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 126 closes the
-current MCM Extender slice and redirects the next implementation lane to
-broader Forge value: capability/Doctor environment inspection and explanation.
+The project is currently in gated v0.1 implementation. Gate 134 adds
+diagnostic handoff context to `forge capabilities explain --project`.
 
 ## Architecture Spine
 
@@ -17,13 +16,38 @@ broader Forge value: capability/Doctor environment inspection and explanation.
 
 ## Current Gate
 
-Gate 126 closes the first game-facing generator path for now. It keeps
+Gate 134 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
 and `forge capabilities scan --project <path>` from Gate 60. Project scans read
 declared dependency capabilities and resolve them against built-in catalogue
-and scan evidence as `satisfied`, `missing`, or `unknown`.
+and scan evidence as `satisfied`, `missing`, `unknown`, or `wrong-scope`.
+
+Gate 127 adds a derived `doctor` section to capability scan output and
+target-level next actions to `forge capabilities explain`. Gate 128 adds
+`forge doctor export`, which writes a redacted local handoff bundle containing
+that capability scan and Doctor readiness data. Local game, data, tool,
+project, and provider evidence paths are replaced with placeholders. The
+export remains offline-first and AI-optional. Gate 129 projects unavailable
+project capability requirements into canonical `WF-CAP-*` diagnostics, with
+JSON, SARIF, and GitHub annotation output for `forge capabilities scan`.
+Gate 130 threads the same provider evidence into project requirement JSON,
+diagnostic JSON evidence, SARIF result properties, GitHub annotations, and
+redacted Doctor export bundles.
+Gate 131 adds grouped provider evidence to `forge capabilities explain`, so
+capability and provider explanations now surface provider status, install
+scope, detector evidence, and next actions in one grouped section.
+Gate 132 adds `wrong-scope` propagation for deterministic root-vs-Data marker
+checks and projects wrong-scope project requirements as `WF-CAP-004` in JSON,
+SARIF, GitHub annotation, and text diagnostic output.
+Gate 133 lets `forge capabilities explain --project <path>` include matching
+declared project requirement context, including source pointer, optional/phase
+metadata, reason, resolution status, provider statuses, and resolver message.
+Gate 134 adds diagnostic handoff metadata to the same explanation output so
+unavailable matching requirements show the `WF-CAP-*` rule, severity, title,
+source location, fix text, and evidence that `forge capabilities scan
+--project` would project.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under
@@ -426,6 +450,11 @@ implemented slice remains available through `forge generate --target mcm-json`,
 lane moves to capability scanner and Doctor-style environment value instead of
 continuing MCM verifier micro-gates.
 
+Gate 127 implements that capability/Doctor value through existing
+`forge capabilities scan` and `forge capabilities explain` commands. Gate 128
+implements the canonical `forge doctor export` command for a redacted local
+handoff bundle without adding new aliases.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
@@ -439,6 +468,53 @@ MCM Extender option types, FOMOD package creation,
 capability-to-runtime requirement inference, callbacks, non-object diagnostic
 projection coverage, and in-game runtime verification remain deferred unless a
 later gate explicitly reopens the MCM lane.
+
+Gate 127 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, emit `WF-CAP-*` diagnostics, resolve
+GECK Extender safe markers, or resolve JIP PP LN aliases. It summarizes those
+limits as open capability questions where relevant.
+
+Gate 128 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, emit `WF-CAP-*` diagnostics, resolve
+GECK Extender safe markers, resolve JIP PP LN aliases, call AI, or create a
+Doctor bundle archive. It exports the current local evidence only.
+
+Gate 129 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve wrong-scope installs,
+resolve GECK Extender safe markers, resolve JIP PP LN aliases, call AI, or
+create Doctor SARIF/GitHub bundle mode. It projects the existing project
+requirement statuses into `WF-CAP-001`, `WF-CAP-002`, and `WF-CAP-003`.
+
+Gate 130 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve wrong-scope installs,
+resolve GECK Extender safe markers, resolve JIP PP LN aliases, call AI, or
+create Doctor SARIF/GitHub bundle mode. It only enriches the existing
+project requirement diagnostics with scan-derived provider evidence.
+
+Gate 131 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve wrong-scope installs,
+resolve GECK Extender safe markers, resolve JIP PP LN aliases, call AI, or
+create Doctor SARIF/GitHub bundle mode. It only groups existing scan-derived
+provider evidence inside `forge capabilities explain`.
+
+Gate 132 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve mixed-scope GECK Extender
+markers, resolve JIP PP LN aliases, call AI, or create Doctor SARIF/GitHub
+bundle mode. It only detects root-vs-Data misplaced markers for existing
+deterministic path detectors.
+
+Gate 133 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve mixed-scope GECK Extender
+markers, resolve JIP PP LN aliases, call AI, or create Doctor SARIF/GitHub
+bundle mode. It only adds project requirement context to `capabilities
+explain` using existing deterministic project loading and resolution.
+
+Gate 134 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve mixed-scope GECK Extender
+markers, resolve JIP PP LN aliases, call AI, add new `WF-CAP-*` rule IDs, or
+create SARIF/GitHub output for `capabilities explain`. It only reuses the
+existing scan diagnostic projector to display handoff context inside explain
+output.
 
 The current response route baseline still includes:
 
@@ -768,6 +844,26 @@ behavior to normal package generation.
 Gate 126 closes the current MCM Extender lane and moves next implementation
 work to capability scanner and Doctor-style environment value instead of more
 MCM verify-existing edge-case gates.
+Gate 127 adds the Doctor-style capability readiness report and explain actions
+without changing the canonical CLI command surface.
+Gate 128 implements the canonical `forge doctor export` redacted local handoff
+bundle without adding aliases, runtime probes, network calls, or AI.
+Gate 129 adds the first canonical `WF-CAP-*` diagnostics for capability
+requirement resolution and exposes them through JSON, SARIF, and GitHub
+annotation projections for `forge capabilities scan`.
+Gate 130 adds provider evidence detail to those diagnostics and preserves
+redaction inside `forge doctor export`.
+Gate 131 adds grouped provider evidence to `forge capabilities explain`
+without adding new detector behavior.
+Gate 132 adds wrong-scope capability diagnostics for deterministic root-vs-Data
+marker evidence without adding runtime probes, MO2 VFS checks, provider
+version checks, or new command names.
+Gate 133 adds project requirement context to `forge capabilities explain`
+without adding new detectors, diagnostics, aliases, runtime probes, MO2 VFS
+checks, provider version checks, or external tool execution.
+Gate 134 adds diagnostic handoff context to `forge capabilities explain`
+without adding new detectors, rule IDs, aliases, runtime probes, MO2 VFS
+checks, provider version checks, or external tool execution.
 
 It intentionally does not create:
 
@@ -825,7 +921,9 @@ It intentionally does not create:
 - external tool-backed asset inspection,
 - automatic provider discovery without explicit paths,
 - runtime provider confirmation, MO2 VFS/profile inspection, provider version
-  parsing, wrong-scope diagnostics, and `WF-CAP-*` diagnostic projection,
+  parsing, mixed/effective-scope diagnostics beyond root-vs-Data marker
+  checks, and future `WF-CAP-*` diagnostics beyond `WF-CAP-001` through
+  `WF-CAP-004`,
 - in-game-verified MCM Extender output, FOMOD installers, release
   prepare/publish, binary plugin generation, JIP text scripts, or external
   tool execution.

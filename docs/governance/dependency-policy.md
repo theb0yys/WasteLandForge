@@ -227,3 +227,30 @@ Gate 126 closes the current MCM Extender lane without adding, downloading,
 rehosting, or requiring third-party runtime dependencies. Future
 capability/Doctor work must detect local providers and link users to official
 acquisition paths rather than bundling restricted runtime assets.
+Gate 127 adds only derived Doctor reporting over local path evidence. It does
+not add, download, rehost, or require third-party runtime dependencies.
+Gate 128 exports that local evidence as a redacted Doctor handoff bundle. It
+does not add, download, rehost, or require third-party runtime dependencies,
+and it performs no network, runtime, MO2, GECK, or AI operation.
+Gate 129 projects existing capability requirement evidence into `WF-CAP-*`
+diagnostics. It does not add, download, rehost, or require third-party runtime
+dependencies, and it performs no network, runtime, MO2, GECK, or AI operation.
+Gate 130 adds provider evidence detail to the same local capability diagnostics.
+It does not add, download, rehost, or require third-party runtime dependencies,
+and it performs no network, runtime, MO2, GECK, or AI operation.
+Gate 131 groups that same local provider evidence in `forge capabilities
+explain`. It adds no new dependency, detector, network call, runtime probe,
+MO2/GECK integration, or AI requirement.
+Gate 132 uses existing local path detectors to identify root-vs-Data
+wrong-scope markers. It adds no third-party dependency, download, rehosted
+runtime binary, network call, runtime probe, MO2/GECK integration, or AI
+requirement.
+Gate 133 reuses existing project requirement loading and local capability
+resolution inside `forge capabilities explain --project`. It adds no
+third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, provider-version parser, or AI
+requirement.
+Gate 134 reuses the existing capability diagnostic projector inside
+`forge capabilities explain --project`. It adds no third-party dependency,
+download, rehosted runtime binary, network call, runtime probe, MO2/GECK
+integration, provider-version parser, or AI requirement.

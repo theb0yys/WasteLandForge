@@ -10,17 +10,20 @@ public sealed class BuiltInFnvCapabilityScanner
         var inputs = NormalizeInputs(options);
         var providers = catalog.Providers.Select(provider => ScanProvider(provider, inputs)).ToArray();
         var capabilities = catalog.Capabilities.Select(capability => ScanCapability(capability, providers)).ToArray();
+        var doctor = CapabilityDoctorPlanner.Build(catalog, providers, capabilities);
         var summary = new CapabilityScanSummary(
             providers.Length,
             capabilities.Length,
             CountStatus(providers, CapabilityScanStatuses.Probable),
             CountStatus(providers, CapabilityScanStatuses.Missing),
             CountStatus(providers, CapabilityScanStatuses.Unknown),
+            CountStatus(providers, CapabilityScanStatuses.WrongScope),
             CountStatus(capabilities, CapabilityScanStatuses.Probable),
             CountStatus(capabilities, CapabilityScanStatuses.Missing),
-            CountStatus(capabilities, CapabilityScanStatuses.Unknown));
+            CountStatus(capabilities, CapabilityScanStatuses.Unknown),
+            CountStatus(capabilities, CapabilityScanStatuses.WrongScope));
 
-        return new CapabilityScanReport(catalog, inputs, summary, providers, capabilities);
+        return new CapabilityScanReport(catalog, inputs, summary, providers, capabilities, doctor);
     }
 
     private static CapabilityScanInputs NormalizeInputs(CapabilityScanOptions options)
@@ -44,19 +47,19 @@ public sealed class BuiltInFnvCapabilityScanner
     private static ProviderScanResult ScanProvider(ProviderDefinition provider, CapabilityScanInputs inputs) =>
         provider.Id switch
         {
-            "provider.game.falloutnv" => ProbePathSet(provider, "root-file", "root", inputs.GameRoot, ["FalloutNV.exe"]),
-            "provider.runtime.xnvse" => ProbePathSet(provider, "root-file", "root", inputs.GameRoot, ["nvse_loader.exe"]),
-            "provider.runtime.jip_ln" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("NVSE", "Plugins", "jip_nvse.dll")]),
+            "provider.game.falloutnv" => ProbePathSet(provider, "root-file", "root", inputs.GameRoot, ["FalloutNV.exe"], inputs.DataRoot, "data-managed"),
+            "provider.runtime.xnvse" => ProbePathSet(provider, "root-file", "root", inputs.GameRoot, ["nvse_loader.exe"], inputs.DataRoot, "data-managed"),
+            "provider.runtime.jip_ln" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("NVSE", "Plugins", "jip_nvse.dll")], inputs.GameRoot, "root"),
             "provider.runtime.jip_pp_ln" => UnknownProvider(provider, "data-file", "data-managed", "JIP PP LN file alias policy remains open in the built-in catalogue."),
-            "provider.runtime.johnnyguitar" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("NVSE", "Plugins", "JohnnyGuitarNVSE.dll")]),
-            "provider.runtime.showoff" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("NVSE", "Plugins", "ShowOffNVSE.dll")]),
-            "provider.runtime.uio" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("UIO", "Public")]),
-            "provider.runtime.mcm" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("Menus", "Prefabs", "MCM")]),
-            "provider.runtime.mcm_extender" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("Menus", "Prefabs", "MCMExtender")]),
-            "provider.runtime.knvse" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("NVSE", "Plugins", "kNVSE.dll")]),
+            "provider.runtime.johnnyguitar" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("NVSE", "Plugins", "JohnnyGuitarNVSE.dll")], inputs.GameRoot, "root"),
+            "provider.runtime.showoff" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("NVSE", "Plugins", "ShowOffNVSE.dll")], inputs.GameRoot, "root"),
+            "provider.runtime.uio" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("UIO", "Public")], inputs.GameRoot, "root"),
+            "provider.runtime.mcm" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("Menus", "Prefabs", "MCM")], inputs.GameRoot, "root"),
+            "provider.runtime.mcm_extender" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("Menus", "Prefabs", "MCMExtender")], inputs.GameRoot, "root"),
+            "provider.runtime.knvse" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("NVSE", "Plugins", "kNVSE.dll")], inputs.GameRoot, "root"),
             "provider.editor.geck" => ProbeExecutable(provider, "editor", inputs, ["GECK.exe"], includeGameRoot: true),
             "provider.editor.geck_extender" => UnknownProvider(provider, "executable-tool", "mixed", "GECK Extender has mixed-scope install evidence; Gate 58 does not define a safe file marker."),
-            "provider.editor.hot_reload" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("NVSE", "Plugins", "hot_reload.dll")]),
+            "provider.editor.hot_reload" => ProbePathSet(provider, "data-file", "data-managed", inputs.DataRoot, [Path.Combine("NVSE", "Plugins", "hot_reload.dll")], inputs.GameRoot, "root"),
             "provider.tool.xedit" => ProbeExecutable(provider, "tool", inputs, ["FNVEdit.exe", "xEdit.exe"], includeGameRoot: false),
             "provider.tool.mo2" => ProbeExecutable(provider, "tool", inputs, ["ModOrganizer.exe", "ModOrganizer2.exe"], includeGameRoot: false),
             _ => UnknownProvider(provider, "unknown", provider.InstallScope, "No Gate 58 detector is configured for this provider.")
@@ -67,25 +70,53 @@ public sealed class BuiltInFnvCapabilityScanner
         string detectorKind,
         string scope,
         string? root,
+        IReadOnlyList<string> relativePaths,
+        string? wrongScopeRoot = null,
+        string? wrongScope = null)
+    {
+        var evidence = ProbeExpectedPathSet(detectorKind, scope, root, relativePaths);
+        if (evidence.Any(item => StringComparer.Ordinal.Equals(item.Status, CapabilityScanStatuses.Probable)))
+        {
+            return new ProviderScanResult(
+                provider,
+                CapabilityScanStatuses.Probable,
+                evidence);
+        }
+
+        var wrongScopeEvidence = ProbeWrongScopePathSet(detectorKind, scope, wrongScopeRoot, wrongScope, relativePaths);
+        if (wrongScopeEvidence.Any(item => StringComparer.Ordinal.Equals(item.Status, CapabilityScanStatuses.WrongScope)))
+        {
+            return new ProviderScanResult(
+                provider,
+                CapabilityScanStatuses.WrongScope,
+                evidence.Concat(wrongScopeEvidence).ToArray());
+        }
+
+        return new ProviderScanResult(
+            provider,
+            evidence.All(item => StringComparer.Ordinal.Equals(item.Status, CapabilityScanStatuses.Missing))
+                ? CapabilityScanStatuses.Missing
+                : CapabilityScanStatuses.Unknown,
+            evidence);
+    }
+
+    private static IReadOnlyList<CapabilityScanEvidence> ProbeExpectedPathSet(
+        string detectorKind,
+        string scope,
+        string? root,
         IReadOnlyList<string> relativePaths)
     {
         if (string.IsNullOrWhiteSpace(root))
         {
-            return new ProviderScanResult(
-                provider,
-                CapabilityScanStatuses.Unknown,
-                [new CapabilityScanEvidence(detectorKind, scope, CapabilityScanStatuses.Unknown, null, $"No {scope} path was provided.")]);
+            return [new CapabilityScanEvidence(detectorKind, scope, CapabilityScanStatuses.Unknown, null, $"No {scope} path was provided.")];
         }
 
         if (!Directory.Exists(root))
         {
-            return new ProviderScanResult(
-                provider,
-                CapabilityScanStatuses.Missing,
-                [new CapabilityScanEvidence(detectorKind, scope, CapabilityScanStatuses.Missing, root, $"The {scope} path does not exist.")]);
+            return [new CapabilityScanEvidence(detectorKind, scope, CapabilityScanStatuses.Missing, root, $"The {scope} path does not exist.")];
         }
 
-        var evidence = relativePaths.Select(relativePath =>
+        return relativePaths.Select(relativePath =>
         {
             var fullPath = Path.Combine(root, relativePath);
             var exists = File.Exists(fullPath) || Directory.Exists(fullPath);
@@ -96,13 +127,36 @@ public sealed class BuiltInFnvCapabilityScanner
                 fullPath,
                 exists ? "Expected marker exists." : "Expected marker is missing.");
         }).ToArray();
+    }
 
-        return new ProviderScanResult(
-            provider,
-            evidence.Any(item => StringComparer.Ordinal.Equals(item.Status, CapabilityScanStatuses.Probable))
-                ? CapabilityScanStatuses.Probable
-                : CapabilityScanStatuses.Missing,
-            evidence);
+    private static IReadOnlyList<CapabilityScanEvidence> ProbeWrongScopePathSet(
+        string detectorKind,
+        string expectedScope,
+        string? wrongScopeRoot,
+        string? wrongScope,
+        IReadOnlyList<string> relativePaths)
+    {
+        if (string.IsNullOrWhiteSpace(wrongScopeRoot) || string.IsNullOrWhiteSpace(wrongScope) || !Directory.Exists(wrongScopeRoot))
+        {
+            return [];
+        }
+
+        return relativePaths
+            .Select(relativePath =>
+            {
+                var fullPath = Path.Combine(wrongScopeRoot, relativePath);
+                var exists = File.Exists(fullPath) || Directory.Exists(fullPath);
+                return exists
+                    ? new CapabilityScanEvidence(
+                        detectorKind,
+                        wrongScope,
+                        CapabilityScanStatuses.WrongScope,
+                        fullPath,
+                        $"Expected marker was found in {wrongScope} scope, but this provider expects {expectedScope} scope.")
+                    : null;
+            })
+            .OfType<CapabilityScanEvidence>()
+            .ToArray();
     }
 
     private static ProviderScanResult ProbeExecutable(
@@ -183,9 +237,11 @@ public sealed class BuiltInFnvCapabilityScanner
 
         var status = providerStatuses.Any(item => item.EndsWith($":{CapabilityScanStatuses.Probable}", StringComparison.Ordinal))
             ? CapabilityScanStatuses.Probable
-            : providerStatuses.Length > 0 && providerStatuses.All(item => item.EndsWith($":{CapabilityScanStatuses.Missing}", StringComparison.Ordinal))
-                ? CapabilityScanStatuses.Missing
-                : CapabilityScanStatuses.Unknown;
+            : providerStatuses.Any(item => item.EndsWith($":{CapabilityScanStatuses.WrongScope}", StringComparison.Ordinal))
+                ? CapabilityScanStatuses.WrongScope
+                : providerStatuses.Length > 0 && providerStatuses.All(item => item.EndsWith($":{CapabilityScanStatuses.Missing}", StringComparison.Ordinal))
+                    ? CapabilityScanStatuses.Missing
+                    : CapabilityScanStatuses.Unknown;
 
         return new CapabilityScanResult(capability, status, providerStatuses);
     }

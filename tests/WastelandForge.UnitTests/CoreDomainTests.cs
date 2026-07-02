@@ -71,7 +71,8 @@ public sealed class CoreDomainTests
             ],
             "Declare the capability in the capability registry or remove the dependency.",
             new Uri("https://docs.wastelandforge.dev/rules/WF-SEM-014"),
-            "wf:sem:014:runtime.ui.fakeprovider");
+            "wf:sem:014:runtime.ui.fakeprovider",
+            ["provider.runtime.fake:missing"]);
 
         var json = DiagnosticIssueJsonSerializer.Serialize(issue);
         var node = JsonNode.Parse(json) ?? throw new InvalidOperationException("Issue JSON did not parse.");
@@ -82,6 +83,7 @@ public sealed class CoreDomainTests
         Assert.Equal("io.github.theboyyss.examplemod", (string?)node["projectId"]);
         Assert.Equal("/requires/capabilities/2/id", (string?)node["primaryLocation"]?["pointer"]);
         Assert.Equal("registries/capabilities/runtime.yaml", (string?)node["relatedLocations"]?[0]?["file"]);
+        Assert.Equal("provider.runtime.fake:missing", (string?)node["evidence"]?[0]);
         Assert.Equal("https://docs.wastelandforge.dev/rules/WF-SEM-014", (string?)node["docsUri"]);
         Assert.Equal("wf:sem:014:runtime.ui.fakeprovider", (string?)node["fingerprint"]);
     }
@@ -137,7 +139,8 @@ public sealed class CoreDomainTests
                     ],
                     "Declare the capability in the capability registry or remove the dependency.",
                     new Uri("https://docs.wastelandforge.dev/rules/WF-SEM-014"),
-                    "wf:sem:014:runtime.ui.fakeprovider")
+                    "wf:sem:014:runtime.ui.fakeprovider",
+                    ["provider.runtime.fake:missing"])
             ]);
 
         var json = DiagnosticReportSarifSerializer.Serialize(report, "0.1.0");
@@ -155,6 +158,7 @@ public sealed class CoreDomainTests
         Assert.Equal(18, (int?)node["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["region"]?["startLine"]);
         Assert.Equal(7, (int?)node["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["region"]?["startColumn"]);
         Assert.Equal("/requires/capabilities/0/id", (string?)node["runs"]?[0]?["results"]?[0]?["locations"]?[0]?["physicalLocation"]?["properties"]?["jsonPointer"]);
+        Assert.Equal("provider.runtime.fake:missing", (string?)node["runs"]?[0]?["results"]?[0]?["properties"]?["evidence"]?[0]);
         Assert.Equal("wf:sem:014:runtime.ui.fakeprovider", (string?)node["runs"]?[0]?["results"]?[0]?["partialFingerprints"]?["wastelandforgeFingerprint"]);
         Assert.Equal("src/registries/capabilities/runtime.json", (string?)node["runs"]?[0]?["results"]?[0]?["relatedLocations"]?[0]?["physicalLocation"]?["artifactLocation"]?["uri"]);
     }
@@ -203,7 +207,8 @@ public sealed class CoreDomainTests
                         JsonPointer.Parse("/requires/capabilities/0/id"),
                         18,
                         7),
-                    suggestedFix: "Declare the capability in the capability registry or remove the dependency.")
+                    suggestedFix: "Declare the capability in the capability registry or remove the dependency.",
+                    evidence: ["provider.runtime.fake:missing"])
             ]);
 
         var annotations = DiagnosticReportGitHubAnnotationRenderer.Render(report);
@@ -212,5 +217,6 @@ public sealed class CoreDomainTests
         Assert.Contains("100%25 not defined.", annotations, StringComparison.Ordinal);
         Assert.Contains("Location: src/registries/dependencies/main.json#/requires/capabilities/0/id", annotations, StringComparison.Ordinal);
         Assert.Contains("Fix: Declare the capability in the capability registry or remove the dependency.", annotations, StringComparison.Ordinal);
+        Assert.Contains("Evidence: provider.runtime.fake:missing", annotations, StringComparison.Ordinal);
     }
 }

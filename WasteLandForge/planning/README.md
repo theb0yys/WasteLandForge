@@ -131,9 +131,17 @@ Gate status:
 - `gates/gate-124-mcm-extender-verify-existing-malformed-evidence-diagnostics.md` - Gate 124, MCM Extender verify-existing malformed evidence diagnostics.
 - `gates/gate-125-mcm-extender-verify-existing-malformed-evidence-diagnostic-projection-coverage.md` - Gate 125, MCM Extender verify-existing malformed evidence diagnostic projection coverage.
 - `gates/gate-126-mcm-extender-slice-closeout-forge-value-transition.md` - Gate 126, MCM Extender slice closeout and Forge value transition.
+- `gates/gate-127-capability-doctor-environment-report.md` - Gate 127, capability Doctor environment report.
+- `gates/gate-128-redacted-local-doctor-export-bundle.md` - Gate 128, redacted local Doctor export bundle.
+- `gates/gate-129-capability-diagnostic-projection-skeleton.md` - Gate 129, capability `WF-CAP-*` diagnostic projection skeleton.
+- `gates/gate-130-provider-evidence-detail-diagnostics-skeleton.md` - Gate 130, provider evidence detail diagnostics skeleton.
+- `gates/gate-131-capability-explain-provider-evidence-grouping.md` - Gate 131, capability explain provider evidence grouping.
+- `gates/gate-132-wrong-scope-capability-diagnostics.md` - Gate 132, wrong-scope capability diagnostics.
+- `gates/gate-133-capability-explain-project-requirement-context.md` - Gate 133, capability explain project requirement context.
+- `gates/gate-134-capability-explain-diagnostic-handoff.md` - Gate 134, capability explain diagnostic handoff.
 
 Next gate:
 
-- Gate 127 - Capability scanner and Doctor environment report value slice.
+- Gate 135 - Continue local capability/Doctor ergonomics unless provider-version evidence is documented.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

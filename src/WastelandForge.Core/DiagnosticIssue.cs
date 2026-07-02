@@ -13,7 +13,8 @@ public sealed record DiagnosticIssue
         IReadOnlyList<SourceLocation>? relatedLocations = null,
         string? suggestedFix = null,
         Uri? docsUri = null,
-        string? fingerprint = null)
+        string? fingerprint = null,
+        IReadOnlyList<string>? evidence = null)
     {
         if (string.IsNullOrWhiteSpace(category))
         {
@@ -38,6 +39,7 @@ public sealed record DiagnosticIssue
         ProjectId = projectId;
         PrimaryLocation = primaryLocation;
         RelatedLocations = relatedLocations ?? [];
+        Evidence = evidence ?? [];
         SuggestedFix = suggestedFix;
         DocsUri = docsUri;
         Fingerprint = fingerprint;
@@ -58,6 +60,8 @@ public sealed record DiagnosticIssue
     public SourceLocation PrimaryLocation { get; }
 
     public IReadOnlyList<SourceLocation> RelatedLocations { get; }
+
+    public IReadOnlyList<string> Evidence { get; }
 
     public string? SuggestedFix { get; }
 

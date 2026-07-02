@@ -104,6 +104,11 @@ internal static class ForgeCli
             return RunCapabilitiesExplain(resolution.RemainingArgs);
         }
 
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "doctor export"))
+        {
+            return RunDoctorExport(resolution.RemainingArgs);
+        }
+
         return RunReservedCommand(resolution.CommandPath, resolution.RemainingArgs);
     }
 
@@ -376,11 +381,9 @@ internal static class ForgeCli
             var requirementRead = new ProjectValidationPipeline().ReadCapabilityRequirements(parse.ProjectPath);
             if (requirementRead.Diagnostics.HasErrors)
             {
-                var diagnosticPayload = CliConstants.IsMachineFormat(parse.Format)
-                    ? DiagnosticReportJsonSerializer.Serialize(requirementRead.Diagnostics, CliConstants.Version, "capabilities scan")
-                    : DiagnosticReportTextRenderer.Render(requirementRead.Diagnostics, "capabilities scan");
+                var diagnosticPayload = RenderDiagnosticPayload(requirementRead.Diagnostics, parse.Format, "capabilities scan");
 
-                WritePayload(parse.OutputPath, diagnosticPayload, appendFinalNewline: !CliConstants.IsTextFormat(parse.Format));
+                WritePayload(parse.OutputPath, diagnosticPayload, appendFinalNewline: ShouldAppendFinalNewline(parse.Format));
                 return (int)CliExitCode.ProjectDiscovery;
             }
 
@@ -389,11 +392,24 @@ internal static class ForgeCli
                 requirementRead.ProjectId?.ToString(),
                 report,
                 requirementRead.Requirements);
-            report = report with { Requirements = requirementResolution };
+            report = report with
+            {
+                Doctor = CapabilityDoctorPlanner.Build(report.Catalog, report.Providers, report.Capabilities, requirementResolution),
+                Requirements = requirementResolution
+            };
             if (requirementResolution.Summary.RequiredUnavailable > 0)
             {
                 exitCode = (int)CliExitCode.CapabilityResolution;
             }
+        }
+
+        var diagnostics = CapabilityDiagnosticProjector.Project(report);
+        if (StringComparer.Ordinal.Equals(parse.Format, "sarif") ||
+            StringComparer.Ordinal.Equals(parse.Format, "github"))
+        {
+            var diagnosticPayload = RenderDiagnosticPayload(diagnostics, parse.Format, "capabilities scan");
+            WritePayload(parse.OutputPath, diagnosticPayload, appendFinalNewline: ShouldAppendFinalNewline(parse.Format));
+            return exitCode;
         }
 
         var payload = CliConstants.IsMachineFormat(parse.Format)
@@ -424,9 +440,110 @@ internal static class ForgeCli
             return (int)CliExitCode.Usage;
         }
 
+        if (parse.ProjectPath is not null)
+        {
+            var requirementRead = new ProjectValidationPipeline().ReadCapabilityRequirements(parse.ProjectPath);
+            if (requirementRead.Diagnostics.HasErrors)
+            {
+                var diagnosticPayload = RenderDiagnosticPayload(requirementRead.Diagnostics, parse.Format, "capabilities explain");
+
+                WritePayload(parse.OutputPath, diagnosticPayload, appendFinalNewline: ShouldAppendFinalNewline(parse.Format));
+                return (int)CliExitCode.ProjectDiscovery;
+            }
+
+            var scanReport = new CapabilityScanReport(
+                report.Catalog,
+                report.Inputs,
+                new CapabilityScanSummary(
+                    report.Providers.Count,
+                    report.Capabilities.Count,
+                    report.Providers.Count(provider => StringComparer.Ordinal.Equals(provider.Status, CapabilityScanStatuses.Probable)),
+                    report.Providers.Count(provider => StringComparer.Ordinal.Equals(provider.Status, CapabilityScanStatuses.Missing)),
+                    report.Providers.Count(provider => StringComparer.Ordinal.Equals(provider.Status, CapabilityScanStatuses.Unknown)),
+                    report.Providers.Count(provider => StringComparer.Ordinal.Equals(provider.Status, CapabilityScanStatuses.WrongScope)),
+                    report.Capabilities.Count(capability => StringComparer.Ordinal.Equals(capability.Status, CapabilityScanStatuses.Probable)),
+                    report.Capabilities.Count(capability => StringComparer.Ordinal.Equals(capability.Status, CapabilityScanStatuses.Missing)),
+                    report.Capabilities.Count(capability => StringComparer.Ordinal.Equals(capability.Status, CapabilityScanStatuses.Unknown)),
+                    report.Capabilities.Count(capability => StringComparer.Ordinal.Equals(capability.Status, CapabilityScanStatuses.WrongScope))),
+                report.Providers,
+                report.Capabilities,
+                CapabilityDoctorPlanner.Build(report.Catalog, report.Providers, report.Capabilities));
+            var requirementResolution = new BuiltInFnvCapabilityRequirementResolver().Resolve(
+                requirementRead.ProjectRoot,
+                requirementRead.ProjectId?.ToString(),
+                scanReport,
+                requirementRead.Requirements);
+            var relevantCapabilityIds = report.Capabilities
+                .Select(capability => capability.Capability.Id)
+                .Append(StringComparer.Ordinal.Equals(report.Target.Kind, "capability") ? report.Target.Id : string.Empty)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+            var relevantRequirements = requirementResolution.Requirements
+                .Where(requirement => relevantCapabilityIds.Contains(requirement.Id, StringComparer.Ordinal))
+                .OrderBy(requirement => requirement.Source.File, StringComparer.Ordinal)
+                .ThenBy(requirement => requirement.Source.Pointer, StringComparer.Ordinal)
+                .ToArray();
+            var diagnosticHandoff = relevantRequirements
+                .Select(requirement => CapabilityDiagnosticProjector.ProjectRequirement(requirement, requirementResolution.ProjectId))
+                .OfType<DiagnosticIssue>()
+                .ToArray();
+            report = report with
+            {
+                ProjectRequirements = new CapabilityExplanationProjectRequirements(
+                    requirementResolution.ProjectRoot,
+                    requirementResolution.ProjectId,
+                    relevantRequirements,
+                    diagnosticHandoff)
+            };
+        }
+
         var payload = CliConstants.IsMachineFormat(parse.Format)
             ? CapabilityExplanationJsonSerializer.Serialize(report)
             : CapabilityExplanationTextRenderer.Render(report);
+
+        WritePayload(parse.OutputPath, payload, appendFinalNewline: !CliConstants.IsTextFormat(parse.Format));
+        return (int)CliExitCode.Success;
+    }
+
+    private static int RunDoctorExport(string[] args)
+    {
+        var parse = ParseDoctorExportOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "doctor export", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var scanReport = new BuiltInFnvCapabilityScanner().Scan(new CapabilityScanOptions(
+            parse.GameRoot,
+            parse.DataRoot,
+            parse.ToolPaths));
+        if (parse.ProjectPath is not null)
+        {
+            var requirementRead = new ProjectValidationPipeline().ReadCapabilityRequirements(parse.ProjectPath);
+            if (requirementRead.Diagnostics.HasErrors)
+            {
+                WriteUsage(parse.Format, "doctor export", "Project capability requirements could not be read for the redacted Doctor export.");
+                return (int)CliExitCode.ProjectDiscovery;
+            }
+
+            var requirementResolution = new BuiltInFnvCapabilityRequirementResolver().Resolve(
+                requirementRead.ProjectRoot,
+                requirementRead.ProjectId?.ToString(),
+                scanReport,
+                requirementRead.Requirements);
+            scanReport = scanReport with
+            {
+                Doctor = CapabilityDoctorPlanner.Build(scanReport.Catalog, scanReport.Providers, scanReport.Capabilities, requirementResolution),
+                Requirements = requirementResolution
+            };
+        }
+
+        var export = DoctorExportRedactor.Create(scanReport);
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? DoctorExportJsonSerializer.Serialize(export)
+            : DoctorExportTextRenderer.Render(export);
 
         WritePayload(parse.OutputPath, payload, appendFinalNewline: !CliConstants.IsTextFormat(parse.Format));
         return (int)CliExitCode.Success;
@@ -1072,12 +1189,6 @@ internal static class ForgeCli
                     return CapabilitiesScanParseResult.Fail(format, $"Unsupported format '{format}'.");
                 }
 
-                if (StringComparer.Ordinal.Equals(format, "sarif") ||
-                    StringComparer.Ordinal.Equals(format, "github"))
-                {
-                    return CapabilitiesScanParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
-                }
-
                 continue;
             }
 
@@ -1173,6 +1284,7 @@ internal static class ForgeCli
     {
         var format = "human";
         string? targetId = null;
+        string? projectPath = null;
         string? gameRoot = null;
         string? dataRoot = null;
         string? outputPath = null;
@@ -1199,6 +1311,22 @@ internal static class ForgeCli
                     return CapabilitiesExplainParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
                 }
 
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectPath is not null)
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
                 continue;
             }
 
@@ -1278,7 +1406,133 @@ internal static class ForgeCli
 
         return string.IsNullOrWhiteSpace(targetId)
             ? CapabilitiesExplainParseResult.Fail(format, "Missing capability or provider id.")
-            : CapabilitiesExplainParseResult.Ok(targetId, gameRoot, dataRoot, toolPaths, outputPath, format);
+            : CapabilitiesExplainParseResult.Ok(targetId, projectPath, gameRoot, dataRoot, toolPaths, outputPath, format);
+    }
+
+    private static DoctorExportParseResult ParseDoctorExportOptions(string[] args)
+    {
+        var format = "human";
+        string? gameRoot = null;
+        string? dataRoot = null;
+        string? outputPath = null;
+        string? projectPath = null;
+        var toolPaths = new List<string>();
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return DoctorExportParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return DoctorExportParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return DoctorExportParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return DoctorExportParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectPath is not null)
+                {
+                    return DoctorExportParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--game") ||
+                StringComparer.Ordinal.Equals(arg, "--game-root"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitGameRoot))
+                {
+                    return DoctorExportParseResult.Fail(format, $"Missing value for {arg}.");
+                }
+
+                if (gameRoot is not null)
+                {
+                    return DoctorExportParseResult.Fail(format, "Game root was specified more than once.");
+                }
+
+                gameRoot = explicitGameRoot;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--data-root"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitDataRoot))
+                {
+                    return DoctorExportParseResult.Fail(format, "Missing value for --data-root.");
+                }
+
+                if (dataRoot is not null)
+                {
+                    return DoctorExportParseResult.Fail(format, "Data root was specified more than once.");
+                }
+
+                dataRoot = explicitDataRoot;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--tool-path"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitToolPath))
+                {
+                    return DoctorExportParseResult.Fail(format, "Missing value for --tool-path.");
+                }
+
+                toolPaths.Add(explicitToolPath);
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputPath))
+                {
+                    return DoctorExportParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputPath = explicitOutputPath;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return DoctorExportParseResult.Fail(format, $"Unsupported doctor export option '{arg}'.");
+            }
+
+            if (projectPath is not null)
+            {
+                return DoctorExportParseResult.Fail(format, "Project root was specified more than once.");
+            }
+
+            projectPath = arg;
+        }
+
+        return DoctorExportParseResult.Ok(projectPath, gameRoot, dataRoot, toolPaths, outputPath, format);
     }
 
     private static string ParseReservedFormat(string[] args, out string? error)
@@ -1359,6 +1613,26 @@ internal static class ForgeCli
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath) ?? ".");
         File.WriteAllText(fullPath, appendFinalNewline ? payload + Environment.NewLine : payload);
     }
+
+    private static string RenderDiagnosticPayload(DiagnosticReport report, string format, string command)
+    {
+        if (StringComparer.Ordinal.Equals(format, "sarif"))
+        {
+            return DiagnosticReportSarifSerializer.Serialize(report, CliConstants.Version, command);
+        }
+
+        if (StringComparer.Ordinal.Equals(format, "github"))
+        {
+            return DiagnosticReportGitHubAnnotationRenderer.Render(report);
+        }
+
+        return CliConstants.IsMachineFormat(format)
+            ? DiagnosticReportJsonSerializer.Serialize(report, CliConstants.Version, command)
+            : DiagnosticReportTextRenderer.Render(report, command);
+    }
+
+    private static bool ShouldAppendFinalNewline(string format) =>
+        !CliConstants.IsTextFormat(format) && !StringComparer.Ordinal.Equals(format, "github");
 
     private static void WriteMarkdownSummary(
         string? summaryPath,
@@ -1567,6 +1841,7 @@ internal static class ForgeCli
     private sealed record CapabilitiesExplainParseResult(
         bool Success,
         string TargetId,
+        string? ProjectPath,
         string? GameRoot,
         string? DataRoot,
         IReadOnlyList<string> ToolPaths,
@@ -1576,14 +1851,38 @@ internal static class ForgeCli
     {
         public static CapabilitiesExplainParseResult Ok(
             string targetId,
+            string? projectPath,
             string? gameRoot,
             string? dataRoot,
             IReadOnlyList<string> toolPaths,
             string? outputPath,
             string format) =>
-            new(true, targetId, gameRoot, dataRoot, toolPaths, outputPath, format, string.Empty);
+            new(true, targetId, projectPath, gameRoot, dataRoot, toolPaths, outputPath, format, string.Empty);
 
         public static CapabilitiesExplainParseResult Fail(string format, string message) =>
-            new(false, string.Empty, null, null, [], null, format, message);
+            new(false, string.Empty, null, null, null, [], null, format, message);
+    }
+
+    private sealed record DoctorExportParseResult(
+        bool Success,
+        string? ProjectPath,
+        string? GameRoot,
+        string? DataRoot,
+        IReadOnlyList<string> ToolPaths,
+        string? OutputPath,
+        string Format,
+        string Message)
+    {
+        public static DoctorExportParseResult Ok(
+            string? projectPath,
+            string? gameRoot,
+            string? dataRoot,
+            IReadOnlyList<string> toolPaths,
+            string? outputPath,
+            string format) =>
+            new(true, projectPath, gameRoot, dataRoot, toolPaths, outputPath, format, string.Empty);
+
+        public static DoctorExportParseResult Fail(string format, string message) =>
+            new(false, null, null, null, [], null, format, message);
     }
 }

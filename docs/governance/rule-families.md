@@ -140,6 +140,23 @@ diagnostic projection over provider-resolution and project requirement gates.
 Gate 60 adds project requirement resolution output for
 `forge capabilities scan --project`, but still adds no `WF-CAP-*` diagnostic
 rule family member.
+Gate 129 adds the first concrete `WF-CAP-*` diagnostics:
+`WF-CAP-001` for missing required capabilities, `WF-CAP-002` for required
+capabilities unverifiable from local evidence, and `WF-CAP-003` for optional
+capabilities unavailable from local evidence. Version, wrong-scope, and
+runtime-only capability diagnostics remain future `WF-CAP-*` rules.
+Gate 130 adds provider evidence detail to those existing capability
+diagnostics without assigning new rule IDs. Version, wrong-scope, and
+runtime-only capability diagnostics remain future `WF-CAP-*` rules.
+Gate 132 adds `WF-CAP-004` for capability providers detected in the wrong
+root/Data install scope. Version, MO2 effective-scope, mixed-scope, and
+runtime-only capability diagnostics remain future `WF-CAP-*` rules.
+Gate 133 adds no new rule ID. `forge capabilities explain --project` displays
+matching project requirement context but does not project new diagnostics.
+Gate 134 adds no new rule ID. `forge capabilities explain --project` displays
+diagnostic handoff metadata using existing `WF-CAP-001` through `WF-CAP-004`
+projection rules, but it does not add new rules or SARIF/GitHub explain
+output.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths
