@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 134 capability explain diagnostic handoff
+Status: Gate 136 Doctor export diagnostics index
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -233,6 +233,13 @@ forge --version
   redacted `diagnostics` object added by Gate 129 and the nested provider
   evidence detail added by Gate 130, including Gate 132 wrong-scope status
   when present.
+- `forge doctor export --format json` includes top-level `summary` and
+  `index` sections derived from the redacted capability scan report. The
+  summary lists catalogue, provider, capability, Doctor-area, requirement, and
+  diagnostic counts. The index lists Doctor areas, compact `WF-CAP-*`
+  diagnostics with source files and JSON pointers, and open capability
+  questions so handoff bundles can be scanned without opening the nested
+  `capabilities` report.
 - Gate 56 still adds no CLI behavior; response route taxonomy, route
   selection, and GECK/plugin output mapping remain unimplemented pending an
   evidence pack.
@@ -1071,6 +1078,21 @@ Gate 134 adds diagnostic handoff context to `forge capabilities explain
 requirements. It reuses the existing scan diagnostic projector and still does
 not add runtime probes, MO2 VFS checks, provider version checks, new rule IDs,
 SARIF/GitHub output for explain, or Doctor export SARIF/GitHub mode.
+
+Gate 135 adds a top-level summary and index to `forge doctor export`. JSON
+output now includes `summary` and `index`, and human/plain output prints the
+same summary and Doctor-area index before the nested capability scan report.
+It reuses the redacted capability scan report and still does not add runtime
+probes, MO2 VFS checks, provider version checks, new rule IDs, SARIF/GitHub
+output for Doctor export, or AI behavior.
+
+Gate 136 adds `index.diagnostics` to `forge doctor export`. JSON output now
+lists compact `WF-CAP-*` issue IDs, severities, titles, source files, source
+pointers, and suggested fixes at the top level, and human/plain output prints
+matching compact diagnostics under `Doctor index`. It reuses the existing
+capability diagnostic projector and still does not add runtime probes, MO2 VFS
+checks, provider version checks, new rule IDs, SARIF/GitHub output for Doctor
+export, or AI behavior.
 
 ## Exit Codes
 

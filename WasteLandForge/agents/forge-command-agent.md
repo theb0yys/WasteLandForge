@@ -175,22 +175,24 @@ multi-slider, color picker, FOMOD package creation, capability-derived runtime
 requirements, MO2 installation, or in-game verification exist until later
 gates implement them.
 
-Gate 134 continues Doctor-style environment reporting under the canonical
+Gate 136 continues Doctor-style environment reporting under the canonical
 `/forge capabilities scan`, `/forge capabilities explain`, and
 `/forge doctor export` command surface. Route scan, explain, and Doctor export
 requests to the real CLI when available. Describe Doctor export as a redacted
-local handoff bundle over capability scan evidence, including redacted nested
-project requirement provider evidence, not as runtime/session proof. For scan
-requests with `--project`, describe `WF-CAP-001`, `WF-CAP-002`, and
-`WF-CAP-003` diagnostic projection as implemented, plus `WF-CAP-004` for
-deterministic root-vs-Data wrong-scope markers. For explain requests, describe
-grouped provider evidence in JSON `evidenceGroups` and human/plain provider
-evidence groups, plus matching project requirement context when `--project` is
-supplied, including diagnostic handoff metadata for the `WF-CAP-*` rule that
-scan would project for unavailable matching requirements. Do not claim runtime
-probes, MO2 VFS launch, provider version checks, mixed-scope GECK Extender
-checks, GECK automation, network checks, AI explanation, new rule IDs,
-SARIF/GitHub explain output, or Doctor export SARIF/GitHub mode exist yet.
+local handoff bundle over capability scan evidence, including top-level
+summary/index sections, compact `index.diagnostics` entries for
+already-projected `WF-CAP-*` issues, and redacted nested project requirement
+provider evidence, not as runtime/session proof. For scan requests with `--project`,
+describe `WF-CAP-001`, `WF-CAP-002`, and `WF-CAP-003` diagnostic projection
+as implemented, plus `WF-CAP-004` for deterministic root-vs-Data wrong-scope
+markers. For explain requests, describe grouped provider evidence in JSON
+`evidenceGroups` and human/plain provider evidence groups, plus matching
+project requirement context when `--project` is supplied, including diagnostic
+handoff metadata for the `WF-CAP-*` rule that scan would project for
+unavailable matching requirements. Do not claim runtime probes, MO2 VFS launch,
+provider version checks, mixed-scope GECK Extender checks, GECK automation,
+network checks, AI explanation, new rule IDs, SARIF/GitHub explain output, or
+Doctor export SARIF/GitHub mode exist yet.
 
 ## Required output
 

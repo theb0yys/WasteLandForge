@@ -157,6 +157,13 @@ Gate 134 adds no new rule ID. `forge capabilities explain --project` displays
 diagnostic handoff metadata using existing `WF-CAP-001` through `WF-CAP-004`
 projection rules, but it does not add new rules or SARIF/GitHub explain
 output.
+Gate 135 adds no new rule ID. `forge doctor export` displays top-level
+summary and index metadata derived from existing capability scan and Doctor
+data, but it does not add new rules or SARIF/GitHub Doctor export output.
+Gate 136 adds no new rule ID. `forge doctor export` displays compact
+top-level diagnostics index metadata derived from existing `WF-CAP-*`
+capability scan diagnostics, but it does not add new rules or SARIF/GitHub
+Doctor export output.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths

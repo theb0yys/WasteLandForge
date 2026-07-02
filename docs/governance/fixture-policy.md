@@ -375,3 +375,11 @@ existing synthetic `ExampleMod` fixture and temp-only scan inputs to exercise
 Gate 134 adds no committed provider fixtures. Golden CLI tests use the
 existing synthetic `ExampleMod` fixture and temp-only scan inputs to exercise
 `forge capabilities explain --project` diagnostic handoff context.
+
+Gate 135 adds no committed provider fixtures. Golden CLI tests use the
+existing synthetic `ExampleMod` fixture and temp-only scan inputs to exercise
+`forge doctor export` summary and index output.
+
+Gate 136 adds no committed provider fixtures. Golden CLI tests use the
+existing synthetic `ExampleMod` fixture and temp-only scan inputs to exercise
+`forge doctor export` compact diagnostics index output and redaction safety.

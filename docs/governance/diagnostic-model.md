@@ -344,6 +344,16 @@ Gate 134 adds no new diagnostic rule ID. It exposes a diagnostic handoff under
 projection that `forge capabilities scan --project` uses for matching
 unavailable requirements. SARIF and GitHub projection remain scan-only.
 
+Gate 135 adds no new diagnostic rule ID. `forge doctor export` now summarizes
+redacted diagnostic counts at the top level, but canonical issue projection
+remains under the embedded capability scan report and SARIF/GitHub projection
+remain scan-only.
+
+Gate 136 adds no new diagnostic rule ID. `forge doctor export` now exposes a
+compact top-level `index.diagnostics` list derived from the same redacted
+`WF-CAP-*` issues embedded under the capability scan report; SARIF and GitHub
+projection remain scan-only.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

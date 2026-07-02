@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using WastelandForge.Core;
 using WastelandForge.Registry;
 
 namespace WastelandForge.Cli;
@@ -10,6 +11,8 @@ internal sealed record DoctorExportReport(
     bool Offline,
     bool AiOptional,
     DoctorExportRedaction Redaction,
+    DoctorExportSummary Summary,
+    DoctorExportIndex Index,
     CapabilityScanReport Capabilities);
 
 internal sealed record DoctorExportRedaction(
@@ -17,6 +20,85 @@ internal sealed record DoctorExportRedaction(
     string Paths,
     IReadOnlyList<string> Tokens,
     IReadOnlyList<string> Notes);
+
+internal sealed record DoctorExportSummary(
+    DoctorExportCatalogSummary Catalog,
+    DoctorExportProviderSummary Providers,
+    DoctorExportCapabilitySummary Capabilities,
+    DoctorExportDoctorSummary Doctor,
+    DoctorExportRequirementSummary? Requirements,
+    DoctorExportDiagnosticSummary Diagnostics);
+
+internal sealed record DoctorExportCatalogSummary(
+    string Id,
+    string Version);
+
+internal sealed record DoctorExportProviderSummary(
+    int Total,
+    int Probable,
+    int Missing,
+    int Unknown,
+    int WrongScope);
+
+internal sealed record DoctorExportCapabilitySummary(
+    int Total,
+    int Probable,
+    int Missing,
+    int Unknown,
+    int WrongScope);
+
+internal sealed record DoctorExportDoctorSummary(
+    int Areas,
+    int Ready,
+    int ActionNeeded,
+    int Unknown,
+    int Actions);
+
+internal sealed record DoctorExportRequirementSummary(
+    int Total,
+    int Satisfied,
+    int Missing,
+    int Unknown,
+    int WrongScope,
+    int RequiredUnavailable,
+    int OptionalUnavailable);
+
+internal sealed record DoctorExportDiagnosticSummary(
+    int Issues,
+    int Errors,
+    int Warnings,
+    int Notes);
+
+internal sealed record DoctorExportIndex(
+    IReadOnlyList<DoctorExportDoctorAreaIndexEntry> DoctorAreas,
+    IReadOnlyList<DoctorExportRequirementIndexEntry> Requirements,
+    IReadOnlyList<DoctorExportDiagnosticIndexEntry> Diagnostics,
+    IReadOnlyList<string> OpenQuestions);
+
+internal sealed record DoctorExportDoctorAreaIndexEntry(
+    string Id,
+    string Title,
+    string Status,
+    IReadOnlyList<string> Capabilities,
+    IReadOnlyList<string> Providers,
+    IReadOnlyList<string> Actions);
+
+internal sealed record DoctorExportRequirementIndexEntry(
+    string Id,
+    bool Optional,
+    IReadOnlyList<string> Phases,
+    string Status,
+    string SourceFile,
+    string SourcePointer,
+    string Message);
+
+internal sealed record DoctorExportDiagnosticIndexEntry(
+    string RuleId,
+    string Severity,
+    string Title,
+    string SourceFile,
+    string? SourcePointer,
+    string? SuggestedFix);
 
 internal static class DoctorExportRedactor
 {
@@ -52,6 +134,9 @@ internal static class DoctorExportRedactor
             Doctor = doctor,
             Requirements = requirements
         };
+        var diagnostics = CapabilityDiagnosticProjector.Project(redactedReport);
+        var summary = CreateSummary(redactedReport, diagnostics);
+        var index = CreateIndex(redactedReport, diagnostics);
         var tokens = redactor.Tokens
             .Concat(requirements is null ? [] : ["<redacted:project-root>"])
             .Distinct(StringComparer.Ordinal)
@@ -72,8 +157,91 @@ internal static class DoctorExportRedactor
             Offline: true,
             AiOptional: true,
             redaction,
+            summary,
+            index,
             redactedReport);
     }
+
+    private static DoctorExportSummary CreateSummary(
+        CapabilityScanReport report,
+        DiagnosticReport diagnostics) =>
+        new(
+            new DoctorExportCatalogSummary(report.Catalog.CatalogId, report.Catalog.Version),
+            new DoctorExportProviderSummary(
+                report.Summary.Providers,
+                report.Summary.ProbableProviders,
+                report.Summary.MissingProviders,
+                report.Summary.UnknownProviders,
+                report.Summary.WrongScopeProviders),
+            new DoctorExportCapabilitySummary(
+                report.Summary.Capabilities,
+                report.Summary.ProbableCapabilities,
+                report.Summary.MissingCapabilities,
+                report.Summary.UnknownCapabilities,
+                report.Summary.WrongScopeCapabilities),
+            new DoctorExportDoctorSummary(
+                report.Doctor.Summary.Areas,
+                report.Doctor.Summary.ReadyAreas,
+                report.Doctor.Summary.ActionNeededAreas,
+                report.Doctor.Summary.UnknownAreas,
+                report.Doctor.Summary.Actions),
+            report.Requirements is null
+                ? null
+                : new DoctorExportRequirementSummary(
+                    report.Requirements.Summary.Requirements,
+                    report.Requirements.Summary.Satisfied,
+                    report.Requirements.Summary.Missing,
+                    report.Requirements.Summary.Unknown,
+                    report.Requirements.Summary.WrongScope,
+                    report.Requirements.Summary.RequiredUnavailable,
+                    report.Requirements.Summary.OptionalUnavailable),
+            new DoctorExportDiagnosticSummary(
+                diagnostics.Issues.Count,
+                diagnostics.ErrorCount,
+                diagnostics.WarningCount,
+                diagnostics.NoteCount));
+
+    private static DoctorExportIndex CreateIndex(
+        CapabilityScanReport report,
+        DiagnosticReport diagnostics) =>
+        new(
+            report.Doctor.Areas
+                .Select(area => new DoctorExportDoctorAreaIndexEntry(
+                    area.Id,
+                    area.Title,
+                    area.Status,
+                    area.CapabilityIds,
+                    area.ProviderIds,
+                    area.Actions))
+                .ToArray(),
+            report.Requirements is null
+                ? []
+                : report.Requirements.Requirements
+                    .Where(requirement => !StringComparer.Ordinal.Equals(
+                        requirement.Status,
+                        CapabilityRequirementResolutionStatuses.Satisfied))
+                    .Select(requirement => new DoctorExportRequirementIndexEntry(
+                        requirement.Id,
+                        requirement.Optional,
+                        requirement.Phases,
+                        requirement.Status,
+                        requirement.Source.File,
+                        requirement.Source.Pointer,
+                        requirement.Message))
+                    .ToArray(),
+            diagnostics.Issues
+                .Select(issue => new DoctorExportDiagnosticIndexEntry(
+                    issue.RuleId.ToString(),
+                    FormatSeverity(issue.Severity),
+                    issue.Title,
+                    issue.PrimaryLocation.File,
+                    issue.PrimaryLocation.Pointer?.ToString(),
+                    issue.SuggestedFix))
+                .ToArray(),
+            report.Doctor.OpenQuestions.ToArray());
+
+    private static string FormatSeverity(DiagnosticSeverity severity) =>
+        severity.ToString().ToLowerInvariant();
 
     private static CapabilityRequirementResolutionReport RedactRequirements(
         CapabilityRequirementResolutionReport requirements,
@@ -248,6 +416,8 @@ internal static class DoctorExportJsonSerializer
                 ["sourceCommand"] = "capabilities scan"
             },
             ["redaction"] = ToJson(report.Redaction),
+            ["summary"] = ToJson(report.Summary),
+            ["index"] = ToJson(report.Index),
             ["capabilities"] = capabilityScan
         };
 
@@ -262,6 +432,118 @@ internal static class DoctorExportJsonSerializer
             ["tokens"] = new JsonArray(redaction.Tokens.Select(token => JsonValue.Create(token)).ToArray()),
             ["notes"] = new JsonArray(redaction.Notes.Select(note => JsonValue.Create(note)).ToArray())
         };
+
+    private static JsonObject ToJson(DoctorExportSummary summary) =>
+        new()
+        {
+            ["catalog"] = new JsonObject
+            {
+                ["id"] = summary.Catalog.Id,
+                ["version"] = summary.Catalog.Version
+            },
+            ["providers"] = new JsonObject
+            {
+                ["total"] = summary.Providers.Total,
+                ["probable"] = summary.Providers.Probable,
+                ["missing"] = summary.Providers.Missing,
+                ["unknown"] = summary.Providers.Unknown,
+                ["wrongScope"] = summary.Providers.WrongScope
+            },
+            ["capabilities"] = new JsonObject
+            {
+                ["total"] = summary.Capabilities.Total,
+                ["probable"] = summary.Capabilities.Probable,
+                ["missing"] = summary.Capabilities.Missing,
+                ["unknown"] = summary.Capabilities.Unknown,
+                ["wrongScope"] = summary.Capabilities.WrongScope
+            },
+            ["doctor"] = new JsonObject
+            {
+                ["areas"] = summary.Doctor.Areas,
+                ["ready"] = summary.Doctor.Ready,
+                ["actionNeeded"] = summary.Doctor.ActionNeeded,
+                ["unknown"] = summary.Doctor.Unknown,
+                ["actions"] = summary.Doctor.Actions
+            },
+            ["requirements"] = summary.Requirements is null ? null : new JsonObject
+            {
+                ["total"] = summary.Requirements.Total,
+                ["satisfied"] = summary.Requirements.Satisfied,
+                ["missing"] = summary.Requirements.Missing,
+                ["unknown"] = summary.Requirements.Unknown,
+                ["wrongScope"] = summary.Requirements.WrongScope,
+                ["requiredUnavailable"] = summary.Requirements.RequiredUnavailable,
+                ["optionalUnavailable"] = summary.Requirements.OptionalUnavailable
+            },
+            ["diagnostics"] = new JsonObject
+            {
+                ["issues"] = summary.Diagnostics.Issues,
+                ["errors"] = summary.Diagnostics.Errors,
+                ["warnings"] = summary.Diagnostics.Warnings,
+                ["notes"] = summary.Diagnostics.Notes
+            }
+        };
+
+    private static JsonObject ToJson(DoctorExportIndex index) =>
+        new()
+        {
+            ["doctorAreas"] = new JsonArray(index.DoctorAreas.Select(ToJson).ToArray()),
+            ["requirements"] = new JsonArray(index.Requirements.Select(ToJson).ToArray()),
+            ["diagnostics"] = new JsonArray(index.Diagnostics.Select(ToJson).ToArray()),
+            ["openQuestions"] = new JsonArray(index.OpenQuestions.Select(question => JsonValue.Create(question)).ToArray())
+        };
+
+    private static JsonObject ToJson(DoctorExportDoctorAreaIndexEntry area) =>
+        new()
+        {
+            ["id"] = area.Id,
+            ["title"] = area.Title,
+            ["status"] = area.Status,
+            ["capabilities"] = new JsonArray(area.Capabilities.Select(capability => JsonValue.Create(capability)).ToArray()),
+            ["providers"] = new JsonArray(area.Providers.Select(provider => JsonValue.Create(provider)).ToArray()),
+            ["actions"] = new JsonArray(area.Actions.Select(action => JsonValue.Create(action)).ToArray())
+        };
+
+    private static JsonObject ToJson(DoctorExportRequirementIndexEntry requirement) =>
+        new()
+        {
+            ["id"] = requirement.Id,
+            ["optional"] = requirement.Optional,
+            ["phases"] = new JsonArray(requirement.Phases.Select(phase => JsonValue.Create(phase)).ToArray()),
+            ["status"] = requirement.Status,
+            ["source"] = new JsonObject
+            {
+                ["file"] = requirement.SourceFile,
+                ["pointer"] = requirement.SourcePointer
+            },
+            ["message"] = requirement.Message
+        };
+
+    private static JsonObject ToJson(DoctorExportDiagnosticIndexEntry diagnostic)
+    {
+        var source = new JsonObject
+        {
+            ["file"] = diagnostic.SourceFile
+        };
+        if (!string.IsNullOrWhiteSpace(diagnostic.SourcePointer))
+        {
+            source["pointer"] = diagnostic.SourcePointer;
+        }
+
+        var json = new JsonObject
+        {
+            ["ruleId"] = diagnostic.RuleId,
+            ["severity"] = diagnostic.Severity,
+            ["title"] = diagnostic.Title,
+            ["source"] = source
+        };
+        if (!string.IsNullOrWhiteSpace(diagnostic.SuggestedFix))
+        {
+            json["suggestedFix"] = diagnostic.SuggestedFix;
+        }
+
+        return json;
+    }
 }
 
 internal static class DoctorExportTextRenderer
@@ -278,10 +560,93 @@ internal static class DoctorExportTextRenderer
         builder.AppendLine($"Redaction: {report.Redaction.Mode}; paths {report.Redaction.Paths}");
         builder.AppendLine($"Tokens: {JoinOrNone(report.Redaction.Tokens)}");
         builder.AppendLine();
+        builder.AppendLine("Summary:");
+        builder.AppendLine($"  Catalog: {report.Summary.Catalog.Id} {report.Summary.Catalog.Version}");
+        builder.AppendLine(
+            $"  Providers: {report.Summary.Providers.Probable} probable, {report.Summary.Providers.Missing} missing, {report.Summary.Providers.Unknown} unknown, {report.Summary.Providers.WrongScope} wrong-scope");
+        builder.AppendLine(
+            $"  Capabilities: {report.Summary.Capabilities.Probable} probable, {report.Summary.Capabilities.Missing} missing, {report.Summary.Capabilities.Unknown} unknown, {report.Summary.Capabilities.WrongScope} wrong-scope");
+        builder.AppendLine(
+            $"  Doctor: {report.Summary.Doctor.Ready} ready, {report.Summary.Doctor.ActionNeeded} action-needed, {report.Summary.Doctor.Unknown} unknown, {report.Summary.Doctor.Actions} action(s)");
+        if (report.Summary.Requirements is null)
+        {
+            builder.AppendLine("  Requirements: not included");
+        }
+        else
+        {
+            builder.AppendLine(
+                $"  Requirements: {report.Summary.Requirements.Satisfied} satisfied, {report.Summary.Requirements.Missing} missing, {report.Summary.Requirements.Unknown} unknown, {report.Summary.Requirements.WrongScope} wrong-scope");
+            builder.AppendLine(
+                $"  Requirement availability: {report.Summary.Requirements.RequiredUnavailable} required unavailable, {report.Summary.Requirements.OptionalUnavailable} optional unavailable");
+        }
+
+        builder.AppendLine(
+            $"  Diagnostics: {report.Summary.Diagnostics.Errors} error(s), {report.Summary.Diagnostics.Warnings} warning(s), {report.Summary.Diagnostics.Notes} note(s)");
+        builder.AppendLine();
+        builder.AppendLine("Doctor index:");
+        foreach (var area in report.Index.DoctorAreas)
+        {
+            builder.AppendLine($"  {area.Id}: {area.Status}");
+            builder.AppendLine($"    Capabilities: {JoinOrNone(area.Capabilities)}");
+            builder.AppendLine($"    Providers: {JoinOrNone(area.Providers)}");
+            foreach (var action in area.Actions)
+            {
+                builder.AppendLine($"    Next: {action}");
+            }
+        }
+
+        if (report.Index.Requirements.Count > 0)
+        {
+            builder.AppendLine("  Requirements:");
+            foreach (var requirement in report.Index.Requirements)
+            {
+                builder.AppendLine(
+                    $"    {requirement.Id} {FormatRequirementKind(requirement)} {requirement.Status} {FormatLocation(requirement)} ({FormatPhases(requirement.Phases)}) - {requirement.Message}");
+            }
+        }
+
+        if (report.Index.Diagnostics.Count > 0)
+        {
+            builder.AppendLine("  Diagnostics:");
+            foreach (var diagnostic in report.Index.Diagnostics)
+            {
+                builder.AppendLine(
+                    $"    {diagnostic.RuleId} {diagnostic.Severity} {FormatLocation(diagnostic)} - {diagnostic.Title}");
+                if (!string.IsNullOrWhiteSpace(diagnostic.SuggestedFix))
+                {
+                    builder.AppendLine($"      Fix: {diagnostic.SuggestedFix}");
+                }
+            }
+        }
+
+        if (report.Index.OpenQuestions.Count > 0)
+        {
+            builder.AppendLine("  Open questions:");
+            foreach (var question in report.Index.OpenQuestions)
+            {
+                builder.AppendLine($"    {question}");
+            }
+        }
+
+        builder.AppendLine();
         builder.Append(CapabilityScanTextRenderer.Render(report.Capabilities));
         return builder.ToString();
     }
 
     private static string JoinOrNone(IReadOnlyList<string> values) =>
         values.Count == 0 ? "(none)" : string.Join(", ", values);
+
+    private static string FormatRequirementKind(DoctorExportRequirementIndexEntry requirement) =>
+        requirement.Optional ? "optional" : "required";
+
+    private static string FormatPhases(IReadOnlyList<string> phases) =>
+        phases.Count == 0 ? "all phases" : string.Join(", ", phases);
+
+    private static string FormatLocation(DoctorExportRequirementIndexEntry requirement) =>
+        $"{requirement.SourceFile}#{requirement.SourcePointer}";
+
+    private static string FormatLocation(DoctorExportDiagnosticIndexEntry diagnostic) =>
+        string.IsNullOrWhiteSpace(diagnostic.SourcePointer)
+            ? diagnostic.SourceFile
+            : $"{diagnostic.SourceFile}#{diagnostic.SourcePointer}";
 }

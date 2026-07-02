@@ -183,7 +183,7 @@ Gate 126 option routing:
   installation, or in-game verification exist until later gates implement
   them.
 
-Gate 134 option routing:
+Gate 136 option routing:
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider
@@ -206,10 +206,13 @@ Gate 134 option routing:
   for unavailable matching requirements.
 - `/forge doctor export` routes to the real `forge doctor export` behavior
   when available. Treat it as a redacted local handoff bundle over capability
-  scan evidence, including redacted nested project requirement provider
-  evidence, not as runtime/session proof. It does not run runtime probes, MO2
-  VFS launch, provider version checks, GECK automation, network checks, AI
-  calls, or SARIF/GitHub Doctor bundle mode.
+  scan evidence, including top-level summary/index sections, compact
+  `index.diagnostics` entries for already-projected `WF-CAP-*` issues, and
+  redacted nested project requirement provider evidence, not as
+  runtime/session proof.
+  It does not run runtime probes, MO2 VFS launch, provider version checks,
+  GECK automation, network checks, AI calls, or SARIF/GitHub Doctor bundle
+  mode.
 
 - `/forge package --target mcm-json --verify-existing` routes to the real
   `forge package --target mcm-json --verify-existing` CLI behavior when

@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 134 adds
-diagnostic handoff context to `forge capabilities explain --project`.
+The project is currently in gated v0.1 implementation. Gate 136 adds a
+compact diagnostics index to `forge doctor export`.
 
 ## Architecture Spine
 
@@ -16,7 +16,7 @@ diagnostic handoff context to `forge capabilities explain --project`.
 
 ## Current Gate
 
-Gate 134 builds on the closed first game-facing generator path. It keeps
+Gate 136 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -48,6 +48,14 @@ Gate 134 adds diagnostic handoff metadata to the same explanation output so
 unavailable matching requirements show the `WF-CAP-*` rule, severity, title,
 source location, fix text, and evidence that `forge capabilities scan
 --project` would project.
+Gate 135 adds top-level `summary` and `index` sections to redacted
+`forge doctor export` bundles, so authors can scan provider/capability counts,
+Doctor readiness areas, requirement counts, diagnostic counts, open questions,
+and Doctor area actions before opening the nested capability scan report.
+Gate 136 adds `index.diagnostics` to the same redacted bundle. It lists
+already-projected `WF-CAP-*` issue IDs, severity, title, source file, source
+pointer, and fix text at the top level so unavailable project requirements can
+be found without opening the nested capability diagnostics report.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under
@@ -516,6 +524,19 @@ create SARIF/GitHub output for `capabilities explain`. It only reuses the
 existing scan diagnostic projector to display handoff context inside explain
 output.
 
+Gate 135 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve mixed-scope GECK Extender
+markers, resolve JIP PP LN aliases, call AI, add new `WF-CAP-*` rule IDs, or
+create SARIF/GitHub output for Doctor export. It only derives summary and
+index data from the already-redacted capability scan report.
+
+Gate 136 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve mixed-scope GECK Extender
+markers, resolve JIP PP LN aliases, call AI, add new `WF-CAP-*` rule IDs, or
+create SARIF/GitHub output for Doctor export. It only adds a compact top-level
+diagnostics index derived from the already-redacted capability scan diagnostic
+report.
+
 The current response route baseline still includes:
 
 - `WF-SEM-036` for response route `targetTopicId` values that do not resolve
@@ -864,6 +885,12 @@ checks, provider version checks, or external tool execution.
 Gate 134 adds diagnostic handoff context to `forge capabilities explain`
 without adding new detectors, rule IDs, aliases, runtime probes, MO2 VFS
 checks, provider version checks, or external tool execution.
+Gate 135 adds Doctor export summary/index sections without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
+checks, or external tool execution.
+Gate 136 adds a compact Doctor export diagnostics index without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
+checks, SARIF/GitHub Doctor export modes, or external tool execution.
 
 It intentionally does not create:
 

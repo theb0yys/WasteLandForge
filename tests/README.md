@@ -643,6 +643,11 @@ project requirement context in JSON and plain output, provider-target
 requirement filtering, and project read failure diagnostics.
 Gate 134 extends `WastelandForge.GoldenTests` coverage for capability explain
 diagnostic handoff JSON and plain output for matching project requirements.
+Gate 135 extends `WastelandForge.GoldenTests` coverage for Doctor export
+summary and index JSON, plain output, output-file JSON, and redaction safety.
+Gate 136 extends `WastelandForge.GoldenTests` coverage for Doctor export
+compact diagnostics index JSON, plain output, output-file JSON, and redaction
+safety.
 
 Run the full local suite serially:
 

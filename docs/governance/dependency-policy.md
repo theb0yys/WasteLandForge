@@ -254,3 +254,11 @@ Gate 134 reuses the existing capability diagnostic projector inside
 `forge capabilities explain --project`. It adds no third-party dependency,
 download, rehosted runtime binary, network call, runtime probe, MO2/GECK
 integration, provider-version parser, or AI requirement.
+Gate 135 derives `forge doctor export` summary and index data from the
+existing redacted capability scan report. It adds no third-party dependency,
+download, rehosted runtime binary, network call, runtime probe, MO2/GECK
+integration, provider-version parser, or AI requirement.
+Gate 136 derives `forge doctor export` diagnostics index data from the
+existing redacted capability scan diagnostic report. It adds no third-party
+dependency, download, rehosted runtime binary, network call, runtime probe,
+MO2/GECK integration, provider-version parser, or AI requirement.

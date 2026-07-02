@@ -706,3 +706,13 @@ Gate 134 extends `CapabilityExplanationProjectRequirements` with diagnostic
 handoff issues projected by `CapabilityDiagnosticProjector`, so
 `forge capabilities explain --project` can show the scan `WF-CAP-*` rule that
 would apply to each unavailable matching requirement.
+
+Gate 135 extends `DoctorExportReport` with top-level summary and index records
+derived from the redacted capability scan report. `forge doctor export` JSON
+now includes `summary` and `index`, and text output prints the same scanable
+sections before the nested capability scan report.
+
+Gate 136 extends the Doctor export index with compact diagnostics entries
+derived from the redacted capability diagnostic report. `forge doctor export`
+JSON now includes `index.diagnostics`, and text output prints matching
+diagnostic index lines before the nested capability scan report.

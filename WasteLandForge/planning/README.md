@@ -139,9 +139,11 @@ Gate status:
 - `gates/gate-132-wrong-scope-capability-diagnostics.md` - Gate 132, wrong-scope capability diagnostics.
 - `gates/gate-133-capability-explain-project-requirement-context.md` - Gate 133, capability explain project requirement context.
 - `gates/gate-134-capability-explain-diagnostic-handoff.md` - Gate 134, capability explain diagnostic handoff.
+- `gates/gate-135-doctor-export-summary-index.md` - Gate 135, Doctor export summary index.
+- `gates/gate-136-doctor-export-diagnostics-index.md` - Gate 136, Doctor export diagnostics index.
 
 Next gate:
 
-- Gate 135 - Continue local capability/Doctor ergonomics unless provider-version evidence is documented.
+- Gate 137 - Continue local capability/Doctor ergonomics unless provider-version evidence is documented.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.
