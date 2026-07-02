@@ -183,41 +183,61 @@ Gate 126 option routing:
   installation, or in-game verification exist until later gates implement
   them.
 
-Gate 158 option routing:
+Gate 165 option routing:
 
-Gate 158 keeps the Gate 157 command behavior and adds compact
-`index.actionSummary` metadata to scan and Doctor export output. Treat it as a
-summary of existing non-ready Doctor area actions, not new provider detection,
-provider-version evidence, Doctor planning, runtime confirmation, or
-catalogue-policy resolution.
+Gate 165 keeps the Gate 164 command behavior and adds
+`forge capabilities scan --summary <path>` as a path-minimized Markdown
+sidecar summary. Treat it as a summary of the existing capability scan report
+and already-projected diagnostics, not new provider detection, diagnostic
+projection behavior, rule IDs, provider-version evidence, Doctor planning,
+runtime confirmation, catalogue-policy resolution, scan SARIF/GitHub changes,
+GitHub step-summary behavior, or `--format markdown`.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider
   evidence plus compact `index.providerStatuses`,
   `index.capabilityStatuses`, `index.actions`, `index.actionSummary`,
-  `index.requirements`, `index.diagnostics`, `index.cataloguePolicy`,
-  `index.openQuestionDetails`, `index.cataloguePolicyDiagnosticHandoff`,
+  `index.evidenceSummary`, `index.providerInventorySummary`,
+  `index.doctorAreaCapabilitySummary`, `index.requirementSummary`,
+  `index.requirements`, `index.diagnosticSummary`, `index.diagnostics`,
+  `index.cataloguePolicy`, `index.openQuestionDetails`,
+  `index.cataloguePolicyDiagnosticHandoff`,
   `doctor.index.areaStatuses`, derived Doctor readiness areas, and next
-  actions. Treat `index.actions` as existing non-ready Doctor area actions
+  actions. Treat `index.actions` as
+  existing non-ready Doctor area actions
   grouped by area and source type before the full Doctor area list. Treat
   `index.actionSummary` as a source-type and area-status summary of those
-  same existing actions. Treat
+  same existing actions. Treat `index.evidenceSummary` as detector-kind,
+  status, and scope summary metadata for existing provider evidence. Treat
+  `index.providerInventorySummary` as provider-type, install-scope, and
+  provider-status summary metadata for existing provider scan results. Treat
+  `index.doctorAreaCapabilitySummary` as Doctor-area capability-status,
+  provider-status/install-scope, and actionable-action summary metadata for
+  existing Doctor areas. Treat
+  `index.requirementSummary` as status, phase, and optionality summary
+  metadata for existing project requirement resolution. Treat
   `index.requirements` as unavailable project requirement entries before the
-  full requirement report. Treat `index.diagnostics` as already-projected
-  `WF-CAP-*` issues before the full diagnostics report. Treat
+  full requirement report. Treat `index.diagnosticSummary` as severity,
+  rule ID, and category summary metadata for already-projected diagnostics.
+  Treat `index.diagnostics` as already-projected `WF-CAP-*` issues before
+  the full diagnostics report. Treat
   `index.cataloguePolicy` as existing Doctor open-question IDs grouped by
   source type before the full open-question text. Treat
   `index.openQuestionDetails` as those IDs mapped to existing question text
   before the full open-question list. Treat
   `index.cataloguePolicyDiagnosticHandoff` as those IDs mapped to open
   catalogue-policy evidence handoff entries. With `--project`, it also
-  projects
-  unavailable capability requirements to
+  projects unavailable capability requirements to
   `WF-CAP-001`, `WF-CAP-002`, `WF-CAP-003`, and `WF-CAP-004`, including
   provider evidence detail in JSON, SARIF, GitHub, and text output.
-  `WF-CAP-004` is limited to deterministic root-vs-Data wrong-scope markers.
+  With `--summary <path>`, it writes a path-minimized Markdown scan summary
+  derived from the same scan report and projected diagnostics, including
+  summary counts, Doctor areas, action summary counts, unavailable
+  requirements, diagnostics, and open questions. `WF-CAP-004` is limited to
+  deterministic root-vs-Data wrong-scope markers.
   It does not run runtime probes, MO2 VFS launch, provider version checks,
-  mixed-scope GECK Extender checks, or effective-scope diagnostics.
+  mixed-scope GECK Extender checks, effective-scope diagnostics, GitHub
+  step-summary output, or `--format markdown`.
 - `/forge capabilities explain <capability-or-provider-id>` routes to the real
   `forge capabilities explain` behavior when available. Treat target actions
   and grouped provider evidence as local-evidence guidance, not proof of
@@ -237,15 +257,27 @@ catalogue-policy resolution.
   `index.doctorAreaStatuses` groups by Doctor area readiness status,
   `index.providerStatuses` groups by provider status and install scope,
   compact `index.capabilityStatuses` groups by capability status,
+  `index.providerInventorySummary` metadata for existing provider scan
+  results grouped by provider type, install scope, and status,
+  `index.doctorAreaCapabilitySummary` metadata for existing Doctor areas
+  grouped by capability status, provider status/install scope, and actionable
+  action count,
+  `index.evidenceSummary` metadata for existing provider detector evidence,
   `index.actions` entries for non-ready Doctor area actions,
   `index.actionSummary` metadata for those existing action groups, compact
-  `index.requirements` entries for unavailable project requirements, compact
-  `index.diagnostics` entries for already-projected `WF-CAP-*` issues,
+  `index.requirementSummary` metadata for existing project requirement
+  resolution, compact `index.requirements` entries for unavailable project
+  requirements, compact `index.diagnosticSummary` metadata for
+  already-projected diagnostics, compact `index.diagnostics` entries for
+  already-projected `WF-CAP-*` issues,
   compact `index.cataloguePolicy` groups by open-question source type,
   structured `index.openQuestionDetails` for current catalogue policy gaps,
   compact `index.cataloguePolicyDiagnosticHandoff` entries for open
   catalogue-policy evidence handoff, and redacted nested project requirement
-  provider evidence, not as runtime/session proof.
+  provider evidence, not as runtime/session proof. With `--summary <path>`,
+  it writes a redacted Markdown handoff summary derived from the same Doctor
+  export report, including summary counts, Doctor areas, next actions,
+  unavailable requirements, diagnostics, and open questions.
   It does not run runtime probes, MO2 VFS launch, provider version checks,
   GECK automation, network checks, AI calls, or SARIF/GitHub Doctor bundle
   mode.

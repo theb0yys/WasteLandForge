@@ -232,6 +232,20 @@ derived metadata through one view model across scan, explain, and Doctor
 export output.
 Gate 158 adds no new rule ID. It only shares Doctor action summary rendering
 across scan and Doctor export output.
+Gate 159 adds no new rule ID. It only shares provider evidence summary
+rendering across scan and Doctor export output.
+Gate 160 adds no new rule ID. It only shares requirement summary rendering
+across scan and Doctor export output.
+Gate 161 adds no new rule ID. It only shares diagnostic summary rendering
+across scan and Doctor export output.
+Gate 162 adds no new rule ID. It only shares provider inventory summary
+rendering across scan and Doctor export output.
+Gate 163 adds no new rule ID. It only shares Doctor area capability summary
+rendering across scan and Doctor export output.
+Gate 164 adds no new rule ID. It only writes a redacted Markdown sidecar
+summary for Doctor export output.
+Gate 165 adds no new rule ID. It only writes a path-minimized Markdown sidecar
+summary for capability scan output.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths

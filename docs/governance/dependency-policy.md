@@ -375,3 +375,42 @@ area actions. It adds no third-party dependency, download, rehosted runtime
 binary, network call, runtime probe, MO2/GECK integration, provider-version
 parser, capability resolver dependency, Doctor planner dependency,
 catalogue-policy decision dependency, or AI requirement.
+Gate 159 derives compact provider evidence summary metadata from existing
+provider detector evidence. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, capability resolver dependency, Doctor planner
+dependency, catalogue-policy decision dependency, or AI requirement.
+Gate 160 derives compact requirement summary metadata from existing project
+requirement resolution data. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, capability resolver dependency, Doctor planner
+dependency, catalogue-policy decision dependency, or AI requirement.
+Gate 161 derives compact diagnostic summary metadata from existing diagnostic
+reports. It adds no third-party dependency, download, rehosted runtime binary,
+network call, runtime probe, MO2/GECK integration, provider-version parser,
+capability resolver dependency, Doctor planner dependency, catalogue-policy
+decision dependency, SARIF/GitHub dependency, or AI requirement.
+Gate 162 derives compact provider inventory summary metadata from existing
+provider scan results. It adds no third-party dependency, download, rehosted
+runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, detector dependency, capability resolver dependency,
+Doctor planner dependency, catalogue-policy decision dependency,
+SARIF/GitHub dependency, or AI requirement.
+Gate 163 derives compact Doctor area capability summary metadata from
+existing Doctor, capability, and provider scan results. It adds no third-party
+dependency, download, rehosted runtime binary, network call, runtime probe,
+MO2/GECK integration, provider-version parser, detector dependency,
+capability resolver dependency, Doctor planner dependency, catalogue-policy
+decision dependency, SARIF/GitHub dependency, or AI requirement.
+Gate 164 derives a Markdown sidecar summary from the existing redacted Doctor
+export report. It adds no third-party dependency, download, rehosted runtime
+binary, network call, runtime probe, MO2/GECK integration, provider-version
+parser, detector dependency, capability resolver dependency, Doctor planner
+dependency, catalogue-policy decision dependency, SARIF/GitHub dependency, or
+AI requirement.
+Gate 165 derives a Markdown sidecar summary from the existing capability scan
+report and projected diagnostics. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, detector dependency, capability resolver dependency,
+Doctor planner dependency, catalogue-policy decision dependency,
+SARIF/GitHub dependency, GitHub step-summary dependency, or AI requirement.

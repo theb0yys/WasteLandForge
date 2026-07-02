@@ -835,3 +835,44 @@ Gate 158 extracts a shared Doctor action summary helper for
 `index.actionSummary`, and text output prints an `Action summary:` section
 that summarizes existing non-ready Doctor area actions by source type and
 area status.
+
+Gate 159 extracts a shared provider evidence summary helper for
+`forge capabilities scan` and `forge doctor export`. JSON output now includes
+`index.evidenceSummary`, and text output prints an `Evidence summary:` section
+that summarizes existing provider detector evidence by detector kind, status,
+and scope.
+
+Gate 160 extracts a shared requirement summary helper for
+`forge capabilities scan` and `forge doctor export`. JSON output now includes
+`index.requirementSummary`, and text output prints a `Requirement summary:`
+section that summarizes existing project requirement resolution data by
+status, phase, and optionality.
+
+Gate 161 extracts a shared diagnostic summary helper for
+`forge capabilities scan` and `forge doctor export`. JSON output now includes
+`index.diagnosticSummary`, and text output prints a `Diagnostic summary:`
+section that summarizes already-projected diagnostics by severity, rule ID,
+and category.
+
+Gate 162 extracts a shared provider inventory summary helper for
+`forge capabilities scan` and `forge doctor export`. JSON output now includes
+`index.providerInventorySummary`, and text output prints a
+`Provider inventory summary:` section that summarizes existing providers by
+provider type, install scope, and provider status.
+
+Gate 163 extracts a shared Doctor area capability summary helper for
+`forge capabilities scan` and `forge doctor export`. JSON output now includes
+`index.doctorAreaCapabilitySummary`, and text output prints a
+`Doctor area capability summary:` section that summarizes existing Doctor
+areas by capability status, provider status/install scope, and actionable
+action count.
+
+Gate 164 adds a Doctor export Markdown summary renderer. `forge doctor export
+--summary <path>` now writes a redacted Markdown sidecar derived from the
+existing Doctor export report while preserving the primary human/plain/json
+output behavior.
+
+Gate 165 adds a capability scan Markdown summary renderer. `forge capabilities
+scan --summary <path>` now writes a path-minimized Markdown sidecar derived
+from the existing capability scan report and projected diagnostics while
+preserving the selected primary scan output behavior.

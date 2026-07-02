@@ -163,9 +163,16 @@ Gate status:
 - `gates/gate-156-catalogue-policy-open-question-rendering-helpers.md` - Gate 156, shared catalogue-policy open-question rendering helpers.
 - `gates/gate-157-catalogue-policy-view-model-helper.md` - Gate 157, shared catalogue-policy view model helper.
 - `gates/gate-158-doctor-action-summary-index.md` - Gate 158, Doctor action summary index.
+- `gates/gate-159-provider-evidence-summary-index.md` - Gate 159, provider evidence summary index.
+- `gates/gate-160-requirement-summary-index.md` - Gate 160, requirement summary index.
+- `gates/gate-161-diagnostic-summary-index.md` - Gate 161, diagnostic summary index.
+- `gates/gate-162-provider-inventory-summary-index.md` - Gate 162, provider inventory summary index.
+- `gates/gate-163-doctor-area-capability-summary-index.md` - Gate 163, Doctor area capability summary index.
+- `gates/gate-164-doctor-export-markdown-summary.md` - Gate 164, Doctor export Markdown summary.
+- `gates/gate-165-capability-scan-markdown-summary.md` - Gate 165, capability scan Markdown summary.
 
 Next gate:
 
-- Gate 159 - Add provider-version evidence only if documented file/runtime/parser evidence is ready; otherwise move to the next documented capability/Doctor value slice that does not resolve open provider policy questions.
+- Gate 166 - Continue documented capability/Doctor value without resolving open provider policy questions. Provider-version evidence should only start when documented file/runtime/parser/catalogue-policy evidence is ready.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

@@ -707,6 +707,33 @@ as the output-contract guard.
 Gate 158 adds focused `WastelandForge.GoldenTests` coverage for Doctor action
 summary grouping, JSON shape, text indentation, and empty output behavior,
 plus scan and Doctor export golden coverage for JSON/plain action summaries.
+Gate 159 adds focused `WastelandForge.GoldenTests` coverage for provider
+evidence summary grouping, JSON shape, text indentation, and empty output
+behavior, plus scan and Doctor export golden coverage for JSON/plain evidence
+summaries.
+Gate 160 adds focused `WastelandForge.GoldenTests` coverage for requirement
+summary grouping, JSON shape, text indentation, and empty output behavior,
+plus scan and Doctor export golden coverage for JSON/plain requirement
+summaries.
+Gate 161 adds focused `WastelandForge.GoldenTests` coverage for diagnostic
+summary grouping, JSON shape, text indentation, and empty output behavior,
+plus scan and Doctor export golden coverage for JSON/plain diagnostic
+summaries.
+Gate 162 adds focused `WastelandForge.GoldenTests` coverage for provider
+inventory summary grouping, JSON shape, text indentation, and empty output
+behavior, plus scan and Doctor export golden coverage for JSON/plain provider
+inventory summaries.
+Gate 163 adds focused `WastelandForge.GoldenTests` coverage for Doctor area
+capability summary grouping, JSON shape, text indentation, and empty output
+behavior, plus scan and Doctor export golden coverage for JSON/plain Doctor
+area capability summaries.
+Gate 164 adds `WastelandForge.GoldenTests` coverage for
+`forge doctor export --summary <path>` Markdown sidecar output, redaction of
+local paths in that summary, and missing summary-path usage errors.
+
+Gate 165 adds `WastelandForge.GoldenTests` coverage for
+`forge capabilities scan --summary <path>` Markdown sidecar output, omission
+of local paths in that summary, and missing summary-path usage errors.
 
 Run the full local suite serially:
 

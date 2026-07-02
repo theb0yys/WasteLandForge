@@ -442,6 +442,21 @@ metadata fields.
 Gate 158 adds no new diagnostic rule ID. It summarizes existing non-ready
 Doctor area actions by source type and area status without changing canonical
 `WF-CAP-*` issue projection.
+Gate 159 adds no new diagnostic rule ID. It summarizes existing provider
+detector evidence by detector kind, evidence status, and scope without
+changing canonical `WF-CAP-*` issue projection.
+Gate 160 adds no new diagnostic rule ID. It summarizes existing project
+requirement resolution data by status, phase, and optionality without changing
+canonical `WF-CAP-*` issue projection.
+Gate 161 adds no new diagnostic rule ID. It summarizes existing projected
+diagnostic data by severity, rule ID, and category without changing canonical
+`WF-CAP-*` issue projection.
+Gate 162 adds no new diagnostic rule ID. It summarizes existing provider scan
+results by provider type, install scope, and provider status without changing
+canonical `WF-CAP-*` issue projection.
+Gate 163 adds no new diagnostic rule ID. It summarizes existing Doctor areas
+by capability status, provider status/install scope, and actionable action
+count without changing canonical `WF-CAP-*` issue projection.
 
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
@@ -683,6 +698,14 @@ and no new rule family member.
 Gate 68 keeps the same command and diagnostic output shape while adding image
 to the supported MCM option subset. It adds no new diagnostic report fields
 and no new rule family member.
+
+Gate 164 adds a Doctor export Markdown sidecar summary derived from the
+redacted Doctor export report. It does not change the canonical diagnostic
+report shape and adds no new diagnostic report fields.
+Gate 165 adds a capability scan Markdown sidecar summary derived from the
+existing capability scan report and projected diagnostics. It does not change
+the canonical diagnostic report shape and adds no new diagnostic report
+fields.
 
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

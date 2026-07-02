@@ -72,11 +72,16 @@ internal sealed record DoctorExportDiagnosticSummary(
 internal sealed record DoctorExportIndex(
     IReadOnlyList<DoctorExportDoctorAreaIndexEntry> DoctorAreas,
     IReadOnlyList<DoctorExportDoctorAreaStatusIndexEntry> DoctorAreaStatuses,
+    CapabilityDoctorAreaCapabilitySummary DoctorAreaCapabilitySummary,
     IReadOnlyList<DoctorExportProviderStatusIndexEntry> ProviderStatuses,
     IReadOnlyList<DoctorExportCapabilityStatusIndexEntry> CapabilityStatuses,
+    CapabilityProviderInventorySummary ProviderInventorySummary,
+    CapabilityScanEvidenceSummary EvidenceSummary,
     IReadOnlyList<DoctorExportActionIndexEntry> Actions,
     CapabilityDoctorActionSummary ActionSummary,
+    CapabilityRequirementSummary RequirementSummary,
     IReadOnlyList<DoctorExportRequirementIndexEntry> Requirements,
+    CapabilityDiagnosticSummary DiagnosticSummary,
     IReadOnlyList<DoctorExportDiagnosticIndexEntry> Diagnostics,
     CapabilityCataloguePolicyView CataloguePolicy);
 
@@ -234,8 +239,15 @@ internal static class DoctorExportRedactor
         DiagnosticReport diagnostics)
     {
         var cataloguePolicy = CapabilityCataloguePolicyIndex.CreateView(report.Doctor.OpenQuestions);
-
         var actionSummary = CapabilityDoctorActionSummaryIndex.Create(report.Doctor);
+        var doctorAreaCapabilitySummary = CapabilityDoctorAreaCapabilitySummaryIndex.Create(
+            report.Doctor,
+            report.Capabilities,
+            report.Providers);
+        var evidenceSummary = CapabilityScanEvidenceSummaryIndex.Create(report.Providers);
+        var providerInventorySummary = CapabilityProviderInventorySummaryIndex.Create(report.Providers);
+        var requirementSummary = CapabilityRequirementSummaryIndex.Create(report.Requirements);
+        var diagnosticSummary = CapabilityDiagnosticSummaryIndex.Create(diagnostics);
 
         return new DoctorExportIndex(
             report.Doctor.Areas
@@ -257,6 +269,7 @@ internal static class DoctorExportRedactor
                         .Order(StringComparer.Ordinal)
                         .ToArray()))
                 .ToArray(),
+            doctorAreaCapabilitySummary,
             report.Providers
                 .GroupBy(provider => (provider.Status, provider.Provider.InstallScope))
                 .OrderBy(group => group.Key.Status, StringComparer.Ordinal)
@@ -279,6 +292,8 @@ internal static class DoctorExportRedactor
                         .Order(StringComparer.Ordinal)
                         .ToArray()))
                 .ToArray(),
+            providerInventorySummary,
+            evidenceSummary,
             report.Doctor.Areas
                 .Where(area => !StringComparer.Ordinal.Equals(area.Status, CapabilityDoctorStatuses.Ready))
                 .Where(area => area.Actions.Count > 0)
@@ -290,6 +305,7 @@ internal static class DoctorExportRedactor
                     area.Actions))
                 .ToArray(),
             actionSummary,
+            requirementSummary,
             report.Requirements is null
                 ? []
                 : report.Requirements.Requirements
@@ -305,6 +321,7 @@ internal static class DoctorExportRedactor
                         requirement.Source.Pointer,
                         requirement.Message))
                     .ToArray(),
+            diagnosticSummary,
             diagnostics.Issues
                 .Select(issue => new DoctorExportDiagnosticIndexEntry(
                     issue.RuleId.ToString(),
@@ -566,11 +583,16 @@ internal static class DoctorExportJsonSerializer
         {
             ["doctorAreas"] = new JsonArray(index.DoctorAreas.Select(ToJson).ToArray()),
             ["doctorAreaStatuses"] = new JsonArray(index.DoctorAreaStatuses.Select(ToJson).ToArray()),
+            ["doctorAreaCapabilitySummary"] = CapabilityDoctorAreaCapabilitySummaryIndex.ToJson(index.DoctorAreaCapabilitySummary),
             ["providerStatuses"] = new JsonArray(index.ProviderStatuses.Select(ToJson).ToArray()),
             ["capabilityStatuses"] = new JsonArray(index.CapabilityStatuses.Select(ToJson).ToArray()),
+            ["providerInventorySummary"] = CapabilityProviderInventorySummaryIndex.ToJson(index.ProviderInventorySummary),
+            ["evidenceSummary"] = CapabilityScanEvidenceSummaryIndex.ToJson(index.EvidenceSummary),
             ["actions"] = new JsonArray(index.Actions.Select(ToJson).ToArray()),
             ["actionSummary"] = CapabilityDoctorActionSummaryIndex.ToJson(index.ActionSummary),
+            ["requirementSummary"] = CapabilityRequirementSummaryIndex.ToJson(index.RequirementSummary),
             ["requirements"] = new JsonArray(index.Requirements.Select(ToJson).ToArray()),
+            ["diagnosticSummary"] = CapabilityDiagnosticSummaryIndex.ToJson(index.DiagnosticSummary),
             ["diagnostics"] = new JsonArray(index.Diagnostics.Select(ToJson).ToArray()),
             ["cataloguePolicy"] = CapabilityCataloguePolicyOpenQuestionRenderer.ToSourceTypeIndexJson(index.CataloguePolicy),
             ["openQuestionDetails"] = CapabilityCataloguePolicyOpenQuestionRenderer.ToOpenQuestionDetailsJson(index.CataloguePolicy),
@@ -729,6 +751,13 @@ internal static class DoctorExportTextRenderer
             }
         }
 
+        CapabilityDoctorAreaCapabilitySummaryIndex.AppendText(
+            builder,
+            report.Index.DoctorAreaCapabilitySummary,
+            "  ",
+            "    ",
+            "      ");
+
         if (report.Index.ProviderStatuses.Count > 0)
         {
             builder.AppendLine("  Provider statuses:");
@@ -751,6 +780,19 @@ internal static class DoctorExportTextRenderer
             }
         }
 
+        CapabilityProviderInventorySummaryIndex.AppendText(
+            builder,
+            report.Index.ProviderInventorySummary,
+            "  ",
+            "    ",
+            "      ");
+        CapabilityScanEvidenceSummaryIndex.AppendText(
+            builder,
+            report.Index.EvidenceSummary,
+            "  ",
+            "    ",
+            "      ");
+
         if (report.Index.Actions.Count > 0)
         {
             builder.AppendLine("  Actions:");
@@ -768,6 +810,18 @@ internal static class DoctorExportTextRenderer
         CapabilityDoctorActionSummaryIndex.AppendText(
             builder,
             report.Index.ActionSummary,
+            "  ",
+            "    ",
+            "      ");
+        CapabilityRequirementSummaryIndex.AppendText(
+            builder,
+            report.Index.RequirementSummary,
+            "  ",
+            "    ",
+            "      ");
+        CapabilityDiagnosticSummaryIndex.AppendText(
+            builder,
+            report.Index.DiagnosticSummary,
             "  ",
             "    ",
             "      ");

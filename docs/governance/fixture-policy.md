@@ -464,3 +464,26 @@ input behavior.
 Gate 158 adds no committed provider fixtures. Golden CLI tests use existing
 synthetic inputs plus a focused helper test to cover Doctor action summary
 grouping, JSON shape, text indentation, and empty output behavior.
+Gate 159 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic inputs plus a focused helper test to cover provider evidence
+summary grouping, JSON shape, text indentation, and empty output behavior.
+Gate 160 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic inputs plus a focused helper test to cover requirement
+summary grouping, JSON shape, text indentation, and empty output behavior.
+Gate 161 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic inputs plus a focused helper test to cover diagnostic
+summary grouping, JSON shape, text indentation, and empty output behavior.
+Gate 162 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic inputs plus a focused helper test to cover provider
+inventory summary grouping, JSON shape, text indentation, and empty output
+behavior.
+Gate 163 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic inputs plus a focused helper test to cover Doctor area
+capability summary grouping, JSON shape, text indentation, and empty output
+behavior.
+Gate 164 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover the redacted Doctor export Markdown sidecar.
+Gate 165 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover the path-minimized capability scan Markdown sidecar.

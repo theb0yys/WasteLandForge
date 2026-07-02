@@ -79,6 +79,15 @@ internal static class CapabilityScanJsonSerializer
     {
         var cataloguePolicy = CapabilityCataloguePolicyIndex.CreateView(report.Doctor.OpenQuestions);
         var actionSummary = CapabilityDoctorActionSummaryIndex.Create(report.Doctor);
+        var evidenceSummary = CapabilityScanEvidenceSummaryIndex.Create(report.Providers);
+        var providerInventorySummary = CapabilityProviderInventorySummaryIndex.Create(report.Providers);
+        var doctorAreaCapabilitySummary = CapabilityDoctorAreaCapabilitySummaryIndex.Create(
+            report.Doctor,
+            report.Capabilities,
+            report.Providers);
+        var requirementSummary = CapabilityRequirementSummaryIndex.Create(report.Requirements);
+        var diagnostics = CapabilityDiagnosticProjector.Project(report);
+        var diagnosticSummary = CapabilityDiagnosticSummaryIndex.Create(diagnostics);
 
         return new()
         {
@@ -112,6 +121,9 @@ internal static class CapabilityScanJsonSerializer
                         .ToArray())
                 })
                 .ToArray()),
+            ["doctorAreaCapabilitySummary"] = CapabilityDoctorAreaCapabilitySummaryIndex.ToJson(doctorAreaCapabilitySummary),
+            ["providerInventorySummary"] = CapabilityProviderInventorySummaryIndex.ToJson(providerInventorySummary),
+            ["evidenceSummary"] = CapabilityScanEvidenceSummaryIndex.ToJson(evidenceSummary),
             ["actions"] = new JsonArray(report.Doctor.Areas
                 .Where(area => !StringComparer.Ordinal.Equals(area.Status, CapabilityDoctorStatuses.Ready))
                 .Where(area => area.Actions.Count > 0)
@@ -131,7 +143,9 @@ internal static class CapabilityScanJsonSerializer
                 .ToArray()),
             ["actionSummary"] = CapabilityDoctorActionSummaryIndex.ToJson(actionSummary),
             ["requirements"] = ToRequirementIndex(report.Requirements),
-            ["diagnostics"] = ToDiagnosticIndex(CapabilityDiagnosticProjector.Project(report)),
+            ["requirementSummary"] = CapabilityRequirementSummaryIndex.ToJson(requirementSummary),
+            ["diagnosticSummary"] = CapabilityDiagnosticSummaryIndex.ToJson(diagnosticSummary),
+            ["diagnostics"] = ToDiagnosticIndex(diagnostics),
             ["cataloguePolicy"] = CapabilityCataloguePolicyOpenQuestionRenderer.ToSourceTypeIndexJson(cataloguePolicy),
             ["openQuestionDetails"] = CapabilityCataloguePolicyOpenQuestionRenderer.ToOpenQuestionDetailsJson(cataloguePolicy),
             ["cataloguePolicyDiagnosticHandoff"] = CapabilityCataloguePolicyHandoffRenderer.ToJson(cataloguePolicy)

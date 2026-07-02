@@ -11,6 +11,15 @@ internal static class CapabilityScanTextRenderer
         var builder = new StringBuilder();
         var cataloguePolicy = CapabilityCataloguePolicyIndex.CreateView(report.Doctor.OpenQuestions);
         var actionSummary = CapabilityDoctorActionSummaryIndex.Create(report.Doctor);
+        var evidenceSummary = CapabilityScanEvidenceSummaryIndex.Create(report.Providers);
+        var providerInventorySummary = CapabilityProviderInventorySummaryIndex.Create(report.Providers);
+        var doctorAreaCapabilitySummary = CapabilityDoctorAreaCapabilitySummaryIndex.Create(
+            report.Doctor,
+            report.Capabilities,
+            report.Providers);
+        var requirementSummary = CapabilityRequirementSummaryIndex.Create(report.Requirements);
+        var diagnostics = CapabilityDiagnosticProjector.Project(report);
+        var diagnosticSummary = CapabilityDiagnosticSummaryIndex.Create(diagnostics);
         builder.AppendLine($"Capability scan: {report.Catalog.CatalogId} {report.Catalog.Version}");
         builder.AppendLine($"Game root: {report.Inputs.GameRoot ?? "(not provided)"}");
         builder.AppendLine($"Data root: {report.Inputs.DataRoot ?? "(not provided)"}");
@@ -53,6 +62,10 @@ internal static class CapabilityScanTextRenderer
             builder.AppendLine($"      Capabilities: {JoinOrNone(capabilityIds)}");
         }
 
+        CapabilityDoctorAreaCapabilitySummaryIndex.AppendText(builder, doctorAreaCapabilitySummary, "  ", "    ", "      ");
+        CapabilityProviderInventorySummaryIndex.AppendText(builder, providerInventorySummary, "  ", "    ", "      ");
+        CapabilityScanEvidenceSummaryIndex.AppendText(builder, evidenceSummary, "  ", "    ", "      ");
+
         var actionGroups = report.Doctor.Areas
             .Where(area => !StringComparer.Ordinal.Equals(area.Status, CapabilityDoctorStatuses.Ready))
             .Where(area => area.Actions.Count > 0)
@@ -71,6 +84,8 @@ internal static class CapabilityScanTextRenderer
         }
 
         CapabilityDoctorActionSummaryIndex.AppendText(builder, actionSummary, "  ", "    ", "      ");
+        CapabilityRequirementSummaryIndex.AppendText(builder, requirementSummary, "  ", "    ", "      ");
+        CapabilityDiagnosticSummaryIndex.AppendText(builder, diagnosticSummary, "  ", "    ", "      ");
 
         var unavailableRequirements = report.Requirements is null
             ? []
@@ -89,7 +104,6 @@ internal static class CapabilityScanTextRenderer
             }
         }
 
-        var diagnostics = CapabilityDiagnosticProjector.Project(report);
         if (diagnostics.Issues.Count > 0)
         {
             builder.AppendLine("  Diagnostics:");

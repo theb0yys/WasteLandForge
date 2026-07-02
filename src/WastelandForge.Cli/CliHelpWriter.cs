@@ -303,10 +303,11 @@ internal static class CliHelpWriter
         writer.WriteLine("forge capabilities scan");
         writer.WriteLine();
         writer.WriteLine("Usage:");
-        writer.WriteLine("  forge capabilities scan [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
+        writer.WriteLine("  forge capabilities scan [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--summary <path>] [--format human|plain|json] [--no-input]");
         writer.WriteLine();
         writer.WriteLine("Scans explicit local paths with root-file, data-file, and executable-tool detectors. When --project is supplied, resolves declared dependency capabilities against scan evidence.");
         writer.WriteLine("Also emits compact provider/capability status indexes, compact action, requirement, diagnostic, catalogue-policy, open-question detail, and catalogue-policy diagnostic handoff indexes, and a Doctor-style readiness report with a compact readiness index, environment areas, next actions, and known open catalogue questions.");
+        writer.WriteLine("--summary writes a path-minimized Markdown scan summary beside the selected primary output.");
         writer.WriteLine("Reports probable, missing, unknown, and deterministic root-vs-Data wrong-scope evidence. Runtime probes, MO2 VFS launch, mixed-scope checks, and provider version checks are not used.");
         writer.WriteLine();
         writer.WriteLine("Examples:");
@@ -314,6 +315,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge capabilities scan --project fixtures/projects/ExampleMod --game-root fnv --format json");
         writer.WriteLine("  forge capabilities scan --game-root fnv --tool-path tools/FNVEdit.exe --tool-path tools/ModOrganizer.exe --format json");
         writer.WriteLine("  forge capabilities scan --format json --output artifacts/capability-scan.json");
+        writer.WriteLine("  forge capabilities scan --project fixtures/projects/ExampleMod --summary artifacts/capability-scan.md --format json");
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
         writer.WriteLine("  0 scan completed");
@@ -397,10 +399,11 @@ internal static class CliHelpWriter
         writer.WriteLine("forge doctor export");
         writer.WriteLine();
         writer.WriteLine("Usage:");
-        writer.WriteLine("  forge doctor export [project-root] [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
+        writer.WriteLine("  forge doctor export [project-root] [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--summary <path>] [--format human|plain|json] [--no-input]");
         writer.WriteLine();
         writer.WriteLine("Writes a redacted Doctor handoff bundle from the same deterministic path-based evidence used by capabilities scan.");
         writer.WriteLine("Includes compact catalogue-policy open-question groups, details, and diagnostic handoff metadata.");
+        writer.WriteLine("--summary writes a redacted Markdown handoff summary beside the selected primary output.");
         writer.WriteLine("Absolute local game, data, tool, project, and evidence paths are replaced with placeholders.");
         writer.WriteLine("Runtime probes, MO2 VFS launch, GECK automation, network checks, and AI calls are not used.");
         writer.WriteLine();
@@ -408,6 +411,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge doctor export fixtures/projects/ExampleMod --format json");
         writer.WriteLine("  forge doctor export --project fixtures/projects/ExampleMod --game-root fnv --tool-path tools/FNVEdit.exe --format json");
         writer.WriteLine("  forge doctor export . --output dist/doctor-handoff.json --format json --no-input");
+        writer.WriteLine("  forge doctor export . --format json --summary dist/doctor-handoff.md --no-input");
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
         writer.WriteLine("  0 export written");

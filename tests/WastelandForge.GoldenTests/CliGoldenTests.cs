@@ -625,6 +625,72 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CapabilitiesScanJsonIncludesProviderInventorySummaryIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var providers = json["providers"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan did not include providers.");
+        var providerInventorySummary = json["index"]?["providerInventorySummary"] ??
+            throw new InvalidOperationException("Capability scan index did not include provider inventory summary.");
+        var providerTypes = providerInventorySummary["providerTypes"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan provider inventory summary did not include provider types.");
+        var installScopes = providerInventorySummary["installScopes"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan provider inventory summary did not include install scopes.");
+        var runtimeUi = providerTypes.Single(item =>
+            StringComparer.Ordinal.Equals("runtime-ui", (string?)item?["providerType"]));
+        var dataManaged = installScopes.Single(item =>
+            StringComparer.Ordinal.Equals("data-managed", (string?)item?["installScope"]));
+        var root = installScopes.Single(item =>
+            StringComparer.Ordinal.Equals("root", (string?)item?["installScope"]));
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(providers.Count, (int?)providerInventorySummary["providers"]);
+        Assert.Equal(7, providerTypes.Count);
+        Assert.Equal(5, installScopes.Count);
+        Assert.Equal(3, (int?)runtimeUi?["count"]);
+        Assert.Contains(runtimeUi?["providerIds"]?.AsArray() ?? [], provider =>
+            StringComparer.Ordinal.Equals("provider.runtime.mcm_extender", (string?)provider));
+        Assert.Equal(9, (int?)dataManaged?["count"]);
+        Assert.Contains(dataManaged?["providerIds"]?.AsArray() ?? [], provider =>
+            StringComparer.Ordinal.Equals("provider.runtime.mcm_extender", (string?)provider));
+        Assert.Equal(2, (int?)root?["count"]);
+        Assert.Contains(root?["providerIds"]?.AsArray() ?? [], provider =>
+            StringComparer.Ordinal.Equals("provider.runtime.xnvse", (string?)provider));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanJsonIncludesDoctorAreaCapabilitySummaryIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var areaSummary = json["index"]?["doctorAreaCapabilitySummary"] ??
+            throw new InvalidOperationException("Capability scan index did not include Doctor area capability summary.");
+        var areaSummaries = areaSummary["areaSummaries"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan Doctor area capability summary did not include area summaries.");
+        var baseGame = areaSummaries.Single(area =>
+            StringComparer.Ordinal.Equals("base-game", (string?)area?["areaId"]));
+        var mcmJsonStack = areaSummaries.Single(area =>
+            StringComparer.Ordinal.Equals("mcm-json-stack", (string?)area?["areaId"]));
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(4, (int?)areaSummary["areas"]);
+        Assert.Equal(4, areaSummaries.Count);
+        Assert.Equal("unknown", (string?)baseGame?["status"]);
+        Assert.Equal(1, (int?)baseGame?["capabilities"]);
+        Assert.Equal(1, (int?)baseGame?["providers"]);
+        Assert.Equal("unknown", (string?)baseGame?["capabilityStatuses"]?[0]?["status"]);
+        Assert.Equal("provider.game.falloutnv", (string?)baseGame?["providerStatuses"]?[0]?["providerIds"]?[0]);
+        Assert.Equal("unknown", (string?)mcmJsonStack?["status"]);
+        Assert.Equal(7, (int?)mcmJsonStack?["capabilities"]);
+        Assert.Equal(7, (int?)mcmJsonStack?["providers"]);
+        Assert.Contains(mcmJsonStack?["capabilityStatuses"]?[0]?["capabilityIds"]?.AsArray() ?? [], capability =>
+            StringComparer.Ordinal.Equals("runtime.ui.mcm_json", (string?)capability));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void CapabilitiesScanJsonIncludesActionIndex()
     {
         var result = RunCli("capabilities", "scan", "--format", "json");
@@ -669,6 +735,35 @@ public sealed class CliGoldenTests
         Assert.True((int?)sourceTypes[0]?["actions"] > 0);
         Assert.Single(areaStatuses);
         Assert.Equal("unknown", (string?)areaStatuses[0]?["status"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanJsonIncludesEvidenceSummaryIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var providers = json["providers"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan did not include providers.");
+        var evidenceSummary = json["index"]?["evidenceSummary"] ??
+            throw new InvalidOperationException("Capability scan index did not include evidence summary.");
+        var detectorKinds = evidenceSummary["detectorKinds"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan evidence summary did not include detector kinds.");
+        var statuses = evidenceSummary["statuses"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan evidence summary did not include statuses.");
+        var scopes = evidenceSummary["scopes"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan evidence summary did not include scopes.");
+        var expectedEvidence = providers.Sum(provider => provider?["evidence"]?.AsArray().Count ?? 0);
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(providers.Count, (int?)evidenceSummary["providersWithEvidence"]);
+        Assert.Equal(expectedEvidence, (int?)evidenceSummary["evidenceEntries"]);
+        Assert.Contains(detectorKinds, detectorKind =>
+            StringComparer.Ordinal.Equals("data-file", (string?)detectorKind?["detectorKind"]));
+        Assert.Contains(statuses, status =>
+            StringComparer.Ordinal.Equals("unknown", (string?)status?["status"]));
+        Assert.Contains(scopes, scope =>
+            StringComparer.Ordinal.Equals("data-managed", (string?)scope?["scope"]));
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -875,6 +970,37 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CapabilitiesScanPlainIncludesProviderInventorySummaryIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("  Provider inventory summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Providers: 15 total", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Type runtime-ui: 3 provider(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Scope data-managed: 9 provider(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Scope root: 2 provider(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("provider.runtime.mcm_extender", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("provider.runtime.xnvse", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanPlainIncludesDoctorAreaCapabilitySummaryIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("  Doctor area capability summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("base-game (unknown): 1 capability(ies); 1 provider(s);", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("mcm-json-stack (unknown): 7 capability(ies); 7 provider(s);", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Capability unknown: 7 capability(ies)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Provider unknown/data-managed: 6 provider(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("provider.runtime.mcm_extender", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void CapabilitiesScanPlainIncludesActionIndex()
     {
         var result = RunCli("capabilities", "scan", "--format", "plain");
@@ -903,6 +1029,21 @@ public sealed class CliGoldenTests
         Assert.Contains("Source capability-scan:", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Status unknown:", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Areas: authoring-tools, base-game, mcm-json-stack, script-extender-stack", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanPlainIncludesEvidenceSummaryIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("  Evidence summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Evidence entries:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Detector data-file:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status unknown:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Scope data-managed:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Providers: provider.runtime.jip_ln", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1034,6 +1175,53 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CapabilitiesScanProjectJsonIncludesRequirementSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var requirementSummary = json["index"]?["requirementSummary"] ??
+            throw new InvalidOperationException("Capability scan index did not include requirement summary.");
+        var statuses = requirementSummary["statuses"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan requirement summary did not include statuses.");
+        var phases = requirementSummary["phases"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan requirement summary did not include phases.");
+        var optionality = requirementSummary["optionality"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan requirement summary did not include optionality.");
+        var unknownStatus = statuses.Single(status =>
+            StringComparer.Ordinal.Equals("unknown", (string?)status?["status"]));
+        var allPhases = phases.Single(phase =>
+            StringComparer.Ordinal.Equals("all-phases", (string?)phase?["phase"]));
+        var generation = phases.Single(phase =>
+            StringComparer.Ordinal.Equals("generation", (string?)phase?["phase"]));
+        var required = optionality.Single(item => (bool?)item?["optional"] == false);
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Equal(2, (int?)requirementSummary["requirements"]);
+        Assert.Equal(0, (int?)requirementSummary["satisfied"]);
+        Assert.Equal(2, (int?)requirementSummary["unavailable"]);
+        Assert.Equal(2, (int?)requirementSummary["requiredUnavailable"]);
+        Assert.Equal(0, (int?)requirementSummary["optionalUnavailable"]);
+        Assert.Equal(2, (int?)unknownStatus?["count"]);
+        Assert.Contains(unknownStatus?["requirementIds"]?.AsArray() ?? [], requirement =>
+            StringComparer.Ordinal.Equals("runtime.scripting.xnvse", (string?)requirement));
+        Assert.Equal(1, (int?)allPhases?["count"]);
+        Assert.Equal(1, (int?)allPhases?["unavailable"]);
+        Assert.Equal(1, (int?)generation?["count"]);
+        Assert.Equal(1, (int?)generation?["unavailable"]);
+        Assert.Equal(2, (int?)required?["count"]);
+        Assert.Equal(2, (int?)required?["unavailable"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void CapabilitiesScanProjectJsonIncludesDiagnosticIndex()
     {
         var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
@@ -1063,6 +1251,48 @@ public sealed class CliGoldenTests
         Assert.Equal("WF-CAP-002", (string?)diagnostics[1]?["ruleId"]);
         Assert.Equal("src/registries/dependencies/main.json", (string?)diagnostics[1]?["source"]?["file"]);
         Assert.Equal("/requires/capabilities/1", (string?)diagnostics[1]?["source"]?["pointer"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectJsonIncludesDiagnosticSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--format",
+            "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var diagnosticSummary = json["index"]?["diagnosticSummary"] ??
+            throw new InvalidOperationException("Capability scan index did not include diagnostic summary.");
+        var severities = diagnosticSummary["severities"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan diagnostic summary did not include severities.");
+        var rules = diagnosticSummary["rules"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan diagnostic summary did not include rules.");
+        var categories = diagnosticSummary["categories"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan diagnostic summary did not include categories.");
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Equal(2, (int?)diagnosticSummary["issues"]);
+        Assert.Equal(2, (int?)diagnosticSummary["errors"]);
+        Assert.Equal(0, (int?)diagnosticSummary["warnings"]);
+        Assert.Equal(0, (int?)diagnosticSummary["notes"]);
+        Assert.Single(severities);
+        Assert.Equal("error", (string?)severities[0]?["severity"]);
+        Assert.Equal("WF-CAP-002", (string?)severities[0]?["ruleIds"]?[0]);
+        Assert.Single(rules);
+        Assert.Equal("WF-CAP-002", (string?)rules[0]?["ruleId"]);
+        Assert.Equal(2, (int?)rules[0]?["count"]);
+        Assert.Equal("error", (string?)rules[0]?["severities"]?[0]);
+        Assert.Equal("capability", (string?)rules[0]?["categories"]?[0]);
+        Assert.Equal("src/registries/dependencies/main.json", (string?)rules[0]?["sourceFiles"]?[0]);
+        Assert.Single(categories);
+        Assert.Equal("capability", (string?)categories[0]?["category"]);
+        Assert.Equal("WF-CAP-002", (string?)categories[0]?["ruleIds"]?[0]);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1329,6 +1559,25 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CapabilitiesScanProjectPlainIncludesRequirementSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("capabilities", "scan", "--project", projectRoot, "--format", "plain");
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Contains("Scan status index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Requirement summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Requirements: 2 total; 2 unavailable; 2 required unavailable; 0 optional unavailable", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status unknown: 2 requirement(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Phase all-phases: 1 requirement(s); 1 unavailable", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Phase generation: 1 requirement(s); 1 unavailable", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Required: 2 requirement(s); 2 unavailable", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Requirements: runtime.scripting.xnvse, runtime.ui.mcm_json", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void CapabilitiesScanProjectPlainIncludesDiagnosticIndex()
     {
         var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
@@ -1347,6 +1596,25 @@ public sealed class CliGoldenTests
             result.Stdout,
             StringComparison.Ordinal);
         Assert.Contains("Capability diagnostics:", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanProjectPlainIncludesDiagnosticSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("capabilities", "scan", "--project", projectRoot, "--format", "plain");
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Contains("Scan status index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Diagnostic summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Diagnostics: 2 issue(s); 2 error(s), 0 warning(s), 0 note(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Severity error: 2 issue(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Rule WF-CAP-002: 2 issue(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Categories: capability", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Files: src/registries/dependencies/main.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Category capability: 2 issue(s)", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1402,6 +1670,70 @@ public sealed class CliGoldenTests
         Assert.Equal("WF-CAP-002", (string?)json["index"]?["diagnostics"]?[0]?["ruleId"]);
         Assert.Equal("runtime.ui.mcm_json", (string?)json["index"]?["requirements"]?[1]?["id"]);
         Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanCanWriteMarkdownSummary()
+    {
+        var layout = CreateSyntheticCapabilityLayout();
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+        var summaryPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "capability-scan.md");
+
+        var result = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--game-root",
+            layout.GameRoot,
+            "--tool-path",
+            layout.XEditPath,
+            "--tool-path",
+            layout.Mo2Path,
+            "--format",
+            "json",
+            "--summary",
+            summaryPath);
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var markdown = File.ReadAllText(summaryPath);
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("capabilities scan", (string?)json["command"]);
+        Assert.Contains("# WastelandForge Capability Scan", markdown, StringComparison.Ordinal);
+        Assert.Contains("Command: `capabilities scan`", markdown, StringComparison.Ordinal);
+        Assert.Contains("Local paths: omitted from this Markdown summary", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Summary", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Doctor: 5 area(s); 5 ready; 0 action-needed; 0 unknown; 0 action(s)", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Requirements: 2 total; 2 satisfied; 0 missing; 0 unknown; 0 wrong-scope; 0 required unavailable; 0 optional unavailable", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Doctor Areas", markdown, StringComparison.Ordinal);
+        Assert.Contains("| `project-requirements` | `ready` | 2 | 0 | 0 |", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Action Summary", markdown, StringComparison.Ordinal);
+        Assert.Contains("No actions.", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Project Requirements", markdown, StringComparison.Ordinal);
+        Assert.Contains("No unavailable project requirements.", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Diagnostics", markdown, StringComparison.Ordinal);
+        Assert.Contains("No diagnostics.", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Open Questions", markdown, StringComparison.Ordinal);
+        Assert.Contains("JIP PP LN alias and file-marker policy remains open", markdown, StringComparison.Ordinal);
+        Assert.DoesNotContain(projectRoot, markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(projectRoot), markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(layout.GameRoot, markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(layout.GameRoot), markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(layout.XEditPath, markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(layout.XEditPath), markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(layout.Mo2Path, markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(layout.Mo2Path), markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanRejectsMissingMarkdownSummaryPath()
+    {
+        var result = RunCli("capabilities", "scan", "--summary");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Contains("Missing value for --summary.", result.Stderr, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1527,6 +1859,70 @@ public sealed class CliGoldenTests
         Assert.Equal("unknown", (string?)providerStatuses[4]?["status"]);
         Assert.Equal("tool", (string?)providerStatuses[4]?["installScope"]);
         Assert.Equal(2, (int?)providerStatuses[4]?["count"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportJsonIncludesProviderInventorySummaryIndex()
+    {
+        var result = RunCli("doctor", "export", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var providerInventorySummary = json["index"]?["providerInventorySummary"] ??
+            throw new InvalidOperationException("Doctor export index did not include provider inventory summary.");
+        var providerTypes = providerInventorySummary["providerTypes"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export provider inventory summary did not include provider types.");
+        var installScopes = providerInventorySummary["installScopes"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export provider inventory summary did not include install scopes.");
+        var runtimeUi = providerTypes.Single(item =>
+            StringComparer.Ordinal.Equals("runtime-ui", (string?)item?["providerType"]));
+        var dataManaged = installScopes.Single(item =>
+            StringComparer.Ordinal.Equals("data-managed", (string?)item?["installScope"]));
+        var root = installScopes.Single(item =>
+            StringComparer.Ordinal.Equals("root", (string?)item?["installScope"]));
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(15, (int?)providerInventorySummary["providers"]);
+        Assert.Equal(7, providerTypes.Count);
+        Assert.Equal(5, installScopes.Count);
+        Assert.Equal(3, (int?)runtimeUi?["count"]);
+        Assert.Contains(runtimeUi?["providerIds"]?.AsArray() ?? [], provider =>
+            StringComparer.Ordinal.Equals("provider.runtime.mcm", (string?)provider));
+        Assert.Equal(9, (int?)dataManaged?["count"]);
+        Assert.Contains(dataManaged?["providerIds"]?.AsArray() ?? [], provider =>
+            StringComparer.Ordinal.Equals("provider.runtime.mcm_extender", (string?)provider));
+        Assert.Equal(2, (int?)root?["count"]);
+        Assert.Contains(root?["providerIds"]?.AsArray() ?? [], provider =>
+            StringComparer.Ordinal.Equals("provider.runtime.xnvse", (string?)provider));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportJsonIncludesDoctorAreaCapabilitySummaryIndex()
+    {
+        var result = RunCli("doctor", "export", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var areaSummary = json["index"]?["doctorAreaCapabilitySummary"] ??
+            throw new InvalidOperationException("Doctor export index did not include Doctor area capability summary.");
+        var areaSummaries = areaSummary["areaSummaries"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export Doctor area capability summary did not include area summaries.");
+        var baseGame = areaSummaries.Single(area =>
+            StringComparer.Ordinal.Equals("base-game", (string?)area?["areaId"]));
+        var authoringTools = areaSummaries.Single(area =>
+            StringComparer.Ordinal.Equals("authoring-tools", (string?)area?["areaId"]));
+        var authoringToolProviders = authoringTools?["providerStatuses"]?.AsArray()
+            .Single(status => StringComparer.Ordinal.Equals("tool", (string?)status?["installScope"])) ??
+            throw new InvalidOperationException("Doctor export authoring-tools summary did not include tool providers.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(4, (int?)areaSummary["areas"]);
+        Assert.Equal(4, areaSummaries.Count);
+        Assert.Equal(1, (int?)baseGame?["capabilities"]);
+        Assert.Equal(1, (int?)baseGame?["providers"]);
+        Assert.Equal("unknown", (string?)baseGame?["providerStatuses"]?[0]?["status"]);
+        Assert.Equal(4, (int?)authoringTools?["capabilities"]);
+        Assert.Equal(4, (int?)authoringTools?["providers"]);
+        Assert.Contains(authoringToolProviders["providerIds"]?.AsArray() ?? [], provider =>
+            StringComparer.Ordinal.Equals("provider.tool.xedit", (string?)provider));
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1677,6 +2073,73 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void DoctorExportJsonIncludesEvidenceSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("doctor", "export", projectRoot, "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var providers = json["capabilities"]?["providers"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export nested scan did not include providers.");
+        var evidenceSummary = json["index"]?["evidenceSummary"] ??
+            throw new InvalidOperationException("Doctor export index did not include evidence summary.");
+        var expectedEvidence = providers.Sum(provider => provider?["evidence"]?.AsArray().Count ?? 0);
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(providers.Count, (int?)evidenceSummary["providersWithEvidence"]);
+        Assert.Equal(expectedEvidence, (int?)evidenceSummary["evidenceEntries"]);
+        Assert.Contains(evidenceSummary["detectorKinds"]?.AsArray() ?? [], detectorKind =>
+            StringComparer.Ordinal.Equals("root-file", (string?)detectorKind?["detectorKind"]));
+        Assert.Contains(evidenceSummary["statuses"]?.AsArray() ?? [], status =>
+            StringComparer.Ordinal.Equals("unknown", (string?)status?["status"]));
+        Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportJsonIncludesRequirementSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("doctor", "export", projectRoot, "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var requirementSummary = json["index"]?["requirementSummary"] ??
+            throw new InvalidOperationException("Doctor export index did not include requirement summary.");
+        var statuses = requirementSummary["statuses"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export requirement summary did not include statuses.");
+        var phases = requirementSummary["phases"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export requirement summary did not include phases.");
+        var optionality = requirementSummary["optionality"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export requirement summary did not include optionality.");
+        var unknownStatus = statuses.Single(status =>
+            StringComparer.Ordinal.Equals("unknown", (string?)status?["status"]));
+        var allPhases = phases.Single(phase =>
+            StringComparer.Ordinal.Equals("all-phases", (string?)phase?["phase"]));
+        var generation = phases.Single(phase =>
+            StringComparer.Ordinal.Equals("generation", (string?)phase?["phase"]));
+        var required = optionality.Single(item => (bool?)item?["optional"] == false);
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(2, (int?)requirementSummary["requirements"]);
+        Assert.Equal(0, (int?)requirementSummary["satisfied"]);
+        Assert.Equal(2, (int?)requirementSummary["unavailable"]);
+        Assert.Equal(2, (int?)requirementSummary["requiredUnavailable"]);
+        Assert.Equal(0, (int?)requirementSummary["optionalUnavailable"]);
+        Assert.Equal(2, (int?)unknownStatus?["count"]);
+        Assert.Contains(unknownStatus?["requirementIds"]?.AsArray() ?? [], requirement =>
+            StringComparer.Ordinal.Equals("runtime.ui.mcm_json", (string?)requirement));
+        Assert.Equal(1, (int?)allPhases?["count"]);
+        Assert.Equal(1, (int?)allPhases?["unavailable"]);
+        Assert.Equal(1, (int?)generation?["count"]);
+        Assert.Equal(1, (int?)generation?["unavailable"]);
+        Assert.Equal(2, (int?)required?["count"]);
+        Assert.Equal(2, (int?)required?["unavailable"]);
+        Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(projectRoot), result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void DoctorExportJsonIncludesCompactRequirementsIndex()
     {
         var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
@@ -1728,6 +2191,41 @@ public sealed class CliGoldenTests
         Assert.Equal("WF-CAP-002", (string?)diagnostics[1]?["ruleId"]);
         Assert.Equal("src/registries/dependencies/main.json", (string?)diagnostics[1]?["source"]?["file"]);
         Assert.Equal("/requires/capabilities/1", (string?)diagnostics[1]?["source"]?["pointer"]);
+        Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(projectRoot), result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportJsonIncludesDiagnosticSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("doctor", "export", projectRoot, "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var diagnosticSummary = json["index"]?["diagnosticSummary"] ??
+            throw new InvalidOperationException("Doctor export index did not include diagnostic summary.");
+        var severities = diagnosticSummary["severities"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export diagnostic summary did not include severities.");
+        var rules = diagnosticSummary["rules"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export diagnostic summary did not include rules.");
+        var categories = diagnosticSummary["categories"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export diagnostic summary did not include categories.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(2, (int?)diagnosticSummary["issues"]);
+        Assert.Equal(2, (int?)diagnosticSummary["errors"]);
+        Assert.Equal(0, (int?)diagnosticSummary["warnings"]);
+        Assert.Equal(0, (int?)diagnosticSummary["notes"]);
+        Assert.Single(severities);
+        Assert.Equal("error", (string?)severities[0]?["severity"]);
+        Assert.Equal("WF-CAP-002", (string?)severities[0]?["ruleIds"]?[0]);
+        Assert.Single(rules);
+        Assert.Equal("WF-CAP-002", (string?)rules[0]?["ruleId"]);
+        Assert.Equal(2, (int?)rules[0]?["count"]);
+        Assert.Equal("src/registries/dependencies/main.json", (string?)rules[0]?["sourceFiles"]?[0]);
+        Assert.Single(categories);
+        Assert.Equal("capability", (string?)categories[0]?["category"]);
         Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(EscapeJsonPath(projectRoot), result.Stdout, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(string.Empty, result.Stderr);
@@ -1797,6 +2295,36 @@ public sealed class CliGoldenTests
         Assert.Contains("unknown/root: 2 provider(s)", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("provider.runtime.xnvse", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("unknown/tool: 2 provider(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportPlainIncludesProviderInventorySummaryIndex()
+    {
+        var result = RunCli("doctor", "export", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Doctor index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Provider inventory summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Providers: 15 total", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Type runtime-ui: 3 provider(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Scope data-managed: 9 provider(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Scope root: 2 provider(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("provider.runtime.mcm_extender", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportPlainIncludesDoctorAreaCapabilitySummaryIndex()
+    {
+        var result = RunCli("doctor", "export", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("  Doctor area capability summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("base-game (unknown): 1 capability(ies); 1 provider(s);", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("authoring-tools (unknown): 4 capability(ies); 4 provider(s);", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Provider unknown/tool: 2 provider(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("provider.tool.xedit", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1909,6 +2437,42 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void DoctorExportPlainIncludesEvidenceSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("doctor", "export", projectRoot, "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("  Evidence summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Detector data-file:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status unknown:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Scope root:", result.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportPlainIncludesRequirementSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("doctor", "export", projectRoot, "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Doctor index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Requirement summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Requirements: 2 total; 2 unavailable; 2 required unavailable; 0 optional unavailable", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status unknown: 2 requirement(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Phase all-phases: 1 requirement(s); 1 unavailable", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Phase generation: 1 requirement(s); 1 unavailable", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Required: 2 requirement(s); 2 unavailable", result.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(projectRoot), result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void DoctorExportPlainIncludesCompactRequirementsIndex()
     {
         var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
@@ -1953,6 +2517,26 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void DoctorExportPlainIncludesDiagnosticSummaryIndex()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("doctor", "export", projectRoot, "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Doctor index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Diagnostic summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Diagnostics: 2 issue(s); 2 error(s), 0 warning(s), 0 note(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Severity error: 2 issue(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Rule WF-CAP-002: 2 issue(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Files: src/registries/dependencies/main.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Category capability: 2 issue(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(projectRoot), result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void DoctorExportCanWriteToOutputFile()
     {
         var outputPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "doctor-handoff.json");
@@ -1979,6 +2563,66 @@ public sealed class CliGoldenTests
         Assert.Equal("capabilities scan", (string?)json["capabilities"]?["command"]);
         Assert.Equal(15, (int?)json["capabilities"]?["summary"]?["unknownProviders"]);
         Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportCanWriteMarkdownSummary()
+    {
+        var layout = CreateSyntheticCapabilityLayout();
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+        var summaryPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "doctor-handoff.md");
+
+        var result = RunCli(
+            "doctor",
+            "export",
+            projectRoot,
+            "--game-root",
+            layout.GameRoot,
+            "--tool-path",
+            layout.XEditPath,
+            "--tool-path",
+            layout.Mo2Path,
+            "--format",
+            "json",
+            "--summary",
+            summaryPath);
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var markdown = File.ReadAllText(summaryPath);
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("doctor export", (string?)json["command"]);
+        Assert.Contains("# WastelandForge Doctor Export", markdown, StringComparison.Ordinal);
+        Assert.Contains("Command: `doctor export`", markdown, StringComparison.Ordinal);
+        Assert.Contains("Bundle: `wastelandforge/doctor-handoff/v1`", markdown, StringComparison.Ordinal);
+        Assert.Contains("Redaction: `local-paths`; paths `redacted`", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Summary", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Doctor: 5 area(s); 5 ready; 0 action-needed; 0 unknown; 0 action(s)", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Requirements: 2 total; 2 satisfied; 0 missing; 0 unknown; 0 wrong-scope; 0 required unavailable; 0 optional unavailable", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Doctor Areas", markdown, StringComparison.Ordinal);
+        Assert.Contains("| `project-requirements` | `ready` | 2 | 0 | 0 |", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Next Actions", markdown, StringComparison.Ordinal);
+        Assert.Contains("No actions.", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Open Questions", markdown, StringComparison.Ordinal);
+        Assert.Contains("JIP PP LN alias and file-marker policy remains open", markdown, StringComparison.Ordinal);
+        Assert.DoesNotContain(projectRoot, markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(projectRoot), markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(layout.GameRoot, markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(layout.GameRoot), markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(layout.XEditPath, markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(layout.XEditPath), markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(layout.Mo2Path, markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(layout.Mo2Path), markdown, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportRejectsMissingMarkdownSummaryPath()
+    {
+        var result = RunCli("doctor", "export", "--summary");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Contains("Missing value for --summary.", result.Stderr, StringComparison.Ordinal);
     }
 
     [Fact]

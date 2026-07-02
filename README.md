@@ -2,9 +2,10 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 158 adds compact
-Doctor action summary indexes to capability scan and Doctor export output,
-derived from existing non-ready Doctor area actions.
+The project is currently in gated v0.1 implementation. Gate 165 adds a
+path-minimized Markdown sidecar summary for
+`forge capabilities scan --summary <path>`, derived from the existing
+capability scan report and projected diagnostics.
 
 ## Architecture Spine
 
@@ -17,7 +18,7 @@ derived from existing non-ready Doctor area actions.
 
 ## Current Gate
 
-Gate 158 builds on the closed first game-facing generator path. It keeps
+Gate 165 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -140,6 +141,36 @@ Gate 158 adds `index.actionSummary` to `forge capabilities scan` and
 `forge doctor export`. It summarizes existing non-ready Doctor area actions by
 derived source type and area status, and prints matching `Action summary:`
 sections under the scan status index and Doctor index.
+Gate 159 adds `index.evidenceSummary` to `forge capabilities scan` and
+`forge doctor export`. It summarizes existing provider detector evidence by
+detector kind, evidence status, and scope, and prints matching
+`Evidence summary:` sections under the scan status index and Doctor index.
+Gate 160 adds `index.requirementSummary` to `forge capabilities scan` and
+`forge doctor export`. It summarizes existing project capability requirement
+resolution by status, phase, and optionality, and prints matching
+`Requirement summary:` sections under the scan status index and Doctor index.
+Gate 161 adds `index.diagnosticSummary` to `forge capabilities scan` and
+`forge doctor export`. It summarizes existing projected diagnostics by
+severity, rule ID, and category, and prints matching `Diagnostic summary:`
+sections under the scan status index and Doctor index.
+Gate 162 adds `index.providerInventorySummary` to `forge capabilities scan`
+and `forge doctor export`. It summarizes existing providers by provider type,
+install scope, and provider status, and prints matching `Provider inventory
+summary:` sections under the scan status index and Doctor index.
+Gate 163 adds `index.doctorAreaCapabilitySummary` to `forge capabilities
+scan` and `forge doctor export`. It summarizes each Doctor area by capability
+status, provider status/install scope, and actionable action count, and prints
+matching `Doctor area capability summary:` sections under the scan status
+index and Doctor index.
+Gate 164 adds `forge doctor export --summary <path>`. It writes a redacted
+Markdown handoff summary derived from the same Doctor export report, including
+summary counts, Doctor areas, next actions, unavailable requirements,
+diagnostics, and open questions, without adding a new primary output format.
+Gate 165 adds `forge capabilities scan --summary <path>`. It writes a
+path-minimized Markdown scan summary derived from the same capability scan
+report and projected diagnostics, including summary counts, Doctor areas,
+action summary counts, unavailable requirements, diagnostics, and open
+questions, without adding a new primary output format.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under
@@ -762,6 +793,44 @@ capability resolution, change requirement resolution, change diagnostic
 projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
 rule IDs, or add SARIF/GitHub output. It only summarizes existing non-ready
 Doctor area actions by source type and area status.
+Gate 159 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or add SARIF/GitHub output. It only summarizes existing provider
+detector evidence by detector kind, status, and scope.
+Gate 160 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or add SARIF/GitHub output. It only summarizes existing project
+requirement resolution data by status, phase, and optionality.
+Gate 161 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or add SARIF/GitHub output. It only summarizes existing projected
+diagnostics by severity, rule ID, and category.
+Gate 162 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or add SARIF/GitHub output. It only summarizes existing providers
+by provider type, install scope, and provider status.
+Gate 163 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, change Doctor planning, resolve catalogue-policy questions, call
+AI, add new `WF-CAP-*` rule IDs, or add SARIF/GitHub output. It only
+summarizes existing Doctor areas by capability status, provider status,
+install scope, and actionable action count.
+Gate 164 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, change Doctor planning, resolve catalogue-policy questions, call
+AI, add new `WF-CAP-*` rule IDs, add Doctor export SARIF/GitHub mode, or add
+`--format markdown`. It only writes a redacted Markdown sidecar summary for
+the existing Doctor export report.
 
 The current response route baseline still includes:
 
@@ -1194,6 +1263,35 @@ Gate 158 adds a shared Doctor action summary helper without adding new
 detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
 version checks, catalogue-policy decisions, SARIF/GitHub changes, or external
 tool execution.
+Gate 159 adds a shared provider evidence summary helper without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, SARIF/GitHub changes, or external
+tool execution.
+Gate 160 adds a shared requirement summary helper without adding new
+detectors, resolver behavior, rule IDs, aliases, runtime probes, MO2 VFS
+checks, provider version checks, catalogue-policy decisions, SARIF/GitHub
+changes, or external tool execution.
+Gate 161 adds a shared diagnostic summary helper without adding new detectors,
+resolver behavior, rule IDs, aliases, runtime probes, MO2 VFS checks,
+provider version checks, catalogue-policy decisions, SARIF/GitHub changes, or
+external tool execution.
+Gate 162 adds a shared provider inventory summary helper without adding new
+detectors, resolver behavior, rule IDs, aliases, runtime probes, MO2 VFS
+checks, provider version checks, catalogue-policy decisions, SARIF/GitHub
+changes, or external tool execution.
+Gate 163 adds a shared Doctor area capability summary helper without adding
+new detectors, resolver behavior, Doctor planning behavior, rule IDs,
+aliases, runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, SARIF/GitHub changes, or external tool execution.
+Gate 164 adds a Doctor export Markdown summary renderer without adding new
+detectors, resolver behavior, Doctor planning behavior, rule IDs, aliases,
+runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
+decisions, SARIF/GitHub changes, or external tool execution.
+Gate 165 adds a capability scan Markdown summary renderer without adding new
+detectors, resolver behavior, Doctor planning behavior, rule IDs, aliases,
+runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
+decisions, SARIF/GitHub changes, `--format markdown`, GitHub step-summary
+behavior, or external tool execution.
 
 It intentionally does not create:
 

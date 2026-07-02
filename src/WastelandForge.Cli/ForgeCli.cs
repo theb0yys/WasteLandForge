@@ -383,6 +383,7 @@ internal static class ForgeCli
             {
                 var diagnosticPayload = RenderDiagnosticPayload(requirementRead.Diagnostics, parse.Format, "capabilities scan");
 
+                WriteMarkdownSummary(parse.SummaryPath, requirementRead.Diagnostics, "capabilities scan", writeGitHubStepSummary: false);
                 WritePayload(parse.OutputPath, diagnosticPayload, appendFinalNewline: ShouldAppendFinalNewline(parse.Format));
                 return (int)CliExitCode.ProjectDiscovery;
             }
@@ -404,6 +405,8 @@ internal static class ForgeCli
         }
 
         var diagnostics = CapabilityDiagnosticProjector.Project(report);
+        WriteCapabilityScanMarkdownSummary(parse.SummaryPath, report, diagnostics);
+
         if (StringComparer.Ordinal.Equals(parse.Format, "sarif") ||
             StringComparer.Ordinal.Equals(parse.Format, "github"))
         {
@@ -541,6 +544,8 @@ internal static class ForgeCli
         }
 
         var export = DoctorExportRedactor.Create(scanReport);
+        WriteDoctorExportMarkdownSummary(parse.SummaryPath, export);
+
         var payload = CliConstants.IsMachineFormat(parse.Format)
             ? DoctorExportJsonSerializer.Serialize(export)
             : DoctorExportTextRenderer.Render(export);
@@ -1171,6 +1176,7 @@ internal static class ForgeCli
         string? gameRoot = null;
         string? dataRoot = null;
         string? outputPath = null;
+        string? summaryPath = null;
         string? projectPath = null;
         var toolPaths = new List<string>();
 
@@ -1264,6 +1270,17 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--summary"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitSummaryPath))
+                {
+                    return CapabilitiesScanParseResult.Fail(format, "Missing value for --summary.");
+                }
+
+                summaryPath = explicitSummaryPath;
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--no-input"))
             {
                 continue;
@@ -1277,7 +1294,7 @@ internal static class ForgeCli
             return CapabilitiesScanParseResult.Fail(format, $"Unexpected capabilities scan argument '{arg}'.");
         }
 
-        return CapabilitiesScanParseResult.Ok(projectPath, gameRoot, dataRoot, toolPaths, outputPath, format);
+        return CapabilitiesScanParseResult.Ok(projectPath, gameRoot, dataRoot, toolPaths, outputPath, summaryPath, format);
     }
 
     private static CapabilitiesExplainParseResult ParseCapabilitiesExplainOptions(string[] args)
@@ -1415,6 +1432,7 @@ internal static class ForgeCli
         string? gameRoot = null;
         string? dataRoot = null;
         string? outputPath = null;
+        string? summaryPath = null;
         string? projectPath = null;
         var toolPaths = new List<string>();
 
@@ -1514,6 +1532,17 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--summary"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitSummaryPath))
+                {
+                    return DoctorExportParseResult.Fail(format, "Missing value for --summary.");
+                }
+
+                summaryPath = explicitSummaryPath;
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--no-input"))
             {
                 continue;
@@ -1532,7 +1561,7 @@ internal static class ForgeCli
             projectPath = arg;
         }
 
-        return DoctorExportParseResult.Ok(projectPath, gameRoot, dataRoot, toolPaths, outputPath, format);
+        return DoctorExportParseResult.Ok(projectPath, gameRoot, dataRoot, toolPaths, outputPath, summaryPath, format);
     }
 
     private static string ParseReservedFormat(string[] args, out string? error)
@@ -1669,6 +1698,33 @@ internal static class ForgeCli
 
         Directory.CreateDirectory(Path.GetDirectoryName(fullGitHubStepSummaryPath) ?? ".");
         File.AppendAllText(fullGitHubStepSummaryPath, markdown + Environment.NewLine);
+    }
+
+    private static void WriteDoctorExportMarkdownSummary(string? summaryPath, DoctorExportReport report)
+    {
+        if (string.IsNullOrWhiteSpace(summaryPath))
+        {
+            return;
+        }
+
+        var fullSummaryPath = Path.GetFullPath(summaryPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(fullSummaryPath) ?? ".");
+        File.WriteAllText(fullSummaryPath, DoctorExportMarkdownRenderer.Render(report));
+    }
+
+    private static void WriteCapabilityScanMarkdownSummary(
+        string? summaryPath,
+        CapabilityScanReport report,
+        DiagnosticReport diagnostics)
+    {
+        if (string.IsNullOrWhiteSpace(summaryPath))
+        {
+            return;
+        }
+
+        var fullSummaryPath = Path.GetFullPath(summaryPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(fullSummaryPath) ?? ".");
+        File.WriteAllText(fullSummaryPath, CapabilityScanMarkdownRenderer.Render(report, diagnostics));
     }
 
     private static bool HasHelpFlag(IEnumerable<string> args)
@@ -1822,6 +1878,7 @@ internal static class ForgeCli
         string? DataRoot,
         IReadOnlyList<string> ToolPaths,
         string? OutputPath,
+        string? SummaryPath,
         string Format,
         string Message)
     {
@@ -1831,11 +1888,12 @@ internal static class ForgeCli
             string? dataRoot,
             IReadOnlyList<string> toolPaths,
             string? outputPath,
+            string? summaryPath,
             string format) =>
-            new(true, projectPath, gameRoot, dataRoot, toolPaths, outputPath, format, string.Empty);
+            new(true, projectPath, gameRoot, dataRoot, toolPaths, outputPath, summaryPath, format, string.Empty);
 
         public static CapabilitiesScanParseResult Fail(string format, string message) =>
-            new(false, null, null, null, [], null, format, message);
+            new(false, null, null, null, [], null, null, format, message);
     }
 
     private sealed record CapabilitiesExplainParseResult(
@@ -1870,6 +1928,7 @@ internal static class ForgeCli
         string? DataRoot,
         IReadOnlyList<string> ToolPaths,
         string? OutputPath,
+        string? SummaryPath,
         string Format,
         string Message)
     {
@@ -1879,10 +1938,11 @@ internal static class ForgeCli
             string? dataRoot,
             IReadOnlyList<string> toolPaths,
             string? outputPath,
+            string? summaryPath,
             string format) =>
-            new(true, projectPath, gameRoot, dataRoot, toolPaths, outputPath, format, string.Empty);
+            new(true, projectPath, gameRoot, dataRoot, toolPaths, outputPath, summaryPath, format, string.Empty);
 
         public static DoctorExportParseResult Fail(string format, string message) =>
-            new(false, null, null, null, [], null, format, message);
+            new(false, null, null, null, [], null, null, format, message);
     }
 }

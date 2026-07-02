@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 158 Doctor action summary index
+Status: Gate 165 capability scan Markdown summary
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -157,8 +157,11 @@ forge --version
 - `forge capabilities scan --format human|plain|json` selects text or
   machine-readable scan output. JSON scan output includes top-level
   `index.providerStatuses`, `index.capabilityStatuses`, `index.actions`,
-  `index.actionSummary`, `index.requirements`, `index.diagnostics`,
-  `index.cataloguePolicy`, and
+  `index.actionSummary`, `index.evidenceSummary`,
+  `index.providerInventorySummary`, `index.doctorAreaCapabilitySummary`,
+  `index.requirementSummary`, `index.requirements`, `index.diagnostics`,
+  `index.diagnosticSummary`,
+  `index.cataloguePolicy`,
   `index.openQuestionDetails`, and
   `index.cataloguePolicyDiagnosticHandoff` entries, plus a nested
   `diagnostics` object with canonical `WF-CAP-*` issue data when project requirements are
@@ -171,6 +174,9 @@ forge --version
   annotations for the same canonical `WF-CAP-*` diagnostics, including
   provider evidence in the annotation message.
 - `forge capabilities scan --output <path>` writes scan output to a file.
+- `forge capabilities scan --summary <path>` writes a path-minimized Markdown
+  scan summary beside the selected primary output. Markdown is a sidecar
+  summary, not a `--format` value.
 - `forge capabilities scan` reports `probable`, `missing`, `unknown`, and
   `wrong-scope`
   evidence states. With `--project`, it also reports requirement
@@ -232,6 +238,9 @@ forge --version
   export because Doctor export is currently a redacted bundle command, not a
   diagnostic projection command.
 - `forge doctor export --output <path>` writes the bundle to a file.
+- `forge doctor export --summary <path>` writes a redacted Markdown handoff
+  summary beside the selected primary output. Markdown is a sidecar summary,
+  not a `--format` value.
 - `forge doctor export` replaces local game, data, tool, project, and
   provider evidence paths with deterministic placeholders. It does not run
   runtime probes, MO2 VFS launch, GECK automation, provider version checks,
@@ -244,9 +253,14 @@ forge --version
   summary lists catalogue, provider, capability, Doctor-area, requirement, and
   diagnostic counts. The index lists Doctor areas, Doctor area status groups
   by readiness status, provider status groups by scan status and install
-  scope, capability status groups by scan status, grouped next actions,
-  a compact next-action summary, unavailable project requirements with phases
-  and source pointers, compact `WF-CAP-*` diagnostics with source files and JSON pointers,
+  scope, capability status groups by scan status, compact provider inventory
+  summaries by provider type, install scope, and status, compact provider
+  evidence summaries, compact Doctor area capability summaries by capability
+  status and provider status/install scope, grouped next actions, a compact
+  next-action summary, compact requirement summaries by status, phase, and
+  optionality, unavailable project requirements with phases and source
+  pointers, compact diagnostic summaries by severity, rule ID, and category,
+  compact `WF-CAP-*` diagnostics with source files and JSON pointers,
   catalogue-policy open-question groups, structured open-question details,
   catalogue-policy diagnostic handoff metadata, and open capability questions
   so handoff bundles can be scanned without opening the nested `capabilities`
@@ -479,6 +493,7 @@ forge --version
 - `--project <path>`
 - repeated `--tool-path <path>`
 - `--output <path>`
+- `--summary <path>`
 
 `forge capabilities explain` supports:
 
@@ -505,6 +520,7 @@ forge --version
 - repeated `--tool-path <path>`
 - `--output <path>`
 - `-o <path>`
+- `--summary <path>`
 - `--no-input`
 
 `forge generate` supports:
@@ -581,9 +597,20 @@ map the normalized JSON Pointer back to the YAML source node.
 
 `--summary <path>` writes a Markdown diagnostic summary beside the selected
 primary output format for `forge validate`, `forge release verify`, and
-`forge package --target mcm-json --verify-existing`. Markdown is not a
-`--format` value because ADR-010/R006 defines the current format set as
-`human`, `plain`, `json`, `sarif`, and `github`.
+`forge package --target mcm-json --verify-existing`.
+
+`forge capabilities scan --summary <path>` writes a path-minimized Markdown
+scan summary derived from the existing scan report and projected diagnostics.
+It is not a diagnostic projection mode, does not enable scan SARIF/GitHub
+changes, and does not expose raw local paths.
+
+`forge doctor export --summary <path>` writes a redacted Markdown handoff
+summary derived from the existing Doctor export report. It is not a
+diagnostic projection mode and does not enable Doctor export SARIF or GitHub
+annotation output.
+
+Markdown is not a `--format` value because ADR-010/R006 defines the current
+format set as `human`, `plain`, `json`, `sarif`, and `github`.
 
 ## Release Verify Evidence
 
@@ -1273,6 +1300,66 @@ actions by derived source type and area status; human/plain output prints a
 matching `Action summary:` section. It still does not add runtime probes, MO2
 VFS checks, provider version checks, catalogue-policy decisions, new rule IDs,
 SARIF/GitHub output, or AI behavior.
+
+Gate 159 keeps the same command surface while adding compact
+`index.evidenceSummary` metadata to `forge capabilities scan` and
+`forge doctor export`. JSON output summarizes existing provider detector
+evidence by detector kind, evidence status, and scope; human/plain output
+prints a matching `Evidence summary:` section. It still does not add runtime
+probes, MO2 VFS checks, provider version checks, catalogue-policy decisions,
+new rule IDs, SARIF/GitHub output, or AI behavior.
+
+Gate 160 keeps the same command surface while adding compact
+`index.requirementSummary` metadata to `forge capabilities scan` and
+`forge doctor export`. JSON output summarizes existing project capability
+requirements by status, phase, and optionality; human/plain output prints a
+matching `Requirement summary:` section. It still does not add runtime probes,
+MO2 VFS checks, provider version checks, catalogue-policy decisions, new rule
+IDs, SARIF/GitHub output, requirement resolver changes, or AI behavior.
+
+Gate 161 keeps the same command surface while adding compact
+`index.diagnosticSummary` metadata to `forge capabilities scan` and
+`forge doctor export`. JSON output summarizes already-projected diagnostics by
+severity, rule ID, and category; human/plain output prints a matching
+`Diagnostic summary:` section. It still does not add runtime probes, MO2 VFS
+checks, provider version checks, catalogue-policy decisions, new rule IDs,
+SARIF/GitHub output, diagnostic projection changes, or AI behavior.
+
+Gate 162 keeps the same command surface while adding compact
+`index.providerInventorySummary` metadata to `forge capabilities scan` and
+`forge doctor export`. JSON output summarizes existing providers by provider
+type, install scope, and provider status; human/plain output prints a matching
+`Provider inventory summary:` section. It still does not add runtime probes,
+MO2 VFS checks, provider version checks, catalogue-policy decisions, new rule
+IDs, SARIF/GitHub output, provider detection changes, or AI behavior.
+
+Gate 163 keeps the same command surface while adding compact
+`index.doctorAreaCapabilitySummary` metadata to `forge capabilities scan` and
+`forge doctor export`. JSON output summarizes each existing Doctor area by
+capability status, provider status/install scope, and actionable action count;
+human/plain output prints a matching `Doctor area capability summary:`
+section. It still does not add runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, new rule IDs, SARIF/GitHub output,
+Doctor planning changes, or AI behavior.
+
+Gate 164 keeps the same canonical command surface while adding
+`forge doctor export --summary <path>`. The sidecar Markdown report is derived
+from the already redacted Doctor export report and summarizes counts, Doctor
+areas, next actions, unavailable requirements, diagnostics, and open
+questions. It still does not add runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, new rule IDs, Doctor export
+SARIF/GitHub output, `--format markdown`, Doctor planning changes, or AI
+behavior.
+
+Gate 165 keeps the same canonical command surface while adding
+`forge capabilities scan --summary <path>`. The sidecar Markdown report is
+derived from the existing capability scan report and projected diagnostics,
+and summarizes counts, Doctor areas, action summary counts, unavailable
+requirements, diagnostics, and open questions while omitting raw local paths.
+It still does not add runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, new rule IDs, scan SARIF/GitHub changes,
+`--format markdown`, GitHub step-summary output, Doctor planning changes, or
+AI behavior.
 
 ## Exit Codes
 

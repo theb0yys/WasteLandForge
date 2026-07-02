@@ -175,7 +175,7 @@ multi-slider, color picker, FOMOD package creation, capability-derived runtime
 requirements, MO2 installation, or in-game verification exist until later
 gates implement them.
 
-Gate 158 continues Doctor-style environment reporting under the canonical
+Gate 165 continues Doctor-style environment reporting under the canonical
 `/forge capabilities scan`, `/forge capabilities explain`, and
 `/forge doctor export` command surface. Route scan, explain, and Doctor export
 requests to the real CLI when available. Describe Doctor export as a redacted
@@ -183,24 +183,44 @@ local handoff bundle over capability scan evidence, including top-level
 summary/index sections, compact `index.doctorAreaStatuses` groups by Doctor
 area readiness status, compact `index.providerStatuses` groups by provider
 status and install scope, compact `index.capabilityStatuses` groups by
-capability status, compact `index.actions` entries for non-ready Doctor area
-actions, compact `index.actionSummary` metadata for those existing actions,
+capability status, compact `index.providerInventorySummary` metadata for
+existing providers grouped by provider type, install scope, and status,
+compact `index.doctorAreaCapabilitySummary` metadata for existing Doctor areas
+grouped by capability status, provider status/install scope, and actionable
+action count,
+compact `index.evidenceSummary` metadata for existing provider detector
+evidence, compact `index.actions` entries for non-ready
+Doctor area actions, compact `index.actionSummary` metadata for those
+existing actions,
+compact `index.requirementSummary` metadata for existing project requirement
+resolution,
 compact `index.requirements` entries for unavailable project
-requirements, compact `index.diagnostics` entries for already-projected
-`WF-CAP-*` issues, compact `index.cataloguePolicy` groups by open-question
+requirements, compact `index.diagnosticSummary` metadata for
+already-projected diagnostics, compact `index.diagnostics` entries for
+already-projected `WF-CAP-*` issues, compact `index.cataloguePolicy` groups by open-question
 source type, structured `index.openQuestionDetails` for current catalogue
 policy gaps, compact `index.cataloguePolicyDiagnosticHandoff` entries for
 open catalogue-policy evidence handoff, and redacted nested project
-requirement provider evidence, not as runtime/session proof. For scan
+requirement provider evidence, not as runtime/session proof. With
+`--summary <path>`, describe Doctor export as writing a redacted Markdown
+handoff summary derived from that same Doctor export report, including summary
+counts, Doctor areas, next actions, unavailable requirements, diagnostics, and
+open questions. For scan
 requests, describe compact top-level
 `index.providerStatuses`, `index.capabilityStatuses`, `index.actions`, and
-`index.actionSummary`, `index.requirements`, `index.diagnostics`,
+`index.actionSummary`, `index.evidenceSummary`,
+`index.providerInventorySummary`, `index.doctorAreaCapabilitySummary`,
+`index.requirementSummary`, `index.requirements`, `index.diagnosticSummary`,
+`index.diagnostics`,
 `index.cataloguePolicy`, `index.openQuestionDetails`, and
 `index.cataloguePolicyDiagnosticHandoff` groups plus compact
 `doctor.index.areaStatuses` readiness groups before the full provider,
-capability, Doctor, project requirement, diagnostics,
-catalogue-policy handoff, and open-question arrays; for scan requests with
-`--project`,
+capability, Doctor, project requirement, diagnostics, catalogue-policy
+handoff, and open-question arrays. With `--summary <path>`, describe scan as
+writing a path-minimized Markdown summary derived from the same scan report
+and projected diagnostics, including summary counts, Doctor areas, action
+summary counts, unavailable requirements, diagnostics, and open questions;
+for scan requests with `--project`,
 describe `WF-CAP-001`, `WF-CAP-002`, and `WF-CAP-003` diagnostic projection
 as implemented, plus `WF-CAP-004` for deterministic root-vs-Data wrong-scope
 markers. For explain requests, describe grouped provider evidence in JSON
@@ -212,8 +232,9 @@ is supplied, including diagnostic handoff metadata for the `WF-CAP-*` rule
 that scan would project for unavailable matching requirements. Do not claim
 runtime probes, MO2 VFS launch, provider version checks, mixed-scope GECK
 Extender checks, GECK automation, network checks, AI explanation, new rule
-IDs, SARIF/GitHub explain output, or Doctor export SARIF/GitHub mode exist
-yet.
+IDs, SARIF/GitHub explain output, Doctor export SARIF/GitHub mode, or
+scan SARIF/GitHub changes, GitHub step-summary output, or `--format markdown`
+exist yet.
 
 Gate 155 shares catalogue-policy diagnostic handoff rendering across the scan,
 explain, and Doctor export outputs. Do not describe a new command or output
@@ -229,6 +250,36 @@ Gate 158 adds compact action summary metadata across scan and Doctor export
 output. Treat it as a summary of existing non-ready Doctor area actions, not a
 new command, detector, diagnostic rule, provider-version policy, or runtime
 probe.
+Gate 159 adds compact evidence summary metadata across scan and Doctor export
+output. Treat it as a summary of existing provider detector evidence, not a
+new command, detector, diagnostic rule, provider-version policy, or runtime
+probe.
+Gate 160 adds compact requirement summary metadata across scan and Doctor
+export output. Treat it as a summary of existing project requirement
+resolution data, not a new command, detector, diagnostic rule, requirement
+resolver behavior, provider-version policy, or runtime probe.
+Gate 161 adds compact diagnostic summary metadata across scan and Doctor
+export output. Treat it as a summary of already-projected diagnostics, not a
+new command, detector, diagnostic rule, diagnostic projection behavior,
+provider-version policy, or runtime probe.
+Gate 162 adds compact provider inventory summary metadata across scan and
+Doctor export output. Treat it as a summary of existing provider scan results,
+not a new command, detector, diagnostic rule, provider detection behavior,
+provider-version policy, or runtime probe.
+Gate 163 adds compact Doctor area capability summary metadata across scan and
+Doctor export output. Treat it as a summary of existing Doctor, capability,
+and provider scan results, not a new command, detector, diagnostic rule,
+Doctor planning behavior, provider-version policy, or runtime probe.
+Gate 164 adds a redacted Doctor export Markdown sidecar summary. Treat it as
+derived reporting over the existing redacted Doctor export report, not a new
+command alias, detector, diagnostic rule, Doctor planning behavior,
+provider-version policy, runtime probe, `--format markdown`, or
+SARIF/GitHub Doctor export mode.
+Gate 165 adds a path-minimized capability scan Markdown sidecar summary. Treat
+it as derived reporting over the existing capability scan report and projected
+diagnostics, not a new command alias, detector, diagnostic rule, Doctor
+planning behavior, provider-version policy, runtime probe, scan SARIF/GitHub
+change, GitHub step-summary behavior, or `--format markdown`.
 
 ## Required output
 
