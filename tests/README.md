@@ -648,6 +648,19 @@ summary and index JSON, plain output, output-file JSON, and redaction safety.
 Gate 136 extends `WastelandForge.GoldenTests` coverage for Doctor export
 compact diagnostics index JSON, plain output, output-file JSON, and redaction
 safety.
+Gate 137 extends `WastelandForge.GoldenTests` coverage for Doctor export
+compact requirements index JSON, plain output, output-file JSON, and redaction
+safety.
+Gate 138 extends `WastelandForge.GoldenTests` coverage for Doctor export
+compact action index JSON, plain output, output-file JSON, and redaction
+safety.
+Gate 139 extends `WastelandForge.GoldenTests` coverage for Doctor export
+structured open-question details in JSON and plain output while preserving the
+existing `index.openQuestions` list.
+Gate 140 extends `WastelandForge.GoldenTests` coverage for Doctor export
+provider-status groups in JSON, plain output, and output-file JSON.
+Gate 141 extends `WastelandForge.GoldenTests` coverage for Doctor export
+capability-status groups in JSON, plain output, and output-file JSON.
 
 Run the full local suite serially:
 

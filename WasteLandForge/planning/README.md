@@ -141,9 +141,14 @@ Gate status:
 - `gates/gate-134-capability-explain-diagnostic-handoff.md` - Gate 134, capability explain diagnostic handoff.
 - `gates/gate-135-doctor-export-summary-index.md` - Gate 135, Doctor export summary index.
 - `gates/gate-136-doctor-export-diagnostics-index.md` - Gate 136, Doctor export diagnostics index.
+- `gates/gate-137-doctor-export-requirements-index.md` - Gate 137, Doctor export requirements index.
+- `gates/gate-138-doctor-export-action-index.md` - Gate 138, Doctor export action index.
+- `gates/gate-139-doctor-export-open-question-details.md` - Gate 139, Doctor export open-question details.
+- `gates/gate-140-doctor-export-provider-status-index.md` - Gate 140, Doctor export provider-status index.
+- `gates/gate-141-doctor-export-capability-status-index.md` - Gate 141, Doctor export capability-status index.
 
 Next gate:
 
-- Gate 137 - Continue local capability/Doctor ergonomics unless provider-version evidence is documented.
+- Gate 142 - Continue local capability/Doctor ergonomics unless provider-version evidence is documented.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

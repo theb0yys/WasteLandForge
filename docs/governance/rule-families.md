@@ -164,6 +164,22 @@ Gate 136 adds no new rule ID. `forge doctor export` displays compact
 top-level diagnostics index metadata derived from existing `WF-CAP-*`
 capability scan diagnostics, but it does not add new rules or SARIF/GitHub
 Doctor export output.
+Gate 137 adds no new rule ID. `forge doctor export` displays compact
+top-level requirements index metadata derived from existing project capability
+requirement resolution data, but it does not add new rules or SARIF/GitHub
+Doctor export output.
+Gate 138 adds no new rule ID. `forge doctor export` displays compact
+top-level action index metadata derived from existing Doctor area actions, but
+it does not add new rules or SARIF/GitHub Doctor export output.
+Gate 139 adds no new rule ID. `forge doctor export` displays structured
+open-question metadata derived from existing Doctor open-question text, but it
+does not add new rules or SARIF/GitHub Doctor export output.
+Gate 140 adds no new rule ID. `forge doctor export` displays compact
+provider-status metadata derived from existing redacted provider scan results,
+but it does not add new rules or SARIF/GitHub Doctor export output.
+Gate 141 adds no new rule ID. `forge doctor export` displays compact
+capability-status metadata derived from existing redacted capability scan
+results, but it does not add new rules or SARIF/GitHub Doctor export output.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths

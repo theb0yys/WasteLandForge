@@ -383,3 +383,23 @@ existing synthetic `ExampleMod` fixture and temp-only scan inputs to exercise
 Gate 136 adds no committed provider fixtures. Golden CLI tests use the
 existing synthetic `ExampleMod` fixture and temp-only scan inputs to exercise
 `forge doctor export` compact diagnostics index output and redaction safety.
+
+Gate 137 adds no committed provider fixtures. Golden CLI tests use the
+existing synthetic `ExampleMod` fixture and temp-only scan inputs to exercise
+`forge doctor export` compact requirements index output and redaction safety.
+
+Gate 138 adds no committed provider fixtures. Golden CLI tests use the
+existing synthetic `ExampleMod` fixture and temp-only scan inputs to exercise
+`forge doctor export` compact action index output and redaction safety.
+
+Gate 139 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic fixtures and built-in catalogue open questions to exercise
+`forge doctor export` structured open-question detail output.
+
+Gate 140 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic fixtures and built-in catalogue provider scan results to exercise
+`forge doctor export` provider-status index output.
+
+Gate 141 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic fixtures and built-in catalogue capability scan results to exercise
+`forge doctor export` capability-status index output.

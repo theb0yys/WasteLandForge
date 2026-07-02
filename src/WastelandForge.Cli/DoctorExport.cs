@@ -71,8 +71,12 @@ internal sealed record DoctorExportDiagnosticSummary(
 
 internal sealed record DoctorExportIndex(
     IReadOnlyList<DoctorExportDoctorAreaIndexEntry> DoctorAreas,
+    IReadOnlyList<DoctorExportProviderStatusIndexEntry> ProviderStatuses,
+    IReadOnlyList<DoctorExportCapabilityStatusIndexEntry> CapabilityStatuses,
+    IReadOnlyList<DoctorExportActionIndexEntry> Actions,
     IReadOnlyList<DoctorExportRequirementIndexEntry> Requirements,
     IReadOnlyList<DoctorExportDiagnosticIndexEntry> Diagnostics,
+    IReadOnlyList<DoctorExportOpenQuestionIndexEntry> OpenQuestionDetails,
     IReadOnlyList<string> OpenQuestions);
 
 internal sealed record DoctorExportDoctorAreaIndexEntry(
@@ -81,6 +85,24 @@ internal sealed record DoctorExportDoctorAreaIndexEntry(
     string Status,
     IReadOnlyList<string> Capabilities,
     IReadOnlyList<string> Providers,
+    IReadOnlyList<string> Actions);
+
+internal sealed record DoctorExportProviderStatusIndexEntry(
+    string Status,
+    string InstallScope,
+    int Count,
+    IReadOnlyList<string> Providers);
+
+internal sealed record DoctorExportCapabilityStatusIndexEntry(
+    string Status,
+    int Count,
+    IReadOnlyList<string> Capabilities);
+
+internal sealed record DoctorExportActionIndexEntry(
+    string AreaId,
+    string AreaTitle,
+    string AreaStatus,
+    string SourceType,
     IReadOnlyList<string> Actions);
 
 internal sealed record DoctorExportRequirementIndexEntry(
@@ -99,6 +121,11 @@ internal sealed record DoctorExportDiagnosticIndexEntry(
     string SourceFile,
     string? SourcePointer,
     string? SuggestedFix);
+
+internal sealed record DoctorExportOpenQuestionIndexEntry(
+    string Id,
+    string SourceType,
+    string Question);
 
 internal static class DoctorExportRedactor
 {
@@ -214,6 +241,38 @@ internal static class DoctorExportRedactor
                     area.ProviderIds,
                     area.Actions))
                 .ToArray(),
+            report.Providers
+                .GroupBy(provider => (provider.Status, provider.Provider.InstallScope))
+                .OrderBy(group => group.Key.Status, StringComparer.Ordinal)
+                .ThenBy(group => group.Key.InstallScope, StringComparer.Ordinal)
+                .Select(group => new DoctorExportProviderStatusIndexEntry(
+                    group.Key.Status,
+                    group.Key.InstallScope,
+                    group.Count(),
+                    group.Select(provider => provider.Provider.Id)
+                        .Order(StringComparer.Ordinal)
+                        .ToArray()))
+                .ToArray(),
+            report.Capabilities
+                .GroupBy(capability => capability.Status)
+                .OrderBy(group => group.Key, StringComparer.Ordinal)
+                .Select(group => new DoctorExportCapabilityStatusIndexEntry(
+                    group.Key,
+                    group.Count(),
+                    group.Select(capability => capability.Capability.Id)
+                        .Order(StringComparer.Ordinal)
+                        .ToArray()))
+                .ToArray(),
+            report.Doctor.Areas
+                .Where(area => !StringComparer.Ordinal.Equals(area.Status, CapabilityDoctorStatuses.Ready))
+                .Where(area => area.Actions.Count > 0)
+                .Select(area => new DoctorExportActionIndexEntry(
+                    area.Id,
+                    area.Title,
+                    area.Status,
+                    ResolveActionSourceType(area.Id),
+                    area.Actions))
+                .ToArray(),
             report.Requirements is null
                 ? []
                 : report.Requirements.Requirements
@@ -238,10 +297,32 @@ internal static class DoctorExportRedactor
                     issue.PrimaryLocation.Pointer?.ToString(),
                     issue.SuggestedFix))
                 .ToArray(),
+            report.Doctor.OpenQuestions
+                .Select(CreateOpenQuestionIndexEntry)
+                .ToArray(),
             report.Doctor.OpenQuestions.ToArray());
 
     private static string FormatSeverity(DiagnosticSeverity severity) =>
         severity.ToString().ToLowerInvariant();
+
+    private static string ResolveActionSourceType(string areaId) =>
+        StringComparer.Ordinal.Equals(areaId, "project-requirements")
+            ? "project-requirement"
+            : "capability-scan";
+
+    private static DoctorExportOpenQuestionIndexEntry CreateOpenQuestionIndexEntry(string question)
+    {
+        var id = question switch
+        {
+            var value when value.StartsWith("JIP PP LN alias", StringComparison.Ordinal) =>
+                "catalogue-policy.jip-pp-ln-alias",
+            var value when value.StartsWith("GECK Extender", StringComparison.Ordinal) =>
+                "catalogue-policy.geck-extender-marker",
+            _ => "catalogue-policy.unspecified"
+        };
+
+        return new DoctorExportOpenQuestionIndexEntry(id, "catalogue-policy", question);
+    }
 
     private static CapabilityRequirementResolutionReport RedactRequirements(
         CapabilityRequirementResolutionReport requirements,
@@ -488,8 +569,12 @@ internal static class DoctorExportJsonSerializer
         new()
         {
             ["doctorAreas"] = new JsonArray(index.DoctorAreas.Select(ToJson).ToArray()),
+            ["providerStatuses"] = new JsonArray(index.ProviderStatuses.Select(ToJson).ToArray()),
+            ["capabilityStatuses"] = new JsonArray(index.CapabilityStatuses.Select(ToJson).ToArray()),
+            ["actions"] = new JsonArray(index.Actions.Select(ToJson).ToArray()),
             ["requirements"] = new JsonArray(index.Requirements.Select(ToJson).ToArray()),
             ["diagnostics"] = new JsonArray(index.Diagnostics.Select(ToJson).ToArray()),
+            ["openQuestionDetails"] = new JsonArray(index.OpenQuestionDetails.Select(ToJson).ToArray()),
             ["openQuestions"] = new JsonArray(index.OpenQuestions.Select(question => JsonValue.Create(question)).ToArray())
         };
 
@@ -502,6 +587,36 @@ internal static class DoctorExportJsonSerializer
             ["capabilities"] = new JsonArray(area.Capabilities.Select(capability => JsonValue.Create(capability)).ToArray()),
             ["providers"] = new JsonArray(area.Providers.Select(provider => JsonValue.Create(provider)).ToArray()),
             ["actions"] = new JsonArray(area.Actions.Select(action => JsonValue.Create(action)).ToArray())
+        };
+
+    private static JsonObject ToJson(DoctorExportProviderStatusIndexEntry providerStatus) =>
+        new()
+        {
+            ["status"] = providerStatus.Status,
+            ["installScope"] = providerStatus.InstallScope,
+            ["count"] = providerStatus.Count,
+            ["providers"] = new JsonArray(providerStatus.Providers.Select(provider => JsonValue.Create(provider)).ToArray())
+        };
+
+    private static JsonObject ToJson(DoctorExportCapabilityStatusIndexEntry capabilityStatus) =>
+        new()
+        {
+            ["status"] = capabilityStatus.Status,
+            ["count"] = capabilityStatus.Count,
+            ["capabilities"] = new JsonArray(capabilityStatus.Capabilities.Select(capability => JsonValue.Create(capability)).ToArray())
+        };
+
+    private static JsonObject ToJson(DoctorExportActionIndexEntry action) =>
+        new()
+        {
+            ["area"] = new JsonObject
+            {
+                ["id"] = action.AreaId,
+                ["title"] = action.AreaTitle,
+                ["status"] = action.AreaStatus
+            },
+            ["sourceType"] = action.SourceType,
+            ["actions"] = new JsonArray(action.Actions.Select(item => JsonValue.Create(item)).ToArray())
         };
 
     private static JsonObject ToJson(DoctorExportRequirementIndexEntry requirement) =>
@@ -517,6 +632,14 @@ internal static class DoctorExportJsonSerializer
                 ["pointer"] = requirement.SourcePointer
             },
             ["message"] = requirement.Message
+        };
+
+    private static JsonObject ToJson(DoctorExportOpenQuestionIndexEntry openQuestion) =>
+        new()
+        {
+            ["id"] = openQuestion.Id,
+            ["sourceType"] = openQuestion.SourceType,
+            ["question"] = openQuestion.Question
         };
 
     private static JsonObject ToJson(DoctorExportDiagnosticIndexEntry diagnostic)
@@ -595,6 +718,42 @@ internal static class DoctorExportTextRenderer
             }
         }
 
+        if (report.Index.ProviderStatuses.Count > 0)
+        {
+            builder.AppendLine("  Provider statuses:");
+            foreach (var providerStatus in report.Index.ProviderStatuses)
+            {
+                builder.AppendLine(
+                    $"    {providerStatus.Status}/{providerStatus.InstallScope}: {providerStatus.Count} provider(s)");
+                builder.AppendLine($"      Providers: {JoinOrNone(providerStatus.Providers)}");
+            }
+        }
+
+        if (report.Index.CapabilityStatuses.Count > 0)
+        {
+            builder.AppendLine("  Capability statuses:");
+            foreach (var capabilityStatus in report.Index.CapabilityStatuses)
+            {
+                builder.AppendLine(
+                    $"    {capabilityStatus.Status}: {capabilityStatus.Count} capability(ies)");
+                builder.AppendLine($"      Capabilities: {JoinOrNone(capabilityStatus.Capabilities)}");
+            }
+        }
+
+        if (report.Index.Actions.Count > 0)
+        {
+            builder.AppendLine("  Actions:");
+            foreach (var actionGroup in report.Index.Actions)
+            {
+                builder.AppendLine(
+                    $"    {actionGroup.AreaId} ({actionGroup.SourceType}, {actionGroup.AreaStatus}):");
+                foreach (var action in actionGroup.Actions)
+                {
+                    builder.AppendLine($"      Next: {action}");
+                }
+            }
+        }
+
         if (report.Index.Requirements.Count > 0)
         {
             builder.AppendLine("  Requirements:");
@@ -616,6 +775,15 @@ internal static class DoctorExportTextRenderer
                 {
                     builder.AppendLine($"      Fix: {diagnostic.SuggestedFix}");
                 }
+            }
+        }
+
+        if (report.Index.OpenQuestionDetails.Count > 0)
+        {
+            builder.AppendLine("  Open question details:");
+            foreach (var question in report.Index.OpenQuestionDetails)
+            {
+                builder.AppendLine($"    {question.Id} ({question.SourceType}): {question.Question}");
             }
         }
 

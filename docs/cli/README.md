@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 136 Doctor export diagnostics index
+Status: Gate 141 Doctor export capability-status index
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -236,9 +236,12 @@ forge --version
 - `forge doctor export --format json` includes top-level `summary` and
   `index` sections derived from the redacted capability scan report. The
   summary lists catalogue, provider, capability, Doctor-area, requirement, and
-  diagnostic counts. The index lists Doctor areas, compact `WF-CAP-*`
-  diagnostics with source files and JSON pointers, and open capability
-  questions so handoff bundles can be scanned without opening the nested
+  diagnostic counts. The index lists Doctor areas, provider status groups by
+  scan status and install scope, capability status groups by scan status,
+  grouped next actions, unavailable project requirements with phases and
+  source pointers, compact `WF-CAP-*`
+  diagnostics with source files and JSON pointers, structured open-question
+  details, and open capability questions so handoff bundles can be scanned without opening the nested
   `capabilities` report.
 - Gate 56 still adds no CLI behavior; response route taxonomy, route
   selection, and GECK/plugin output mapping remain unimplemented pending an
@@ -1093,6 +1096,43 @@ matching compact diagnostics under `Doctor index`. It reuses the existing
 capability diagnostic projector and still does not add runtime probes, MO2 VFS
 checks, provider version checks, new rule IDs, SARIF/GitHub output for Doctor
 export, or AI behavior.
+
+Gate 137 adds `index.requirements` to `forge doctor export`. JSON output now
+lists compact unavailable project capability requirements with IDs, optional
+flags, phases, statuses, source files, source pointers, and resolver messages,
+and human/plain output prints matching compact requirements under
+`Doctor index`. It reuses the existing project requirement resolution report
+and still does not add runtime probes, MO2 VFS checks, provider version checks,
+new rule IDs, SARIF/GitHub output for Doctor export, or AI behavior.
+
+Gate 138 adds `index.actions` to `forge doctor export`. JSON output now lists
+non-ready Doctor area action groups with area metadata, derived source type,
+and action strings, and human/plain output prints matching compact action
+groups under `Doctor index`. It reuses the existing Doctor area actions and
+still does not add runtime probes, MO2 VFS checks, provider version checks, new
+rule IDs, SARIF/GitHub output for Doctor export, or AI behavior.
+
+Gate 139 adds `index.openQuestionDetails` to `forge doctor export` while
+preserving the existing `index.openQuestions` string list. JSON output now
+lists stable IDs, `catalogue-policy` source type, and question text for the
+current JIP PP LN and GECK Extender catalogue policy gaps; human/plain output
+prints matching detail lines under `Doctor index`. It still does not resolve
+those policy gaps or add runtime probes, MO2 VFS checks, provider version
+checks, new rule IDs, SARIF/GitHub output for Doctor export, or AI behavior.
+
+Gate 140 adds `index.providerStatuses` to `forge doctor export`. JSON output
+now groups provider IDs by scan status and install scope with counts; human
+and plain output print matching provider-status groups under `Doctor index`.
+It reuses the existing redacted capability scan report and still does not add
+runtime probes, MO2 VFS checks, provider version checks, new rule IDs,
+SARIF/GitHub output for Doctor export, or AI behavior.
+
+Gate 141 adds `index.capabilityStatuses` to `forge doctor export`. JSON output
+now groups capability IDs by scan status with counts; human and plain output
+print matching capability-status groups under `Doctor index`. It reuses the
+existing redacted capability scan report and still does not add runtime probes,
+MO2 VFS checks, provider version checks, new rule IDs, SARIF/GitHub output for
+Doctor export, or AI behavior.
 
 ## Exit Codes
 

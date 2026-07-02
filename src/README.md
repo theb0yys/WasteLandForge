@@ -716,3 +716,30 @@ Gate 136 extends the Doctor export index with compact diagnostics entries
 derived from the redacted capability diagnostic report. `forge doctor export`
 JSON now includes `index.diagnostics`, and text output prints matching
 diagnostic index lines before the nested capability scan report.
+
+Gate 137 extends the Doctor export index with compact unavailable project
+requirement entries derived from the redacted project requirement resolution
+report. `forge doctor export` JSON now includes `index.requirements`, and text
+output prints matching requirement index lines before the diagnostics index and
+nested capability scan report.
+
+Gate 138 extends the Doctor export index with compact action groups derived
+from redacted Doctor area actions. `forge doctor export` JSON now includes
+`index.actions`, and text output prints matching action groups before
+requirements, diagnostics, open questions, and the nested capability scan
+report.
+
+Gate 139 extends the Doctor export index with structured open-question detail
+entries derived from existing Doctor open-question text. `forge doctor export`
+JSON now includes `index.openQuestionDetails`, while preserving the existing
+`index.openQuestions` string list.
+
+Gate 140 extends the Doctor export index with compact provider-status entries
+derived from existing redacted provider scan results. `forge doctor export`
+JSON now includes `index.providerStatuses`, and text output prints matching
+provider-status groups under `Doctor index`.
+
+Gate 141 extends the Doctor export index with compact capability-status
+entries derived from existing redacted capability scan results. `forge doctor
+export` JSON now includes `index.capabilityStatuses`, and text output prints
+matching capability-status groups under `Doctor index`.

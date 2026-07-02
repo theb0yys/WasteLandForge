@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 136 adds a
-compact diagnostics index to `forge doctor export`.
+The project is currently in gated v0.1 implementation. Gate 141 adds compact
+capability-status groups to `forge doctor export`.
 
 ## Architecture Spine
 
@@ -16,7 +16,7 @@ compact diagnostics index to `forge doctor export`.
 
 ## Current Gate
 
-Gate 136 builds on the closed first game-facing generator path. It keeps
+Gate 141 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -56,6 +56,25 @@ Gate 136 adds `index.diagnostics` to the same redacted bundle. It lists
 already-projected `WF-CAP-*` issue IDs, severity, title, source file, source
 pointer, and fix text at the top level so unavailable project requirements can
 be found without opening the nested capability diagnostics report.
+Gate 137 adds `index.requirements` to the same redacted bundle. It lists
+unavailable project capability requirement IDs, optional flags, phases,
+statuses, source files, source pointers, and resolver messages at the top
+level so authors can scan declared requirement failures without opening the
+nested project requirement report.
+Gate 138 adds `index.actions` to the same redacted bundle. It groups non-ready
+Doctor actions by area and derived source type, so authors can scan the next
+local steps before opening nested Doctor area details.
+Gate 139 adds `index.openQuestionDetails` while preserving the existing
+`index.openQuestions` string list. It gives current catalogue policy gaps
+stable IDs and a `catalogue-policy` source type without resolving those gaps.
+Gate 140 adds `index.providerStatuses` to the same redacted bundle. It groups
+existing provider IDs by scan status and install scope, with counts and stable
+provider ordering, so authors can scan provider readiness without opening the
+nested provider list.
+Gate 141 adds `index.capabilityStatuses` to the same redacted bundle. It
+groups existing capability IDs by scan status, with counts and stable
+capability ordering, so authors can scan capability readiness without opening
+the nested capability list.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under
@@ -537,6 +556,37 @@ create SARIF/GitHub output for Doctor export. It only adds a compact top-level
 diagnostics index derived from the already-redacted capability scan diagnostic
 report.
 
+Gate 137 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve mixed-scope GECK Extender
+markers, resolve JIP PP LN aliases, call AI, add new `WF-CAP-*` rule IDs, or
+create SARIF/GitHub output for Doctor export. It only adds a compact top-level
+requirements index derived from the already-redacted project requirement
+resolution report.
+
+Gate 138 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve mixed-scope GECK Extender
+markers, resolve JIP PP LN aliases, call AI, add new `WF-CAP-*` rule IDs, or
+create SARIF/GitHub output for Doctor export. It only adds a compact top-level
+action index derived from the already-redacted Doctor area actions.
+
+Gate 139 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve mixed-scope GECK Extender
+markers, resolve JIP PP LN aliases, call AI, add new `WF-CAP-*` rule IDs, or
+create SARIF/GitHub output for Doctor export. It only adds structured
+open-question details derived from existing Doctor open-question text.
+
+Gate 140 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, resolve mixed/effective scope,
+resolve JIP PP LN aliases, call AI, add new `WF-CAP-*` rule IDs, or create
+SARIF/GitHub output for Doctor export. It only groups existing scan-derived
+provider statuses by install scope in the redacted handoff index.
+
+Gate 141 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change capability resolution, call
+AI, add new `WF-CAP-*` rule IDs, or create SARIF/GitHub output for Doctor
+export. It only groups existing scan-derived capability statuses in the
+redacted handoff index.
+
 The current response route baseline still includes:
 
 - `WF-SEM-036` for response route `targetTopicId` values that do not resolve
@@ -891,6 +941,21 @@ checks, or external tool execution.
 Gate 136 adds a compact Doctor export diagnostics index without adding new
 detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
 checks, SARIF/GitHub Doctor export modes, or external tool execution.
+Gate 137 adds a compact Doctor export requirements index without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
+checks, SARIF/GitHub Doctor export modes, or external tool execution.
+Gate 138 adds a compact Doctor export action index without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
+checks, SARIF/GitHub Doctor export modes, or external tool execution.
+Gate 139 adds structured Doctor export open-question details without adding
+new detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
+version checks, SARIF/GitHub Doctor export modes, or external tool execution.
+Gate 140 adds a compact Doctor export provider-status index without adding
+new detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
+version checks, SARIF/GitHub Doctor export modes, or external tool execution.
+Gate 141 adds a compact Doctor export capability-status index without adding
+new detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
+version checks, SARIF/GitHub Doctor export modes, or external tool execution.
 
 It intentionally does not create:
 

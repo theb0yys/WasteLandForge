@@ -262,3 +262,25 @@ Gate 136 derives `forge doctor export` diagnostics index data from the
 existing redacted capability scan diagnostic report. It adds no third-party
 dependency, download, rehosted runtime binary, network call, runtime probe,
 MO2/GECK integration, provider-version parser, or AI requirement.
+Gate 137 derives `forge doctor export` requirements index data from the
+existing redacted project requirement resolution report. It adds no
+third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, provider-version parser, or AI
+requirement.
+Gate 138 derives `forge doctor export` action index data from the existing
+redacted Doctor area actions. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, or AI requirement.
+Gate 139 derives `forge doctor export` open-question detail data from the
+existing built-in catalogue policy gap text. It adds no third-party
+dependency, download, rehosted runtime binary, network call, runtime probe,
+MO2/GECK integration, provider-version parser, or AI requirement.
+Gate 140 derives `forge doctor export` provider-status index data from the
+existing redacted capability scan report. It adds no third-party dependency,
+download, rehosted runtime binary, network call, runtime probe, MO2/GECK
+integration, provider-version parser, or AI requirement.
+Gate 141 derives `forge doctor export` capability-status index data from the
+existing redacted capability scan report. It adds no third-party dependency,
+download, rehosted runtime binary, network call, runtime probe, MO2/GECK
+integration, provider-version parser, capability resolver dependency, or AI
+requirement.
