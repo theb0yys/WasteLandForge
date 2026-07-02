@@ -8,6 +8,8 @@ internal sealed record McmPackageVerificationCliResult(
     string PackageManifest,
     string InstallPreview,
     string InstallPreviewSummary,
+    string InstallPlan,
+    string InstallPlanSummary,
     string PackageVerification,
     string PackageVerificationSummary,
     string Checksums,

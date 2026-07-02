@@ -8,6 +8,8 @@ public sealed record McmJsonGeneratorOutputs(
     string PackageManifest,
     string InstallPreview,
     string InstallPreviewSummary,
+    string InstallPlan,
+    string InstallPlanSummary,
     string PackageVerification,
     string PackageVerificationSummary,
     string? PackageArchive,

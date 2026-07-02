@@ -2,10 +2,10 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 114 adds checksum
-path containment revalidation for
+The project is currently in gated v0.1 implementation. Gate 117 adds
+install-plan content revalidation to
 `forge package --target mcm-json --verify-existing` while preserving the CLI
-command surface.
+command surface and offline-first package boundary.
 
 ## Architecture Spine
 
@@ -18,7 +18,7 @@ command surface.
 
 ## Current Gate
 
-Gate 114 advances the first game-facing generator path. It keeps
+Gate 117 advances the first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -349,12 +349,32 @@ path form that escapes the package root, the file-based verifier emits one
 blocking `WF-BUILD-006` path-containment diagnostic without also reporting the
 same recognizable expected path as missing.
 
+Gate 115 adds checksum comment-line rejection revalidation to that
+verify-existing mode. If `checksums.sha256` contains a `#` comment line, the
+file-based verifier emits one blocking `WF-BUILD-006` comment-line diagnostic
+instead of treating the row as a generic malformed checksum entry.
+
+Gate 116 adds `install-plan.json` and `install-plan.md` to the MCM Extender
+generate/build/package output set. `install-plan.json` is validated against
+`install-plan/0.1.0`, recorded in generation/build manifests, included in
+output digests and distribution checksums, and surfaced in CLI JSON output. It
+records Data-relative copy intent with `requiresManualApproval: true`,
+`writesToGameData: false`, `writesToMo2Profile: false`, and
+`launchesGame: false`.
+
+Gate 117 extends `forge package --target mcm-json --verify-existing` so the
+file-based verifier reads `install-plan.json` and `install-plan.md`, checks
+install-plan metadata, archive evidence, package-manifest entry consistency,
+required copy actions, manual-approval/non-mutation flags, and Markdown
+summary content, and reports stale evidence as blocking `WF-BUILD-006`
+diagnostics without regenerating outputs.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
 `unknown` in this gate because their safe file-marker policy remains open.
 
-Gate 114 does not inspect an MO2 profile, launch through MO2 VFS, probe a
+Gate 117 does not inspect an MO2 profile, launch through MO2 VFS, probe a
 runtime, parse provider versions, emit `WF-CAP-*` diagnostics, generate
 in-game-verified MCM Extender files, generate JIP text scripts, package
 archives as FOMOD installers, or compile plugin records. Remaining advanced
@@ -654,6 +674,15 @@ verify-existing mode without adding package-verifier behavior to normal package
 generation.
 Gate 114 adds checksum path containment revalidation to that verify-existing
 mode without adding package-verifier behavior to normal package generation.
+Gate 115 adds checksum comment-line rejection revalidation to that
+verify-existing mode without adding package-verifier behavior to normal package
+generation.
+
+Gate 116 adds install-plan JSON and Markdown evidence to the MCM package
+generate/build/package output set without installing files.
+Gate 117 adds install-plan JSON and Markdown content revalidation to
+`forge package --target mcm-json --verify-existing` without adding
+package-verifier behavior to normal package generation.
 
 It intentionally does not create:
 

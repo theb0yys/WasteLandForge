@@ -24,6 +24,8 @@ internal static class McmPackageVerificationTextRenderer
         AppendEvidence(builder, result.PackageManifest);
         AppendEvidence(builder, result.InstallPreview);
         AppendEvidence(builder, result.InstallPreviewSummary);
+        AppendEvidence(builder, result.InstallPlan);
+        AppendEvidence(builder, result.InstallPlanSummary);
         AppendEvidence(builder, result.PackageVerification);
         AppendEvidence(builder, result.PackageVerificationSummary);
         AppendEvidence(builder, result.Checksums);

@@ -604,3 +604,21 @@ package evidence path. The file-based verifier now reports a single blocking
 `WF-BUILD-006` path-containment diagnostic when a checksum row escapes the
 package root, while suppressing the missing-entry cascade for the same
 recognizable expected path.
+
+Gate 115 adds checksum comment-line rejection revalidation to that
+verify-existing package evidence path. The file-based verifier now reports a
+single blocking `WF-BUILD-006` comment-line diagnostic when `checksums.sha256`
+contains a `#` comment line, without also reporting the same row as a generic
+malformed checksum entry.
+
+Gate 116 adds schema-validated `install-plan.json` and generated
+`install-plan.md` evidence to the MCM Extender generate/build/package path.
+`McmJsonGenerator` records the install plan in local manifests, output
+digests, distribution checksums, and CLI output while keeping Data/MO2 writes
+outside this gate.
+
+Gate 117 extends `McmPackageVerificationEvidenceFileVerifier` so
+`--verify-existing` revalidates install-plan JSON and Markdown content against
+package-manifest evidence. It checks metadata, archive details, entries,
+required copy actions, manual-approval/non-mutation flags, and summary lines
+without regenerating outputs.

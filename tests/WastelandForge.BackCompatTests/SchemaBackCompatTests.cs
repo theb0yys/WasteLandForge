@@ -46,6 +46,9 @@ public sealed class SchemaBackCompatTests
             "https://schemas.wastelandforge.dev/fnv/install-preview/0.1.0/schema.json",
             WastelandForgeSchemaIds.InstallPreview010);
         Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/install-plan/0.1.0/schema.json",
+            WastelandForgeSchemaIds.InstallPlan010);
+        Assert.Equal(
             "https://schemas.wastelandforge.dev/fnv/package-verification/0.1.0/schema.json",
             WastelandForgeSchemaIds.PackageVerification010);
         Assert.Equal(
@@ -158,6 +161,7 @@ public sealed class SchemaBackCompatTests
     [InlineData(WastelandForgeSchemaIds.McmExtenderOutput010, "mcm-extender-output", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.PackageManifest010, "package-manifest", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.InstallPreview010, "install-preview", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.InstallPlan010, "install-plan", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.PackageVerification010, "package-verification", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.Quest010, "quest", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.Quest020, "quest", "0.2.0")]

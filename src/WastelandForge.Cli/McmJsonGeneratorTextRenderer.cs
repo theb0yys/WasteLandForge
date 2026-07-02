@@ -62,6 +62,8 @@ internal static class McmJsonGeneratorTextRenderer
             builder.AppendLine(result.DryRun ? "  PLAN package-manifest.json" : "  OK   package-manifest.json written");
             builder.AppendLine(result.DryRun ? "  PLAN install-preview.json" : "  OK   install-preview.json written");
             builder.AppendLine(result.DryRun ? "  PLAN install-preview.md" : "  OK   install-preview.md written");
+            builder.AppendLine(result.DryRun ? "  PLAN install-plan.json" : "  OK   install-plan.json written");
+            builder.AppendLine(result.DryRun ? "  PLAN install-plan.md" : "  OK   install-plan.md written");
             builder.AppendLine(result.DryRun ? "  PLAN package-verification.json" : "  OK   package-verification.json written");
             builder.AppendLine(result.DryRun ? "  PLAN package-verification.md" : "  OK   package-verification.md written");
             if (result.Outputs.PackageArchive is not null)

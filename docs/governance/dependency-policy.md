@@ -190,3 +190,12 @@ require third-party runtime dependencies.
 Gate 114 adds only checksum path containment revalidation over the same local
 package evidence diagnostics; it still does not add, download, rehost, or
 require third-party runtime dependencies.
+Gate 115 adds only checksum comment-line rejection revalidation over the same
+local package evidence diagnostics; it still does not add, download, rehost, or
+require third-party runtime dependencies.
+Gate 116 adds only schema-validated install-plan evidence over the same local
+MCM package output tree; it still does not add, download, rehost, or require
+third-party runtime dependencies.
+Gate 117 adds only install-plan content revalidation over existing local
+package evidence; it still does not add, download, rehost, or require
+third-party runtime dependencies.

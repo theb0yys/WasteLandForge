@@ -349,6 +349,31 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
     }
 
     [Fact]
+    public void VerifyReportsChecksumCommentLine()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "build",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        InsertChecksumCommentLineBefore(
+            Path.Combine(projectRoot, outputs.Checksums!),
+            "package-verification.md");
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package checksum comment line is not canonical", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("comment lines", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void VerifyReportsChecksumEntriesNotInCanonicalOrder()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");
@@ -880,10 +905,19 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
             ?? throw new InvalidOperationException("Package manifest archive evidence did not parse.");
         archive["mediaType"] = "application/octet-stream";
         File.WriteAllText(packageManifestPath, packageManifest.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        var installPlanPath = Path.Combine(projectRoot, outputs.InstallPlan);
+        var installPlan = JsonNode.Parse(File.ReadAllText(installPlanPath)) as JsonObject
+            ?? throw new InvalidOperationException("Install plan did not parse.");
+        var installPlanArchive = installPlan["archive"] as JsonObject
+            ?? throw new InvalidOperationException("Install plan archive evidence did not parse.");
+        installPlanArchive["mediaType"] = "application/octet-stream";
+        File.WriteAllText(installPlanPath, installPlan.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
         var buildManifestPath = Path.Combine(projectRoot, outputs.Manifest);
         RefreshBuildManifestOutputDigest(buildManifestPath, outputs.PackageManifest, packageManifestPath);
+        RefreshBuildManifestOutputDigest(buildManifestPath, outputs.InstallPlan, installPlanPath);
         RefreshChecksumEntrySha256(Path.Combine(projectRoot, outputs.Checksums!), "package-manifest.json", packageManifestPath);
+        RefreshChecksumEntrySha256(Path.Combine(projectRoot, outputs.Checksums!), "install-plan.json", installPlanPath);
         RefreshChecksumEntrySha256(Path.Combine(projectRoot, outputs.Checksums!), "build-manifest.json", buildManifestPath);
 
         var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
@@ -911,23 +945,27 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
         var outputs = result.Outputs!;
         var packageManifestPath = Path.Combine(projectRoot, outputs.PackageManifest);
         var installPreviewPath = Path.Combine(projectRoot, outputs.InstallPreview);
+        var installPlanPath = Path.Combine(projectRoot, outputs.InstallPlan);
         var packageVerificationPath = Path.Combine(projectRoot, outputs.PackageVerification);
         RewriteArchiveSha256(packageManifestPath, new string('0', 64));
         RewriteArchiveSha256(installPreviewPath, new string('1', 64));
+        RewriteArchiveSha256(installPlanPath, new string('1', 64));
         RewriteArchiveSha256(packageVerificationPath, new string('1', 64));
 
         var buildManifestPath = Path.Combine(projectRoot, outputs.Manifest);
         RefreshBuildManifestOutputDigest(buildManifestPath, outputs.PackageManifest, packageManifestPath);
         RefreshBuildManifestOutputDigest(buildManifestPath, outputs.InstallPreview, installPreviewPath);
+        RefreshBuildManifestOutputDigest(buildManifestPath, outputs.InstallPlan, installPlanPath);
         RefreshBuildManifestOutputDigest(buildManifestPath, outputs.PackageVerification, packageVerificationPath);
         RefreshChecksumEntrySha256(Path.Combine(projectRoot, outputs.Checksums!), "package-manifest.json", packageManifestPath);
         RefreshChecksumEntrySha256(Path.Combine(projectRoot, outputs.Checksums!), "install-preview.json", installPreviewPath);
+        RefreshChecksumEntrySha256(Path.Combine(projectRoot, outputs.Checksums!), "install-plan.json", installPlanPath);
         RefreshChecksumEntrySha256(Path.Combine(projectRoot, outputs.Checksums!), "package-verification.json", packageVerificationPath);
         RefreshChecksumEntrySha256(Path.Combine(projectRoot, outputs.Checksums!), "build-manifest.json", buildManifestPath);
 
         var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
 
-        Assert.Equal(3, issues.Count);
+        Assert.Equal(4, issues.Count);
         Assert.Contains(issues, issue => issue.Title == "MCM package archive digest does not match package manifest");
         var installPreviewIssue = Assert.Single(issues, issue => issue.Title == "Install preview archive digest does not match package manifest");
         Assert.Equal("WF-BUILD-006", installPreviewIssue.RuleId.ToString());
@@ -935,6 +973,12 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
         Assert.Equal("/archive/sha256", installPreviewIssue.PrimaryLocation.Pointer?.ToString());
         Assert.Contains(new string('0', 64), installPreviewIssue.Message, StringComparison.Ordinal);
         Assert.Contains(new string('1', 64), installPreviewIssue.Message, StringComparison.Ordinal);
+        var installPlanIssue = Assert.Single(issues, issue => issue.Title == "MCM package install plan archive digest does not match package manifest");
+        Assert.Equal("WF-BUILD-006", installPlanIssue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/install-plan.json", installPlanIssue.PrimaryLocation.File);
+        Assert.Equal("/archive/sha256", installPlanIssue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains(new string('0', 64), installPlanIssue.Message, StringComparison.Ordinal);
+        Assert.Contains(new string('1', 64), installPlanIssue.Message, StringComparison.Ordinal);
         var packageVerificationIssue = Assert.Single(issues, issue => issue.Title == "Package verification archive digest does not match package manifest");
         Assert.Equal("WF-BUILD-006", packageVerificationIssue.RuleId.ToString());
         Assert.Equal("dist/mcm-json/package-verification.json", packageVerificationIssue.PrimaryLocation.File);
@@ -957,10 +1001,12 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
         var outputs = result.Outputs!;
         RewriteArchiveEvidenceAsNotCreated(Path.Combine(projectRoot, outputs.PackageManifest), includeValidation: false);
         RewriteArchiveEvidenceAsNotCreated(Path.Combine(projectRoot, outputs.InstallPreview), includeValidation: true);
+        RewriteArchiveEvidenceAsNotCreated(Path.Combine(projectRoot, outputs.InstallPlan), includeValidation: true);
         var packageVerificationPath = Path.Combine(projectRoot, outputs.PackageVerification);
         RewriteArchiveEvidenceAsNotCreated(packageVerificationPath, includeValidation: true);
         RewritePackageArchiveCheckAsNotCreated(packageVerificationPath);
         RewriteArchiveSummaryAsNotCreated(Path.Combine(projectRoot, outputs.InstallPreviewSummary));
+        RewriteArchiveSummaryAsNotCreated(Path.Combine(projectRoot, outputs.InstallPlanSummary));
         RewriteArchiveSummaryAsNotCreated(Path.Combine(projectRoot, outputs.PackageVerificationSummary));
         var request = new McmPackageVerificationEvidenceFileVerificationRequest(
             projectRoot,
@@ -982,6 +1028,88 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
         Assert.Contains("archive status 'not-created'", issue.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void VerifyReportsInstallPlanMismatchFromEditedEvidenceFile()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        var installPlanPath = Path.Combine(projectRoot, outputs.InstallPlan);
+        var installPlan = JsonNode.Parse(File.ReadAllText(installPlanPath)) as JsonObject
+            ?? throw new InvalidOperationException("Install plan did not parse.");
+        ((JsonObject?)installPlan["package"])!["root"] = "generated/other";
+        File.WriteAllText(installPlanPath, installPlan.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues, issue => issue.Title == "MCM package install plan root does not match package manifest");
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/install-plan.json", issue.PrimaryLocation.File);
+        Assert.Equal("/package/root", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("generated/other", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsInstallPlanEntryMismatchFromEditedEvidenceFile()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        var installPlanPath = Path.Combine(projectRoot, outputs.InstallPlan);
+        var installPlan = JsonNode.Parse(File.ReadAllText(installPlanPath)) as JsonObject
+            ?? throw new InvalidOperationException("Install plan did not parse.");
+        var firstEntry = installPlan["entries"]?.AsArray().OfType<JsonObject>().First()
+            ?? throw new InvalidOperationException("Install plan entry did not parse.");
+        firstEntry["action"] = "would-copy-loose-file";
+        File.WriteAllText(installPlanPath, installPlan.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues, issue => issue.Title == "MCM package install plan entry does not match package manifest");
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/install-plan.json", issue.PrimaryLocation.File);
+        Assert.Contains("copy-loose-file-if-user-approved", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("would-copy-loose-file", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsInstallPlanSummaryMismatchFromEditedEvidenceFile()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        var installPlanSummaryPath = Path.Combine(projectRoot, outputs.InstallPlanSummary);
+        File.WriteAllText(
+            installPlanSummaryPath,
+            File.ReadAllText(installPlanSummaryPath).Replace("Mode: export-plan", "Mode: edited-plan", StringComparison.Ordinal));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package install plan summary does not match JSON evidence", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/install-plan.md", issue.PrimaryLocation.File);
+        Assert.Contains("Mode: export-plan", issue.Message, StringComparison.Ordinal);
+    }
+
     private static McmPackageVerificationEvidenceFileVerificationRequest CreateRequest(
         string projectRoot,
         McmJsonGeneratorOutputs outputs) =>
@@ -994,7 +1122,9 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
             ProjectId: null,
             ChecksumsPath: outputs.Checksums,
             BuildManifestPath: IsBuildManifest(outputs.Manifest) ? outputs.Manifest : null,
-            InstallPreviewSummaryPath: outputs.InstallPreviewSummary);
+            InstallPreviewSummaryPath: outputs.InstallPreviewSummary,
+            InstallPlanPath: outputs.InstallPlan,
+            InstallPlanSummaryPath: outputs.InstallPlanSummary);
 
     private static void UpdateArchiveDigestEvidence(string projectRoot, McmJsonGeneratorOutputs outputs)
     {
@@ -1011,6 +1141,7 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
         archive["length"] = stream.Length;
         File.WriteAllText(packageManifestPath, packageManifest.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         UpdateArchiveDigest(Path.Combine(projectRoot, outputs.InstallPreview), Convert.ToHexString(hash).ToLowerInvariant(), stream.Length);
+        UpdateArchiveDigest(Path.Combine(projectRoot, outputs.InstallPlan), Convert.ToHexString(hash).ToLowerInvariant(), stream.Length);
         UpdateArchiveDigest(Path.Combine(projectRoot, outputs.PackageVerification), Convert.ToHexString(hash).ToLowerInvariant(), stream.Length);
     }
 
@@ -1103,6 +1234,19 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
         }
 
         lines.Insert(index, string.Empty);
+        File.WriteAllLines(checksumsPath, lines);
+    }
+
+    private static void InsertChecksumCommentLineBefore(string checksumsPath, string beforeEntryPath)
+    {
+        var lines = File.ReadAllLines(checksumsPath).ToList();
+        var index = lines.FindIndex(line => line.EndsWith($"  {beforeEntryPath}", StringComparison.Ordinal));
+        if (index < 0)
+        {
+            throw new InvalidOperationException($"Checksum entry '{beforeEntryPath}' was not found.");
+        }
+
+        lines.Insert(index, "# Forge checksum comments are not canonical");
         File.WriteAllLines(checksumsPath, lines);
     }
 

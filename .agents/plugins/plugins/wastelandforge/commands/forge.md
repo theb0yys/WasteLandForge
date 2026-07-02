@@ -92,23 +92,27 @@ Gate 45 option routing:
   file only. Do not control, automate, import into, or mutate an open GECK
   session.
 
-Gate 114 option routing:
+Gate 117 option routing:
 
 - `/forge generate --target mcm-json`, `/forge build --target mcm-json`, and
   `/forge package --target mcm-json` route to the real `forge` CLI behavior
-  when available. Treat the output as the Gate 114 validated MCM Extender JSON
+  when available. Treat the output as the Gate 117 validated MCM Extender JSON
   runtime subset under `MCM/<menu>.json`, plus
   `MCM/Translations/<modName>.ini` when translations are declared, and staged
   referenced texture assets under their game-relative target paths. Build and
   package output also include `package-manifest.json`, `package.zip`,
   `install-preview.json`, `install-preview.md`,
+  `install-plan.json`, `install-plan.md`,
   `package-verification.json`, `package-verification.md`,
   `build-manifest.json`, and `checksums.sha256` under `dist/mcm-json`. The
   package manifest is validated against
   `package-manifest/0.1.0`, and build/package ZIP entries are checked against
   the deterministic package payload. `install-preview.json` is validated
   against `install-preview/0.1.0`; `install-preview.md` is a human-readable
-  summary of the same preview intent; `package-verification.json` summarizes
+  summary of the same preview intent; `install-plan.json` is validated against
+  `install-plan/0.1.0` and records install-ready Data-relative copy intent
+  without mutating Data or MO2; `install-plan.md` is the human-readable
+  install plan; `package-verification.json` summarizes
   local package evidence, package counts, and archive validation status and is
   validated against `package-verification/0.1.0`; `package-verification.md`
   is a human-readable summary of that local package verification evidence.
@@ -131,11 +135,16 @@ Gate 114 option routing:
   checksum unexpected-entry revalidation, checksum duplicate-entry
   revalidation, checksum case-insensitive duplicate-entry revalidation,
   checksum malformed-entry revalidation, checksum path containment
-  revalidation, checksum canonical-order revalidation, checksum digest
+  revalidation, checksum comment-line revalidation, checksum canonical-order
+  revalidation, checksum digest
   canonical-casing revalidation, checksum path separator canonicalization
   revalidation, checksum path casing canonicalization revalidation, checksum
   blank-line revalidation, checksum entry spacing revalidation, checksum
   line-ending revalidation, and checksum trailing-newline revalidation.
+  Gate 117 also revalidates `install-plan.json` and `install-plan.md`
+  content in verify-existing mode, including package metadata, archive
+  details, package-manifest entry consistency, required copy actions,
+  manual-approval/non-mutation flags, and summary lines.
   These remain
   reports only:
   they list Data-relative would-copy paths and do not install into Data or MO2. It
@@ -167,7 +176,8 @@ Gate 114 option routing:
   out of canonical order, uppercase checksum digests, backslash checksum path
   separators, checksum paths with casing drift, blank checksum rows,
   non-canonical checksum entry spacing, non-canonical checksum line endings,
-  and missing checksum final newlines.
+  missing checksum final newlines, install-plan JSON content, and install-plan
+  Markdown summary content.
   Do not invent `/forge verify-package`,
   `/forge package verify`, or other verifier aliases.
 

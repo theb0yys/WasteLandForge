@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 114 MCM Extender package verify-existing checksum path containment revalidation
+Status: Gate 117 MCM Extender install-plan verify-existing content revalidation
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -243,17 +243,20 @@ forge --version
   build manifest, and checksums under project `dist/build`.
 - `forge generate --target mcm-json` writes deterministic MCM Extender JSON
   files, translation INI files when declared, a schema-validated package
-  manifest, a schema-validated install-preview report, a human summary, and
+  manifest, a schema-validated install-preview report, a human summary,
+  schema-validated `install-plan.json` plus `install-plan.md`, and
   schema-validated `package-verification.json` plus
   `package-verification.md` under project `generated/mcm-json`.
 - `forge build --target mcm-json` writes deterministic MCM Extender JSON
   files, translation INI files when declared, a schema-validated package
   manifest, a schema-validated install-preview report, a human summary,
-  schema-validated `package-verification.json`, `package-verification.md`, a
-  build manifest, and checksums under project `dist/mcm-json`.
+  schema-validated `install-plan.json`, `install-plan.md`, schema-validated
+  `package-verification.json`, `package-verification.md`, a build manifest,
+  and checksums under project `dist/mcm-json`.
 - `forge package --target mcm-json` assembles the deterministic MCM Extender
   package tree, schema-validated `install-preview.json`,
-  `install-preview.md`, schema-validated `package-verification.json`,
+  `install-preview.md`, schema-validated `install-plan.json`,
+  `install-plan.md`, schema-validated `package-verification.json`,
   `package-verification.md`, and `package.zip` under project `dist/mcm-json`.
 - `forge generate|build|package --target mcm-json` cross-checks
   package-verification evidence against the package manifest, install-preview
@@ -353,6 +356,9 @@ forge --version
 - Gate 114 adds checksum path containment revalidation to that verify-existing
   diagnostic mode; normal package generation still does not run diagnostic
   package verification.
+- Gate 115 adds checksum comment-line rejection revalidation to that
+  verify-existing diagnostic mode; normal package generation still does not run
+  diagnostic package verification.
 - `forge validate --format sarif` emits SARIF 2.1.0 from canonical diagnostics.
 - `forge validate --format sarif --output <path>` writes SARIF to a file.
 - `forge validate --format github` emits GitHub workflow-command annotations.
@@ -547,6 +553,8 @@ generated/mcm-json/<asset-target>
 generated/mcm-json/package-manifest.json
 generated/mcm-json/install-preview.json
 generated/mcm-json/install-preview.md
+generated/mcm-json/install-plan.json
+generated/mcm-json/install-plan.md
 generated/mcm-json/package-verification.json
 generated/mcm-json/package-verification.md
 generated/mcm-json/generation-manifest.json
@@ -561,6 +569,8 @@ dist/mcm-json/<asset-target>
 dist/mcm-json/package-manifest.json
 dist/mcm-json/install-preview.json
 dist/mcm-json/install-preview.md
+dist/mcm-json/install-plan.json
+dist/mcm-json/install-plan.md
 dist/mcm-json/package-verification.json
 dist/mcm-json/package-verification.md
 dist/mcm-json/package.zip
@@ -578,6 +588,8 @@ dist/mcm-json/<asset-target>
 dist/mcm-json/package-manifest.json
 dist/mcm-json/install-preview.json
 dist/mcm-json/install-preview.md
+dist/mcm-json/install-plan.json
+dist/mcm-json/install-plan.md
 dist/mcm-json/package-verification.json
 dist/mcm-json/package-verification.md
 dist/mcm-json/package.zip
@@ -855,6 +867,28 @@ mode. When a `checksums.sha256` row uses parent-directory traversal or another
 path form that escapes the package root, the file-based verifier emits one
 `WF-BUILD-006` path-containment diagnostic without regenerating package outputs
 or reporting the same recognizable expected path as missing.
+
+Gate 115 adds checksum comment-line rejection revalidation for that
+verify-existing mode. When `checksums.sha256` contains a `#` comment line, the
+file-based verifier emits one `WF-BUILD-006` comment-line diagnostic without
+regenerating package outputs or also treating the row as a malformed checksum
+entry.
+
+Gate 116 adds `install-plan.json` and `install-plan.md` to the
+`mcm-json` generate/build/package output set. `install-plan.json` is validated
+against `install-plan/0.1.0`, recorded in local manifests, included in build
+output digests and distribution checksums, and exposed in CLI JSON output. The
+plan records Data-relative copy intent and explicit non-mutation flags; Forge
+still does not install files, invoke MO2, inspect VFS conflicts, or launch the
+game.
+
+Gate 117 adds install-plan content revalidation to
+`forge package --target mcm-json --verify-existing`. The verifier reads
+`install-plan.json` and `install-plan.md`, checks install-plan metadata,
+archive fields, package-manifest entry consistency, required copy actions,
+manual-approval and non-mutation flags, and Markdown summary content, then
+emits blocking `WF-BUILD-006` diagnostics for stale install-plan evidence
+without regenerating outputs.
 
 ## Exit Codes
 

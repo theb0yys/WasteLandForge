@@ -258,6 +258,16 @@ Gate 114 adds no new diagnostic rule family or rule ID. Checksum path
 containment failures for existing package evidence continue to use
 `WF-BUILD-006`.
 
+Gate 115 adds no new diagnostic rule family or rule ID. Checksum comment-line
+failures for existing package evidence continue to use `WF-BUILD-006`.
+
+Gate 116 adds `WF-BUILD-007` for generated `install-plan.json` schema
+validation failures. Existing package evidence revalidation still uses
+`WF-BUILD-006`.
+
+Gate 117 adds no new diagnostic rule family or rule ID. Install-plan
+verify-existing content failures continue to use `WF-BUILD-006`.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

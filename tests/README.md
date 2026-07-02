@@ -546,6 +546,23 @@ coverage for checksum path containment revalidation in
 expected checksum path to escape the package root, then assert a single
 blocking `WF-BUILD-006` checksum path-containment diagnostic.
 
+Gate 115 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for checksum comment-line rejection revalidation in
+`forge package --target mcm-json --verify-existing`. The tests insert a `#`
+comment line into `checksums.sha256`, then assert a single blocking
+`WF-BUILD-006` checksum comment-line diagnostic.
+
+Gate 116 adds schema, back-compat, unit, and golden CLI coverage for
+`install-plan/0.1.0`, generated `install-plan.json`, generated
+`install-plan.md`, manifest/checksum coverage, and `--verify-existing` output
+paths for install-plan evidence.
+
+Gate 117 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for install-plan JSON and Markdown content revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit
+install-plan metadata, entry content, and summary content, then assert
+blocking `WF-BUILD-006` diagnostics.
+
 Run the full local suite serially:
 
 ```text

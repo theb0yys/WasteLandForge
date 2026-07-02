@@ -119,9 +119,12 @@ Gate status:
 - `gates/gate-112-mcm-extender-package-verify-existing-checksum-case-insensitive-duplicate-revalidation.md` - Gate 112, MCM Extender package verify-existing checksum case-insensitive duplicate revalidation.
 - `gates/gate-113-mcm-extender-package-verify-existing-checksum-malformed-entry-format-revalidation.md` - Gate 113, MCM Extender package verify-existing checksum malformed-entry format revalidation.
 - `gates/gate-114-mcm-extender-package-verify-existing-checksum-path-containment-revalidation.md` - Gate 114, MCM Extender package verify-existing checksum path containment revalidation.
+- `gates/gate-115-mcm-extender-package-verify-existing-checksum-comment-line-rejection-revalidation.md` - Gate 115, MCM Extender package verify-existing checksum comment-line rejection revalidation.
+- `gates/gate-116-mcm-extender-install-ready-layout-export-planning.md` - Gate 116, MCM Extender install-ready layout and export planning.
+- `gates/gate-117-mcm-extender-install-plan-verify-existing-content-revalidation.md` - Gate 117, MCM Extender install-plan verify-existing content revalidation.
 
 Next gate:
 
-- Gate 115 - MCM Extender package verify-existing checksum comment-line rejection revalidation.
+- Gate 118 - MCM Extender install-plan verify-existing schema revalidation.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

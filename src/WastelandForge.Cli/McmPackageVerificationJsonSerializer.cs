@@ -28,6 +28,8 @@ internal static class McmPackageVerificationJsonSerializer
             ["packageManifest"] = result.PackageManifest,
             ["installPreview"] = result.InstallPreview,
             ["installPreviewSummary"] = result.InstallPreviewSummary,
+            ["installPlan"] = result.InstallPlan,
+            ["installPlanSummary"] = result.InstallPlanSummary,
             ["packageVerification"] = result.PackageVerification,
             ["packageVerificationSummary"] = result.PackageVerificationSummary,
             ["checksums"] = result.Checksums,

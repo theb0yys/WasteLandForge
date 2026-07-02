@@ -11,4 +11,6 @@ public sealed record McmPackageVerificationEvidenceFileVerificationRequest(
     LogicalId? ProjectId,
     string? ChecksumsPath = null,
     string? BuildManifestPath = null,
-    string? InstallPreviewSummaryPath = null);
+    string? InstallPreviewSummaryPath = null,
+    string? InstallPlanPath = null,
+    string? InstallPlanSummaryPath = null);

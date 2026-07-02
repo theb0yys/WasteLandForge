@@ -24,6 +24,12 @@ public static class McmPackageVerificationEvidenceFileVerifier
         var installPreviewPath = ResolvePath(projectRoot, request.InstallPreviewPath);
         var packageVerificationPath = ResolvePath(projectRoot, request.PackageVerificationPath);
         var packageVerificationSummaryPath = ResolvePath(projectRoot, request.PackageVerificationSummaryPath);
+        var installPlanPath = string.IsNullOrWhiteSpace(request.InstallPlanPath)
+            ? ResolvePath(projectRoot, Path.Combine(Path.GetDirectoryName(request.PackageManifestPath) ?? string.Empty, "install-plan.json"))
+            : ResolvePath(projectRoot, request.InstallPlanPath);
+        var installPlanSummaryPath = string.IsNullOrWhiteSpace(request.InstallPlanSummaryPath)
+            ? ResolvePath(projectRoot, Path.Combine(Path.GetDirectoryName(request.PackageManifestPath) ?? string.Empty, "install-plan.md"))
+            : ResolvePath(projectRoot, request.InstallPlanSummaryPath);
         var checksumsPath = string.IsNullOrWhiteSpace(request.ChecksumsPath)
             ? null
             : ResolvePath(projectRoot, request.ChecksumsPath);
@@ -37,6 +43,8 @@ public static class McmPackageVerificationEvidenceFileVerifier
         var issues = new List<DiagnosticIssue>();
         var packageManifest = ReadJsonObject(projectRoot, packageManifestPath, "package manifest", request.ProjectId, issues);
         var installPreview = ReadJsonObject(projectRoot, installPreviewPath, "install preview", request.ProjectId, issues);
+        var installPlan = ReadJsonObject(projectRoot, installPlanPath, "install plan", request.ProjectId, issues);
+        var installPlanSummary = ReadText(projectRoot, installPlanSummaryPath, "install plan summary", request.ProjectId, issues);
         var packageVerification = ReadJsonObject(projectRoot, packageVerificationPath, "package verification", request.ProjectId, issues);
         var packageVerificationSummary = ReadText(projectRoot, packageVerificationSummaryPath, "package verification summary", request.ProjectId, issues);
         var buildManifest = buildManifestPath is null
@@ -58,6 +66,29 @@ public static class McmPackageVerificationEvidenceFileVerifier
         ValidateUnexpectedPackageArchivePresence(projectRoot, packageManifestPath, packageManifest, request.ProjectId, issues);
         ValidatePackageArchiveEntries(projectRoot, packageManifest, request.ProjectId, issues);
         ValidateInstallPreviewPackageManifestEntries(projectRoot, installPreviewPath, packageManifest, installPreview, request.ProjectId, issues);
+        if (installPlan is not null)
+        {
+            ValidateInstallPlan(
+                projectRoot,
+                installPlanPath,
+                installPlan,
+                packageManifest,
+                installPreview,
+                request.ProjectId,
+                issues);
+
+            if (installPlanSummary is not null)
+            {
+                ValidateInstallPlanSummary(
+                    projectRoot,
+                    installPlanSummaryPath,
+                    installPlanSummary,
+                    installPlan,
+                    request.ProjectId,
+                    issues);
+            }
+        }
+
         if (installPreviewSummaryPath is null)
         {
             issues.Add(CreateFileIssue(
@@ -219,6 +250,11 @@ public static class McmPackageVerificationEvidenceFileVerifier
         {
             var line = lines[index].TrimEnd('\r');
             if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            if (IsChecksumCommentLine(line))
             {
                 continue;
             }
@@ -424,6 +460,7 @@ public static class McmPackageVerificationEvidenceFileVerifier
         }
 
         ValidateChecksumBlankLines(projectRoot, checksumsPath, checksums, projectId, issues);
+        ValidateChecksumCommentLines(projectRoot, checksumsPath, checksums, projectId, issues);
     }
 
     private static bool EndsWithLineEnding(string value) =>
@@ -457,6 +494,38 @@ public static class McmPackageVerificationEvidenceFileVerifier
             return;
         }
     }
+
+    private static void ValidateChecksumCommentLines(
+        string projectRoot,
+        string checksumsPath,
+        string checksums,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        var lines = checksums
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Split('\n');
+        var lineCount = EndsWithLineEnding(checksums) ? lines.Length - 1 : lines.Length;
+        for (var index = 0; index < lineCount; index++)
+        {
+            if (!IsChecksumCommentLine(lines[index]))
+            {
+                continue;
+            }
+
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                checksumsPath,
+                projectId,
+                "MCM package checksum comment line is not canonical",
+                $"Expected checksums.sha256 line {index + 1} to contain a checksum entry; Forge-generated checksum evidence does not include comment lines."));
+            return;
+        }
+    }
+
+    private static bool IsChecksumCommentLine(string line) =>
+        line.TrimStart().StartsWith('#');
 
     private static void AddChecksumLineEndingIssue(
         string projectRoot,
@@ -662,6 +731,8 @@ public static class McmPackageVerificationEvidenceFileVerifier
         var entries = new SortedSet<string>(StringComparer.Ordinal);
         AddExpectedChecksumPath(outputRoot, packageManifestPath, entries);
         AddExpectedChecksumPath(outputRoot, installPreviewPath, entries);
+        AddExpectedChecksumPath(outputRoot, Path.Combine(outputRoot, "install-plan.json"), entries);
+        AddExpectedChecksumPath(outputRoot, Path.Combine(outputRoot, "install-plan.md"), entries);
         AddExpectedChecksumPath(outputRoot, packageVerificationPath, entries);
         AddExpectedChecksumPath(outputRoot, packageVerificationSummaryPath, entries);
 
@@ -964,6 +1035,47 @@ public static class McmPackageVerificationEvidenceFileVerifier
             GetRequiredString(installPreview, "summary"),
             issues);
 
+        var outputRoot = Path.GetDirectoryName(buildManifestPath) ?? projectRoot;
+        var installPlanPath = Path.Combine(outputRoot, "install-plan.json");
+        var installPlanSummaryPath = Path.Combine(outputRoot, "install-plan.md");
+        var installPlan = buildManifest["installPlan"] as JsonObject ?? new JsonObject();
+        AddBuildManifestMismatch(
+            projectRoot,
+            buildManifestPath,
+            projectId,
+            "/installPlan/schema",
+            "MCM package build manifest install-plan schema does not match package evidence",
+            WastelandForgeSchemaIds.InstallPlan010,
+            GetRequiredString(installPlan, "schema"),
+            issues);
+        AddBuildManifestMismatch(
+            projectRoot,
+            buildManifestPath,
+            projectId,
+            "/installPlan/status",
+            "MCM package build manifest install-plan status does not match package evidence",
+            "written",
+            GetRequiredString(installPlan, "status"),
+            issues);
+        AddBuildManifestMismatch(
+            projectRoot,
+            buildManifestPath,
+            projectId,
+            "/installPlan/report",
+            "MCM package build manifest install-plan report does not match package evidence",
+            ToDisplayPath(projectRoot, installPlanPath),
+            GetRequiredString(installPlan, "report"),
+            issues);
+        AddBuildManifestMismatch(
+            projectRoot,
+            buildManifestPath,
+            projectId,
+            "/installPlan/summary",
+            "MCM package build manifest install-plan summary does not match package evidence",
+            ToDisplayPath(projectRoot, installPlanSummaryPath),
+            GetRequiredString(installPlan, "summary"),
+            issues);
+
         var packageVerificationManifest = buildManifest["packageVerification"] as JsonObject ?? new JsonObject();
         var crossChecks = packageVerificationManifest["crossChecks"] as JsonObject ?? new JsonObject();
         AddBuildManifestMismatch(
@@ -1018,6 +1130,8 @@ public static class McmPackageVerificationEvidenceFileVerifier
             packageManifestPath,
             installPreviewPath,
             installPreviewSummaryPath,
+            installPlanPath,
+            installPlanSummaryPath,
             packageVerificationPath,
             packageVerificationSummaryPath,
             computedPayloadDigests,
@@ -1033,6 +1147,8 @@ public static class McmPackageVerificationEvidenceFileVerifier
         string packageManifestPath,
         string installPreviewPath,
         string? installPreviewSummaryPath,
+        string installPlanPath,
+        string installPlanSummaryPath,
         string packageVerificationPath,
         string packageVerificationSummaryPath,
         IReadOnlyList<FileDigest> computedPayloadDigests,
@@ -1048,6 +1164,8 @@ public static class McmPackageVerificationEvidenceFileVerifier
             AddBuildManifestOutputDigest(projectRoot, buildManifestPath, ResolvePath(projectRoot, installPreviewSummaryPath), digests, projectId, issues);
         }
 
+        AddBuildManifestOutputDigest(projectRoot, buildManifestPath, installPlanPath, digests, projectId, issues);
+        AddBuildManifestOutputDigest(projectRoot, buildManifestPath, installPlanSummaryPath, digests, projectId, issues);
         AddBuildManifestOutputDigest(projectRoot, buildManifestPath, packageVerificationPath, digests, projectId, issues);
         AddBuildManifestOutputDigest(projectRoot, buildManifestPath, packageVerificationSummaryPath, digests, projectId, issues);
         if (computedPackageArchiveDigest is not null)
@@ -1393,6 +1511,279 @@ public static class McmPackageVerificationEvidenceFileVerifier
             $"Expected install-preview.json entry '{entryKey}' field '{fieldName}' to be '{expected}' from package-manifest.json, but it recorded '{actual}'."));
     }
 
+    private static void ValidateInstallPlan(
+        string projectRoot,
+        string installPlanPath,
+        JsonObject installPlan,
+        JsonObject packageManifest,
+        JsonObject installPreview,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        var package = installPlan["package"] as JsonObject ?? new JsonObject();
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/formatVersion", "MCM package install plan format version does not match expected package evidence", "0.1", GetRequiredString(installPlan, "formatVersion"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/kind", "MCM package install plan kind does not match expected package evidence", "wastelandforge.install-plan", GetRequiredString(installPlan, "kind"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/planType", "MCM package install plan type does not match expected package evidence", "wastelandforge/mcm-json-loose-file-install-plan/v1", GetRequiredString(installPlan, "planType"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/command", "MCM package install plan command does not match package manifest", GetRequiredString(packageManifest, "command"), GetRequiredString(installPlan, "command"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/target", "MCM package install plan target does not match expected package evidence", "mcm-json", GetRequiredString(installPlan, "target"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/target", "MCM package install plan target does not match package manifest", GetRequiredString(packageManifest, "target"), GetRequiredString(installPlan, "target"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/dryRun", "MCM package install plan dry-run flag does not match package manifest", GetOptionalBool(packageManifest["dryRun"]).ToString(), GetOptionalBool(installPlan["dryRun"]).ToString(), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/project/id", "MCM package install plan project does not match package manifest", ReadProjectId(packageManifest), ReadProjectId(installPlan), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/packageType", "MCM package install plan package type does not match expected package evidence", "wastelandforge/mcm-json-loose-files/v1", GetRequiredString(package, "packageType"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/packageType", "MCM package install plan package type does not match package manifest", GetRequiredString(packageManifest, "packageType"), GetRequiredString(package, "packageType"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/root", "MCM package install plan root does not match package manifest", GetRequiredString(packageManifest, "root"), GetRequiredString(package, "root"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/layout", "MCM package install plan layout does not match expected package evidence", "fallout-new-vegas-data-loose-files", GetRequiredString(package, "layout"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/layout", "MCM package install plan layout does not match package manifest", GetRequiredString(packageManifest, "layout"), GetRequiredString(package, "layout"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/installRoot", "MCM package install plan install root does not match expected package evidence", "Data", GetRequiredString(package, "installRoot"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/mode", "MCM package install plan mode does not match expected package evidence", "export-plan", GetRequiredString(package, "mode"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/requiresManualApproval", "MCM package install plan manual approval flag does not match expected package evidence", true.ToString(), GetOptionalBool(package["requiresManualApproval"]).ToString(), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/writesToGameData", "MCM package install plan game Data mutation flag does not match expected package evidence", false.ToString(), GetOptionalBool(package["writesToGameData"]).ToString(), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/writesToMo2Profile", "MCM package install plan MO2 mutation flag does not match expected package evidence", false.ToString(), GetOptionalBool(package["writesToMo2Profile"]).ToString(), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/package/launchesGame", "MCM package install plan launch flag does not match expected package evidence", false.ToString(), GetOptionalBool(package["launchesGame"]).ToString(), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/entries", "MCM package install plan entry count does not match package manifest", GetArrayCount(packageManifest, "entries").ToString(System.Globalization.CultureInfo.InvariantCulture), GetArrayCount(installPlan, "entries").ToString(System.Globalization.CultureInfo.InvariantCulture), issues);
+
+        ValidateInstallPlanArchive(projectRoot, installPlanPath, installPlan, packageManifest, projectId, issues);
+        ValidateInstallPlanPackageManifestEntries(projectRoot, installPlanPath, packageManifest, installPlan, projectId, issues);
+
+        if (GetArrayCount(installPreview, "entries") != GetArrayCount(installPlan, "entries"))
+        {
+            AddInstallPlanMismatch(
+                projectRoot,
+                installPlanPath,
+                projectId,
+                "/entries",
+                "MCM package install plan entry count does not match install preview",
+                GetArrayCount(installPreview, "entries").ToString(System.Globalization.CultureInfo.InvariantCulture),
+                GetArrayCount(installPlan, "entries").ToString(System.Globalization.CultureInfo.InvariantCulture),
+                issues);
+        }
+    }
+
+    private static void ValidateInstallPlanArchive(
+        string projectRoot,
+        string installPlanPath,
+        JsonObject installPlan,
+        JsonObject packageManifest,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        var manifestArchive = packageManifest["archive"] as JsonObject ?? new JsonObject();
+        var planArchive = installPlan["archive"] as JsonObject ?? new JsonObject();
+        var archiveStatus = GetRequiredString(manifestArchive, "status");
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/archive/status", "MCM package install plan archive status does not match package manifest", archiveStatus, GetRequiredString(planArchive, "status"), issues);
+        if (StringComparer.Ordinal.Equals(archiveStatus, "created"))
+        {
+            AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/archive/validation", "MCM package install plan archive validation does not match package manifest", "entries-matched", GetRequiredString(planArchive, "validation"), issues);
+            AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/archive/outputFile", "MCM package install plan archive file does not match package manifest", GetRequiredString(manifestArchive, "outputFile"), GetRequiredString(planArchive, "outputFile"), issues);
+            AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/archive/mediaType", "MCM package install plan archive media type does not match package manifest", GetRequiredString(manifestArchive, "mediaType"), GetRequiredString(planArchive, "mediaType"), issues);
+            AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/archive/compression", "MCM package install plan archive compression does not match package manifest", GetRequiredString(manifestArchive, "compression"), GetRequiredString(planArchive, "compression"), issues);
+            AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/archive/sha256", "MCM package install plan archive digest does not match package manifest", GetRequiredString(manifestArchive, "sha256"), GetRequiredString(planArchive, "sha256"), issues);
+            AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/archive/length", "MCM package install plan archive length does not match package manifest", GetOptionalLong(manifestArchive["length"]).ToString(System.Globalization.CultureInfo.InvariantCulture), GetOptionalLong(planArchive["length"]).ToString(System.Globalization.CultureInfo.InvariantCulture), issues);
+            return;
+        }
+
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/archive/validation", "MCM package install plan archive validation does not match package manifest", "not-applicable", GetRequiredString(planArchive, "validation"), issues);
+        AddInstallPlanMismatch(projectRoot, installPlanPath, projectId, "/archive/reason", "MCM package install plan archive reason does not match package manifest", GetRequiredString(manifestArchive, "reason"), GetRequiredString(planArchive, "reason"), issues);
+    }
+
+    private static void ValidateInstallPlanPackageManifestEntries(
+        string projectRoot,
+        string installPlanPath,
+        JsonObject packageManifest,
+        JsonObject installPlan,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        var manifestEntries = ReadPackageManifestEntryEvidence(packageManifest);
+        var installPlanEntries = ReadInstallPlanEntryEvidence(installPlan);
+        var manifestByKey = manifestEntries
+            .GroupBy(entry => entry.Key, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        var installPlanByKey = installPlanEntries
+            .GroupBy(entry => entry.Key, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+
+        foreach (var manifestEntry in manifestEntries.OrderBy(entry => entry.Key, StringComparer.Ordinal))
+        {
+            if (!installPlanByKey.TryGetValue(manifestEntry.Key, out var installPlanEntry))
+            {
+                issues.Add(CreateFileIssue(
+                    projectRoot,
+                    installPlanPath,
+                    projectId,
+                    "MCM package install plan entry is missing from package manifest cross-check",
+                    $"Expected install-plan.json to include entry '{manifestEntry.Key}' from package-manifest.json."));
+                continue;
+            }
+
+            AddInstallPlanEntryMismatch(projectRoot, installPlanPath, projectId, manifestEntry.Key, "dataPath", manifestEntry.Path, installPlanEntry.DataPath, issues);
+            AddInstallPlanEntryMismatch(projectRoot, installPlanPath, projectId, manifestEntry.Key, "sourceFile", manifestEntry.OutputFile, installPlanEntry.SourceFile, issues);
+            AddInstallPlanEntryMismatch(projectRoot, installPlanPath, projectId, manifestEntry.Key, "installPath", $"Data/{manifestEntry.Path}", installPlanEntry.InstallPath, issues);
+            AddInstallPlanEntryMismatch(projectRoot, installPlanPath, projectId, manifestEntry.Key, "mediaType", manifestEntry.MediaType, installPlanEntry.MediaType, issues);
+            AddInstallPlanEntryMismatch(projectRoot, installPlanPath, projectId, manifestEntry.Key, "action", "copy-loose-file-if-user-approved", installPlanEntry.Action, issues);
+            AddInstallPlanEntryMismatch(projectRoot, installPlanPath, projectId, manifestEntry.Key, "required", true.ToString(), installPlanEntry.Required.ToString(), issues);
+            AddInstallPlanEntryMismatch(projectRoot, installPlanPath, projectId, manifestEntry.Key, "declaredSourceFile", manifestEntry.SourceFile ?? string.Empty, installPlanEntry.DeclaredSourceFile ?? string.Empty, issues);
+            AddInstallPlanEntryMismatch(projectRoot, installPlanPath, projectId, manifestEntry.Key, "targetFile", manifestEntry.TargetFile ?? string.Empty, installPlanEntry.TargetFile ?? string.Empty, issues);
+        }
+
+        foreach (var installPlanEntry in installPlanEntries.OrderBy(entry => entry.Key, StringComparer.Ordinal))
+        {
+            if (manifestByKey.ContainsKey(installPlanEntry.Key))
+            {
+                continue;
+            }
+
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                installPlanPath,
+                projectId,
+                "MCM package install plan entry is not declared in package manifest",
+                $"Install-plan entry '{installPlanEntry.Key}' is not declared by package-manifest.json."));
+        }
+    }
+
+    private static void AddInstallPlanEntryMismatch(
+        string projectRoot,
+        string installPlanPath,
+        LogicalId? projectId,
+        string entryKey,
+        string fieldName,
+        string expected,
+        string actual,
+        List<DiagnosticIssue> issues)
+    {
+        if (StringComparer.Ordinal.Equals(expected, actual))
+        {
+            return;
+        }
+
+        issues.Add(CreateFileIssue(
+            projectRoot,
+            installPlanPath,
+            projectId,
+            "MCM package install plan entry does not match package manifest",
+            $"Expected install-plan.json entry '{entryKey}' field '{fieldName}' to be '{expected}' from package-manifest.json, but it recorded '{actual}'."));
+    }
+
+    private static void ValidateInstallPlanSummary(
+        string projectRoot,
+        string installPlanSummaryPath,
+        string installPlanSummary,
+        JsonObject installPlan,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        var package = installPlan["package"] as JsonObject ?? new JsonObject();
+        var archive = installPlan["archive"] as JsonObject ?? new JsonObject();
+        var entries = installPlan["entries"] as JsonArray ?? [];
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, "# WastelandForge MCM Install Plan", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, "Generated by WastelandForge. Do not edit; regenerate from source contracts.", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Project: {ReadProjectId(installPlan)}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Command: {GetRequiredString(installPlan, "command")}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Target: {GetRequiredString(installPlan, "target")}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Package root: {GetRequiredString(package, "root")}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Install root: {GetRequiredString(package, "installRoot")}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Mode: {GetRequiredString(package, "mode")}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Requires manual approval: {FormatBool(GetOptionalBool(package["requiresManualApproval"]))}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Writes to game Data: {FormatBool(GetOptionalBool(package["writesToGameData"]))}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Writes to MO2 profile: {FormatBool(GetOptionalBool(package["writesToMo2Profile"]))}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Launches game: {FormatBool(GetOptionalBool(package["launchesGame"]))}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Entries: {entries.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Archive: {FormatInstallPlanArchive(archive)}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"Archive validation: {GetRequiredString(archive, "validation")}", projectId, issues);
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, "## Copy Plan", projectId, issues);
+
+        foreach (var entry in entries.OfType<JsonObject>())
+        {
+            ValidateInstallPlanSummaryLine(
+                projectRoot,
+                installPlanSummaryPath,
+                installPlanSummary,
+                $"- {GetRequiredString(entry, "installPath")} <- {GetRequiredString(entry, "sourceFile")} ({GetRequiredString(entry, "kind")}: {GetRequiredString(entry, "id")})",
+                projectId,
+                issues);
+            ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"  Action: {GetRequiredString(entry, "action")}", projectId, issues);
+
+            var declaredSourceFile = GetOptionalString(entry, "declaredSourceFile");
+            if (declaredSourceFile is not null)
+            {
+                ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"  Declared source: {declaredSourceFile}", projectId, issues);
+            }
+
+            var targetFile = GetOptionalString(entry, "targetFile");
+            if (targetFile is not null)
+            {
+                ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"  Target file: {targetFile}", projectId, issues);
+            }
+        }
+
+        ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, "## Limitations", projectId, issues);
+        if (installPlan["limitations"] is JsonArray limitations)
+        {
+            foreach (var limitation in limitations)
+            {
+                var text = limitation?.GetValue<string>();
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    ValidateInstallPlanSummaryLine(projectRoot, installPlanSummaryPath, installPlanSummary, $"- {text}", projectId, issues);
+                }
+            }
+        }
+    }
+
+    private static void ValidateInstallPlanSummaryLine(
+        string projectRoot,
+        string installPlanSummaryPath,
+        string installPlanSummary,
+        string expectedLine,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues)
+    {
+        if (installPlanSummary.Contains(expectedLine, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        issues.Add(CreateFileIssue(
+            projectRoot,
+            installPlanSummaryPath,
+            projectId,
+            "MCM package install plan summary does not match JSON evidence",
+            $"Expected install-plan.md to contain '{expectedLine}'."));
+    }
+
+    private static string FormatInstallPlanArchive(JsonObject archive) =>
+        StringComparer.Ordinal.Equals(GetRequiredString(archive, "status"), "created")
+            ? $"{GetRequiredString(archive, "outputFile")} (created)"
+            : "not-created";
+
+    private static void AddInstallPlanMismatch(
+        string projectRoot,
+        string installPlanPath,
+        LogicalId? projectId,
+        string pointer,
+        string title,
+        string expected,
+        string actual,
+        List<DiagnosticIssue> issues)
+    {
+        if (StringComparer.Ordinal.Equals(expected, actual))
+        {
+            return;
+        }
+
+        issues.Add(new DiagnosticIssue(
+            WastelandForge.Core.RuleId.Parse(McmPackageVerificationEvidenceValidator.RuleId),
+            DiagnosticSeverity.Error,
+            "build",
+            title,
+            $"Expected '{expected}', but install-plan.json recorded '{actual}'.",
+            new SourceLocation(ToDisplayPath(projectRoot, installPlanPath), JsonPointer.Parse(pointer)),
+            projectId,
+            suggestedFix: "Regenerate install plan evidence from the same package manifest, install preview, payload digest, and archive inputs.",
+            docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{McmPackageVerificationEvidenceValidator.RuleId}")));
+    }
+
     private static IReadOnlyList<PackageManifestEntryEvidence> ReadPackageManifestEntryEvidence(JsonObject packageManifest)
     {
         if (packageManifest["entries"] is not JsonArray entries)
@@ -1445,6 +1836,36 @@ public static class McmPackageVerificationEvidenceFileVerifier
                     GetRequiredString(entry, "installPath"),
                     GetRequiredString(entry, "mediaType"),
                     GetRequiredString(entry, "action"));
+            })
+            .ToArray();
+    }
+
+    private static IReadOnlyList<InstallPlanEntryEvidence> ReadInstallPlanEntryEvidence(JsonObject installPlan)
+    {
+        if (installPlan["entries"] is not JsonArray entries)
+        {
+            return [];
+        }
+
+        return entries
+            .OfType<JsonObject>()
+            .Select(entry =>
+            {
+                var kind = GetRequiredString(entry, "kind");
+                var id = GetRequiredString(entry, "id");
+                var dataPath = GetRequiredString(entry, "dataPath");
+                return new InstallPlanEntryEvidence(
+                    ToPackageEntryKey(kind, id, dataPath),
+                    kind,
+                    id,
+                    dataPath,
+                    GetRequiredString(entry, "sourceFile"),
+                    GetOptionalString(entry, "declaredSourceFile"),
+                    GetOptionalString(entry, "targetFile"),
+                    GetRequiredString(entry, "installPath"),
+                    GetRequiredString(entry, "mediaType"),
+                    GetRequiredString(entry, "action"),
+                    GetOptionalBool(entry["required"]));
             })
             .ToArray();
     }
@@ -1713,6 +2134,9 @@ public static class McmPackageVerificationEvidenceFileVerifier
     private static string? GetOptionalString(JsonObject json, string propertyName) =>
         json[propertyName]?.GetValue<string>();
 
+    private static int GetArrayCount(JsonObject json, string propertyName) =>
+        json[propertyName] is JsonArray array ? array.Count : -1;
+
     private static long GetOptionalLong(JsonNode? node) =>
         node?.GetValue<long>() ?? 0L;
 
@@ -1758,4 +2182,17 @@ public static class McmPackageVerificationEvidenceFileVerifier
         string InstallPath,
         string MediaType,
         string Action);
+
+    private sealed record InstallPlanEntryEvidence(
+        string Key,
+        string Kind,
+        string Id,
+        string DataPath,
+        string SourceFile,
+        string? DeclaredSourceFile,
+        string? TargetFile,
+        string InstallPath,
+        string MediaType,
+        string Action,
+        bool Required);
 }

@@ -23,6 +23,7 @@ public sealed class McmJsonGenerator
     private static readonly Lazy<JsonSchema> McmExtenderOutputSchema = new(LoadMcmExtenderOutputSchema);
     private static readonly Lazy<JsonSchema> PackageManifestSchema = new(LoadPackageManifestSchema);
     private static readonly Lazy<JsonSchema> InstallPreviewSchema = new(LoadInstallPreviewSchema);
+    private static readonly Lazy<JsonSchema> InstallPlanSchema = new(LoadInstallPlanSchema);
     private static readonly Lazy<JsonSchema> PackageVerificationSchema = new(LoadPackageVerificationSchema);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -184,6 +185,25 @@ public sealed class McmJsonGenerator
             menuOutputs,
             stagedAssets,
             packageArchiveDigest);
+        var installPlanPath = Path.Combine(outputRoot, "install-plan.json");
+        var installPlanJson = CreateInstallPlanJson(
+            options,
+            projectRoot,
+            outputRoot,
+            projectId,
+            menuOutputs,
+            stagedAssets,
+            packageArchiveDigest);
+        ValidateInstallPlanJson(projectRoot, installPlanPath, installPlanJson, issues, projectId);
+        var installPlanSummaryPath = Path.Combine(outputRoot, "install-plan.md");
+        var installPlanSummary = CreateInstallPlanSummary(
+            options,
+            projectRoot,
+            outputRoot,
+            projectId,
+            menuOutputs,
+            stagedAssets,
+            packageArchiveDigest);
         var packageVerificationPath = Path.Combine(outputRoot, "package-verification.json");
         var packageVerificationJson = CreatePackageVerificationJson(
             options,
@@ -244,6 +264,14 @@ public sealed class McmJsonGenerator
             installPreviewSummary);
 
         WriteUtf8NoBom(
+            installPlanPath,
+            installPlanJson.ToJsonString(JsonOptions) + Environment.NewLine);
+
+        WriteUtf8NoBom(
+            installPlanSummaryPath,
+            installPlanSummary);
+
+        WriteUtf8NoBom(
             packageVerificationPath,
             packageVerificationJson.ToJsonString(JsonOptions) + Environment.NewLine);
 
@@ -252,8 +280,8 @@ public sealed class McmJsonGenerator
             packageVerificationSummary);
 
         var generatedEvidenceFiles = packageArchivePath is null
-            ? generatedFiles.Append(packageManifestPath).Append(installPreviewPath).Append(installPreviewSummaryPath).Append(packageVerificationPath).Append(packageVerificationSummaryPath).ToArray()
-            : generatedFiles.Append(packageManifestPath).Append(installPreviewPath).Append(installPreviewSummaryPath).Append(packageVerificationPath).Append(packageVerificationSummaryPath).Append(packageArchivePath).ToArray();
+            ? generatedFiles.Append(packageManifestPath).Append(installPreviewPath).Append(installPreviewSummaryPath).Append(installPlanPath).Append(installPlanSummaryPath).Append(packageVerificationPath).Append(packageVerificationSummaryPath).ToArray()
+            : generatedFiles.Append(packageManifestPath).Append(installPreviewPath).Append(installPreviewSummaryPath).Append(installPlanPath).Append(installPlanSummaryPath).Append(packageVerificationPath).Append(packageVerificationSummaryPath).Append(packageArchivePath).ToArray();
         var outputDigestsBeforeManifest = generatedEvidenceFiles
             .Select(path => ComputeDigest(projectRoot, path))
             .OrderBy(digest => digest.Path, StringComparer.Ordinal)
@@ -277,6 +305,8 @@ public sealed class McmJsonGenerator
                 stagedAssets,
                 installPreviewPath,
                 installPreviewSummaryPath,
+                installPlanPath,
+                installPlanSummaryPath,
                 packageVerificationPath,
                 packageVerificationSummaryPath).ToJsonString(JsonOptions) + Environment.NewLine);
 
@@ -512,6 +542,8 @@ public sealed class McmJsonGenerator
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-manifest.json")),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-preview.json")),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-preview.md")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-plan.json")),
+            ToDisplayPath(projectRoot, Path.Combine(outputRoot, "install-plan.md")),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-verification.json")),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "package-verification.md")),
             IsDistributionCommand(command)
@@ -1065,6 +1097,17 @@ public sealed class McmJsonGenerator
         return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource));
     }
 
+    private static JsonSchema LoadInstallPlanSchema()
+    {
+        if (!WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.InstallPlan010, out var resource) ||
+            resource is null)
+        {
+            throw new InvalidOperationException($"Built-in schema '{WastelandForgeSchemaIds.InstallPlan010}' was not found.");
+        }
+
+        return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource));
+    }
+
     private static JsonSchema LoadPackageVerificationSchema()
     {
         if (!WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.PackageVerification010, out var resource) ||
@@ -1135,6 +1178,37 @@ public sealed class McmJsonGenerator
                 new SourceLocation(ToDisplayPath(projectRoot, installPreviewPath), JsonPointer.Parse(NormalizeJsonPointer(failure.InstanceLocation.ToString()))),
                 projectId,
                 "Fix the generated install preview contract or package metadata so it matches the install preview schema."));
+        }
+    }
+
+    private static void ValidateInstallPlanJson(
+        string projectRoot,
+        string installPlanPath,
+        JsonObject installPlanJson,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        using var jsonDocument = JsonDocument.Parse(installPlanJson.ToJsonString());
+        var results = InstallPlanSchema.Value.Evaluate(
+            jsonDocument.RootElement,
+            new EvaluationOptions
+            {
+                OutputFormat = OutputFormat.Hierarchical
+            });
+        if (results.IsValid)
+        {
+            return;
+        }
+
+        foreach (var failure in EnumerateSchemaFailures(results))
+        {
+            issues.Add(CreateIssue(
+                "WF-BUILD-007",
+                "Install plan validation failed",
+                FormatSchemaErrors(failure),
+                new SourceLocation(ToDisplayPath(projectRoot, installPlanPath), JsonPointer.Parse(NormalizeJsonPointer(failure.InstanceLocation.ToString()))),
+                projectId,
+                "Fix the generated install plan contract or package metadata so it matches the install plan schema."));
         }
     }
 
@@ -1212,6 +1286,8 @@ public sealed class McmJsonGenerator
         IReadOnlyList<StagedAsset> stagedAssets,
         string installPreviewPath,
         string installPreviewSummaryPath,
+        string installPlanPath,
+        string installPlanSummaryPath,
         string packageVerificationPath,
         string packageVerificationSummaryPath)
     {
@@ -1263,6 +1339,13 @@ public sealed class McmJsonGenerator
                 ["status"] = "written",
                 ["report"] = ToDisplayPath(projectRoot, installPreviewPath),
                 ["summary"] = ToDisplayPath(projectRoot, installPreviewSummaryPath)
+            },
+            ["installPlan"] = new JsonObject
+            {
+                ["schema"] = WastelandForgeSchemaIds.InstallPlan010,
+                ["status"] = "written",
+                ["report"] = ToDisplayPath(projectRoot, installPlanPath),
+                ["summary"] = ToDisplayPath(projectRoot, installPlanSummaryPath)
             },
             ["packageVerification"] = new JsonObject
             {
@@ -1387,6 +1470,89 @@ public sealed class McmJsonGenerator
         return builder.ToString();
     }
 
+    private static string CreateInstallPlanSummary(
+        McmJsonGeneratorOptions options,
+        string projectRoot,
+        string outputRoot,
+        LogicalId? projectId,
+        IReadOnlyList<MenuOutput> menuOutputs,
+        IReadOnlyList<StagedAsset> stagedAssets,
+        FileDigest? packageArchiveDigest)
+    {
+        var entries = CreateInstallPlanEntryJsons(projectRoot, outputRoot, menuOutputs, stagedAssets).ToArray();
+        var builder = new StringBuilder();
+        builder.AppendLine("# WastelandForge MCM Install Plan");
+        builder.AppendLine();
+        builder.AppendLine("Generated by WastelandForge. Do not edit; regenerate from source contracts.");
+        builder.AppendLine();
+        builder.Append("Project: ");
+        builder.AppendLine(projectId?.ToString() ?? "unknown");
+        builder.Append("Command: ");
+        builder.AppendLine(options.Command);
+        builder.Append("Target: ");
+        builder.AppendLine(Target);
+        builder.Append("Package root: ");
+        builder.AppendLine(ToDisplayPath(projectRoot, outputRoot));
+        builder.AppendLine("Install root: Data");
+        builder.AppendLine("Mode: export-plan");
+        builder.AppendLine("Requires manual approval: yes");
+        builder.AppendLine("Writes to game Data: no");
+        builder.AppendLine("Writes to MO2 profile: no");
+        builder.AppendLine("Launches game: no");
+        builder.Append("Entries: ");
+        builder.AppendLine(entries.Length.ToString(CultureInfo.InvariantCulture));
+        builder.Append("Archive: ");
+        if (packageArchiveDigest is null)
+        {
+            builder.AppendLine("not-created");
+            builder.AppendLine("Archive validation: not-applicable");
+        }
+        else
+        {
+            builder.Append(packageArchiveDigest.Path);
+            builder.AppendLine(" (created)");
+            builder.AppendLine("Archive validation: entries-matched");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("## Copy Plan");
+        foreach (var entry in entries)
+        {
+            builder.Append("- ");
+            builder.Append(GetRequiredString(entry, "installPath"));
+            builder.Append(" <- ");
+            builder.Append(GetRequiredString(entry, "sourceFile"));
+            builder.Append(" (");
+            builder.Append(GetRequiredString(entry, "kind"));
+            builder.Append(": ");
+            builder.Append(GetRequiredString(entry, "id"));
+            builder.AppendLine(")");
+            builder.Append("  Action: ");
+            builder.AppendLine(GetRequiredString(entry, "action"));
+
+            var declaredSourceFile = GetOptionalString(entry, "declaredSourceFile");
+            if (declaredSourceFile is not null)
+            {
+                builder.Append("  Declared source: ");
+                builder.AppendLine(declaredSourceFile);
+            }
+
+            var targetFile = GetOptionalString(entry, "targetFile");
+            if (targetFile is not null)
+            {
+                builder.Append("  Target file: ");
+                builder.AppendLine(targetFile);
+            }
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("## Limitations");
+        builder.AppendLine("- Plan only; Forge did not copy files into a game Data folder or MO2 profile.");
+        builder.AppendLine("- Plan only; a human or installer must approve and perform any Data-relative file copy.");
+        builder.AppendLine("- Plan only; runtime provider versions and MO2 VFS conflicts remain outside this report.");
+        return builder.ToString();
+    }
+
     private static JsonObject CreatePackageManifestJson(
         McmJsonGeneratorOptions options,
         string projectRoot,
@@ -1450,6 +1616,47 @@ public sealed class McmJsonGenerator
                 "Preview only; Forge did not copy files into a game Data folder or MO2 profile.",
                 "Preview only; Forge did not launch the game or verify runtime MCM Extender visibility.",
                 "Preview only; runtime provider versions and MO2 VFS conflicts remain outside this report."
+            }
+        };
+    }
+
+    private static JsonObject CreateInstallPlanJson(
+        McmJsonGeneratorOptions options,
+        string projectRoot,
+        string outputRoot,
+        LogicalId? projectId,
+        IReadOnlyList<MenuOutput> menuOutputs,
+        IReadOnlyList<StagedAsset> stagedAssets,
+        FileDigest? packageArchiveDigest)
+    {
+        return new JsonObject
+        {
+            ["formatVersion"] = "0.1",
+            ["kind"] = "wastelandforge.install-plan",
+            ["planType"] = "wastelandforge/mcm-json-loose-file-install-plan/v1",
+            ["command"] = options.Command,
+            ["target"] = Target,
+            ["dryRun"] = options.DryRun,
+            ["project"] = CreateProjectJson(projectId),
+            ["package"] = new JsonObject
+            {
+                ["packageType"] = "wastelandforge/mcm-json-loose-files/v1",
+                ["root"] = ToDisplayPath(projectRoot, outputRoot),
+                ["layout"] = "fallout-new-vegas-data-loose-files",
+                ["installRoot"] = "Data",
+                ["mode"] = "export-plan",
+                ["requiresManualApproval"] = true,
+                ["writesToGameData"] = false,
+                ["writesToMo2Profile"] = false,
+                ["launchesGame"] = false
+            },
+            ["archive"] = CreateInstallPreviewArchiveJson(packageArchiveDigest),
+            ["entries"] = new JsonArray(CreateInstallPlanEntryJsons(projectRoot, outputRoot, menuOutputs, stagedAssets).ToArray()),
+            ["limitations"] = new JsonArray
+            {
+                "Plan only; Forge did not copy files into a game Data folder or MO2 profile.",
+                "Plan only; a human or installer must approve and perform any Data-relative file copy.",
+                "Plan only; runtime provider versions and MO2 VFS conflicts remain outside this report."
             }
         };
     }
@@ -1790,6 +1997,70 @@ public sealed class McmJsonGenerator
                 ["installPath"] = $"Data/{path}",
                 ["mediaType"] = "image/vnd-ms.dds",
                 ["action"] = "would-copy-loose-file"
+            }));
+        }
+
+        return entries
+            .OrderBy(entry => entry.Path, StringComparer.Ordinal)
+            .Select(entry => entry.Json);
+    }
+
+    private static IEnumerable<JsonObject> CreateInstallPlanEntryJsons(
+        string projectRoot,
+        string outputRoot,
+        IReadOnlyList<MenuOutput> menuOutputs,
+        IReadOnlyList<StagedAsset> stagedAssets)
+    {
+        var entries = new List<(string Path, JsonObject Json)>();
+        foreach (var output in menuOutputs)
+        {
+            var path = ToDisplayPath(outputRoot, output.Path);
+            entries.Add((path, new JsonObject
+            {
+                ["kind"] = "mcm-menu",
+                ["id"] = output.Menu.Id,
+                ["dataPath"] = path,
+                ["sourceFile"] = ToDisplayPath(projectRoot, output.Path),
+                ["installPath"] = $"Data/{path}",
+                ["mediaType"] = "application/json",
+                ["action"] = "copy-loose-file-if-user-approved",
+                ["required"] = true
+            }));
+
+            if (output.TranslationPath is null)
+            {
+                continue;
+            }
+
+            var translationPath = ToDisplayPath(outputRoot, output.TranslationPath);
+            entries.Add((translationPath, new JsonObject
+            {
+                ["kind"] = "mcm-translation",
+                ["id"] = output.Menu.Id,
+                ["dataPath"] = translationPath,
+                ["sourceFile"] = ToDisplayPath(projectRoot, output.TranslationPath),
+                ["installPath"] = $"Data/{translationPath}",
+                ["mediaType"] = "text/plain",
+                ["action"] = "copy-loose-file-if-user-approved",
+                ["required"] = true
+            }));
+        }
+
+        foreach (var asset in stagedAssets)
+        {
+            var path = ToDisplayPath(outputRoot, asset.OutputPath);
+            entries.Add((path, new JsonObject
+            {
+                ["kind"] = "asset",
+                ["id"] = asset.Id,
+                ["dataPath"] = path,
+                ["sourceFile"] = ToDisplayPath(projectRoot, asset.OutputPath),
+                ["declaredSourceFile"] = ToDisplayPath(projectRoot, asset.SourcePath),
+                ["targetFile"] = asset.Target,
+                ["installPath"] = $"Data/{path}",
+                ["mediaType"] = "image/vnd-ms.dds",
+                ["action"] = "copy-loose-file-if-user-approved",
+                ["required"] = true
             }));
         }
 

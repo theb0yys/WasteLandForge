@@ -33,6 +33,7 @@ Do not overwrite a released schema in place. Schema migrations are explicit tool
 - `mcm-extender-output/0.1.0/schema.json` - minimal MCM Extender runtime JSON output schema emitted by Forge.
 - `package-manifest/0.1.0/schema.json` - deterministic generated package manifest schema for the first MCM Extender loose-file package target.
 - `install-preview/0.1.0/schema.json` - deterministic generated install-preview report schema for the first MCM Extender loose-file package target.
+- `install-plan/0.1.0/schema.json` - deterministic generated install-plan schema for the first MCM Extender loose-file package target.
 - `package-verification/0.1.0/schema.json` - deterministic generated package-verification report schema for the first MCM Extender loose-file package target.
 - `quests/0.1.0/schema.json` - quest registry schema.
 - `quests/0.2.0/schema.json` - quest registry schema with stage and objective skeletons.
@@ -204,6 +205,11 @@ adds `install-preview/0.1.0/schema.json` as generated install-preview
 evidence schema, not a source registry schema. Forge uses it to validate the
 install-preview report emitted by `forge generate --target mcm-json`, `forge
 build --target mcm-json`, and `forge package --target mcm-json`.
+
+Gate 116 adds `install-plan/0.1.0/schema.json` as generated install-plan
+evidence schema, not a source registry schema. Forge uses it to validate the
+install-ready export plan emitted by `forge generate --target mcm-json`,
+`forge build --target mcm-json`, and `forge package --target mcm-json`.
 
 Gate 78 adds generated `package-verification.json` output but no schema. Gate
 79 adds `package-verification/0.1.0/schema.json` as generated
