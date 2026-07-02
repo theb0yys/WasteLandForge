@@ -128,6 +128,18 @@ internal static class CapabilityScanTextRenderer
             }
         }
 
+        var cataloguePolicyHandoff = CapabilityCataloguePolicyIndex.CreateDiagnosticHandoff(report.Doctor.OpenQuestions);
+        if (cataloguePolicyHandoff.Count > 0)
+        {
+            builder.AppendLine("  Catalogue policy diagnostic handoff:");
+            foreach (var item in cataloguePolicyHandoff)
+            {
+                builder.AppendLine($"    {item.QuestionId}: {item.Status} - {item.Title}");
+                builder.AppendLine($"      {item.Message}");
+                builder.AppendLine($"      Suggested action: {item.SuggestedAction}");
+            }
+        }
+
         builder.AppendLine();
         builder.AppendLine("Doctor readiness index:");
         foreach (var areaStatus in report.Doctor.Areas

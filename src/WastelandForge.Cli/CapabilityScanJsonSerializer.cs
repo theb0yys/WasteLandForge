@@ -128,7 +128,8 @@ internal static class CapabilityScanJsonSerializer
             ["requirements"] = ToRequirementIndex(report.Requirements),
             ["diagnostics"] = ToDiagnosticIndex(CapabilityDiagnosticProjector.Project(report)),
             ["cataloguePolicy"] = ToCataloguePolicyIndex(report.Doctor.OpenQuestions),
-            ["openQuestionDetails"] = ToOpenQuestionDetails(report.Doctor.OpenQuestions)
+            ["openQuestionDetails"] = ToOpenQuestionDetails(report.Doctor.OpenQuestions),
+            ["cataloguePolicyDiagnosticHandoff"] = ToCataloguePolicyDiagnosticHandoff(report.Doctor.OpenQuestions)
         };
 
     private static string ResolveActionSourceType(string areaId) =>
@@ -208,6 +209,27 @@ internal static class CapabilityScanJsonSerializer
                 ["question"] = question.Question
             })
             .ToArray());
+
+    private static JsonObject ToCataloguePolicyDiagnosticHandoff(IReadOnlyList<string> openQuestions)
+    {
+        var handoff = CapabilityCataloguePolicyIndex.CreateDiagnosticHandoff(openQuestions);
+
+        return new JsonObject
+        {
+            ["questions"] = handoff.Count,
+            ["items"] = new JsonArray(handoff
+                .Select(item => new JsonObject
+                {
+                    ["questionId"] = item.QuestionId,
+                    ["sourceType"] = item.SourceType,
+                    ["status"] = item.Status,
+                    ["title"] = item.Title,
+                    ["message"] = item.Message,
+                    ["suggestedAction"] = item.SuggestedAction
+                })
+                .ToArray())
+        };
+    }
 
     private static JsonObject ToJson(CapabilityDoctorReport doctor) =>
         new()

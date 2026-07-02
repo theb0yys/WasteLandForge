@@ -33,7 +33,8 @@ internal static class CapabilityExplanationJsonSerializer
             ["target"] = ToJson(report.Target),
             ["cataloguePolicy"] = new JsonObject
             {
-                ["openQuestionDetails"] = ToOpenQuestionDetails(report.OpenQuestions)
+                ["openQuestionDetails"] = ToOpenQuestionDetails(report.OpenQuestions),
+                ["diagnosticHandoff"] = ToCataloguePolicyDiagnosticHandoff(report.OpenQuestions)
             },
             ["evidenceGroups"] = new JsonArray(report.EvidenceGroups.Select(ToJson).ToArray()),
             ["providers"] = new JsonArray(report.Providers.Select(ToJson).ToArray()),
@@ -78,6 +79,27 @@ internal static class CapabilityExplanationJsonSerializer
                 ["question"] = question.Question
             })
             .ToArray());
+
+    private static JsonObject ToCataloguePolicyDiagnosticHandoff(IReadOnlyList<string> openQuestions)
+    {
+        var handoff = CapabilityCataloguePolicyIndex.CreateDiagnosticHandoff(openQuestions);
+
+        return new JsonObject
+        {
+            ["questions"] = handoff.Count,
+            ["items"] = new JsonArray(handoff
+                .Select(item => new JsonObject
+                {
+                    ["questionId"] = item.QuestionId,
+                    ["sourceType"] = item.SourceType,
+                    ["status"] = item.Status,
+                    ["title"] = item.Title,
+                    ["message"] = item.Message,
+                    ["suggestedAction"] = item.SuggestedAction
+                })
+                .ToArray())
+        };
+    }
 
     private static JsonObject ToJson(CapabilityExplanationEvidenceGroup group) =>
         new()

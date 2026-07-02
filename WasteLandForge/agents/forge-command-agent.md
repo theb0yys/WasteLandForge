@@ -175,7 +175,7 @@ multi-slider, color picker, FOMOD package creation, capability-derived runtime
 requirements, MO2 installation, or in-game verification exist until later
 gates implement them.
 
-Gate 151 continues Doctor-style environment reporting under the canonical
+Gate 154 continues Doctor-style environment reporting under the canonical
 `/forge capabilities scan`, `/forge capabilities explain`, and
 `/forge doctor export` command surface. Route scan, explain, and Doctor export
 requests to the real CLI when available. Describe Doctor export as a redacted
@@ -188,25 +188,30 @@ actions, compact `index.requirements` entries for unavailable project
 requirements, compact `index.diagnostics` entries for already-projected
 `WF-CAP-*` issues, compact `index.cataloguePolicy` groups by open-question
 source type, structured `index.openQuestionDetails` for current catalogue
-policy gaps, and redacted nested project requirement provider evidence, not
-as runtime/session proof. For scan requests, describe compact top-level
+policy gaps, compact `index.cataloguePolicyDiagnosticHandoff` entries for
+open catalogue-policy evidence handoff, and redacted nested project
+requirement provider evidence, not as runtime/session proof. For scan
+requests, describe compact top-level
 `index.providerStatuses`, `index.capabilityStatuses`, `index.actions`, and
 `index.requirements`, `index.diagnostics`, `index.cataloguePolicy`, and
-`index.openQuestionDetails` groups plus compact `doctor.index.areaStatuses`
-readiness groups before the full provider, capability, Doctor, project
-requirement, diagnostics, and open-question arrays; for scan requests with
+`index.openQuestionDetails`, and `index.cataloguePolicyDiagnosticHandoff`
+groups plus compact `doctor.index.areaStatuses` readiness groups before the
+full provider, capability, Doctor, project requirement, diagnostics,
+catalogue-policy handoff, and open-question arrays; for scan requests with
 `--project`,
 describe `WF-CAP-001`, `WF-CAP-002`, and `WF-CAP-003` diagnostic projection
 as implemented, plus `WF-CAP-004` for deterministic root-vs-Data wrong-scope
 markers. For explain requests, describe grouped provider evidence in JSON
 `evidenceGroups`, catalogue-policy open-question details in
-`cataloguePolicy.openQuestionDetails`, and human/plain provider evidence
-groups, plus matching project requirement context when `--project` is
-supplied, including diagnostic handoff metadata for the `WF-CAP-*` rule that
-scan would project for unavailable matching requirements. Do not claim runtime
-probes, MO2 VFS launch, provider version checks, mixed-scope GECK Extender
-checks, GECK automation, network checks, AI explanation, new rule IDs,
-SARIF/GitHub explain output, or Doctor export SARIF/GitHub mode exist yet.
+`cataloguePolicy.openQuestionDetails`, catalogue-policy diagnostic handoff
+metadata in `cataloguePolicy.diagnosticHandoff`, and human/plain provider
+evidence groups, plus matching project requirement context when `--project`
+is supplied, including diagnostic handoff metadata for the `WF-CAP-*` rule
+that scan would project for unavailable matching requirements. Do not claim
+runtime probes, MO2 VFS launch, provider version checks, mixed-scope GECK
+Extender checks, GECK automation, network checks, AI explanation, new rule
+IDs, SARIF/GitHub explain output, or Doctor export SARIF/GitHub mode exist
+yet.
 
 ## Required output
 

@@ -797,3 +797,21 @@ open-question detail entries derived from existing Doctor open-question
 output. `forge capabilities explain` JSON now includes
 `cataloguePolicy.openQuestionDetails`, and text output prints matching detail
 entries before provider evidence groups.
+
+Gate 152 extends capability explain output with catalogue-policy diagnostic
+handoff entries derived from existing Doctor open-question output.
+`forge capabilities explain` JSON now includes
+`cataloguePolicy.diagnosticHandoff`, and text output prints matching handoff
+entries before provider evidence groups.
+
+Gate 153 extends Doctor export output with catalogue-policy diagnostic
+handoff entries derived from existing Doctor open-question output.
+`forge doctor export` JSON now includes
+`index.cataloguePolicyDiagnosticHandoff`, and text output prints matching
+handoff entries under `Doctor index`.
+
+Gate 154 extends capability scan output with catalogue-policy diagnostic
+handoff entries derived from existing Doctor open-question output.
+`forge capabilities scan` JSON now includes
+`index.cataloguePolicyDiagnosticHandoff`, and text output prints matching
+handoff entries under `Scan status index`.

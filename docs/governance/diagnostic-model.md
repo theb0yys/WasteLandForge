@@ -418,6 +418,18 @@ Gate 151 adds no new diagnostic rule ID. `forge capabilities explain` now
 exposes `cataloguePolicy.openQuestionDetails` entries derived from existing
 Doctor open-question output; canonical `WF-CAP-*` issue projection remains
 unchanged.
+Gate 152 adds no new diagnostic rule ID. `forge capabilities explain` now
+exposes `cataloguePolicy.diagnosticHandoff` entries derived from existing
+Doctor open-question output and stable catalogue-policy question IDs;
+canonical `WF-CAP-*` issue projection remains unchanged.
+Gate 153 adds no new diagnostic rule ID. `forge doctor export` now exposes
+`index.cataloguePolicyDiagnosticHandoff` entries derived from existing Doctor
+open-question output and stable catalogue-policy question IDs; canonical
+`WF-CAP-*` issue projection remains unchanged.
+Gate 154 adds no new diagnostic rule ID. `forge capabilities scan` now
+exposes `index.cataloguePolicyDiagnosticHandoff` entries derived from existing
+Doctor open-question output and stable catalogue-policy question IDs;
+canonical `WF-CAP-*` issue projection remains unchanged.
 
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose

@@ -295,6 +295,32 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CapabilitiesExplainJsonIncludesCataloguePolicyDiagnosticHandoff()
+    {
+        var result = RunCli("capabilities", "explain", "runtime.scripting.jip_pp_ln", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability explanation JSON did not parse.");
+        var handoff = json["cataloguePolicy"]?["diagnosticHandoff"]?["items"]?.AsArray() ??
+            throw new InvalidOperationException("Capability explanation did not include catalogue-policy diagnostic handoff.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(2, (int?)json["cataloguePolicy"]?["diagnosticHandoff"]?["questions"]);
+        Assert.Equal(2, handoff.Count);
+        Assert.Equal("catalogue-policy.jip-pp-ln-alias", (string?)handoff[0]?["questionId"]);
+        Assert.Equal("catalogue-policy", (string?)handoff[0]?["sourceType"]);
+        Assert.Equal("open", (string?)handoff[0]?["status"]);
+        Assert.Equal("Catalogue policy question remains open", (string?)handoff[0]?["title"]);
+        Assert.Equal(
+            "JIP PP LN alias and file-marker policy remains open in the built-in catalogue.",
+            (string?)handoff[0]?["message"]);
+        Assert.Contains("provider-version", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Contains("file-marker", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Contains("runtime", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Contains("parser", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Null(handoff[0]?["ruleId"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void CapabilitiesExplainPlainIncludesProviderEvidenceGroups()
     {
         var result = RunCli(
@@ -331,6 +357,30 @@ public sealed class CliGoldenTests
             StringComparison.Ordinal);
         Assert.Contains(
             "catalogue-policy.geck-extender-marker (catalogue-policy): GECK Extender has mixed-scope install evidence; a safe built-in file marker remains open.",
+            result.Stdout,
+            StringComparison.Ordinal);
+        Assert.Contains("Provider evidence groups:", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesExplainPlainIncludesCataloguePolicyDiagnosticHandoff()
+    {
+        var result = RunCli(
+            "capabilities",
+            "explain",
+            "provider.editor.geck_extender",
+            "--format",
+            "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Catalogue policy diagnostic handoff:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(
+            "catalogue-policy.jip-pp-ln-alias: open - Catalogue policy question remains open",
+            result.Stdout,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "Suggested action: Keep this catalogue-policy question open until documented provider-version, file-marker, runtime, or parser evidence resolves it.",
             result.Stdout,
             StringComparison.Ordinal);
         Assert.Contains("Provider evidence groups:", result.Stdout, StringComparison.Ordinal);
@@ -497,6 +547,7 @@ public sealed class CliGoldenTests
         Assert.Equal("tool.mo2", (string?)json["target"]?["id"]);
         Assert.Equal("unknown", (string?)json["target"]?["status"]);
         Assert.Equal(2, json["cataloguePolicy"]?["openQuestionDetails"]?.AsArray().Count);
+        Assert.Equal(2, (int?)json["cataloguePolicy"]?["diagnosticHandoff"]?["questions"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -519,6 +570,7 @@ public sealed class CliGoldenTests
         Assert.Equal(0, json["index"]?["diagnostics"]?.AsArray().Count);
         Assert.Equal(1, json["index"]?["cataloguePolicy"]?.AsArray().Count);
         Assert.Equal(2, json["index"]?["openQuestionDetails"]?.AsArray().Count);
+        Assert.Equal(2, (int?)json["index"]?["cataloguePolicyDiagnosticHandoff"]?["questions"]);
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["areas"]);
         Assert.Equal(0, (int?)json["doctor"]?["summary"]?["readyAreas"]);
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["unknownAreas"]);
@@ -639,6 +691,32 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CapabilitiesScanJsonIncludesCataloguePolicyDiagnosticHandoff()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var handoff = json["index"]?["cataloguePolicyDiagnosticHandoff"]?["items"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan index did not include catalogue-policy diagnostic handoff.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(2, (int?)json["index"]?["cataloguePolicyDiagnosticHandoff"]?["questions"]);
+        Assert.Equal(2, handoff.Count);
+        Assert.Equal("catalogue-policy.jip-pp-ln-alias", (string?)handoff[0]?["questionId"]);
+        Assert.Equal("catalogue-policy", (string?)handoff[0]?["sourceType"]);
+        Assert.Equal("open", (string?)handoff[0]?["status"]);
+        Assert.Equal("Catalogue policy question remains open", (string?)handoff[0]?["title"]);
+        Assert.Equal(
+            "JIP PP LN alias and file-marker policy remains open in the built-in catalogue.",
+            (string?)handoff[0]?["message"]);
+        Assert.Contains("provider-version", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Contains("file-marker", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Contains("runtime", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Contains("parser", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Null(handoff[0]?["ruleId"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void CapabilitiesScanJsonReportsPathEvidence()
     {
         var layout = CreateSyntheticCapabilityLayout();
@@ -667,6 +745,7 @@ public sealed class CliGoldenTests
         Assert.Equal(0, json["index"]?["actions"]?.AsArray().Count);
         Assert.Equal(1, json["index"]?["cataloguePolicy"]?.AsArray().Count);
         Assert.Equal(2, json["index"]?["openQuestionDetails"]?.AsArray().Count);
+        Assert.Equal(2, (int?)json["index"]?["cataloguePolicyDiagnosticHandoff"]?["questions"]);
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["areas"]);
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["readyAreas"]);
         Assert.Equal(0, (int?)json["doctor"]?["summary"]?["actionNeededAreas"]);
@@ -820,6 +899,26 @@ public sealed class CliGoldenTests
             result.Stdout,
             StringComparison.Ordinal);
         Assert.Contains("Open capability questions:", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanPlainIncludesCataloguePolicyDiagnosticHandoff()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Scan status index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Catalogue policy diagnostic handoff:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(
+            "catalogue-policy.jip-pp-ln-alias: open - Catalogue policy question remains open",
+            result.Stdout,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "Suggested action: Keep this catalogue-policy question open until documented provider-version, file-marker, runtime, or parser evidence resolves it.",
+            result.Stdout,
+            StringComparison.Ordinal);
+        Assert.Contains("Doctor readiness index:", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1229,6 +1328,7 @@ public sealed class CliGoldenTests
         Assert.Equal(0, json["index"]?["diagnostics"]?.AsArray().Count);
         Assert.Equal(1, json["index"]?["cataloguePolicy"]?.AsArray().Count);
         Assert.Equal(2, json["index"]?["openQuestionDetails"]?.AsArray().Count);
+        Assert.Equal(2, (int?)json["index"]?["cataloguePolicyDiagnosticHandoff"]?["questions"]);
         Assert.Equal(1, json["doctor"]?["index"]?["areaStatuses"]?.AsArray().Count);
         Assert.Equal(string.Empty, result.Stderr);
     }
@@ -1308,6 +1408,7 @@ public sealed class CliGoldenTests
         Assert.True(json["index"]?["providerStatuses"]?.AsArray().Count > 0);
         Assert.True(json["index"]?["capabilityStatuses"]?.AsArray().Count > 0);
         Assert.True(json["index"]?["cataloguePolicy"]?.AsArray().Count > 0);
+        Assert.Equal(2, (int?)json["index"]?["cataloguePolicyDiagnosticHandoff"]?["questions"]);
         Assert.Equal("base-game", (string?)json["index"]?["doctorAreas"]?[0]?["id"]);
         Assert.Equal("ready", (string?)json["index"]?["doctorAreas"]?[0]?["status"]);
         Assert.Equal("project-requirements", (string?)json["index"]?["doctorAreas"]?[4]?["id"]);
@@ -1452,6 +1553,32 @@ public sealed class CliGoldenTests
         Assert.Contains(questionIds, questionId =>
             StringComparer.Ordinal.Equals("catalogue-policy.jip-pp-ln-alias", (string?)questionId));
         Assert.Equal(2, json["index"]?["openQuestionDetails"]?.AsArray().Count);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportJsonIncludesCataloguePolicyDiagnosticHandoff()
+    {
+        var result = RunCli("doctor", "export", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var handoff = json["index"]?["cataloguePolicyDiagnosticHandoff"]?["items"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export index did not include catalogue-policy diagnostic handoff.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(2, (int?)json["index"]?["cataloguePolicyDiagnosticHandoff"]?["questions"]);
+        Assert.Equal(2, handoff.Count);
+        Assert.Equal("catalogue-policy.jip-pp-ln-alias", (string?)handoff[0]?["questionId"]);
+        Assert.Equal("catalogue-policy", (string?)handoff[0]?["sourceType"]);
+        Assert.Equal("open", (string?)handoff[0]?["status"]);
+        Assert.Equal("Catalogue policy question remains open", (string?)handoff[0]?["title"]);
+        Assert.Equal(
+            "JIP PP LN alias and file-marker policy remains open in the built-in catalogue.",
+            (string?)handoff[0]?["message"]);
+        Assert.Contains("provider-version", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Contains("file-marker", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Contains("runtime", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Contains("parser", (string?)handoff[0]?["suggestedAction"], StringComparison.Ordinal);
+        Assert.Null(handoff[0]?["ruleId"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1657,6 +1784,25 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void DoctorExportPlainIncludesCataloguePolicyDiagnosticHandoff()
+    {
+        var result = RunCli("doctor", "export", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Doctor index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Catalogue policy diagnostic handoff:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(
+            "catalogue-policy.jip-pp-ln-alias: open - Catalogue policy question remains open",
+            result.Stdout,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "Suggested action: Keep this catalogue-policy question open until documented provider-version, file-marker, runtime, or parser evidence resolves it.",
+            result.Stdout,
+            StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void DoctorExportPlainIncludesCompactActionIndex()
     {
         var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
@@ -1743,6 +1889,7 @@ public sealed class CliGoldenTests
         Assert.Equal(5, json["index"]?["providerStatuses"]?.AsArray().Count);
         Assert.Equal(1, json["index"]?["capabilityStatuses"]?.AsArray().Count);
         Assert.Equal(1, json["index"]?["cataloguePolicy"]?.AsArray().Count);
+        Assert.Equal(2, (int?)json["index"]?["cataloguePolicyDiagnosticHandoff"]?["questions"]);
         Assert.Equal(4, json["index"]?["actions"]?.AsArray().Count);
         Assert.Equal(0, json["index"]?["requirements"]?.AsArray().Count);
         Assert.Equal(0, json["index"]?["diagnostics"]?.AsArray().Count);

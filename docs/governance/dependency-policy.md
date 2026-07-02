@@ -336,3 +336,21 @@ dependency, download, rehosted runtime binary, network call, runtime probe,
 MO2/GECK integration, provider-version parser, capability resolver dependency,
 Doctor planner dependency, catalogue-policy decision dependency, or AI
 requirement.
+Gate 152 derives `forge capabilities explain` catalogue-policy diagnostic
+handoff data from existing Doctor open-question output and stable question
+IDs. It adds no third-party dependency, download, rehosted runtime binary,
+network call, runtime probe, MO2/GECK integration, provider-version parser,
+capability resolver dependency, Doctor planner dependency, catalogue-policy
+decision dependency, or AI requirement.
+Gate 153 derives `forge doctor export` catalogue-policy diagnostic handoff
+data from existing Doctor open-question output and stable question IDs. It
+adds no third-party dependency, download, rehosted runtime binary, network
+call, runtime probe, MO2/GECK integration, provider-version parser,
+capability resolver dependency, Doctor planner dependency, catalogue-policy
+decision dependency, or AI requirement.
+Gate 154 derives `forge capabilities scan` catalogue-policy diagnostic
+handoff data from existing Doctor open-question output and stable question
+IDs. It adds no third-party dependency, download, rehosted runtime binary,
+network call, runtime probe, MO2/GECK integration, provider-version parser,
+capability resolver dependency, Doctor planner dependency, catalogue-policy
+decision dependency, or AI requirement.

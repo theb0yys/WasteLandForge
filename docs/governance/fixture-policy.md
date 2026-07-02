@@ -441,3 +441,12 @@ synthetic fixtures and built-in Doctor open-question output to exercise
 Gate 151 adds no committed provider fixtures. Golden CLI tests use existing
 synthetic fixtures and built-in Doctor open-question output to exercise
 `forge capabilities explain` catalogue-policy open-question detail output.
+Gate 152 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic fixtures and built-in Doctor open-question output to exercise
+`forge capabilities explain` catalogue-policy diagnostic handoff output.
+Gate 153 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic fixtures and built-in Doctor open-question output to exercise
+`forge doctor export` catalogue-policy diagnostic handoff output.
+Gate 154 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic fixtures and built-in Doctor open-question output to exercise
+`forge capabilities scan` catalogue-policy diagnostic handoff output.

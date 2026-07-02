@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 151 capability explain catalogue-policy open questions
+Status: Gate 154 capability scan catalogue-policy diagnostic handoff
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -158,8 +158,9 @@ forge --version
   machine-readable scan output. JSON scan output includes top-level
   `index.providerStatuses`, `index.capabilityStatuses`, `index.actions`, and
   `index.requirements`, `index.diagnostics`, `index.cataloguePolicy`, and
-  `index.openQuestionDetails` entries, plus a nested `diagnostics` object
-  with canonical `WF-CAP-*` issue data when project requirements are
+  `index.openQuestionDetails`, and
+  `index.cataloguePolicyDiagnosticHandoff` entries, plus a nested
+  `diagnostics` object with canonical `WF-CAP-*` issue data when project requirements are
   unavailable. With `--project`, JSON also includes structured provider evidence under
   `requirements.items[].providerEvidence`.
 - `forge capabilities scan --format sarif` emits SARIF 2.1.0 for canonical
@@ -207,8 +208,9 @@ forge --version
   file.
 - `forge capabilities explain` reports the target kind, target status,
   related providers or capabilities, grouped provider evidence, provider
-  actions, scan evidence, catalogue-policy open-question details, optional
-  matching project requirement context, and optional diagnostic handoff
+  actions, scan evidence, catalogue-policy open-question details,
+  catalogue-policy diagnostic handoff metadata, optional matching project
+  requirement context, and optional project requirement diagnostic handoff
   context. It does not run runtime probes, MO2 VFS launch, provider version
   checks, or SARIF/GitHub diagnostic projection output.
 - `forge doctor export [project-root]` writes a redacted local Doctor handoff
@@ -245,8 +247,9 @@ forge --version
   unavailable project requirements with phases and source pointers, compact
   `WF-CAP-*` diagnostics with source files and JSON pointers,
   catalogue-policy open-question groups, structured open-question details,
-  and open capability questions so handoff bundles can be scanned without
-  opening the nested `capabilities` report.
+  catalogue-policy diagnostic handoff metadata, and open capability questions
+  so handoff bundles can be scanned without opening the nested `capabilities`
+  report.
 - Gate 56 still adds no CLI behavior; response route taxonomy, route
   selection, and GECK/plugin output mapping remain unimplemented pending an
   evidence pack.
@@ -1212,6 +1215,34 @@ matching catalogue-policy open-question entries before provider evidence
 groups. It reuses existing Doctor open-question text and still does not add
 runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
 decisions, new rule IDs, SARIF/GitHub explain output, or AI behavior.
+
+Gate 152 adds `cataloguePolicy.diagnosticHandoff` to `forge capabilities
+explain`. JSON output now summarizes the same catalogue-policy open questions
+as open handoff entries with stable question IDs, source type, title, message,
+and suggested evidence action; human and plain output print matching
+catalogue-policy diagnostic handoff entries before provider evidence groups.
+It reuses existing Doctor open-question text and still does not add runtime
+probes, MO2 VFS checks, provider version checks, catalogue-policy decisions,
+new rule IDs, SARIF/GitHub explain output, or AI behavior.
+
+Gate 153 adds `index.cataloguePolicyDiagnosticHandoff` to
+`forge doctor export`. JSON output now summarizes the same catalogue-policy
+open questions as open handoff entries with stable question IDs, source type,
+title, message, and suggested evidence action; human and plain output print
+matching catalogue-policy diagnostic handoff entries under `Doctor index`.
+It reuses existing Doctor open-question text and still does not add runtime
+probes, MO2 VFS checks, provider version checks, catalogue-policy decisions,
+new rule IDs, SARIF/GitHub Doctor export output, or AI behavior.
+
+Gate 154 adds `index.cataloguePolicyDiagnosticHandoff` to
+`forge capabilities scan`. JSON output now summarizes the same
+catalogue-policy open questions as open handoff entries with stable question
+IDs, source type, title, message, and suggested evidence action; human and
+plain output print matching catalogue-policy diagnostic handoff entries under
+`Scan status index`. It reuses existing Doctor open-question text and still
+does not add runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, new rule IDs, SARIF/GitHub scan output, or AI
+behavior.
 
 ## Exit Codes
 

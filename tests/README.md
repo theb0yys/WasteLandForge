@@ -683,6 +683,15 @@ open-question detail entries in JSON, plain output, and output-file JSON.
 Gate 151 extends `WastelandForge.GoldenTests` coverage for capability explain
 catalogue-policy open-question detail entries in JSON, plain output, and
 output-file JSON.
+Gate 152 extends `WastelandForge.GoldenTests` coverage for capability explain
+catalogue-policy diagnostic handoff entries in JSON, plain output, and
+output-file JSON.
+Gate 153 extends `WastelandForge.GoldenTests` coverage for Doctor export
+catalogue-policy diagnostic handoff entries in JSON, plain output, and
+output-file JSON.
+Gate 154 extends `WastelandForge.GoldenTests` coverage for capability scan
+catalogue-policy diagnostic handoff entries in JSON, plain output, and
+output-file JSON.
 
 Run the full local suite serially:
 

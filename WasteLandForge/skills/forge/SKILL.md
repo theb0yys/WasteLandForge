@@ -187,15 +187,16 @@ Gate 126 option routing:
   picker, FOMOD package creation, capability-derived runtime requirements, MO2
   installation, or in-game verification exist until later gates implement them.
 
-Gate 151 option routing:
+Gate 154 option routing:
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a
   compact top-level scan index with `index.providerStatuses` and
   `index.capabilityStatuses`, `index.actions`, `index.requirements`, and
-  `index.diagnostics`, `index.cataloguePolicy`, and
-  `index.openQuestionDetails`, plus a derived Doctor-style readiness section
-  with compact `doctor.index.areaStatuses`
+  `index.diagnostics`, `index.cataloguePolicy`,
+  `index.openQuestionDetails`, and
+  `index.cataloguePolicyDiagnosticHandoff`, plus a derived Doctor-style
+  readiness section with compact `doctor.index.areaStatuses`
   groups plus base game, xNVSE stack, MCM JSON stack, authoring/tooling, and
   project requirement areas. `index.actions`
   groups existing non-ready Doctor area actions by area and source type before
@@ -205,7 +206,8 @@ Gate 151 option routing:
   report. `index.cataloguePolicy` groups existing Doctor open-question IDs by
   source type before the full open-question text. `index.openQuestionDetails`
   maps those IDs to existing question text before the full open-question
-  list. With `--project`, it also
+  list. `index.cataloguePolicyDiagnosticHandoff` maps those IDs to open
+  catalogue-policy evidence handoff entries. With `--project`, it also
   projects unavailable capability
   requirements to
   `WF-CAP-001`,
@@ -218,14 +220,16 @@ Gate 151 option routing:
   `forge capabilities explain` behavior when available. It includes
   target-level next actions and grouped provider evidence derived from the
   same local scan evidence. JSON output includes `evidenceGroups`, and
-  `cataloguePolicy.openQuestionDetails`; human/plain output includes provider
-  status, install scope, actions, detector evidence, and catalogue-policy
-  open-question details. With `--project`, it also includes matching declared
-  project requirement source, phase/reason metadata, resolution status,
-  provider statuses, resolver message, and diagnostic handoff metadata showing
-  the `WF-CAP-*` rule that `forge capabilities scan --project` would project
-  for unavailable matching requirements. Do not route this to `/forge scan`,
-  `forge doctor`, or any non-canonical alias.
+  `cataloguePolicy.openQuestionDetails` and
+  `cataloguePolicy.diagnosticHandoff`; human/plain output includes provider
+  status, install scope, actions, detector evidence, catalogue-policy
+  open-question details, and catalogue-policy diagnostic handoff entries. With
+  `--project`, it also includes matching declared project requirement source,
+  phase/reason metadata, resolution status, provider statuses, resolver
+  message, and diagnostic handoff metadata showing the `WF-CAP-*` rule that
+  `forge capabilities scan --project` would project for unavailable matching
+  requirements. Do not route this to `/forge scan`, `forge doctor`, or any
+  non-canonical alias.
 - `/forge doctor export` maps to the real `forge doctor export` behavior when
   available. It writes a redacted local handoff bundle from capability scan
   evidence, including top-level summary/index sections, compact
@@ -237,7 +241,9 @@ Gate 151 option routing:
   `index.diagnostics` entries for already-projected `WF-CAP-*` issues,
   compact `index.cataloguePolicy` groups by open-question source type,
   structured `index.openQuestionDetails` for current catalogue policy gaps,
-  and redacted nested project requirement provider evidence.
+  compact `index.cataloguePolicyDiagnosticHandoff` entries for open
+  catalogue-policy evidence handoff, and redacted nested project requirement
+  provider evidence.
   It does not run runtime probes, MO2 VFS launch, provider version checks,
   GECK automation, network checks, AI calls, or SARIF/GitHub Doctor bundle
   mode.

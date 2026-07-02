@@ -36,6 +36,19 @@ internal static class CapabilityExplanationTextRenderer
             }
         }
 
+        var cataloguePolicyHandoff = CapabilityCataloguePolicyIndex.CreateDiagnosticHandoff(report.OpenQuestions);
+        if (cataloguePolicyHandoff.Count > 0)
+        {
+            builder.AppendLine();
+            builder.AppendLine("Catalogue policy diagnostic handoff:");
+            foreach (var item in cataloguePolicyHandoff)
+            {
+                builder.AppendLine($"  {item.QuestionId}: {item.Status} - {item.Title}");
+                builder.AppendLine($"    {item.Message}");
+                builder.AppendLine($"    Suggested action: {item.SuggestedAction}");
+            }
+        }
+
         if (report.EvidenceGroups.Count > 0)
         {
             builder.AppendLine();
