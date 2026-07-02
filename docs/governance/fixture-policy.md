@@ -419,3 +419,7 @@ capabilities scan` Doctor readiness index output.
 Gate 145 adds no committed provider fixtures. Golden CLI tests use existing
 synthetic fixtures and built-in provider/capability scan results to exercise
 `forge capabilities scan` provider/capability status index output.
+
+Gate 146 adds no committed provider fixtures. Golden CLI tests use existing
+synthetic fixtures and built-in Doctor area actions to exercise `forge
+capabilities scan` action index output.

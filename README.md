@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 145 adds compact
-provider and capability status indexes to `forge capabilities scan`.
+The project is currently in gated v0.1 implementation. Gate 146 adds a compact
+action index to `forge capabilities scan`.
 
 ## Architecture Spine
 
@@ -16,7 +16,7 @@ provider and capability status indexes to `forge capabilities scan`.
 
 ## Current Gate
 
-Gate 145 builds on the closed first game-facing generator path. It keeps
+Gate 146 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -92,6 +92,9 @@ Gate 145 adds top-level `index.providerStatuses` and
 provider IDs by scan status and install scope, and existing capability IDs by
 scan status, so authors can scan provider and capability readiness before
 opening the full provider and capability arrays.
+Gate 146 adds top-level `index.actions` to `forge capabilities scan`. It
+groups existing non-ready Doctor area actions by area and source type, so
+authors can scan next steps before opening the full Doctor area list.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under
@@ -629,6 +632,13 @@ capability resolution, call AI, add new `WF-CAP-*` rule IDs, or change
 SARIF/GitHub output for capability scan. It only groups existing provider and
 capability scan statuses under the scan-side top-level `index`.
 
+Gate 146 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change Doctor action planning, call AI, add new
+`WF-CAP-*` rule IDs, or change SARIF/GitHub output for capability scan. It
+only groups existing non-ready Doctor area actions under the scan-side
+top-level `index`.
+
 The current response route baseline still includes:
 
 - `WF-SEM-036` for response route `targetTopicId` values that do not resolve
@@ -1011,6 +1021,9 @@ Gate 145 adds compact capability scan provider/capability status indexes
 without adding new detectors, rule IDs, aliases, runtime probes, MO2 VFS
 checks, provider version checks, SARIF/GitHub scan changes, or external tool
 execution.
+Gate 146 adds a compact capability scan action index without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
+checks, SARIF/GitHub scan changes, or external tool execution.
 
 It intentionally does not create:
 

@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 145 capability scan status index
+Status: Gate 146 capability scan action index
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -156,10 +156,10 @@ forge --version
   built-in catalogue plus scan evidence.
 - `forge capabilities scan --format human|plain|json` selects text or
   machine-readable scan output. JSON scan output includes top-level
-  `index.providerStatuses` and `index.capabilityStatuses` groups, plus a
-  nested `diagnostics` object with canonical `WF-CAP-*` issue data when
-  project requirements are unavailable. With `--project`, JSON also includes
-  structured provider evidence under
+  `index.providerStatuses`, `index.capabilityStatuses`, and `index.actions`
+  groups, plus a nested `diagnostics` object with canonical `WF-CAP-*` issue
+  data when project requirements are unavailable. With `--project`, JSON also
+  includes structured provider evidence under
   `requirements.items[].providerEvidence`.
 - `forge capabilities scan --format sarif` emits SARIF 2.1.0 for canonical
   `WF-CAP-*` diagnostics projected from project requirement resolution,
@@ -1165,6 +1165,13 @@ scan status; human and plain output print a matching `Scan status index`
 before Doctor and full provider details. It reuses existing scan results and
 still does not add runtime probes, MO2 VFS checks, provider version checks,
 new rule IDs, SARIF/GitHub scan changes, or AI behavior.
+
+Gate 146 adds top-level `index.actions` to `forge capabilities scan`. JSON
+output now groups non-ready Doctor area actions by area metadata and source
+type; human and plain output print matching action groups under `Scan status
+index`. It reuses existing Doctor area actions and still does not add runtime
+probes, MO2 VFS checks, provider version checks, new rule IDs, SARIF/GitHub
+scan changes, or AI behavior.
 
 ## Exit Codes
 

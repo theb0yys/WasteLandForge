@@ -670,6 +670,8 @@ Gate 144 extends `WastelandForge.GoldenTests` coverage for capability scan
 Doctor readiness groups in JSON, plain output, and output-file JSON.
 Gate 145 extends `WastelandForge.GoldenTests` coverage for capability scan
 provider/capability status groups in JSON, plain output, and output-file JSON.
+Gate 146 extends `WastelandForge.GoldenTests` coverage for capability scan
+action groups in JSON, plain output, and output-file JSON.
 
 Run the full local suite serially:
 

@@ -192,6 +192,9 @@ does not add new rules or SARIF/GitHub scan output changes.
 Gate 145 adds no new rule ID. `forge capabilities scan` displays compact
 provider/capability status metadata derived from existing scan results, but
 it does not add new rules or SARIF/GitHub scan output changes.
+Gate 146 adds no new rule ID. `forge capabilities scan` displays compact
+action metadata derived from existing non-ready Doctor area actions, but it
+does not add new rules or SARIF/GitHub scan output changes.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths

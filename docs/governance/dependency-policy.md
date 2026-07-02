@@ -304,3 +304,8 @@ data from existing scan results. It adds no third-party dependency, download,
 rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
 provider-version parser, capability resolver dependency, Doctor planner
 dependency, or AI requirement.
+Gate 146 derives `forge capabilities scan` action index data from existing
+Doctor area actions. It adds no third-party dependency, download, rehosted
+runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, capability resolver dependency, Doctor planner
+dependency, or AI requirement.

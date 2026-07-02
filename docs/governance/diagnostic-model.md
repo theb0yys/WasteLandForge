@@ -394,6 +394,10 @@ compact `index.providerStatuses` and `index.capabilityStatuses` lists derived
 from existing scan results; canonical `WF-CAP-*` issue projection remains
 unchanged.
 
+Gate 146 adds no new diagnostic rule ID. `forge capabilities scan` now exposes
+a compact `index.actions` list derived from existing non-ready Doctor area
+actions; canonical `WF-CAP-*` issue projection remains unchanged.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

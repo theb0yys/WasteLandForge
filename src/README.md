@@ -764,3 +764,8 @@ status index entries derived from existing scan results. `forge capabilities
 scan` JSON now includes top-level `index.providerStatuses` and
 `index.capabilityStatuses`, and text output prints a matching `Scan status
 index`.
+
+Gate 146 extends capability scan output with compact action index entries
+derived from existing non-ready Doctor area actions. `forge capabilities scan`
+JSON now includes top-level `index.actions`, and text output prints matching
+action groups before the full Doctor area list.
