@@ -151,9 +151,14 @@ Gate status:
 - `gates/gate-144-capability-scan-doctor-readiness-index.md` - Gate 144, capability scan Doctor readiness index.
 - `gates/gate-145-capability-scan-status-index.md` - Gate 145, capability scan status index.
 - `gates/gate-146-capability-scan-action-index.md` - Gate 146, capability scan action index.
+- `gates/gate-147-capability-scan-requirement-index.md` - Gate 147, capability scan requirement index.
+- `gates/gate-148-capability-scan-diagnostic-index.md` - Gate 148, capability scan diagnostic index.
+- `gates/gate-149-capability-scan-catalogue-policy-index.md` - Gate 149, capability scan catalogue-policy index.
+- `gates/gate-150-capability-scan-open-question-details.md` - Gate 150, capability scan open-question details.
+- `gates/gate-151-capability-explain-catalogue-policy-open-questions.md` - Gate 151, capability explain catalogue-policy open questions.
 
 Next gate:
 
-- Gate 147 - Add broader scan-side project requirement index value unless provider-version evidence is documented.
+- Gate 152 - Add provider-version evidence only if documented file/runtime/parser evidence is ready; otherwise add explain-side diagnostic handoff summary for catalogue-policy open questions.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

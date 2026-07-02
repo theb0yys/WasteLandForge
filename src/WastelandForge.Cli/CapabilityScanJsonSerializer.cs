@@ -124,13 +124,90 @@ internal static class CapabilityScanJsonSerializer
                         .Select(action => JsonValue.Create(action))
                         .ToArray())
                 })
-                .ToArray())
+                .ToArray()),
+            ["requirements"] = ToRequirementIndex(report.Requirements),
+            ["diagnostics"] = ToDiagnosticIndex(CapabilityDiagnosticProjector.Project(report)),
+            ["cataloguePolicy"] = ToCataloguePolicyIndex(report.Doctor.OpenQuestions),
+            ["openQuestionDetails"] = ToOpenQuestionDetails(report.Doctor.OpenQuestions)
         };
 
     private static string ResolveActionSourceType(string areaId) =>
         StringComparer.Ordinal.Equals(areaId, "project-requirements")
             ? "project-requirement"
             : "capability-scan";
+
+    private static JsonArray ToRequirementIndex(CapabilityRequirementResolutionReport? requirements) =>
+        requirements is null
+            ? []
+            : new JsonArray(requirements.Requirements
+                .Where(requirement => !StringComparer.Ordinal.Equals(
+                    requirement.Status,
+                    CapabilityRequirementResolutionStatuses.Satisfied))
+                .Select(requirement => new JsonObject
+                {
+                    ["id"] = requirement.Id,
+                    ["optional"] = requirement.Optional,
+                    ["phases"] = new JsonArray(requirement.Phases
+                        .Select(phase => JsonValue.Create(phase))
+                        .ToArray()),
+                    ["status"] = requirement.Status,
+                    ["source"] = new JsonObject
+                    {
+                        ["file"] = requirement.Source.File,
+                        ["pointer"] = requirement.Source.Pointer
+                    },
+                    ["message"] = requirement.Message
+                })
+                .ToArray());
+
+    private static JsonArray ToDiagnosticIndex(DiagnosticReport diagnostics) =>
+        new(diagnostics.Issues
+            .Select(issue => new JsonObject
+            {
+                ["ruleId"] = issue.RuleId.ToString(),
+                ["severity"] = FormatSeverity(issue.Severity),
+                ["title"] = issue.Title,
+                ["source"] = new JsonObject
+                {
+                    ["file"] = issue.PrimaryLocation.File,
+                    ["pointer"] = issue.PrimaryLocation.Pointer?.ToString()
+                },
+                ["suggestedFix"] = issue.SuggestedFix
+            })
+            .ToArray());
+
+    private static string FormatSeverity(DiagnosticSeverity severity) =>
+        severity.ToString().ToLowerInvariant();
+
+    private static JsonArray ToCataloguePolicyIndex(IReadOnlyList<string> openQuestions)
+    {
+        var openQuestionDetails = CapabilityCataloguePolicyIndex.Create(openQuestions);
+
+        return new JsonArray(openQuestionDetails
+            .GroupBy(question => question.SourceType)
+            .OrderBy(group => group.Key, StringComparer.Ordinal)
+            .Select(group => new JsonObject
+            {
+                ["sourceType"] = group.Key,
+                ["count"] = group.Count(),
+                ["questionIds"] = new JsonArray(group
+                    .Select(question => question.Id)
+                    .Order(StringComparer.Ordinal)
+                    .Select(questionId => JsonValue.Create(questionId))
+                    .ToArray())
+            })
+            .ToArray());
+    }
+
+    private static JsonArray ToOpenQuestionDetails(IReadOnlyList<string> openQuestions) =>
+        new(CapabilityCataloguePolicyIndex.Create(openQuestions)
+            .Select(question => new JsonObject
+            {
+                ["id"] = question.Id,
+                ["sourceType"] = question.SourceType,
+                ["question"] = question.Question
+            })
+            .ToArray());
 
     private static JsonObject ToJson(CapabilityDoctorReport doctor) =>
         new()

@@ -187,17 +187,27 @@ Gate 126 option routing:
   picker, FOMOD package creation, capability-derived runtime requirements, MO2
   installation, or in-game verification exist until later gates implement them.
 
-Gate 146 option routing:
+Gate 151 option routing:
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a
   compact top-level scan index with `index.providerStatuses` and
-  `index.capabilityStatuses`, and `index.actions`, plus a derived
-  Doctor-style readiness section with compact `doctor.index.areaStatuses`
+  `index.capabilityStatuses`, `index.actions`, `index.requirements`, and
+  `index.diagnostics`, `index.cataloguePolicy`, and
+  `index.openQuestionDetails`, plus a derived Doctor-style readiness section
+  with compact `doctor.index.areaStatuses`
   groups plus base game, xNVSE stack, MCM JSON stack, authoring/tooling, and
-  project requirement areas. `index.actions` groups existing non-ready Doctor
-  area actions by area and source type before the full Doctor area list. With
-  `--project`, it also projects unavailable capability requirements to
+  project requirement areas. `index.actions`
+  groups existing non-ready Doctor area actions by area and source type before
+  the full Doctor area list. `index.requirements` lists unavailable project
+  requirement entries before the full requirement report. `index.diagnostics`
+  lists already-projected `WF-CAP-*` issues before the full diagnostics
+  report. `index.cataloguePolicy` groups existing Doctor open-question IDs by
+  source type before the full open-question text. `index.openQuestionDetails`
+  maps those IDs to existing question text before the full open-question
+  list. With `--project`, it also
+  projects unavailable capability
+  requirements to
   `WF-CAP-001`,
   `WF-CAP-002`, `WF-CAP-003`, and `WF-CAP-004`, including provider evidence
   detail in JSON, SARIF, GitHub, and text output. `WF-CAP-004` is limited to
@@ -208,8 +218,9 @@ Gate 146 option routing:
   `forge capabilities explain` behavior when available. It includes
   target-level next actions and grouped provider evidence derived from the
   same local scan evidence. JSON output includes `evidenceGroups`, and
-  human/plain output includes provider status, install scope, actions, and
-  detector evidence. With `--project`, it also includes matching declared
+  `cataloguePolicy.openQuestionDetails`; human/plain output includes provider
+  status, install scope, actions, detector evidence, and catalogue-policy
+  open-question details. With `--project`, it also includes matching declared
   project requirement source, phase/reason metadata, resolution status,
   provider statuses, resolver message, and diagnostic handoff metadata showing
   the `WF-CAP-*` rule that `forge capabilities scan --project` would project

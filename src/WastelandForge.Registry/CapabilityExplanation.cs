@@ -15,6 +15,7 @@ public sealed record CapabilityExplanationReport(
     IReadOnlyList<CapabilityExplanationEvidenceGroup> EvidenceGroups,
     IReadOnlyList<ProviderScanResult> Providers,
     IReadOnlyList<CapabilityScanResult> Capabilities,
+    IReadOnlyList<string> OpenQuestions,
     CapabilityExplanationProjectRequirements? ProjectRequirements = null);
 
 public sealed record CapabilityExplanationTarget(

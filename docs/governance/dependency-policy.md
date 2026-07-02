@@ -309,3 +309,30 @@ Doctor area actions. It adds no third-party dependency, download, rehosted
 runtime binary, network call, runtime probe, MO2/GECK integration,
 provider-version parser, capability resolver dependency, Doctor planner
 dependency, or AI requirement.
+Gate 147 derives `forge capabilities scan` requirement index data from
+existing project requirement resolution output. It adds no third-party
+dependency, download, rehosted runtime binary, network call, runtime probe,
+MO2/GECK integration, provider-version parser, capability resolver
+dependency, Doctor planner dependency, diagnostic projector dependency, or AI
+requirement.
+Gate 148 derives `forge capabilities scan` diagnostic index data from existing
+diagnostic projection output. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, capability resolver dependency, Doctor planner
+dependency, additional diagnostic projector dependency, or AI requirement.
+Gate 149 derives `forge capabilities scan` catalogue-policy index data from
+existing Doctor open-question output. It adds no third-party dependency,
+download, rehosted runtime binary, network call, runtime probe, MO2/GECK
+integration, provider-version parser, capability resolver dependency, Doctor
+planner dependency, catalogue-policy decision dependency, or AI requirement.
+Gate 150 derives `forge capabilities scan` open-question detail index data
+from existing Doctor open-question output. It adds no third-party dependency,
+download, rehosted runtime binary, network call, runtime probe, MO2/GECK
+integration, provider-version parser, capability resolver dependency, Doctor
+planner dependency, catalogue-policy decision dependency, or AI requirement.
+Gate 151 derives `forge capabilities explain` catalogue-policy open-question
+detail data from existing Doctor open-question output. It adds no third-party
+dependency, download, rehosted runtime binary, network call, runtime probe,
+MO2/GECK integration, provider-version parser, capability resolver dependency,
+Doctor planner dependency, catalogue-policy decision dependency, or AI
+requirement.

@@ -25,6 +25,17 @@ internal static class CapabilityExplanationTextRenderer
         builder.AppendLine("Runtime probes: disabled");
         builder.AppendLine("MO2 VFS: disabled");
 
+        var openQuestionDetails = CapabilityCataloguePolicyIndex.Create(report.OpenQuestions);
+        if (openQuestionDetails.Count > 0)
+        {
+            builder.AppendLine();
+            builder.AppendLine("Catalogue policy open questions:");
+            foreach (var question in openQuestionDetails)
+            {
+                builder.AppendLine($"  {question.Id} ({question.SourceType}): {question.Question}");
+            }
+        }
+
         if (report.EvidenceGroups.Count > 0)
         {
             builder.AppendLine();

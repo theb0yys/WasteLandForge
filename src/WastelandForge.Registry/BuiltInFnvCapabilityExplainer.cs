@@ -45,7 +45,8 @@ public sealed class BuiltInFnvCapabilityExplainer
             target,
             CreateEvidenceGroups(providers),
             providers,
-            [capabilityResult]);
+            [capabilityResult],
+            scan.Doctor.OpenQuestions);
     }
 
     private static CapabilityExplanationReport ExplainProvider(
@@ -72,7 +73,8 @@ public sealed class BuiltInFnvCapabilityExplainer
             target,
             CreateEvidenceGroups([providerResult]),
             [providerResult],
-            capabilities);
+            capabilities,
+            scan.Doctor.OpenQuestions);
     }
 
     private static IReadOnlyList<CapabilityExplanationEvidenceGroup> CreateEvidenceGroups(

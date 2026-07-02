@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 146 capability scan action index
+Status: Gate 151 capability explain catalogue-policy open questions
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -156,10 +156,11 @@ forge --version
   built-in catalogue plus scan evidence.
 - `forge capabilities scan --format human|plain|json` selects text or
   machine-readable scan output. JSON scan output includes top-level
-  `index.providerStatuses`, `index.capabilityStatuses`, and `index.actions`
-  groups, plus a nested `diagnostics` object with canonical `WF-CAP-*` issue
-  data when project requirements are unavailable. With `--project`, JSON also
-  includes structured provider evidence under
+  `index.providerStatuses`, `index.capabilityStatuses`, `index.actions`, and
+  `index.requirements`, `index.diagnostics`, `index.cataloguePolicy`, and
+  `index.openQuestionDetails` entries, plus a nested `diagnostics` object
+  with canonical `WF-CAP-*` issue data when project requirements are
+  unavailable. With `--project`, JSON also includes structured provider evidence under
   `requirements.items[].providerEvidence`.
 - `forge capabilities scan --format sarif` emits SARIF 2.1.0 for canonical
   `WF-CAP-*` diagnostics projected from project requirement resolution,
@@ -206,10 +207,10 @@ forge --version
   file.
 - `forge capabilities explain` reports the target kind, target status,
   related providers or capabilities, grouped provider evidence, provider
-  actions, scan evidence, optional matching project requirement context, and
-  optional diagnostic handoff context. It does not run runtime probes, MO2 VFS
-  launch, provider version checks, or SARIF/GitHub diagnostic projection
-  output.
+  actions, scan evidence, catalogue-policy open-question details, optional
+  matching project requirement context, and optional diagnostic handoff
+  context. It does not run runtime probes, MO2 VFS launch, provider version
+  checks, or SARIF/GitHub diagnostic projection output.
 - `forge doctor export [project-root]` writes a redacted local Doctor handoff
   bundle from the same deterministic path-based evidence used by
   `forge capabilities scan`.
@@ -1172,6 +1173,45 @@ type; human and plain output print matching action groups under `Scan status
 index`. It reuses existing Doctor area actions and still does not add runtime
 probes, MO2 VFS checks, provider version checks, new rule IDs, SARIF/GitHub
 scan changes, or AI behavior.
+
+Gate 147 adds top-level `index.requirements` to `forge capabilities scan`.
+JSON output now lists unavailable project capability requirements with source
+location and resolver message; human and plain output print matching
+requirement entries under `Scan status index`. It reuses the existing project
+requirement resolution report and still does not add runtime probes, MO2 VFS
+checks, provider version checks, new rule IDs, SARIF/GitHub scan changes, or
+AI behavior.
+
+Gate 148 adds top-level `index.diagnostics` to `forge capabilities scan`.
+JSON output now lists already-projected `WF-CAP-*` diagnostics with source
+location and suggested fix; human and plain output print matching diagnostic
+entries under `Scan status index`. It reuses the existing diagnostic
+projector and still does not add runtime probes, MO2 VFS checks, provider
+version checks, new rule IDs, SARIF/GitHub scan changes, or AI behavior.
+
+Gate 149 adds top-level `index.cataloguePolicy` to `forge capabilities scan`.
+JSON output now groups existing Doctor open questions by catalogue-policy
+source type and stable question IDs; human and plain output print matching
+catalogue-policy groups under `Scan status index`. It reuses existing Doctor
+open-question text and still does not add runtime probes, MO2 VFS checks,
+provider version checks, catalogue-policy decisions, new rule IDs,
+SARIF/GitHub scan changes, or AI behavior.
+
+Gate 150 adds top-level `index.openQuestionDetails` to `forge capabilities
+scan`. JSON output now maps each stable catalogue-policy question ID to its
+source type and existing question text; human and plain output print matching
+open-question detail entries under `Scan status index`. It reuses existing
+Doctor open-question text and still does not add runtime probes, MO2 VFS
+checks, provider version checks, catalogue-policy decisions, new rule IDs,
+SARIF/GitHub scan changes, or AI behavior.
+
+Gate 151 adds `cataloguePolicy.openQuestionDetails` to `forge capabilities
+explain`. JSON output now maps the same stable catalogue-policy question IDs
+to source type and existing question text; human and plain output print
+matching catalogue-policy open-question entries before provider evidence
+groups. It reuses existing Doctor open-question text and still does not add
+runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
+decisions, new rule IDs, SARIF/GitHub explain output, or AI behavior.
 
 ## Exit Codes
 

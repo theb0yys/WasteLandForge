@@ -1,4 +1,5 @@
 using System.Text;
+using WastelandForge.Core;
 using WastelandForge.Registry;
 
 namespace WastelandForge.Cli;
@@ -67,6 +68,66 @@ internal static class CapabilityScanTextRenderer
             }
         }
 
+        var unavailableRequirements = report.Requirements is null
+            ? []
+            : report.Requirements.Requirements
+                .Where(requirement => !StringComparer.Ordinal.Equals(
+                    requirement.Status,
+                    CapabilityRequirementResolutionStatuses.Satisfied))
+                .ToArray();
+        if (unavailableRequirements.Length > 0)
+        {
+            builder.AppendLine("  Requirements:");
+            foreach (var requirement in unavailableRequirements)
+            {
+                builder.AppendLine(
+                    $"    {requirement.Id} {FormatRequirementKind(requirement)} {requirement.Status} {FormatLocation(requirement)} ({FormatPhases(requirement.Phases)}) - {requirement.Message}");
+            }
+        }
+
+        var diagnostics = CapabilityDiagnosticProjector.Project(report);
+        if (diagnostics.Issues.Count > 0)
+        {
+            builder.AppendLine("  Diagnostics:");
+            foreach (var diagnostic in diagnostics.Issues)
+            {
+                builder.AppendLine(
+                    $"    {diagnostic.RuleId} {FormatSeverity(diagnostic.Severity)} {FormatLocation(diagnostic)} - {diagnostic.Title}");
+                if (!string.IsNullOrWhiteSpace(diagnostic.SuggestedFix))
+                {
+                    builder.AppendLine($"      Fix: {diagnostic.SuggestedFix}");
+                }
+            }
+        }
+
+        var cataloguePolicy = CapabilityCataloguePolicyIndex.Create(report.Doctor.OpenQuestions)
+            .GroupBy(question => question.SourceType)
+            .OrderBy(group => group.Key, StringComparer.Ordinal)
+            .ToArray();
+        if (cataloguePolicy.Length > 0)
+        {
+            builder.AppendLine("  Catalogue policy:");
+            foreach (var policy in cataloguePolicy)
+            {
+                var questionIds = policy
+                    .Select(question => question.Id)
+                    .Order(StringComparer.Ordinal)
+                    .ToArray();
+                builder.AppendLine($"    {policy.Key}: {questionIds.Length} open question(s)");
+                builder.AppendLine($"      Questions: {JoinOrNone(questionIds)}");
+            }
+        }
+
+        var openQuestionDetails = CapabilityCataloguePolicyIndex.Create(report.Doctor.OpenQuestions);
+        if (openQuestionDetails.Count > 0)
+        {
+            builder.AppendLine("  Open question details:");
+            foreach (var question in openQuestionDetails)
+            {
+                builder.AppendLine($"    {question.Id} ({question.SourceType}): {question.Question}");
+            }
+        }
+
         builder.AppendLine();
         builder.AppendLine("Doctor readiness index:");
         foreach (var areaStatus in report.Doctor.Areas
@@ -103,7 +164,6 @@ internal static class CapabilityScanTextRenderer
             }
         }
 
-        var diagnostics = CapabilityDiagnosticProjector.Project(report);
         if (diagnostics.Issues.Count > 0)
         {
             builder.AppendLine();
@@ -170,4 +230,21 @@ internal static class CapabilityScanTextRenderer
         StringComparer.Ordinal.Equals(areaId, "project-requirements")
             ? "project-requirement"
             : "capability-scan";
+
+    private static string FormatRequirementKind(CapabilityRequirementResolution requirement) =>
+        requirement.Optional ? "optional" : "required";
+
+    private static string FormatPhases(IReadOnlyList<string> phases) =>
+        phases.Count == 0 ? "all phases" : string.Join(", ", phases);
+
+    private static string FormatLocation(CapabilityRequirementResolution requirement) =>
+        $"{requirement.Source.File}#{requirement.Source.Pointer}";
+
+    private static string FormatLocation(DiagnosticIssue diagnostic) =>
+        diagnostic.PrimaryLocation.Pointer is null
+            ? diagnostic.PrimaryLocation.File
+            : $"{diagnostic.PrimaryLocation.File}#{diagnostic.PrimaryLocation.Pointer}";
+
+    private static string FormatSeverity(DiagnosticSeverity severity) =>
+        severity.ToString().ToLowerInvariant();
 }

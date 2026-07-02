@@ -2,8 +2,8 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 146 adds a compact
-action index to `forge capabilities scan`.
+The project is currently in gated v0.1 implementation. Gate 151 adds
+catalogue-policy open-question details to `forge capabilities explain`.
 
 ## Architecture Spine
 
@@ -16,7 +16,7 @@ action index to `forge capabilities scan`.
 
 ## Current Gate
 
-Gate 146 builds on the closed first game-facing generator path. It keeps
+Gate 151 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -95,6 +95,24 @@ opening the full provider and capability arrays.
 Gate 146 adds top-level `index.actions` to `forge capabilities scan`. It
 groups existing non-ready Doctor area actions by area and source type, so
 authors can scan next steps before opening the full Doctor area list.
+Gate 147 adds top-level `index.requirements` to `forge capabilities scan`. It
+lists unavailable project capability requirements with source pointers and
+resolver messages, so authors can scan declared requirement failures before
+opening the full requirement resolution report.
+Gate 148 adds top-level `index.diagnostics` to `forge capabilities scan`. It
+lists already-projected `WF-CAP-*` issues with severity, source pointer, and
+fix text, so authors can scan diagnostic handoff before opening the full
+diagnostics report.
+Gate 149 adds top-level `index.cataloguePolicy` to `forge capabilities scan`.
+It groups existing Doctor open questions by source type and stable question
+ID, so authors can scan unresolved catalogue-policy gaps before opening the
+full Doctor open-question text.
+Gate 150 adds top-level `index.openQuestionDetails` to `forge capabilities
+scan`. It maps the same stable catalogue-policy question IDs to their existing
+question text before the full Doctor open-question list.
+Gate 151 adds `cataloguePolicy.openQuestionDetails` to `forge capabilities
+explain`. It exposes the same current catalogue-policy open-question details
+while authors inspect one capability or provider.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under
@@ -639,6 +657,40 @@ capability resolution, change Doctor action planning, call AI, add new
 only groups existing non-ready Doctor area actions under the scan-side
 top-level `index`.
 
+Gate 147 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, call AI, add new `WF-CAP-*` rule IDs, or change SARIF/GitHub
+output for capability scan. It only lists existing unavailable project
+requirement resolution entries under the scan-side top-level `index`.
+
+Gate 148 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, call AI, add new `WF-CAP-*` rule IDs, or change SARIF/GitHub
+output for capability scan. It only lists already-projected `WF-CAP-*`
+diagnostic entries under the scan-side top-level `index`.
+
+Gate 149 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or change SARIF/GitHub output for capability scan. It only groups
+existing Doctor open questions under the scan-side top-level `index`.
+Gate 150 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or change SARIF/GitHub output for capability scan. It only maps
+existing Doctor open questions to stable detail entries under the scan-side
+top-level `index`.
+Gate 151 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
+runtime session, parse provider versions, change provider detection, change
+capability resolution, change requirement resolution, change diagnostic
+projection, resolve catalogue-policy questions, call AI, add new `WF-CAP-*`
+rule IDs, or add SARIF/GitHub output for capability explain. It only exposes
+existing catalogue-policy open-question details in `capabilities explain`.
+
 The current response route baseline still includes:
 
 - `WF-SEM-036` for response route `targetTopicId` values that do not resolve
@@ -1024,6 +1076,24 @@ execution.
 Gate 146 adds a compact capability scan action index without adding new
 detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
 checks, SARIF/GitHub scan changes, or external tool execution.
+Gate 147 adds a compact capability scan requirement index without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
+checks, SARIF/GitHub scan changes, or external tool execution.
+Gate 148 adds a compact capability scan diagnostic index without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
+checks, SARIF/GitHub scan changes, or external tool execution.
+Gate 149 adds a compact capability scan catalogue-policy index without adding
+new detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, SARIF/GitHub scan changes, or
+external tool execution.
+Gate 150 adds compact capability scan open-question details without adding new
+detectors, rule IDs, aliases, runtime probes, MO2 VFS checks, provider version
+checks, catalogue-policy decisions, SARIF/GitHub scan changes, or external
+tool execution.
+Gate 151 adds compact capability explain catalogue-policy open-question
+details without adding new detectors, rule IDs, aliases, runtime probes, MO2
+VFS checks, provider version checks, catalogue-policy decisions, SARIF/GitHub
+explain changes, or external tool execution.
 
 It intentionally does not create:
 

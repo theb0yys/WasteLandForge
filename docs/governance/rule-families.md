@@ -195,6 +195,22 @@ it does not add new rules or SARIF/GitHub scan output changes.
 Gate 146 adds no new rule ID. `forge capabilities scan` displays compact
 action metadata derived from existing non-ready Doctor area actions, but it
 does not add new rules or SARIF/GitHub scan output changes.
+Gate 147 adds no new rule ID. `forge capabilities scan` displays compact
+requirement metadata derived from existing project requirement resolution
+output, but it does not add new rules or SARIF/GitHub scan output changes.
+Gate 148 adds no new rule ID. `forge capabilities scan` displays compact
+diagnostic metadata derived from existing projected `WF-CAP-*` issues, but it
+does not add new rules or SARIF/GitHub scan output changes.
+Gate 149 adds no new rule ID. `forge capabilities scan` displays compact
+catalogue-policy metadata derived from existing Doctor open questions, but it
+does not add new rules or SARIF/GitHub scan output changes.
+Gate 150 adds no new rule ID. `forge capabilities scan` displays compact
+open-question detail metadata derived from existing Doctor open questions,
+but it does not add new rules or SARIF/GitHub scan output changes.
+Gate 151 adds no new rule ID. `forge capabilities explain` displays compact
+catalogue-policy open-question detail metadata derived from existing Doctor
+open questions, but it does not add new rules or SARIF/GitHub explain output
+changes.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths

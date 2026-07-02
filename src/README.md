@@ -769,3 +769,31 @@ Gate 146 extends capability scan output with compact action index entries
 derived from existing non-ready Doctor area actions. `forge capabilities scan`
 JSON now includes top-level `index.actions`, and text output prints matching
 action groups before the full Doctor area list.
+
+Gate 147 extends capability scan output with compact requirement index entries
+derived from existing project requirement resolution output. `forge
+capabilities scan` JSON now includes top-level `index.requirements`, and text
+output prints matching unavailable requirement entries before the full project
+requirement report.
+
+Gate 148 extends capability scan output with compact diagnostic index entries
+derived from existing diagnostic projection output. `forge capabilities scan`
+JSON now includes top-level `index.diagnostics`, and text output prints
+matching diagnostic entries before the full diagnostics report.
+
+Gate 149 extends capability scan output with compact catalogue-policy index
+entries derived from existing Doctor open-question output. `forge capabilities
+scan` JSON now includes top-level `index.cataloguePolicy`, and text output
+prints matching catalogue-policy groups before the full Doctor open-question
+text.
+
+Gate 150 extends capability scan output with compact open-question detail
+entries derived from existing Doctor open-question output. `forge capabilities
+scan` JSON now includes top-level `index.openQuestionDetails`, and text output
+prints matching detail entries before the full Doctor open-question text.
+
+Gate 151 extends capability explain output with catalogue-policy
+open-question detail entries derived from existing Doctor open-question
+output. `forge capabilities explain` JSON now includes
+`cataloguePolicy.openQuestionDetails`, and text output prints matching detail
+entries before provider evidence groups.

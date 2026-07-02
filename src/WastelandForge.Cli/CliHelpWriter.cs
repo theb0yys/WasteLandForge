@@ -306,7 +306,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge capabilities scan [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
         writer.WriteLine();
         writer.WriteLine("Scans explicit local paths with root-file, data-file, and executable-tool detectors. When --project is supplied, resolves declared dependency capabilities against scan evidence.");
-        writer.WriteLine("Also emits compact provider/capability status indexes, a compact action index, and a Doctor-style readiness report with a compact readiness index, environment areas, next actions, and known open catalogue questions.");
+        writer.WriteLine("Also emits compact provider/capability status indexes, compact action, requirement, diagnostic, catalogue-policy, and open-question detail indexes, and a Doctor-style readiness report with a compact readiness index, environment areas, next actions, and known open catalogue questions.");
         writer.WriteLine("Reports probable, missing, unknown, and deterministic root-vs-Data wrong-scope evidence. Runtime probes, MO2 VFS launch, mixed-scope checks, and provider version checks are not used.");
         writer.WriteLine();
         writer.WriteLine("Examples:");
@@ -329,7 +329,7 @@ internal static class CliHelpWriter
         writer.WriteLine("Usage:");
         writer.WriteLine("  forge capabilities explain <capability-or-provider-id> [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Explains a built-in capability or provider using catalogue data and the same path-based evidence as capabilities scan, including target-level next actions.");
+        writer.WriteLine("Explains a built-in capability or provider using catalogue data and the same path-based evidence as capabilities scan, including target-level next actions and catalogue-policy open questions.");
         writer.WriteLine("When --project is supplied, includes matching declared project requirement context. Runtime probes, MO2 VFS launch, and provider versions are not used.");
         writer.WriteLine();
         writer.WriteLine("Examples:");

@@ -672,6 +672,17 @@ Gate 145 extends `WastelandForge.GoldenTests` coverage for capability scan
 provider/capability status groups in JSON, plain output, and output-file JSON.
 Gate 146 extends `WastelandForge.GoldenTests` coverage for capability scan
 action groups in JSON, plain output, and output-file JSON.
+Gate 147 extends `WastelandForge.GoldenTests` coverage for capability scan
+requirement entries in JSON, plain output, and output-file JSON.
+Gate 148 extends `WastelandForge.GoldenTests` coverage for capability scan
+diagnostic entries in JSON, plain output, and output-file JSON.
+Gate 149 extends `WastelandForge.GoldenTests` coverage for capability scan
+catalogue-policy groups in JSON, plain output, and output-file JSON.
+Gate 150 extends `WastelandForge.GoldenTests` coverage for capability scan
+open-question detail entries in JSON, plain output, and output-file JSON.
+Gate 151 extends `WastelandForge.GoldenTests` coverage for capability explain
+catalogue-policy open-question detail entries in JSON, plain output, and
+output-file JSON.
 
 Run the full local suite serially:
 
