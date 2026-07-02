@@ -175,7 +175,7 @@ multi-slider, color picker, FOMOD package creation, capability-derived runtime
 requirements, MO2 installation, or in-game verification exist until later
 gates implement them.
 
-Gate 144 continues Doctor-style environment reporting under the canonical
+Gate 145 continues Doctor-style environment reporting under the canonical
 `/forge capabilities scan`, `/forge capabilities explain`, and
 `/forge doctor export` command surface. Route scan, explain, and Doctor export
 requests to the real CLI when available. Describe Doctor export as a redacted
@@ -189,9 +189,10 @@ requirements, compact `index.diagnostics` entries for already-projected
 `WF-CAP-*` issues, compact `index.cataloguePolicy` groups by open-question
 source type, structured `index.openQuestionDetails` for current catalogue
 policy gaps, and redacted nested project requirement provider evidence, not
-as runtime/session proof. For scan requests, describe compact
-`doctor.index.areaStatuses` readiness groups before the full Doctor areas; for
-scan requests with `--project`,
+as runtime/session proof. For scan requests, describe compact top-level
+`index.providerStatuses` and `index.capabilityStatuses` groups plus compact
+`doctor.index.areaStatuses` readiness groups before the full provider,
+capability, and Doctor arrays; for scan requests with `--project`,
 describe `WF-CAP-001`, `WF-CAP-002`, and `WF-CAP-003` diagnostic projection
 as implemented, plus `WF-CAP-004` for deterministic root-vs-Data wrong-scope
 markers. For explain requests, describe grouped provider evidence in JSON

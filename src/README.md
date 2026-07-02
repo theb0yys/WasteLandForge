@@ -758,3 +758,9 @@ Gate 144 extends capability scan Doctor output with compact readiness index
 entries derived from existing Doctor area results. `forge capabilities scan`
 JSON now includes `doctor.index.areaStatuses`, and text output prints a
 matching `Doctor readiness index`.
+
+Gate 145 extends capability scan output with compact provider/capability
+status index entries derived from existing scan results. `forge capabilities
+scan` JSON now includes top-level `index.providerStatuses` and
+`index.capabilityStatuses`, and text output prints a matching `Scan status
+index`.

@@ -22,6 +22,52 @@ internal static class CapabilityScanTextRenderer
         builder.AppendLine(
             $"Doctor: {report.Doctor.Summary.ReadyAreas} ready area(s), {report.Doctor.Summary.ActionNeededAreas} action-needed area(s), {report.Doctor.Summary.UnknownAreas} unknown area(s)");
         builder.AppendLine();
+        builder.AppendLine("Scan status index:");
+        builder.AppendLine("  Provider statuses:");
+        foreach (var providerStatus in report.Providers
+            .GroupBy(provider => (provider.Status, provider.Provider.InstallScope))
+            .OrderBy(group => group.Key.Status, StringComparer.Ordinal)
+            .ThenBy(group => group.Key.InstallScope, StringComparer.Ordinal))
+        {
+            var providerIds = providerStatus
+                .Select(provider => provider.Provider.Id)
+                .Order(StringComparer.Ordinal)
+                .ToArray();
+            builder.AppendLine($"    {providerStatus.Key.Status}/{providerStatus.Key.InstallScope}: {providerIds.Length} provider(s)");
+            builder.AppendLine($"      Providers: {JoinOrNone(providerIds)}");
+        }
+
+        builder.AppendLine("  Capability statuses:");
+        foreach (var capabilityStatus in report.Capabilities
+            .GroupBy(capability => capability.Status)
+            .OrderBy(group => group.Key, StringComparer.Ordinal))
+        {
+            var capabilityIds = capabilityStatus
+                .Select(capability => capability.Capability.Id)
+                .Order(StringComparer.Ordinal)
+                .ToArray();
+            builder.AppendLine($"    {capabilityStatus.Key}: {capabilityIds.Length} capability(ies)");
+            builder.AppendLine($"      Capabilities: {JoinOrNone(capabilityIds)}");
+        }
+
+        var actionGroups = report.Doctor.Areas
+            .Where(area => !StringComparer.Ordinal.Equals(area.Status, CapabilityDoctorStatuses.Ready))
+            .Where(area => area.Actions.Count > 0)
+            .ToArray();
+        if (actionGroups.Length > 0)
+        {
+            builder.AppendLine("  Actions:");
+            foreach (var actionGroup in actionGroups)
+            {
+                builder.AppendLine($"    {actionGroup.Id} ({ResolveActionSourceType(actionGroup.Id)}, {actionGroup.Status}):");
+                foreach (var action in actionGroup.Actions)
+                {
+                    builder.AppendLine($"      Next: {action}");
+                }
+            }
+        }
+
+        builder.AppendLine();
         builder.AppendLine("Doctor readiness index:");
         foreach (var areaStatus in report.Doctor.Areas
             .GroupBy(area => area.Status)
@@ -119,4 +165,9 @@ internal static class CapabilityScanTextRenderer
 
     private static string JoinOrNone(IReadOnlyList<string> values) =>
         values.Count == 0 ? "(none)" : string.Join(", ", values);
+
+    private static string ResolveActionSourceType(string areaId) =>
+        StringComparer.Ordinal.Equals(areaId, "project-requirements")
+            ? "project-requirement"
+            : "capability-scan";
 }

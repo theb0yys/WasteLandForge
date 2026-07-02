@@ -31,6 +31,7 @@ internal static class CapabilityScanJsonSerializer
             },
             ["inputs"] = ToJson(report.Inputs),
             ["summary"] = ToJson(report.Summary),
+            ["index"] = ToIndex(report),
             ["doctor"] = ToJson(report.Doctor),
             ["diagnostics"] = ToJson(CapabilityDiagnosticProjector.Project(report)),
             ["providers"] = new JsonArray(report.Providers.Select(ToJson).ToArray()),
@@ -73,6 +74,63 @@ internal static class CapabilityScanJsonSerializer
             ["unknownCapabilities"] = summary.UnknownCapabilities,
             ["wrongScopeCapabilities"] = summary.WrongScopeCapabilities
         };
+
+    private static JsonObject ToIndex(CapabilityScanReport report) =>
+        new()
+        {
+            ["providerStatuses"] = new JsonArray(report.Providers
+                .GroupBy(provider => (provider.Status, provider.Provider.InstallScope))
+                .OrderBy(group => group.Key.Status, StringComparer.Ordinal)
+                .ThenBy(group => group.Key.InstallScope, StringComparer.Ordinal)
+                .Select(group => new JsonObject
+                {
+                    ["status"] = group.Key.Status,
+                    ["installScope"] = group.Key.InstallScope,
+                    ["count"] = group.Count(),
+                    ["providers"] = new JsonArray(group
+                        .Select(provider => provider.Provider.Id)
+                        .Order(StringComparer.Ordinal)
+                        .Select(provider => JsonValue.Create(provider))
+                        .ToArray())
+                })
+                .ToArray()),
+            ["capabilityStatuses"] = new JsonArray(report.Capabilities
+                .GroupBy(capability => capability.Status)
+                .OrderBy(group => group.Key, StringComparer.Ordinal)
+                .Select(group => new JsonObject
+                {
+                    ["status"] = group.Key,
+                    ["count"] = group.Count(),
+                    ["capabilities"] = new JsonArray(group
+                        .Select(capability => capability.Capability.Id)
+                        .Order(StringComparer.Ordinal)
+                        .Select(capability => JsonValue.Create(capability))
+                        .ToArray())
+                })
+                .ToArray()),
+            ["actions"] = new JsonArray(report.Doctor.Areas
+                .Where(area => !StringComparer.Ordinal.Equals(area.Status, CapabilityDoctorStatuses.Ready))
+                .Where(area => area.Actions.Count > 0)
+                .Select(area => new JsonObject
+                {
+                    ["area"] = new JsonObject
+                    {
+                        ["id"] = area.Id,
+                        ["title"] = area.Title,
+                        ["status"] = area.Status
+                    },
+                    ["sourceType"] = ResolveActionSourceType(area.Id),
+                    ["actions"] = new JsonArray(area.Actions
+                        .Select(action => JsonValue.Create(action))
+                        .ToArray())
+                })
+                .ToArray())
+        };
+
+    private static string ResolveActionSourceType(string areaId) =>
+        StringComparer.Ordinal.Equals(areaId, "project-requirements")
+            ? "project-requirement"
+            : "capability-scan";
 
     private static JsonObject ToJson(CapabilityDoctorReport doctor) =>
         new()

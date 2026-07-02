@@ -462,6 +462,9 @@ public sealed class CliGoldenTests
         Assert.Equal(15, (int?)json["summary"]?["unknownProviders"]);
         Assert.Equal(0, (int?)json["summary"]?["probableProviders"]);
         Assert.Equal(0, (int?)json["summary"]?["missingProviders"]);
+        Assert.Equal(5, json["index"]?["providerStatuses"]?.AsArray().Count);
+        Assert.Equal(1, json["index"]?["capabilityStatuses"]?.AsArray().Count);
+        Assert.Equal(4, json["index"]?["actions"]?.AsArray().Count);
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["areas"]);
         Assert.Equal(0, (int?)json["doctor"]?["summary"]?["readyAreas"]);
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["unknownAreas"]);
@@ -472,6 +475,67 @@ public sealed class CliGoldenTests
         Assert.Contains("--game-root", (string?)DoctorArea(json, "base-game")["actions"]?[0], StringComparison.Ordinal);
         Assert.Equal(false, (bool?)json["inputs"]?["runtimeProbesEnabled"]);
         Assert.Equal(false, (bool?)json["inputs"]?["mo2VfsEnabled"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanJsonIncludesProviderCapabilityStatusIndexes()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var providerStatuses = json["index"]?["providerStatuses"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan index did not include provider statuses.");
+        var capabilityStatuses = json["index"]?["capabilityStatuses"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan index did not include capability statuses.");
+        var dataManagedProviders = providerStatuses.Single(item =>
+            StringComparer.Ordinal.Equals("unknown", (string?)item?["status"]) &&
+            StringComparer.Ordinal.Equals("data-managed", (string?)item?["installScope"]));
+        var rootProviders = providerStatuses.Single(item =>
+            StringComparer.Ordinal.Equals("unknown", (string?)item?["status"]) &&
+            StringComparer.Ordinal.Equals("root", (string?)item?["installScope"]));
+        var dataManagedProviderIds = dataManagedProviders?["providers"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan data-managed provider status did not include provider IDs.");
+        var rootProviderIds = rootProviders?["providers"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan root provider status did not include provider IDs.");
+        var unknownCapabilities = capabilityStatuses[0]?["capabilities"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan capability status did not include capability IDs.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(5, providerStatuses.Count);
+        Assert.Equal(9, (int?)dataManagedProviders?["count"]);
+        Assert.Contains(dataManagedProviderIds, provider =>
+            StringComparer.Ordinal.Equals("provider.runtime.mcm_extender", (string?)provider));
+        Assert.Equal(2, (int?)rootProviders?["count"]);
+        Assert.Contains(rootProviderIds, provider =>
+            StringComparer.Ordinal.Equals("provider.runtime.xnvse", (string?)provider));
+        Assert.Single(capabilityStatuses);
+        Assert.Equal("unknown", (string?)capabilityStatuses[0]?["status"]);
+        Assert.Equal(19, (int?)capabilityStatuses[0]?["count"]);
+        Assert.Contains(unknownCapabilities, capability =>
+            StringComparer.Ordinal.Equals("runtime.ui.mcm_json", (string?)capability));
+        Assert.Contains(unknownCapabilities, capability =>
+            StringComparer.Ordinal.Equals("tool.mo2.vfs_launch", (string?)capability));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanJsonIncludesActionIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Capability scan JSON did not parse.");
+        var actions = json["index"]?["actions"]?.AsArray() ??
+            throw new InvalidOperationException("Capability scan index did not include actions.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(4, actions.Count);
+        Assert.Equal("base-game", (string?)actions[0]?["area"]?["id"]);
+        Assert.Equal("Base game install", (string?)actions[0]?["area"]?["title"]);
+        Assert.Equal("unknown", (string?)actions[0]?["area"]?["status"]);
+        Assert.Equal("capability-scan", (string?)actions[0]?["sourceType"]);
+        Assert.Contains("--game-root", (string?)actions[0]?["actions"]?[0], StringComparison.Ordinal);
+        Assert.Equal("mcm-json-stack", (string?)actions[2]?["area"]?["id"]);
+        Assert.Equal("capability-scan", (string?)actions[2]?["sourceType"]);
+        Assert.True(actions[2]?["actions"]?.AsArray().Count > 0);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -499,6 +563,9 @@ public sealed class CliGoldenTests
         Assert.Equal(13, (int?)json["summary"]?["probableProviders"]);
         Assert.Equal(0, (int?)json["summary"]?["missingProviders"]);
         Assert.Equal(2, (int?)json["summary"]?["unknownProviders"]);
+        Assert.True(json["index"]?["providerStatuses"]?.AsArray().Count > 0);
+        Assert.True(json["index"]?["capabilityStatuses"]?.AsArray().Count > 0);
+        Assert.Equal(0, json["index"]?["actions"]?.AsArray().Count);
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["areas"]);
         Assert.Equal(4, (int?)json["doctor"]?["summary"]?["readyAreas"]);
         Assert.Equal(0, (int?)json["doctor"]?["summary"]?["actionNeededAreas"]);
@@ -580,6 +647,41 @@ public sealed class CliGoldenTests
         Assert.Contains("unknown: 4 area(s)", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Areas: authoring-tools, base-game, mcm-json-stack, script-extender-stack", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Doctor areas:", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanPlainIncludesProviderCapabilityStatusIndexes()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Scan status index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Provider statuses:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("unknown/data-managed: 9 provider(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("provider.runtime.mcm_extender", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Capability statuses:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("unknown: 19 capability(ies)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("runtime.ui.mcm_json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Providers:", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesScanPlainIncludesActionIndex()
+    {
+        var result = RunCli("capabilities", "scan", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Scan status index:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Actions:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("base-game (capability-scan, unknown):", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(
+            "Next: Provide Fallout: New Vegas evidence in root scope with --game-root.",
+            result.Stdout,
+            StringComparison.Ordinal);
+        Assert.Contains("mcm-json-stack (capability-scan, unknown):", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Doctor readiness index:", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -867,6 +969,9 @@ public sealed class CliGoldenTests
         Assert.Equal(string.Empty, result.Stdout);
         Assert.Equal("capabilities scan", (string?)json["command"]);
         Assert.Equal(15, (int?)json["summary"]?["unknownProviders"]);
+        Assert.Equal(5, json["index"]?["providerStatuses"]?.AsArray().Count);
+        Assert.Equal(1, json["index"]?["capabilityStatuses"]?.AsArray().Count);
+        Assert.Equal(4, json["index"]?["actions"]?.AsArray().Count);
         Assert.Equal(1, json["doctor"]?["index"]?["areaStatuses"]?.AsArray().Count);
         Assert.Equal(string.Empty, result.Stderr);
     }

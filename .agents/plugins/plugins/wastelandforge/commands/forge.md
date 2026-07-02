@@ -183,13 +183,14 @@ Gate 126 option routing:
   installation, or in-game verification exist until later gates implement
   them.
 
-Gate 144 option routing:
+Gate 145 option routing:
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider
-  evidence plus compact `doctor.index.areaStatuses`, derived Doctor readiness
-  areas, and next actions. With `--project`, it also projects unavailable
-  capability requirements to
+  evidence plus compact `index.providerStatuses`,
+  `index.capabilityStatuses`, `doctor.index.areaStatuses`, derived Doctor
+  readiness areas, and next actions. With `--project`, it also projects
+  unavailable capability requirements to
   `WF-CAP-001`, `WF-CAP-002`, `WF-CAP-003`, and `WF-CAP-004`, including
   provider evidence detail in JSON, SARIF, GitHub, and text output.
   `WF-CAP-004` is limited to deterministic root-vs-Data wrong-scope markers.

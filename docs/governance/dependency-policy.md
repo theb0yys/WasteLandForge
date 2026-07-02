@@ -299,3 +299,8 @@ the existing Doctor area results. It adds no third-party dependency, download,
 rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
 provider-version parser, capability resolver dependency, Doctor planner
 dependency, or AI requirement.
+Gate 145 derives `forge capabilities scan` provider/capability status index
+data from existing scan results. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, capability resolver dependency, Doctor planner
+dependency, or AI requirement.
