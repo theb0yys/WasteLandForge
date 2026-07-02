@@ -2,10 +2,9 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 117 adds
-install-plan content revalidation to
-`forge package --target mcm-json --verify-existing` while preserving the CLI
-command surface and offline-first package boundary.
+The project is currently in gated v0.1 implementation. Gate 126 closes the
+current MCM Extender slice and redirects the next implementation lane to
+broader Forge value: capability/Doctor environment inspection and explanation.
 
 ## Architecture Spine
 
@@ -18,7 +17,7 @@ command surface and offline-first package boundary.
 
 ## Current Gate
 
-Gate 117 advances the first game-facing generator path. It keeps
+Gate 126 closes the first game-facing generator path for now. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -369,18 +368,77 @@ required copy actions, manual-approval/non-mutation flags, and Markdown
 summary content, and reports stale evidence as blocking `WF-BUILD-006`
 diagnostics without regenerating outputs.
 
+Gate 118 extends the same verify-existing path so existing `install-plan.json`
+is revalidated against the embedded `install-plan/0.1.0` schema before deeper
+install-plan content checks. Schema failures are reported as blocking
+`WF-BUILD-006` diagnostics, coalesced to one install-plan schema diagnostic
+per invalid install-plan document, and do not regenerate outputs or install
+files.
+
+Gate 119 extends the same verify-existing path so existing
+`package-manifest.json` is revalidated against the embedded
+`package-manifest/0.1.0` schema before package-manifest-derived checks.
+Schema failures are reported as blocking `WF-BUILD-006` diagnostics,
+coalesced to one package-manifest schema diagnostic per invalid manifest, and
+dependent package evidence checks are skipped to avoid cascades.
+
+Gate 120 extends the same verify-existing path so existing
+`install-preview.json` is revalidated against the embedded
+`install-preview/0.1.0` schema before install-preview-derived checks. Schema
+failures are reported as blocking `WF-BUILD-006` diagnostics, coalesced to one
+install-preview schema diagnostic per invalid install preview, and dependent
+package evidence checks are skipped to avoid cascades.
+
+Gate 121 extends the same verify-existing path so existing
+`package-verification.json` is revalidated against the embedded
+`package-verification/0.1.0` schema before package-verification-derived
+checks. Schema failures are reported as blocking `WF-BUILD-006` diagnostics,
+coalesced to one package-verification schema diagnostic per invalid package
+verification report, and dependent package evidence checks are skipped to
+avoid cascades.
+
+Gate 122 adds focused SARIF, GitHub annotation, and Markdown diagnostic summary
+coverage for schema-gated verify-existing failures. It proves those existing
+diagnostic projections carry the same `WF-BUILD-006` package-verification
+schema diagnostic without adding new command behavior.
+
+Gate 123 adds explicit missing required evidence diagnostics to the same
+verify-existing path. If a required package evidence JSON or Markdown file is
+absent, the file-based verifier now reports a blocking `WF-BUILD-006`
+`MCM package ... evidence is missing` diagnostic at the expected evidence path
+before deeper package evidence checks run.
+
+Gate 124 adds explicit malformed evidence diagnostics to the same
+verify-existing path. If a required JSON evidence file cannot be parsed, Forge
+reports `MCM package ... evidence is malformed JSON`; if it parses but is not
+a JSON object, Forge reports `MCM package ... evidence is not a JSON object`.
+Both remain blocking `WF-BUILD-006` diagnostics at the evidence path.
+
+Gate 125 adds focused SARIF, GitHub annotation, and Markdown diagnostic summary
+coverage for malformed package-verification JSON evidence. It proves the
+existing diagnostic projections carry the malformed JSON `WF-BUILD-006`
+diagnostic without adding new command behavior.
+
+Gate 126 records the MCM Extender lane as parked after Gates 62-125. The
+implemented slice remains available through `forge generate --target mcm-json`,
+`forge build --target mcm-json`, `forge package --target mcm-json`, and
+`forge package --target mcm-json --verify-existing`, but the next development
+lane moves to capability scanner and Doctor-style environment value instead of
+continuing MCM verifier micro-gates.
+
 The scanner and explainer currently cover path evidence for the game root,
 xNVSE, JIP LN, JohnnyGuitar, ShowOff, UIO, MCM, MCM Extender JSON, kNVSE,
 GECK, Hot Reload, xEdit, and MO2. JIP PP LN and GECK Extender remain
 `unknown` in this gate because their safe file-marker policy remains open.
 
-Gate 117 does not inspect an MO2 profile, launch through MO2 VFS, probe a
-runtime, parse provider versions, emit `WF-CAP-*` diagnostics, generate
+Gate 126 does not inspect an MO2 profile, launch through MO2 VFS, probe a
+runtime, parse provider versions, emit new `WF-CAP-*` diagnostics, generate
 in-game-verified MCM Extender files, generate JIP text scripts, package
 archives as FOMOD installers, or compile plugin records. Remaining advanced
 MCM Extender option types, FOMOD package creation,
-capability-to-runtime requirement inference, callbacks, and in-game runtime
-verification remain later work.
+capability-to-runtime requirement inference, callbacks, non-object diagnostic
+projection coverage, and in-game runtime verification remain deferred unless a
+later gate explicitly reopens the MCM lane.
 
 The current response route baseline still includes:
 
@@ -683,6 +741,33 @@ generate/build/package output set without installing files.
 Gate 117 adds install-plan JSON and Markdown content revalidation to
 `forge package --target mcm-json --verify-existing` without adding
 package-verifier behavior to normal package generation.
+Gate 118 adds install-plan schema revalidation to
+`forge package --target mcm-json --verify-existing` without adding
+package-verifier behavior to normal package generation.
+Gate 119 adds package-manifest schema revalidation to
+`forge package --target mcm-json --verify-existing` without adding
+package-verifier behavior to normal package generation.
+Gate 120 adds install-preview schema revalidation to
+`forge package --target mcm-json --verify-existing` without adding
+package-verifier behavior to normal package generation.
+Gate 121 adds package-verification schema revalidation to
+`forge package --target mcm-json --verify-existing` without adding
+package-verifier behavior to normal package generation.
+Gate 122 adds SARIF, GitHub annotation, and Markdown diagnostic summary
+coverage for schema-gated verify-existing failures without adding
+package-verifier behavior to normal package generation.
+Gate 123 adds missing evidence-file diagnostics to
+`forge package --target mcm-json --verify-existing` without adding
+package-verifier behavior to normal package generation.
+Gate 124 adds malformed evidence-file diagnostics to
+`forge package --target mcm-json --verify-existing` without adding
+package-verifier behavior to normal package generation.
+Gate 125 adds SARIF, GitHub annotation, and Markdown diagnostic summary
+coverage for malformed JSON evidence failures without adding package-verifier
+behavior to normal package generation.
+Gate 126 closes the current MCM Extender lane and moves next implementation
+work to capability scanner and Doctor-style environment value instead of more
+MCM verify-existing edge-case gates.
 
 It intentionally does not create:
 

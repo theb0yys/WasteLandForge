@@ -218,6 +218,100 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
     }
 
     [Fact]
+    public void VerifyReportsMissingPackageVerificationEvidenceFile()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        File.Delete(Path.Combine(projectRoot, outputs.PackageVerification));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package package verification evidence is missing", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-verification.json", issue.PrimaryLocation.File);
+        Assert.Contains("generated/mcm-json/package-verification.json", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsMissingPackageVerificationSummaryEvidenceFile()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        File.Delete(Path.Combine(projectRoot, outputs.PackageVerificationSummary));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package package verification summary evidence is missing", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-verification.md", issue.PrimaryLocation.File);
+        Assert.Contains("generated/mcm-json/package-verification.md", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsMalformedPackageVerificationJsonEvidenceFile()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        File.WriteAllText(Path.Combine(projectRoot, outputs.PackageVerification), "{");
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package package verification evidence is malformed JSON", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-verification.json", issue.PrimaryLocation.File);
+        Assert.Contains("valid JSON", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("generated/mcm-json/package-verification.json", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsPackageVerificationJsonEvidenceFileThatIsNotObject()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        File.WriteAllText(Path.Combine(projectRoot, outputs.PackageVerification), "[]");
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package package verification evidence is not a JSON object", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-verification.json", issue.PrimaryLocation.File);
+        Assert.Contains("JSON object", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("generated/mcm-json/package-verification.json", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void VerifyReportsUnexpectedChecksumEntry()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");
@@ -797,7 +891,7 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
         var packageVerificationPath = Path.Combine(projectRoot, outputs.PackageVerification);
         var packageVerification = JsonNode.Parse(File.ReadAllText(packageVerificationPath)) as JsonObject
             ?? throw new InvalidOperationException("Package verification did not parse.");
-        packageVerification["verificationType"] = "wastelandforge/stale-package-verification/v1";
+        packageVerification["command"] = "generate";
         File.WriteAllText(packageVerificationPath, packageVerification.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
         var buildManifestPath = Path.Combine(projectRoot, outputs.Manifest);
@@ -807,13 +901,23 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
 
         var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
 
-        var issue = Assert.Single(issues);
-        Assert.Equal("Package verification verification type does not match expected package evidence", issue.Title);
-        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
-        Assert.Equal("dist/mcm-json/package-verification.json", issue.PrimaryLocation.File);
-        Assert.Equal("/verificationType", issue.PrimaryLocation.Pointer?.ToString());
-        Assert.Contains("wastelandforge/mcm-json-loose-file-package-verification/v1", issue.Message, StringComparison.Ordinal);
-        Assert.Contains("wastelandforge/stale-package-verification/v1", issue.Message, StringComparison.Ordinal);
+        Assert.Equal(3, issues.Count);
+        var manifestIssue = Assert.Single(issues, issue => issue.Title == "Package verification command does not match package manifest");
+        Assert.Equal("WF-BUILD-006", manifestIssue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/package-verification.json", manifestIssue.PrimaryLocation.File);
+        Assert.Equal("/command", manifestIssue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("build", manifestIssue.Message, StringComparison.Ordinal);
+        Assert.Contains("generate", manifestIssue.Message, StringComparison.Ordinal);
+        var installPreviewIssue = Assert.Single(issues, issue => issue.Title == "Package verification command does not match install preview");
+        Assert.Equal("WF-BUILD-006", installPreviewIssue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/package-verification.json", installPreviewIssue.PrimaryLocation.File);
+        Assert.Equal("/command", installPreviewIssue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("build", installPreviewIssue.Message, StringComparison.Ordinal);
+        Assert.Contains("generate", installPreviewIssue.Message, StringComparison.Ordinal);
+        var summaryIssue = Assert.Single(issues, issue => issue.Title == "Package verification summary does not match JSON evidence");
+        Assert.Equal("WF-BUILD-006", summaryIssue.RuleId.ToString());
+        Assert.Equal("dist/mcm-json/package-verification.md", summaryIssue.PrimaryLocation.File);
+        Assert.Contains("Command: generate", summaryIssue.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -887,7 +991,7 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
     }
 
     [Fact]
-    public void VerifyReportsMismatchFromEditedPackageManifestArchiveMediaType()
+    public void VerifyReportsPackageManifestSchemaMismatchFromEditedArchiveMediaType()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");
         var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
@@ -923,12 +1027,88 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
         var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
 
         var issue = Assert.Single(issues);
-        Assert.Equal("Package manifest archive media type does not match expected package evidence", issue.Title);
+        Assert.Equal("MCM package manifest schema validation failed", issue.Title);
         Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
         Assert.Equal("dist/mcm-json/package-manifest.json", issue.PrimaryLocation.File);
-        Assert.Equal("/archive/mediaType", issue.PrimaryLocation.Pointer?.ToString());
-        Assert.Contains("application/zip", issue.Message, StringComparison.Ordinal);
-        Assert.Contains("application/octet-stream", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("Package manifest evidence failed schema validation", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyReportsPackageManifestSchemaMismatchFromEditedEvidenceFile()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        var packageManifestPath = Path.Combine(projectRoot, outputs.PackageManifest);
+        var packageManifest = JsonNode.Parse(File.ReadAllText(packageManifestPath)) as JsonObject
+            ?? throw new InvalidOperationException("Package manifest did not parse.");
+        packageManifest["unexpected"] = true;
+        File.WriteAllText(packageManifestPath, packageManifest.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package manifest schema validation failed", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-manifest.json", issue.PrimaryLocation.File);
+    }
+
+    [Fact]
+    public void VerifyReportsInstallPreviewSchemaMismatchFromEditedEvidenceFile()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        var installPreviewPath = Path.Combine(projectRoot, outputs.InstallPreview);
+        var installPreview = JsonNode.Parse(File.ReadAllText(installPreviewPath)) as JsonObject
+            ?? throw new InvalidOperationException("Install preview did not parse.");
+        installPreview["unexpected"] = true;
+        File.WriteAllText(installPreviewPath, installPreview.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package install preview schema validation failed", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/install-preview.json", issue.PrimaryLocation.File);
+    }
+
+    [Fact]
+    public void VerifyReportsPackageVerificationSchemaMismatchFromEditedEvidenceFile()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        var packageVerificationPath = Path.Combine(projectRoot, outputs.PackageVerification);
+        var packageVerification = JsonNode.Parse(File.ReadAllText(packageVerificationPath)) as JsonObject
+            ?? throw new InvalidOperationException("Package verification did not parse.");
+        packageVerification["unexpected"] = true;
+        File.WriteAllText(packageVerificationPath, packageVerification.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package verification schema validation failed", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/package-verification.json", issue.PrimaryLocation.File);
     }
 
     [Fact]
@@ -1056,6 +1236,32 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
     }
 
     [Fact]
+    public void VerifyReportsInstallPlanSchemaMismatchFromEditedEvidenceFile()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
+            "generate",
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+        Assert.False(result.HasErrors);
+        var outputs = result.Outputs!;
+        var installPlanPath = Path.Combine(projectRoot, outputs.InstallPlan);
+        var installPlan = JsonNode.Parse(File.ReadAllText(installPlanPath)) as JsonObject
+            ?? throw new InvalidOperationException("Install plan did not parse.");
+        installPlan["unexpected"] = true;
+        File.WriteAllText(installPlanPath, installPlan.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+
+        var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
+
+        var issue = Assert.Single(issues);
+        Assert.Equal("MCM package install plan schema validation failed", issue.Title);
+        Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
+        Assert.Equal("generated/mcm-json/install-plan.json", issue.PrimaryLocation.File);
+    }
+
+    [Fact]
     public void VerifyReportsInstallPlanEntryMismatchFromEditedEvidenceFile()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");
@@ -1072,7 +1278,8 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
             ?? throw new InvalidOperationException("Install plan did not parse.");
         var firstEntry = installPlan["entries"]?.AsArray().OfType<JsonObject>().First()
             ?? throw new InvalidOperationException("Install plan entry did not parse.");
-        firstEntry["action"] = "would-copy-loose-file";
+        var originalSourceFile = (string?)firstEntry["sourceFile"] ?? throw new InvalidOperationException("Install plan entry source file did not parse.");
+        firstEntry["sourceFile"] = "generated/mcm-json/edited.json";
         File.WriteAllText(installPlanPath, installPlan.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
         var issues = McmPackageVerificationEvidenceFileVerifier.Verify(CreateRequest(projectRoot, outputs));
@@ -1080,8 +1287,8 @@ public sealed class McmPackageVerificationEvidenceFileVerifierTests
         var issue = Assert.Single(issues, issue => issue.Title == "MCM package install plan entry does not match package manifest");
         Assert.Equal("WF-BUILD-006", issue.RuleId.ToString());
         Assert.Equal("generated/mcm-json/install-plan.json", issue.PrimaryLocation.File);
-        Assert.Contains("copy-loose-file-if-user-approved", issue.Message, StringComparison.Ordinal);
-        Assert.Contains("would-copy-loose-file", issue.Message, StringComparison.Ordinal);
+        Assert.Contains(originalSourceFile, issue.Message, StringComparison.Ordinal);
+        Assert.Contains("generated/mcm-json/edited.json", issue.Message, StringComparison.Ordinal);
     }
 
     [Fact]

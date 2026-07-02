@@ -92,11 +92,11 @@ Gate 45 option routing:
   file only. Do not control, automate, import into, or mutate an open GECK
   session.
 
-Gate 117 option routing:
+Gate 126 option routing:
 
 - `/forge generate --target mcm-json`, `/forge build --target mcm-json`, and
   `/forge package --target mcm-json` route to the real `forge` CLI behavior
-  when available. Treat the output as the Gate 117 validated MCM Extender JSON
+  when available. Treat the output as the closed MCM Extender JSON
   runtime subset under `MCM/<menu>.json`, plus
   `MCM/Translations/<modName>.ini` when translations are declared, and staged
   referenced texture assets under their game-relative target paths. Build and
@@ -145,6 +145,33 @@ Gate 117 option routing:
   content in verify-existing mode, including package metadata, archive
   details, package-manifest entry consistency, required copy actions,
   manual-approval/non-mutation flags, and summary lines.
+  Gate 118 also revalidates existing `install-plan.json` against
+  `install-plan/0.1.0` in verify-existing mode before deeper install-plan
+  content checks.
+  Gate 119 also revalidates existing `package-manifest.json` against
+  `package-manifest/0.1.0` in verify-existing mode before dependent package
+  evidence checks.
+  Gate 120 also revalidates existing `install-preview.json` against
+  `install-preview/0.1.0` in verify-existing mode before dependent package
+  evidence checks.
+  Gate 121 also revalidates existing `package-verification.json` against
+  `package-verification/0.1.0` in verify-existing mode before dependent
+  package evidence checks.
+  Gate 122 adds focused SARIF, GitHub annotation, and Markdown summary
+  coverage for schema-gated verify-existing failures without changing command
+  behavior.
+  Gate 123 adds explicit missing evidence-file diagnostics in verify-existing
+  mode before deeper package evidence checks run.
+  Gate 124 adds explicit malformed JSON and non-object JSON evidence
+  diagnostics in verify-existing mode before deeper package evidence checks
+  run.
+  Gate 125 adds focused SARIF, GitHub annotation, and Markdown summary
+  coverage for malformed JSON verify-existing diagnostics without changing
+  command behavior.
+  Gate 126 closes the current MCM Extender lane. Do not route ordinary "next
+  development step" requests into more MCM verifier micro-gates unless the
+  user explicitly reopens MCM work; move next to capability scanner and
+  Doctor-style environment reports.
   These remain
   reports only:
   they list Data-relative would-copy paths and do not install into Data or MO2. It
@@ -176,8 +203,10 @@ Gate 117 option routing:
   out of canonical order, uppercase checksum digests, backslash checksum path
   separators, checksum paths with casing drift, blank checksum rows,
   non-canonical checksum entry spacing, non-canonical checksum line endings,
-  missing checksum final newlines, install-plan JSON content, and install-plan
-  Markdown summary content.
+  missing checksum final newlines, package-manifest schema, install-preview
+  schema, install-plan schema, install-plan JSON content, install-plan
+  Markdown summary content, missing required package evidence files, malformed
+  JSON evidence files, and non-object JSON evidence files.
   Do not invent `/forge verify-package`,
   `/forge package verify`, or other verifier aliases.
 

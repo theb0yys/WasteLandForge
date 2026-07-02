@@ -622,3 +622,49 @@ Gate 117 extends `McmPackageVerificationEvidenceFileVerifier` so
 package-manifest evidence. It checks metadata, archive details, entries,
 required copy actions, manual-approval/non-mutation flags, and summary lines
 without regenerating outputs.
+
+Gate 118 extends `McmPackageVerificationEvidenceFileVerifier` so
+`--verify-existing` first revalidates existing `install-plan.json` against the
+embedded `install-plan/0.1.0` schema. Invalid install-plan documents produce
+one `WF-BUILD-006` schema diagnostic and skip deeper install-plan content
+checks to avoid cascading diagnostics.
+
+Gate 119 extends `McmPackageVerificationEvidenceFileVerifier` so
+`--verify-existing` first revalidates existing `package-manifest.json` against
+the embedded `package-manifest/0.1.0` schema. Invalid package manifests
+produce one `WF-BUILD-006` schema diagnostic and skip dependent package
+evidence checks to avoid cascading diagnostics from an invalid manifest shape.
+
+Gate 120 extends `McmPackageVerificationEvidenceFileVerifier` so
+`--verify-existing` first revalidates existing `install-preview.json` against
+the embedded `install-preview/0.1.0` schema. Invalid install previews produce
+one `WF-BUILD-006` schema diagnostic and skip dependent package evidence
+checks to avoid cascading diagnostics from an invalid install-preview shape.
+
+Gate 121 extends `McmPackageVerificationEvidenceFileVerifier` so
+`--verify-existing` first revalidates existing `package-verification.json`
+against the embedded `package-verification/0.1.0` schema. Invalid package
+verification reports produce one `WF-BUILD-006` schema diagnostic and skip
+dependent package evidence checks to avoid cascading diagnostics from an
+invalid package-verification shape.
+
+Gate 122 keeps the verifier behavior unchanged and adds golden CLI coverage
+for schema-gated verify-existing diagnostics through SARIF, GitHub annotation,
+and Markdown summary projections.
+
+Gate 123 extends `McmPackageVerificationEvidenceFileVerifier` so missing
+required JSON or Markdown evidence files are reported as explicit
+`WF-BUILD-006` missing-evidence diagnostics instead of generic read failures.
+
+Gate 124 extends `McmPackageVerificationEvidenceFileVerifier` so malformed
+required JSON evidence files are reported as explicit `WF-BUILD-006`
+malformed-JSON diagnostics, while valid non-object JSON evidence keeps a
+separate top-level-shape diagnostic.
+
+Gate 125 keeps verifier behavior unchanged and adds golden CLI coverage for
+malformed package-verification JSON diagnostics through SARIF, GitHub
+annotation, and Markdown summary projections.
+
+Gate 126 closes the current MCM Extender implementation lane without changing
+verifier behavior. Next source work should return to broader Forge value in
+capability scanner and Doctor-style environment reporting code.

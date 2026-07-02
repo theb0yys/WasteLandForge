@@ -199,3 +199,31 @@ third-party runtime dependencies.
 Gate 117 adds only install-plan content revalidation over existing local
 package evidence; it still does not add, download, rehost, or require
 third-party runtime dependencies.
+Gate 118 adds only install-plan schema revalidation over existing local
+package evidence; it still does not add, download, rehost, or require
+third-party runtime dependencies.
+Gate 119 adds only package-manifest schema revalidation over existing local
+package evidence; it still does not add, download, rehost, or require
+third-party runtime dependencies.
+Gate 120 adds only install-preview schema revalidation over existing local
+package evidence; it still does not add, download, rehost, or require
+third-party runtime dependencies.
+Gate 121 adds only package-verification schema revalidation over existing local
+package evidence; it still does not add, download, rehost, or require
+third-party runtime dependencies.
+Gate 122 adds only diagnostic projection tests for existing local package
+evidence; it still does not add, download, rehost, or require third-party
+runtime dependencies.
+Gate 123 adds only missing-evidence diagnostics for existing local package
+evidence; it still does not add, download, rehost, or require third-party
+runtime dependencies.
+Gate 124 adds only malformed-evidence diagnostics for existing local package
+evidence; it still does not add, download, rehost, or require third-party
+runtime dependencies.
+Gate 125 adds only diagnostic projection tests for malformed existing local
+package evidence; it still does not add, download, rehost, or require
+third-party runtime dependencies.
+Gate 126 closes the current MCM Extender lane without adding, downloading,
+rehosting, or requiring third-party runtime dependencies. Future
+capability/Doctor work must detect local providers and link users to official
+acquisition paths rather than bundling restricted runtime assets.

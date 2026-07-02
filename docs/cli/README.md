@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 117 MCM Extender install-plan verify-existing content revalidation
+Status: Gate 126 MCM Extender slice closeout and Forge value transition
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -889,6 +889,65 @@ archive fields, package-manifest entry consistency, required copy actions,
 manual-approval and non-mutation flags, and Markdown summary content, then
 emits blocking `WF-BUILD-006` diagnostics for stale install-plan evidence
 without regenerating outputs.
+
+Gate 118 adds install-plan schema revalidation to the same verify-existing
+mode. The verifier checks existing `install-plan.json` against embedded
+`install-plan/0.1.0`, reports schema drift as one blocking `WF-BUILD-006`
+install-plan schema diagnostic per invalid document, and runs deeper
+install-plan content checks only after the existing install-plan passes schema
+validation.
+
+Gate 119 adds package-manifest schema revalidation to the same verify-existing
+mode. The verifier checks existing `package-manifest.json` against embedded
+`package-manifest/0.1.0`, reports schema drift as one blocking `WF-BUILD-006`
+package-manifest schema diagnostic per invalid document, and runs dependent
+package evidence checks only after the existing package manifest passes schema
+validation.
+
+Gate 120 adds install-preview schema revalidation to the same verify-existing
+mode. The verifier checks existing `install-preview.json` against embedded
+`install-preview/0.1.0`, reports schema drift as one blocking `WF-BUILD-006`
+install-preview schema diagnostic per invalid document, and runs dependent
+package evidence checks only after the existing install preview passes schema
+validation.
+
+Gate 121 adds package-verification schema revalidation to the same
+verify-existing mode. The verifier checks existing `package-verification.json`
+against embedded `package-verification/0.1.0`, reports schema drift as one
+blocking `WF-BUILD-006` package-verification schema diagnostic per invalid
+document, and runs dependent package evidence checks only after the existing
+package-verification report passes schema validation.
+
+Gate 122 adds focused SARIF, GitHub annotation, and Markdown diagnostic summary
+coverage for schema-gated verify-existing failures. It does not add new
+formats or command aliases; it verifies that existing diagnostic projections
+carry package-verification schema diagnostics correctly.
+
+Gate 123 adds explicit missing-evidence diagnostics to the same
+verify-existing mode. When required package evidence JSON or Markdown files
+are absent, the file-based verifier emits blocking `WF-BUILD-006`
+`MCM package ... evidence is missing` diagnostics at the expected evidence
+paths before deeper package evidence checks run.
+
+Gate 124 adds explicit malformed-evidence diagnostics to the same
+verify-existing mode. When required JSON evidence cannot be parsed, the
+file-based verifier emits `MCM package ... evidence is malformed JSON`; when
+the evidence parses but is not a JSON object, it emits
+`MCM package ... evidence is not a JSON object`. Both diagnostics remain
+blocking `WF-BUILD-006` package evidence failures and do not regenerate
+outputs.
+
+Gate 125 adds focused SARIF, GitHub annotation, and Markdown diagnostic summary
+coverage for malformed package-verification JSON evidence. It does not add new
+formats or command aliases; it verifies that existing diagnostic projections
+carry malformed JSON package evidence diagnostics correctly.
+
+Gate 126 closes the current MCM Extender lane. Existing `mcm-json`
+generate/build/package and verify-existing behavior remains available under the
+canonical `forge` commands, but further MCM verifier micro-gates are deferred
+unless explicitly reopened. The next CLI value lane should improve
+`forge capabilities scan` and `forge capabilities explain` into a practical
+Doctor-style local environment report.
 
 ## Exit Codes
 

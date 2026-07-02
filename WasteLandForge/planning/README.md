@@ -122,9 +122,18 @@ Gate status:
 - `gates/gate-115-mcm-extender-package-verify-existing-checksum-comment-line-rejection-revalidation.md` - Gate 115, MCM Extender package verify-existing checksum comment-line rejection revalidation.
 - `gates/gate-116-mcm-extender-install-ready-layout-export-planning.md` - Gate 116, MCM Extender install-ready layout and export planning.
 - `gates/gate-117-mcm-extender-install-plan-verify-existing-content-revalidation.md` - Gate 117, MCM Extender install-plan verify-existing content revalidation.
+- `gates/gate-118-mcm-extender-install-plan-verify-existing-schema-revalidation.md` - Gate 118, MCM Extender install-plan verify-existing schema revalidation.
+- `gates/gate-119-mcm-extender-package-manifest-verify-existing-schema-revalidation.md` - Gate 119, MCM Extender package-manifest verify-existing schema revalidation.
+- `gates/gate-120-mcm-extender-install-preview-verify-existing-schema-revalidation.md` - Gate 120, MCM Extender install-preview verify-existing schema revalidation.
+- `gates/gate-121-mcm-extender-package-verification-verify-existing-schema-revalidation.md` - Gate 121, MCM Extender package-verification verify-existing schema revalidation.
+- `gates/gate-122-mcm-extender-verify-existing-schema-diagnostic-projection-coverage.md` - Gate 122, MCM Extender verify-existing schema diagnostic projection coverage.
+- `gates/gate-123-mcm-extender-verify-existing-missing-evidence-diagnostics.md` - Gate 123, MCM Extender verify-existing missing evidence diagnostics.
+- `gates/gate-124-mcm-extender-verify-existing-malformed-evidence-diagnostics.md` - Gate 124, MCM Extender verify-existing malformed evidence diagnostics.
+- `gates/gate-125-mcm-extender-verify-existing-malformed-evidence-diagnostic-projection-coverage.md` - Gate 125, MCM Extender verify-existing malformed evidence diagnostic projection coverage.
+- `gates/gate-126-mcm-extender-slice-closeout-forge-value-transition.md` - Gate 126, MCM Extender slice closeout and Forge value transition.
 
 Next gate:
 
-- Gate 118 - MCM Extender install-plan verify-existing schema revalidation.
+- Gate 127 - Capability scanner and Doctor environment report value slice.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

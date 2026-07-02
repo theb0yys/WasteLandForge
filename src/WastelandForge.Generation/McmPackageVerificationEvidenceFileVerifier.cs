@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Json.Schema;
 using WastelandForge.Core;
 using WastelandForge.Provenance;
 using WastelandForge.Schema;
@@ -10,6 +11,11 @@ namespace WastelandForge.Generation;
 
 public static class McmPackageVerificationEvidenceFileVerifier
 {
+    private static readonly Lazy<JsonSchema> PackageManifestSchema = new(LoadPackageManifestSchema);
+    private static readonly Lazy<JsonSchema> InstallPreviewSchema = new(LoadInstallPreviewSchema);
+    private static readonly Lazy<JsonSchema> InstallPlanSchema = new(LoadInstallPlanSchema);
+    private static readonly Lazy<JsonSchema> PackageVerificationSchema = new(LoadPackageVerificationSchema);
+
     public static IReadOnlyList<DiagnosticIssue> Verify(McmPackageVerificationEvidenceFileVerificationRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -56,6 +62,39 @@ public static class McmPackageVerificationEvidenceFileVerifier
             return issues;
         }
 
+        var packageManifestSchemaIsValid = ValidatePackageManifestSchema(
+            projectRoot,
+            packageManifestPath,
+            packageManifest,
+            request.ProjectId,
+            issues);
+        if (!packageManifestSchemaIsValid)
+        {
+            return issues;
+        }
+
+        var installPreviewSchemaIsValid = ValidateInstallPreviewSchema(
+            projectRoot,
+            installPreviewPath,
+            installPreview,
+            request.ProjectId,
+            issues);
+        if (!installPreviewSchemaIsValid)
+        {
+            return issues;
+        }
+
+        var packageVerificationSchemaIsValid = ValidatePackageVerificationSchema(
+            projectRoot,
+            packageVerificationPath,
+            packageVerification,
+            request.ProjectId,
+            issues);
+        if (!packageVerificationSchemaIsValid)
+        {
+            return issues;
+        }
+
         installPreviewSummaryPath ??= ResolveInstallPreviewSummaryPath(projectRoot, packageVerification);
         var installPreviewSummary = installPreviewSummaryPath is null
             ? null
@@ -68,24 +107,34 @@ public static class McmPackageVerificationEvidenceFileVerifier
         ValidateInstallPreviewPackageManifestEntries(projectRoot, installPreviewPath, packageManifest, installPreview, request.ProjectId, issues);
         if (installPlan is not null)
         {
-            ValidateInstallPlan(
+            var installPlanSchemaIsValid = ValidateInstallPlanSchema(
                 projectRoot,
                 installPlanPath,
                 installPlan,
-                packageManifest,
-                installPreview,
                 request.ProjectId,
                 issues);
 
-            if (installPlanSummary is not null)
+            if (installPlanSchemaIsValid)
             {
-                ValidateInstallPlanSummary(
+                ValidateInstallPlan(
                     projectRoot,
-                    installPlanSummaryPath,
-                    installPlanSummary,
+                    installPlanPath,
                     installPlan,
+                    packageManifest,
+                    installPreview,
                     request.ProjectId,
                     issues);
+
+                if (installPlanSummary is not null)
+                {
+                    ValidateInstallPlanSummary(
+                        projectRoot,
+                        installPlanSummaryPath,
+                        installPlanSummary,
+                        installPlan,
+                        request.ProjectId,
+                        issues);
+                }
             }
         }
 
@@ -814,6 +863,211 @@ public static class McmPackageVerificationEvidenceFileVerifier
             "MCM package checksum entry is malformed",
             $"Expected checksums.sha256 line {lineNumber} to contain a 64-character SHA-256 hex digest, two spaces, and a package-root-relative file path.");
 
+    private static bool ValidateInstallPlanSchema(
+        string projectRoot,
+        string installPlanPath,
+        JsonObject installPlan,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues) =>
+        ValidateEvidenceSchema(
+            projectRoot,
+            installPlanPath,
+            installPlan,
+            InstallPlanSchema.Value,
+            projectId,
+            issues,
+            "MCM package install plan schema validation failed",
+            "Install plan evidence failed schema validation.",
+            "Regenerate install plan evidence so it matches the embedded install-plan schema.");
+
+    private static bool ValidatePackageManifestSchema(
+        string projectRoot,
+        string packageManifestPath,
+        JsonObject packageManifest,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues) =>
+        ValidateEvidenceSchema(
+            projectRoot,
+            packageManifestPath,
+            packageManifest,
+            PackageManifestSchema.Value,
+            projectId,
+            issues,
+            "MCM package manifest schema validation failed",
+            "Package manifest evidence failed schema validation.",
+            "Regenerate package manifest evidence so it matches the embedded package-manifest schema.");
+
+    private static bool ValidateInstallPreviewSchema(
+        string projectRoot,
+        string installPreviewPath,
+        JsonObject installPreview,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues) =>
+        ValidateEvidenceSchema(
+            projectRoot,
+            installPreviewPath,
+            installPreview,
+            InstallPreviewSchema.Value,
+            projectId,
+            issues,
+            "MCM package install preview schema validation failed",
+            "Install preview evidence failed schema validation.",
+            "Regenerate install preview evidence so it matches the embedded install-preview schema.");
+
+    private static bool ValidatePackageVerificationSchema(
+        string projectRoot,
+        string packageVerificationPath,
+        JsonObject packageVerification,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues) =>
+        ValidateEvidenceSchema(
+            projectRoot,
+            packageVerificationPath,
+            packageVerification,
+            PackageVerificationSchema.Value,
+            projectId,
+            issues,
+            "MCM package verification schema validation failed",
+            "Package verification evidence failed schema validation.",
+            "Regenerate package verification evidence so it matches the embedded package-verification schema.");
+
+    private static bool ValidateEvidenceSchema(
+        string projectRoot,
+        string evidencePath,
+        JsonObject evidence,
+        JsonSchema schema,
+        LogicalId? projectId,
+        List<DiagnosticIssue> issues,
+        string title,
+        string fallbackMessage,
+        string suggestedFix)
+    {
+        using var jsonDocument = JsonDocument.Parse(evidence.ToJsonString());
+        var results = schema.Evaluate(
+            jsonDocument.RootElement,
+            new EvaluationOptions
+            {
+                OutputFormat = OutputFormat.Hierarchical
+            });
+        if (results.IsValid)
+        {
+            return true;
+        }
+
+        var failures = EnumerateSchemaFailures(results).ToArray();
+        var pointer = failures.Length == 1
+            ? NormalizeJsonPointer(failures[0].InstanceLocation.ToString())
+            : string.Empty;
+        var message = failures.Length == 1
+            ? FormatSchemaErrors(failures[0], fallbackMessage)
+            : FormatSchemaFailureSummary(failures, fallbackMessage);
+
+        issues.Add(new DiagnosticIssue(
+            WastelandForge.Core.RuleId.Parse(McmPackageVerificationEvidenceValidator.RuleId),
+            DiagnosticSeverity.Error,
+            "build",
+            title,
+            message,
+            new SourceLocation(ToDisplayPath(projectRoot, evidencePath), JsonPointer.Parse(pointer)),
+            projectId,
+            suggestedFix: suggestedFix,
+            docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{McmPackageVerificationEvidenceValidator.RuleId}")));
+        return false;
+    }
+
+    private static IEnumerable<EvaluationResults> EnumerateSchemaFailures(EvaluationResults results)
+    {
+        if (results.IsValid)
+        {
+            yield break;
+        }
+
+        if (results.Errors is { Count: > 0 })
+        {
+            yield return results;
+        }
+
+        foreach (var detail in results.Details ?? [])
+        {
+            foreach (var failure in EnumerateSchemaFailures(detail))
+            {
+                yield return failure;
+            }
+        }
+    }
+
+    private static string FormatSchemaErrors(EvaluationResults result, string fallbackMessage)
+    {
+        if (result.Errors is not { Count: > 0 })
+        {
+            return fallbackMessage;
+        }
+
+        return string.Join(
+            " ",
+            result.Errors
+                .OrderBy(error => error.Key, StringComparer.Ordinal)
+                .Select(error => $"{error.Key}: {error.Value}"));
+    }
+
+    private static string FormatSchemaFailureSummary(IReadOnlyCollection<EvaluationResults> failures, string fallbackMessage)
+    {
+        if (failures.Count == 0)
+        {
+            return fallbackMessage;
+        }
+
+        var examples = failures
+            .Take(3)
+            .Select(failure =>
+            {
+                var pointer = NormalizeJsonPointer(failure.InstanceLocation.ToString());
+                var location = string.IsNullOrWhiteSpace(pointer) ? "/" : pointer;
+                return $"{location}: {FormatSchemaErrors(failure, fallbackMessage)}";
+            });
+
+        return $"{fallbackMessage} {failures.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} errors. Examples: {string.Join(" ", examples)}";
+    }
+
+    private static string NormalizeJsonPointer(string pointer) =>
+        string.IsNullOrWhiteSpace(pointer) ? string.Empty : pointer;
+
+    private static JsonSchema LoadInstallPlanSchema()
+    {
+        return LoadBuiltInSchema(WastelandForgeSchemaIds.InstallPlan010);
+    }
+
+    private static JsonSchema LoadPackageManifestSchema()
+    {
+        return LoadBuiltInSchema(WastelandForgeSchemaIds.PackageManifest010);
+    }
+
+    private static JsonSchema LoadInstallPreviewSchema()
+    {
+        return LoadBuiltInSchema(WastelandForgeSchemaIds.InstallPreview010);
+    }
+
+    private static JsonSchema LoadPackageVerificationSchema()
+    {
+        return LoadBuiltInSchema(WastelandForgeSchemaIds.PackageVerification010);
+    }
+
+    private static JsonSchema LoadBuiltInSchema(string schemaId)
+    {
+        if (!WastelandForgeSchemaCatalog.TryGetById(schemaId, out var resource) ||
+            resource is null)
+        {
+            throw new InvalidOperationException($"Built-in schema '{schemaId}' was not found.");
+        }
+
+        return JsonSchema.FromText(
+            WastelandForgeSchemaCatalog.ReadText(resource),
+            new BuildOptions
+            {
+                SchemaRegistry = new SchemaRegistry()
+            });
+    }
+
     private static void ValidateInstallPreviewSummary(
         string projectRoot,
         string installPreviewSummaryPath,
@@ -1324,9 +1578,21 @@ public static class McmPackageVerificationEvidenceFileVerifier
         LogicalId? projectId,
         List<DiagnosticIssue> issues)
     {
+        if (!File.Exists(path))
+        {
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                path,
+                projectId,
+                $"MCM package {evidenceName} evidence is missing",
+                $"Expected {evidenceName} evidence file '{ToDisplayPath(projectRoot, path)}' to exist before package verify-existing."));
+            return null;
+        }
+
         try
         {
-            if (JsonNode.Parse(File.ReadAllText(path)) is JsonObject json)
+            var node = JsonNode.Parse(File.ReadAllText(path));
+            if (node is JsonObject json)
             {
                 return json;
             }
@@ -1336,10 +1602,20 @@ public static class McmPackageVerificationEvidenceFileVerifier
                 path,
                 projectId,
                 $"MCM package {evidenceName} evidence is not a JSON object",
-                $"Expected {evidenceName} evidence to parse as a JSON object."));
+                $"Expected {evidenceName} evidence file '{ToDisplayPath(projectRoot, path)}' to contain a JSON object."));
             return null;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        catch (JsonException exception)
+        {
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                path,
+                projectId,
+                $"MCM package {evidenceName} evidence is malformed JSON",
+                $"Expected {evidenceName} evidence file '{ToDisplayPath(projectRoot, path)}' to contain valid JSON: {exception.Message}"));
+            return null;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             issues.Add(CreateFileIssue(
                 projectRoot,
@@ -1358,6 +1634,17 @@ public static class McmPackageVerificationEvidenceFileVerifier
         LogicalId? projectId,
         List<DiagnosticIssue> issues)
     {
+        if (!File.Exists(path))
+        {
+            issues.Add(CreateFileIssue(
+                projectRoot,
+                path,
+                projectId,
+                $"MCM package {evidenceName} evidence is missing",
+                $"Expected {evidenceName} evidence file '{ToDisplayPath(projectRoot, path)}' to exist before package verify-existing."));
+            return null;
+        }
+
         try
         {
             return File.ReadAllText(path);

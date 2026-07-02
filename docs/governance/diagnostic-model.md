@@ -268,6 +268,39 @@ validation failures. Existing package evidence revalidation still uses
 Gate 117 adds no new diagnostic rule family or rule ID. Install-plan
 verify-existing content failures continue to use `WF-BUILD-006`.
 
+Gate 118 adds no new diagnostic rule family or rule ID. Install-plan
+verify-existing schema failures continue to use `WF-BUILD-006`.
+
+Gate 119 adds no new diagnostic rule family or rule ID. Package-manifest
+verify-existing schema failures continue to use `WF-BUILD-006`.
+
+Gate 120 adds no new diagnostic rule family or rule ID. Install-preview
+verify-existing schema failures continue to use `WF-BUILD-006`.
+
+Gate 121 adds no new diagnostic rule family or rule ID. Package-verification
+verify-existing schema failures continue to use `WF-BUILD-006`.
+
+Gate 122 adds no new diagnostic rule family or rule ID. Schema-gated
+verify-existing projection coverage continues to use canonical `WF-BUILD-006`
+diagnostics rendered through existing SARIF, GitHub, and Markdown projections.
+
+Gate 123 adds no new diagnostic rule family or rule ID. Missing required
+existing package evidence files continue to use canonical `WF-BUILD-006`
+diagnostics.
+
+Gate 124 adds no new diagnostic rule family or rule ID. Malformed JSON
+evidence and wrong top-level JSON evidence-shape failures continue to use
+canonical `WF-BUILD-006` diagnostics.
+
+Gate 125 adds no new diagnostic rule family or rule ID. Malformed JSON
+evidence projection coverage continues to use canonical `WF-BUILD-006`
+diagnostics rendered through existing SARIF, GitHub, and Markdown projections.
+
+Gate 126 adds no new diagnostic rule family or rule ID. It closes the current
+MCM Extender diagnostics lane and points the next diagnostic work back toward
+capability and environment reporting, where future rule additions should use
+the reserved `WF-CAP-*` family.
+
 Gate 18 extends runtime schema diagnostics to optional dialogue registry
 documents and adds `WF-SEM-015` for dialogue voice worklist entries whose
 declared voice/lip assets are missing.

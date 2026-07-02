@@ -563,6 +563,59 @@ coverage for install-plan JSON and Markdown content revalidation in
 install-plan metadata, entry content, and summary content, then assert
 blocking `WF-BUILD-006` diagnostics.
 
+Gate 118 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for install-plan schema revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit existing
+`install-plan.json` schema shape and assert blocking `WF-BUILD-006` schema
+diagnostics while preserving schema-valid install-plan content drift coverage.
+
+Gate 119 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for package-manifest schema revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit existing
+`package-manifest.json` schema shape and assert blocking `WF-BUILD-006`
+schema diagnostics before dependent package evidence checks run.
+
+Gate 120 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for install-preview schema revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit existing
+`install-preview.json` schema shape and assert blocking `WF-BUILD-006` schema
+diagnostics before dependent package evidence checks run.
+
+Gate 121 adds `WastelandForge.UnitTests` and `WastelandForge.GoldenTests`
+coverage for package-verification schema revalidation in
+`forge package --target mcm-json --verify-existing`. The tests edit existing
+`package-verification.json` schema shape and assert blocking `WF-BUILD-006`
+schema diagnostics before dependent package evidence checks run. Older
+metadata drift tests now mutate schema-valid command evidence so they continue
+to exercise deeper content validation after the schema gate.
+
+Gate 122 adds `WastelandForge.GoldenTests` coverage for schema-gated
+verify-existing diagnostic projections. The tests edit existing
+`package-verification.json` schema shape, refresh local package evidence, and
+assert the same `WF-BUILD-006` package-verification schema diagnostic through
+SARIF, GitHub workflow-command annotation, and Markdown diagnostic summary
+output.
+
+Gate 123 adds `WastelandForge.UnitTests` coverage for missing JSON and
+Markdown package-verification evidence files, plus `WastelandForge.GoldenTests`
+coverage for the CLI JSON diagnostic when `package-verification.json` is
+absent from existing package evidence.
+
+Gate 124 adds `WastelandForge.UnitTests` coverage for malformed JSON and
+non-object package-verification evidence, plus `WastelandForge.GoldenTests`
+coverage for the CLI JSON diagnostic when existing `package-verification.json`
+contains malformed JSON.
+
+Gate 125 adds `WastelandForge.GoldenTests` coverage for malformed
+package-verification JSON diagnostic projections. The tests corrupt existing
+`package-verification.json` in temp-only package evidence and assert the same
+`WF-BUILD-006` malformed JSON diagnostic through SARIF, GitHub
+workflow-command annotation, and Markdown diagnostic summary output.
+
+Gate 126 adds no new test category. It closes the current MCM Extender test
+lane and points the next testing work at capability scanner and Doctor-style
+environment reporting coverage.
+
 Run the full local suite serially:
 
 ```text

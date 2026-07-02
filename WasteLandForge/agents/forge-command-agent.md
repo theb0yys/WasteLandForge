@@ -65,8 +65,11 @@ Gate 45 adds option-level dispatch for
 It validates a user-saved GECK dialogue export text file only; do not control,
 automate, import into, or mutate an open GECK session.
 
-Gate 117 implements existing package evidence verification, install-ready
-export planning, and install-plan content revalidation through
+Gate 126 closes the current MCM Extender lane after existing package evidence
+verification, install-ready
+export planning, package-manifest schema revalidation, install-preview schema
+revalidation, package-verification schema revalidation, and install-plan
+schema/content revalidation through
 `/forge package --target mcm-json --verify-existing`. Route it to the real CLI
 behavior when available; do not invent `/forge verify-package`,
 `/forge package verify`, or other verifier aliases. The current MCM JSON
@@ -87,7 +90,7 @@ checkbox, string-toggle, runtime requirements pass-through, and
 translation-file output for `/forge generate --target mcm-json`,
 `/forge build --target mcm-json`, and `/forge package --target mcm-json`.
 Route them to the real CLI behavior when available and describe the output as
-the Gate 117 MCM Extender JSON subset under `MCM/<menu>.json`, plus
+the closed MCM Extender JSON subset under `MCM/<menu>.json`, plus
 `MCM/Translations/<modName>.ini` when translations are declared, and staged
 referenced texture assets under their game-relative target paths. Build and
 package output also include `package-manifest.json`, `package.zip`,
@@ -143,16 +146,34 @@ rejection. Gate 116 also records install-plan paths in manifests and expected
 checksums. Gate 117 also revalidates install-plan JSON and Markdown content in
 verify-existing mode, including metadata, archive details, package-manifest
 entry consistency, required copy actions, manual-approval/non-mutation flags,
-and summary lines. These remain reports only: they
+and summary lines. Gate 118 also revalidates existing `install-plan.json`
+against `install-plan/0.1.0` in verify-existing mode before deeper
+install-plan content checks. Gate 119 also revalidates existing
+`package-manifest.json` against `package-manifest/0.1.0` before dependent
+package evidence checks. Gate 120 also revalidates existing
+`install-preview.json` against `install-preview/0.1.0` before dependent
+package evidence checks. Gate 121 also revalidates existing
+`package-verification.json` against `package-verification/0.1.0` before
+dependent package evidence checks. Gate 122 adds focused projection coverage
+for schema-gated SARIF, GitHub annotation, and Markdown summary diagnostics.
+Gate 123 adds explicit missing evidence-file diagnostics before deeper package
+evidence checks run.
+Gate 124 adds explicit malformed JSON and non-object JSON evidence diagnostics
+before deeper package evidence checks run.
+Gate 125 adds focused projection coverage for malformed JSON diagnostics
+through SARIF, GitHub annotation, and Markdown summary output.
+Gate 126 closes this MCM lane. Unless the user explicitly reopens MCM work,
+the next development step should move to broader Forge value through
+capability scanner and Doctor-style environment reporting.
+These remain reports only: they
 list Data-relative would-copy paths and do not install into Data or MO2. It
 supports header,
 image, toggle, keybind, checkbox, string-toggle, slider, choice, and text
 settings. MCM image filenames are validated against required texture asset
 targets and existing DDS source-file checks. Do not claim callbacks,
 multi-slider, color picker, FOMOD package creation, capability-derived runtime
-requirements, MO2 installation, install-plan schema revalidation in
-verify-existing mode, or in-game verification exist until later gates
-implement them.
+requirements, MO2 installation, or in-game verification exist until later
+gates implement them.
 
 ## Required output
 
