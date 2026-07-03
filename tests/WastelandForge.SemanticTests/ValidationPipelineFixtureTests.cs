@@ -124,6 +124,71 @@ public sealed class ValidationPipelineFixtureTests
     }
 
     [Fact]
+    public void InvalidJipScriptBodyRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidJipScriptBodyRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/jip-scripts/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/scripts/0/body/lines/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("text", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void JipScriptLifecyclePrefixMismatchEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "JipScriptLifecyclePrefixMismatch"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-040", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/jip-scripts/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/scripts/0/outputFile", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:040:io.github.theboyyss.jipscriptlifecycleprefixmismatch.jip_scripts.bootstrap:outputFile", issue.Fingerprint);
+        Assert.Contains("gl_", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("gr_prefix_mismatch.txt", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MissingJipScriptRunnerRequirementEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingJipScriptRunnerRequirement"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-041", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/jip-scripts/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/scripts/0/requires/capabilities", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:041:io.github.theboyyss.missingjipscriptrunnerrequirement.jip_scripts.bootstrap:runtime.scripting.jip_script_runner", issue.Fingerprint);
+        Assert.Contains("runtime.scripting.jip_script_runner", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void JipScriptSourceLineBudgetExceededEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "JipScriptSourceLineBudgetExceeded"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-042", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/jip-scripts/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/scripts/0/body/lines", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:042:io.github.theboyyss.jipscriptsourcelinebudgetexceeded.jip_scripts.bootstrap:bodyBudget", issue.Fingerprint);
+        Assert.Contains("3 UTF-8 bytes", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("maxBytes 2", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void InvalidDialogueRegistryUsesRuntimeSchemaDiagnostics()
     {
         var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueRegistry"));
@@ -1099,6 +1164,10 @@ public sealed class ValidationPipelineFixtureTests
         Assert.Equal(new[] { "runtime.scripting.jip_script_runner" }, script.RequiredCapabilities);
         Assert.Equal(16384, script.MaxBytes);
         Assert.Equal("explicitReferences", script.FormIdResolutionStrategy);
+        var sourceLine = Assert.Single(script.SourceLines);
+        Assert.Equal("synthetic opaque source line", sourceLine.Text);
+        Assert.Equal("src/registries/jip-scripts/main.json", sourceLine.Source.File);
+        Assert.Equal("/scripts/0/body/lines/0/text", sourceLine.Source.Pointer?.ToString());
         Assert.Equal("src/registries/jip-scripts/main.json", script.Source.File);
         Assert.Equal("/scripts/0", script.Source.Pointer?.ToString());
     }

@@ -2,10 +2,10 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 202 records the
-JIP LN text-script generator evidence checkpoint while keeping source
-contracts, schemas, generator code, CLI wiring, runtime probes, GECK
-automation, MO2 VFS inspection, and external tool execution out of scope.
+The project is currently in gated v0.1 implementation. Gate 206 adds JIP LN
+text-script source-line byte-budget semantic validation while keeping text
+emission, package staging, CLI target wiring, runtime probes, GECK automation,
+MO2 VFS inspection, and external tool execution out of scope.
 
 ## Architecture Spine
 
@@ -369,8 +369,42 @@ Gate 202 records the JIP LN text-script generator evidence checkpoint under
 capability boundaries, generated/dist output limits, and open contract
 questions. No source schema, generator code, CLI target, fixture, runtime
 probe, GECK automation, MO2 VFS inspection, live Data mutation, or external
-tool execution is added. Gate 203 should add the source contract skeleton
-with synthetic validation coverage only.
+tool execution is added.
+
+Gate 203 adds `schemas/jip-scripts/0.1.0/schema.json`, the optional
+`registries.jipScripts` manifest path, schema catalog wiring, validation
+pipeline loading, a typed JIP script read result, and synthetic valid/broken
+fixtures. It records script identity, lifecycle prefix, output filename
+intent, required capabilities, 16,384-byte size policy, and explicit-reference
+FormID resolution only. It does not emit script text, stage packages, wire
+`forge generate` or `forge build` targets, probe runtime installs, automate
+GECK, inspect MO2 VFS state, mutate a live Data tree, or execute external
+tools.
+
+Gate 204 adds schema-valid JIP source semantic validation. `WF-SEM-040`
+requires the declared lifecycle prefix to match the output filename prefix,
+and `WF-SEM-041` requires each JIP script source contract to declare
+`runtime.scripting.jip_script_runner`. It adds synthetic broken fixtures for
+both checks and still does not emit script text, stage packages, wire CLI
+generation/build targets, probe runtimes, automate GECK, inspect MO2 VFS
+state, mutate a live Data tree, or execute external tools. Gate 205 should
+define the first script body/source-line contract before generated output.
+
+Gate 205 extends the JIP source contract with required `body` metadata:
+`lineMode: "opaqueText"` and `body.lines[].text`. These are opaque single-line
+source records for future validation and generation gates, not validated JIP
+syntax and not emitted files. The typed read model now exposes those source
+lines and their source locations. Gate 206 should add source-line byte-budget
+semantic validation before any generator work.
+
+Gate 206 adds `WF-SEM-042` for source bodies whose opaque line text exceeds
+`sizePolicy.maxBytes`. The budget is source-level only: UTF-8 byte count of
+`body.lines[].text` with one LF byte between stored lines. It is not final
+emitted-file byte accounting, and still adds no generated script text,
+package staging, CLI generation/build target, runtime probe, GECK automation,
+MO2 VFS inspection, live Data mutation, or external tool execution. Gate 207
+should add duplicate JIP output filename semantic validation before generator
+work.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

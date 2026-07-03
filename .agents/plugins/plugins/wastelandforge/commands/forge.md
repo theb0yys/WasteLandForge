@@ -393,6 +393,42 @@ external tool execution, command alias, or new output format. Route the next
 implementation slice to Gate 203: JIP LN text-script source contract skeleton
 with synthetic validation coverage only.
 
+Gate 203 adds the JIP LN text-script source contract skeleton with synthetic
+validation coverage. Treat it as schema and validation groundwork only, not as
+generated script output, `forge generate` target wiring, `forge build` target
+wiring, package staging, runtime probe, GECK automation, MO2 VFS inspection,
+live Data mutation, external tool execution, command alias, or new output
+format. Route the next implementation slice to Gate 204: JIP LN text-script
+source semantic validation for lifecycle/output prefix consistency and
+required capability declaration.
+
+Gate 204 adds JIP LN text-script source semantic validation for
+lifecycle/output prefix consistency and required
+`runtime.scripting.jip_script_runner` declaration. Treat it as validation
+groundwork only, not as a script body/source-line contract, generated script
+output, `forge generate` target wiring, `forge build` target wiring, package
+staging, runtime probe, GECK automation, MO2 VFS inspection, live Data
+mutation, external tool execution, command alias, or new output format. Route
+the next implementation slice to Gate 205: JIP LN text-script
+body/source-line contract skeleton.
+
+Gate 205 adds opaque JIP LN text-script body/source-line source records under
+`body.lines[].text`. Treat it as source-contract groundwork only, not as JIP
+syntax validation, generated script output, `forge generate` target wiring,
+`forge build` target wiring, package staging, runtime probe, GECK automation,
+MO2 VFS inspection, live Data mutation, external tool execution, command
+alias, or new output format. Route the next implementation slice to Gate 206:
+source-line byte-budget semantic validation.
+
+Gate 206 adds JIP LN text-script source-line byte-budget semantic validation
+using UTF-8 bytes and LF separators over opaque source lines. Treat it as
+source validation only, not as final emitted-file byte accounting, JIP syntax
+validation, generated script output, `forge generate` target wiring,
+`forge build` target wiring, package staging, runtime probe, GECK automation,
+MO2 VFS inspection, live Data mutation, external tool execution, command
+alias, or new output format. Route the next implementation slice to Gate 207:
+duplicate JIP output filename semantic validation.
+
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider
   evidence plus compact `index.providerStatuses`,

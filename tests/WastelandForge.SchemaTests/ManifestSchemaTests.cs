@@ -70,6 +70,22 @@ public sealed class ManifestSchemaTests
         Assert.Equal(WastelandForgeSchemaIds.Manifest010, (string?)schema["$id"]);
     }
 
+    [Fact]
+    public void JipScriptSchemaDefinesOpaqueBodyLines()
+    {
+        var schemaPath = Path.Combine(RepositoryRoot(), "schemas", "jip-scripts", "0.1.0", "schema.json");
+        var schema = JsonNode.Parse(File.ReadAllText(schemaPath)) as JsonObject;
+
+        Assert.NotNull(schema);
+        var required = schema["$defs"]?["script"]?["required"]?.AsArray()
+            .Select(node => (string?)node)
+            .ToArray();
+        Assert.NotNull(required);
+        Assert.Contains("body", required);
+        Assert.Equal("opaqueText", (string?)schema["$defs"]?["body"]?["properties"]?["lineMode"]?["const"]);
+        Assert.Equal("^[^\\r\\n]*$", (string?)schema["$defs"]?["sourceLine"]?["properties"]?["text"]?["pattern"]);
+    }
+
     [Theory]
     [InlineData("dependencies", "0.1.0", WastelandForgeSchemaIds.Dependency010, "dependency")]
     [InlineData("dependencies", "0.2.0", WastelandForgeSchemaIds.Dependency020, "dependency")]

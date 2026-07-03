@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "jip-script",
+  "id": "io.github.theboyyss.jipscriptlifecycleprefixmismatch.jip_scripts",
+  "scripts": [
+    {
+      "id": "io.github.theboyyss.jipscriptlifecycleprefixmismatch.jip_scripts.bootstrap",
+      "summary": "Synthetic JIP LN text-script lifecycle mismatch fixture.",
+      "lifecyclePrefix": "gl_",
+      "outputFile": "gr_prefix_mismatch.txt",
+      "requires": {
+        "capabilities": [
+          {
+            "id": "runtime.scripting.jip_script_runner"
+          }
+        ]
+      },
+      "sizePolicy": {
+        "maxBytes": 16384
+      },
+      "formIdResolution": {
+        "strategy": "explicitReferences"
+      },
+      "body": {
+        "lineMode": "opaqueText",
+        "lines": [
+          {
+            "text": "synthetic opaque source line"
+          }
+        ]
+      }
+    }
+  ]
+}

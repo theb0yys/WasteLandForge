@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Schema;
@@ -12,6 +13,8 @@ namespace WastelandForge.Validation;
 
 public sealed class ProjectValidationPipeline
 {
+    private const string JipScriptRunnerCapabilityId = "runtime.scripting.jip_script_runner";
+
     private static readonly IReadOnlyDictionary<string, string[]> AssetTargetExtensions = new Dictionary<string, string[]>(StringComparer.Ordinal)
     {
         ["mesh"] = [".nif"],
@@ -1052,9 +1055,10 @@ public sealed class ProjectValidationPipeline
                 issues,
                 projectId);
         }
+        IReadOnlyList<RegistryDocument> jipScriptDocuments = [];
         if (jipScriptsPath is not null)
         {
-            _ = LoadRegistryDocuments(
+            jipScriptDocuments = LoadRegistryDocuments(
                 manifestLoad.ProjectRoot,
                 jipScriptsPath,
                 "jip-script",
@@ -1078,6 +1082,7 @@ public sealed class ProjectValidationPipeline
         RunMcmAssetSemanticValidation(mcmDocuments, assetRecords, issues, projectId);
         RunQuestSemanticValidation(questDocuments, issues, projectId);
         RunDialogueSemanticValidation(dialogueDocuments, questDocuments, assetRecords, issues, projectId);
+        RunJipScriptSemanticValidation(jipScriptDocuments, issues, projectId);
 
         var capabilityIds = capabilityDocuments
             .SelectMany(document => ReadCapabilityIds(document.Root))
@@ -1107,6 +1112,127 @@ public sealed class ProjectValidationPipeline
                     $"wf:sem:014:{requiredCapability.Id}"));
             }
         }
+    }
+
+    private static void RunJipScriptSemanticValidation(
+        IReadOnlyList<RegistryDocument> jipScriptDocuments,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        foreach (var document in jipScriptDocuments)
+        {
+            if (document.Root["scripts"] is not JsonArray scripts)
+            {
+                continue;
+            }
+
+            for (var index = 0; index < scripts.Count; index++)
+            {
+                if (scripts[index] is not JsonObject script)
+                {
+                    continue;
+                }
+
+                var id = GetString(script, "id") ?? $"{document.DisplayPath}:{index}";
+                var lifecyclePrefix = GetString(script, "lifecyclePrefix");
+                var outputFile = GetString(script, "outputFile");
+                if (lifecyclePrefix is not null &&
+                    outputFile is not null &&
+                    !outputFile.StartsWith(lifecyclePrefix, StringComparison.Ordinal))
+                {
+                    issues.Add(CreateIssue(
+                        "WF-SEM-040",
+                        DiagnosticSeverity.Error,
+                        "semantic",
+                        "JIP script lifecycle prefix mismatch",
+                        $"JIP LN text script '{id}' declares lifecycle prefix '{lifecyclePrefix}' but output file '{outputFile}' does not use that prefix.",
+                        CreateSourceLocation(document.DisplayPath, $"/scripts/{index}/outputFile", document.SourceLocations),
+                        projectId,
+                        suggestedFix: "Make lifecyclePrefix match the outputFile prefix.",
+                        docsRule: "WF-SEM-040",
+                        fingerprint: $"wf:sem:040:{id}:outputFile"));
+                }
+
+                var capabilityReferences = ReadCapabilityReferences(script["requires"] as JsonObject);
+                if (!capabilityReferences.Contains(JipScriptRunnerCapabilityId, StringComparer.Ordinal))
+                {
+                    issues.Add(CreateIssue(
+                        "WF-SEM-041",
+                        DiagnosticSeverity.Error,
+                        "semantic",
+                        "Missing JIP Script Runner capability requirement",
+                        $"JIP LN text script '{id}' must declare required capability '{JipScriptRunnerCapabilityId}'.",
+                        CreateSourceLocation(document.DisplayPath, $"/scripts/{index}/requires/capabilities", document.SourceLocations),
+                        projectId,
+                        suggestedFix: $"Add '{JipScriptRunnerCapabilityId}' to the script requires.capabilities list.",
+                        docsRule: "WF-SEM-041",
+                        fingerprint: $"wf:sem:041:{id}:{JipScriptRunnerCapabilityId}"));
+                }
+
+                ValidateJipScriptSourceLineBudget(document, script, index, id, issues, projectId);
+            }
+        }
+    }
+
+    private static void ValidateJipScriptSourceLineBudget(
+        RegistryDocument document,
+        JsonObject script,
+        int scriptIndex,
+        string id,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        var maxBytes = script["sizePolicy"] is JsonObject sizePolicy
+            ? GetInteger(sizePolicy, "maxBytes")
+            : null;
+        if (maxBytes is null ||
+            script["body"] is not JsonObject body ||
+            body["lines"] is not JsonArray lines)
+        {
+            return;
+        }
+
+        var sourceBudgetBytes = CalculateJipScriptSourceLineBudgetBytes(lines);
+        if (sourceBudgetBytes <= maxBytes.Value)
+        {
+            return;
+        }
+
+        issues.Add(CreateIssue(
+            "WF-SEM-042",
+            DiagnosticSeverity.Error,
+            "semantic",
+            "JIP script source body exceeds byte budget",
+            $"JIP LN text script '{id}' source body is {sourceBudgetBytes} UTF-8 bytes using LF separators, exceeding declared maxBytes {maxBytes.Value}.",
+            CreateSourceLocation(document.DisplayPath, $"/scripts/{scriptIndex}/body/lines", document.SourceLocations),
+            projectId,
+            suggestedFix: "Shorten the source lines or increase sizePolicy.maxBytes within the JIP LN Script Runner limit.",
+            docsRule: "WF-SEM-042",
+            fingerprint: $"wf:sem:042:{id}:bodyBudget"));
+    }
+
+    private static long CalculateJipScriptSourceLineBudgetBytes(JsonArray lines)
+    {
+        long total = 0;
+        var textLineCount = 0;
+        foreach (var line in lines.OfType<JsonObject>())
+        {
+            var text = GetString(line, "text");
+            if (text is null)
+            {
+                continue;
+            }
+
+            if (textLineCount > 0)
+            {
+                total += 1;
+            }
+
+            total += Encoding.UTF8.GetByteCount(text);
+            textLineCount++;
+        }
+
+        return total;
     }
 
     private static void RunAssetSemanticValidation(
@@ -2494,8 +2620,32 @@ public sealed class ProjectValidationPipeline
                 ReadCapabilityReferences(script["requires"] as JsonObject),
                 maxBytes.Value,
                 formIdResolutionStrategy,
+                ReadJipScriptSourceLines(document, script, index),
                 CreateSourceLocation(document.DisplayPath, $"/scripts/{index}", document.SourceLocations));
         }
+    }
+
+    private static IReadOnlyList<JipScriptSourceLine> ReadJipScriptSourceLines(
+        RegistryDocument document,
+        JsonObject script,
+        int scriptIndex)
+    {
+        if (script["body"] is not JsonObject body ||
+            body["lines"] is not JsonArray lines)
+        {
+            return [];
+        }
+
+        return lines
+            .Select((line, lineIndex) => new { Line = line as JsonObject, Index = lineIndex })
+            .Where(item => item.Line is not null)
+            .Select(item => new JipScriptSourceLine(
+                GetString(item.Line!, "text") ?? string.Empty,
+                CreateSourceLocation(
+                    document.DisplayPath,
+                    $"/scripts/{scriptIndex}/body/lines/{item.Index}/text",
+                    document.SourceLocations)))
+            .ToArray();
     }
 
     private static IReadOnlyList<string> ReadCapabilityReferences(JsonObject? requires)

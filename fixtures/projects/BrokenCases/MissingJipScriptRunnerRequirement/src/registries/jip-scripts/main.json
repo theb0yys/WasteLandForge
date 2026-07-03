@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "jip-script",
+  "id": "io.github.theboyyss.missingjipscriptrunnerrequirement.jip_scripts",
+  "scripts": [
+    {
+      "id": "io.github.theboyyss.missingjipscriptrunnerrequirement.jip_scripts.bootstrap",
+      "summary": "Synthetic missing JIP LN Script Runner capability requirement fixture.",
+      "lifecyclePrefix": "gr_",
+      "outputFile": "gr_missing_runner_requirement.txt",
+      "requires": {
+        "capabilities": [
+          {
+            "id": "runtime.scripting.xnvse"
+          }
+        ]
+      },
+      "sizePolicy": {
+        "maxBytes": 16384
+      },
+      "formIdResolution": {
+        "strategy": "explicitReferences"
+      },
+      "body": {
+        "lineMode": "opaqueText",
+        "lines": [
+          {
+            "text": "synthetic opaque source line"
+          }
+        ]
+      }
+    }
+  ]
+}

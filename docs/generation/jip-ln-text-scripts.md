@@ -1,6 +1,6 @@
 # JIP LN Text Script Generator Evidence Checkpoint
 
-Status: Gate 202 evidence checkpoint
+Status: Gate 206 source-line byte-budget validation added
 Research classification: Documented / Inferred / Open
 Source: R005, R006 / ADR-008, ADR-009, ADR-010, ADR-011
 
@@ -9,6 +9,15 @@ Source: R005, R006 / ADR-008, ADR-009, ADR-010, ADR-011
 Record the evidence and implementation limits for the next real
 mod-building function slice before adding any JIP LN text-script source
 contract, schema, generator code, CLI output, fixture, or package output.
+
+Gate 203 adds the first source contract skeleton and synthetic validation
+coverage. Gate 204 adds semantic checks for lifecycle/output prefix
+consistency and required JIP Script Runner capability declaration. Gate 205
+adds opaque body/source-line records for future validation and generation
+gates. Gate 206 adds source-level byte-budget validation over those opaque
+lines. Generator code, CLI targets, package staging, runtime probes, GECK
+automation, MO2 VFS inspection, live Data mutation, and external tool
+execution remain out of scope.
 
 ## Documented
 
@@ -49,24 +58,31 @@ contract, schema, generator code, CLI output, fixture, or package output.
   game or MO2-managed Data tree by this slice.
 - The first generator should accept only synthetic, deliberately small script
   fixtures until the script subset and validation rules are explicit.
+- Gate 204 uses `WF-SEM-040` for lifecycle/output prefix mismatches and
+  `WF-SEM-041` when a JIP source contract does not declare
+  `runtime.scripting.jip_script_runner`.
+- Gate 205 records script bodies as `lineMode: "opaqueText"` plus
+  `body.lines[].text`. Those lines are canonical source records only; they
+  are not validated as JIP syntax and are not emitted as script files.
+- Gate 206 uses `WF-SEM-042` when the source body exceeds `sizePolicy.maxBytes`.
+  The source budget uses UTF-8 bytes for stored line text with one LF byte
+  between lines. This is not final emitted-file byte accounting.
 
 ## Open
 
-- Exact JIP LN script source schema name, version, and registry placement.
-- Exact allowed lifecycle filename prefixes and their schema enumeration.
 - Exact safe script syntax subset for the first emitted text files.
 - Exact line ending, encoding, header, comment, and deterministic formatting
   policy for generated scripts.
-- Exact FormID-resolution strategy fields for non-Editor-ID scripts.
-- Whether JohnnyGuitar-backed Editor ID call-through belongs in the first JIP
-  contract or a later optional-capability extension.
-- Exact `WF-GEN-*`, `WF-CAP-*`, or `WF-SEM-*` diagnostics for script size,
-  unsafe output paths, missing capabilities, and unresolved references.
+- Exact future FormID-resolution fields beyond the initial explicit-reference
+  strategy.
+- Exact JohnnyGuitar-backed Editor ID call-through extension point.
+- Exact `WF-GEN-*`, `WF-CAP-*`, or later `WF-SEM-*` diagnostics for emitted
+  script size, unsafe output paths, unresolved references, and capability
+  readiness remain future work.
 
 ## Non-goals
 
 - No JIP LN generator implementation.
-- No source schema or schema catalog update.
 - No generated script files.
 - No build graph target.
 - No CLI behavior or output contract change.
@@ -80,7 +96,6 @@ contract, schema, generator code, CLI output, fixture, or package output.
 
 ## Next implementation slice
 
-Gate 203 should add the JIP LN text-script source contract skeleton with
-synthetic validation coverage only. It should stop before text emission,
-package staging, CLI target wiring, runtime probes, GECK automation, MO2 VFS
-inspection, or external tool execution.
+Gate 207 should add duplicate output filename semantic validation. It should
+stop before text emission, package staging, CLI target wiring, runtime probes,
+GECK automation, MO2 VFS inspection, or external tool execution.

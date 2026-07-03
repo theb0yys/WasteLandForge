@@ -1092,3 +1092,29 @@ evidence checkpoint under `docs/generation/` and leaves source contracts,
 schemas, generator code, CLI target wiring, build/package staging, runtime
 probes, GECK automation, MO2 VFS inspection, and external tool execution for
 later gates.
+
+Gate 203 adds schema catalog wiring and validation pipeline loading for the
+`jip-script` source registry kind. It adds `ProjectJipScriptReadResult` and
+`JipScriptDefinition` as typed read models for schema-valid source contracts.
+No generator, CLI target, package staging, runtime probe, GECK automation,
+MO2 VFS inspection, live Data mutation, or external tool execution consumes
+the model yet.
+
+Gate 204 adds semantic validation over schema-valid JIP source contracts:
+`WF-SEM-040` for lifecycle/output prefix mismatch and `WF-SEM-041` for a
+missing `runtime.scripting.jip_script_runner` script requirement. No
+generator, CLI target, package staging, runtime probe, GECK automation, MO2
+VFS inspection, live Data mutation, or external tool execution consumes these
+contracts yet.
+
+Gate 205 extends `JipScriptDefinition` with opaque source lines and source
+locations. `ProjectValidationPipeline.ReadJipScripts` reads
+`body.lines[].text` from schema-valid JIP source registries. No generator, CLI
+target, package staging, runtime probe, GECK automation, MO2 VFS inspection,
+live Data mutation, or external tool execution consumes these source lines
+yet.
+
+Gate 206 adds `WF-SEM-042` in `ProjectValidationPipeline` for JIP source
+bodies whose opaque line text exceeds `sizePolicy.maxBytes`. The budget uses
+UTF-8 bytes for stored source-line text with one LF byte between lines, and is
+not final emitted-file byte accounting.

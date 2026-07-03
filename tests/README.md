@@ -926,6 +926,29 @@ tests, schema tests, local install snapshots, GECK outputs, MO2 profiles,
 Bethesda assets, third-party mod files, or external tool fixtures. Gate 203
 should use synthetic validation coverage for the source contract skeleton.
 
+Gate 203 adds schema, back-compat, and semantic fixture coverage for the JIP
+LN text-script source contract skeleton. The fixtures are synthetic JSON
+registry documents only and add no generated script files, local install
+snapshots, GECK outputs, MO2 profiles, Bethesda assets, third-party mod files,
+or external tool fixtures.
+
+Gate 204 adds semantic fixture coverage for `WF-SEM-040` lifecycle/output
+prefix mismatch and `WF-SEM-041` missing JIP Script Runner capability
+requirement. The fixtures are synthetic JSON registry documents only and add
+no generated script files, local install snapshots, GECK outputs, MO2
+profiles, Bethesda assets, third-party mod files, or external tool fixtures.
+
+Gate 205 adds schema and semantic fixture coverage for opaque JIP
+body/source-line records. The fixtures are synthetic JSON registry documents
+only and add no generated script files, local install snapshots, GECK outputs,
+MO2 profiles, Bethesda assets, third-party mod files, or external tool
+fixtures.
+
+Gate 206 adds semantic fixture coverage for `WF-SEM-042` source-line
+byte-budget validation. The fixture is synthetic JSON only and adds no
+generated script files, local install snapshots, GECK outputs, MO2 profiles,
+Bethesda assets, third-party mod files, or external tool fixtures.
+
 Run the full local suite serially:
 
 ```text

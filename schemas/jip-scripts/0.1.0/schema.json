@@ -55,7 +55,8 @@
         "outputFile",
         "requires",
         "sizePolicy",
-        "formIdResolution"
+        "formIdResolution",
+        "body"
       ],
       "properties": {
         "id": {
@@ -86,6 +87,9 @@
         },
         "formIdResolution": {
           "$ref": "#/$defs/formIdResolution"
+        },
+        "body": {
+          "$ref": "#/$defs/body"
         }
       }
     },
@@ -147,6 +151,43 @@
           ]
         }
       }
+    },
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lineMode",
+        "lines"
+      ],
+      "properties": {
+        "lineMode": {
+          "description": "Opaque source-line mode. Gate 205 records lines without validating or emitting JIP syntax.",
+          "const": "opaqueText"
+        },
+        "lines": {
+          "description": "Opaque single-line source text records for future syntax validation and generation gates.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceLine"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "sourceLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "text": {
+          "description": "Opaque source line text. This is not validated as JIP syntax in Gate 205.",
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\r\\n]*$"
+        }
+      }
     }
   },
   "examples": [
@@ -172,6 +213,14 @@
           },
           "formIdResolution": {
             "strategy": "explicitReferences"
+          },
+          "body": {
+            "lineMode": "opaqueText",
+            "lines": [
+              {
+                "text": "synthetic opaque source line"
+              }
+            ]
           }
         }
       ]

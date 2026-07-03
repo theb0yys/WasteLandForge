@@ -30,6 +30,7 @@ Do not overwrite a released schema in place. Schema migrations are explicit tool
 - `capabilities/0.2.0/schema.json` - capability registry schema with underscore-capable capability and provider IDs.
 - `assets/0.1.0/schema.json` - asset registry schema.
 - `mcm/0.1.0/schema.json` - MCM menu source registry schema.
+- `jip-scripts/0.1.0/schema.json` - JIP LN text-script source registry schema.
 - `mcm-extender-output/0.1.0/schema.json` - minimal MCM Extender runtime JSON output schema emitted by Forge.
 - `package-manifest/0.1.0/schema.json` - deterministic generated package manifest schema for the first MCM Extender loose-file package target.
 - `install-preview/0.1.0/schema.json` - deterministic generated install-preview report schema for the first MCM Extender loose-file package target.
@@ -254,3 +255,17 @@ no schema. The package-verification evidence schema remains
 Gate 88 implements that package-verification command skeleton but still adds
 no schema. The package-verification evidence schema remains
 `package-verification/0.1.0`.
+
+Gate 203 adds `jip-scripts/0.1.0/schema.json` as a source registry schema and
+adds optional manifest `registries.jipScripts` loading. It records JIP LN
+text-script intent only; generated script output schemas remain future work.
+
+Gate 204 adds no schema. It validates schema-valid JIP source contracts
+semantically and preserves `jip-scripts/0.1.0/schema.json`.
+
+Gate 205 extends the unpublished `jip-scripts/0.1.0/schema.json` source
+contract with required opaque body/source-line records. It does not add a
+generated output schema.
+
+Gate 206 adds no schema. It validates schema-valid JIP source lines against
+the source-level byte budget declared in `sizePolicy.maxBytes`.

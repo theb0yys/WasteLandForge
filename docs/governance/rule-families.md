@@ -380,3 +380,18 @@ source contracts may need `WF-GEN-*`, `WF-CAP-*`, or `WF-SEM-*` diagnostics
 for script size, unsafe output paths, missing capabilities, and unresolved
 references, but it does not allocate those IDs or change current diagnostic
 behavior.
+
+Gate 203 adds no new rule ID. JIP LN text-script source-contract failures use
+existing schema diagnostics for this slice; semantic and generator-specific
+rule IDs remain future work.
+
+Gate 204 adds `WF-SEM-040` for JIP source lifecycle prefix and output
+filename prefix mismatch, and `WF-SEM-041` for JIP source contracts that do
+not declare `runtime.scripting.jip_script_runner`.
+
+Gate 205 adds no new rule ID. Invalid JIP body/source-line shape is reported
+through existing schema diagnostics.
+
+Gate 206 adds `WF-SEM-042` for JIP source bodies whose opaque source-line
+text exceeds `sizePolicy.maxBytes` under the source-level byte-budget
+calculation.

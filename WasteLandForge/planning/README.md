@@ -207,9 +207,13 @@ Gate status:
 - `gates/gate-200-provider-version-parser-documentation-projection-notes.md` - Gate 200, provider-version parser documentation and projection notes.
 - `gates/gate-201-provider-version-parsed-evidence-model-skeleton.md` - Gate 201, provider-version parsed-evidence model skeleton.
 - `gates/gate-202-jip-ln-text-script-generator-evidence-checkpoint.md` - Gate 202, JIP LN text-script generator evidence checkpoint.
+- `gates/gate-203-jip-ln-text-script-source-contract-skeleton.md` - Gate 203, JIP LN text-script source contract skeleton.
+- `gates/gate-204-jip-ln-text-script-source-semantic-validation.md` - Gate 204, JIP LN text-script source semantic validation.
+- `gates/gate-205-jip-ln-text-script-body-source-line-contract.md` - Gate 205, JIP LN text-script body/source-line contract skeleton.
+- `gates/gate-206-jip-ln-text-script-source-line-byte-budget-validation.md` - Gate 206, JIP LN text-script source-line byte-budget validation.
 
 Next gate:
 
-- Gate 203 - JIP LN text-script source contract skeleton with synthetic validation coverage only, without text emission, package staging, CLI target wiring, runtime probes, GECK automation, MO2 VFS inspection, or external tool execution.
+- Gate 207 - JIP LN text-script duplicate output filename semantic validation, without text emission, package staging, CLI target wiring, runtime probes, GECK automation, MO2 VFS inspection, or external tool execution.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

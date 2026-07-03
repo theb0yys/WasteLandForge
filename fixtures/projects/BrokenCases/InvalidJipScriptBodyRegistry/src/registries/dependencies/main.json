@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "dependency",
+  "id": "io.github.theboyyss.invalidjipscriptbodyregistry.dependencies",
+  "requires": {
+    "capabilities": [
+      {
+        "id": "runtime.scripting.jip_script_runner",
+        "phase": [
+          "generation"
+        ],
+        "reason": "Validate future JIP LN text-script generation intent."
+      }
+    ]
+  }
+}

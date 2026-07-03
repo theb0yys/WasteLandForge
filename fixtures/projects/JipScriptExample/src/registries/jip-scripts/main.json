@@ -20,6 +20,14 @@
       },
       "formIdResolution": {
         "strategy": "explicitReferences"
+      },
+      "body": {
+        "lineMode": "opaqueText",
+        "lines": [
+          {
+            "text": "synthetic opaque source line"
+          }
+        ]
       }
     }
   ]

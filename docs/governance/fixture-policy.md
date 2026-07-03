@@ -615,3 +615,27 @@ Gate 202 adds documentation only. It commits no JIP LN script fixtures,
 provider DLLs, Bethesda assets, third-party mod files, local install
 snapshots, MO2 profiles, GECK outputs, external tool fixtures, generated
 script outputs, or generated evidence fixtures.
+
+Gate 203 commits only synthetic JSON registry fixtures for JIP LN text-script
+source-contract validation. It commits no generated JIP script files, provider
+DLLs, Bethesda assets, third-party mod files, local install snapshots, MO2
+profiles, GECK outputs, external tool fixtures, generated script outputs, or
+generated evidence fixtures.
+
+Gate 204 commits only synthetic JSON registry fixtures for JIP source semantic
+validation. It commits no generated JIP script files, provider DLLs, Bethesda
+assets, third-party mod files, local install snapshots, MO2 profiles, GECK
+outputs, external tool fixtures, generated script outputs, or generated
+evidence fixtures.
+
+Gate 205 commits only synthetic JSON registry fixtures for opaque JIP
+body/source-line contract validation. It commits no generated JIP script
+files, provider DLLs, Bethesda assets, third-party mod files, local install
+snapshots, MO2 profiles, GECK outputs, external tool fixtures, generated
+script outputs, or generated evidence fixtures.
+
+Gate 206 commits only synthetic JSON registry fixtures for JIP source-line
+byte-budget validation. It commits no generated JIP script files, provider
+DLLs, Bethesda assets, third-party mod files, local install snapshots, MO2
+profiles, GECK outputs, external tool fixtures, generated script outputs, or
+generated evidence fixtures.

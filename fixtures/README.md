@@ -518,3 +518,47 @@ Gate 88 uses temp-only copies of the synthetic `ExampleMod` fixture to test
 `forge package --target mcm-json --verify-existing`. It still adds no
 generated package verification reports, summaries, archives, manifests, or
 package command output trees to the committed fixture corpus.
+
+Gate 203 adds:
+
+- `projects/JipScriptExample` - valid synthetic JIP LN text-script source
+  contract fixture using only redistributable JSON registry documents.
+- `projects/BrokenCases/InvalidJipScriptRegistry` - runtime JIP script
+  registry schema failure case for a missing required source-contract field.
+
+It still adds no generated JIP script files, Bethesda assets, third-party mod
+files, local install snapshots, MO2 profiles, GECK outputs, or external tool
+fixtures.
+
+Gate 204 adds:
+
+- `projects/BrokenCases/JipScriptLifecyclePrefixMismatch` - deterministic
+  `WF-SEM-040` failure case for lifecycle prefix and output filename prefix
+  mismatch.
+- `projects/BrokenCases/MissingJipScriptRunnerRequirement` - deterministic
+  `WF-SEM-041` failure case for a JIP source contract that omits
+  `runtime.scripting.jip_script_runner`.
+
+It still adds no generated JIP script files, Bethesda assets, third-party mod
+files, local install snapshots, MO2 profiles, GECK outputs, or external tool
+fixtures.
+
+Gate 205 updates the synthetic JIP source fixtures with opaque
+`body.lines[].text` records and adds:
+
+- `projects/BrokenCases/InvalidJipScriptBodyRegistry` - runtime JIP script
+  registry schema failure case for invalid body/source-line shape.
+
+It still adds no generated JIP script files, Bethesda assets, third-party mod
+files, local install snapshots, MO2 profiles, GECK outputs, or external tool
+fixtures.
+
+Gate 206 adds:
+
+- `projects/BrokenCases/JipScriptSourceLineBudgetExceeded` - deterministic
+  `WF-SEM-042` failure case for source body text exceeding declared
+  `sizePolicy.maxBytes`.
+
+It still adds no generated JIP script files, Bethesda assets, third-party mod
+files, local install snapshots, MO2 profiles, GECK outputs, or external tool
+fixtures.

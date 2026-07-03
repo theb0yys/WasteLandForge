@@ -693,3 +693,35 @@ dependency, capability resolver dependency, Doctor planner dependency,
 catalogue-policy decision dependency, SARIF/GitHub dependency, GitHub
 step-summary dependency, release-publishing dependency, external tool
 execution, or AI requirement.
+
+Gate 203 adds a source schema, schema catalog entry, validation read model,
+and synthetic JSON fixtures using existing .NET and repository dependencies.
+It adds no third-party dependency, download, rehosted runtime binary, network
+call, runtime probe, MO2/GECK integration, detector dependency, capability
+resolver dependency, Doctor planner dependency, catalogue-policy decision
+dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, external tool execution, or AI requirement.
+
+Gate 204 adds semantic checks and synthetic JSON fixtures using existing .NET
+and repository dependencies. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+detector dependency, capability resolver dependency, Doctor planner
+dependency, catalogue-policy decision dependency, SARIF/GitHub dependency,
+GitHub step-summary dependency, release-publishing dependency, external tool
+execution, or AI requirement.
+
+Gate 205 adds opaque source-line schema/read-model support and synthetic JSON
+fixtures using existing .NET and repository dependencies. It adds no
+third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, detector dependency, capability resolver
+dependency, Doctor planner dependency, catalogue-policy decision dependency,
+SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, external tool execution, or AI requirement.
+
+Gate 206 adds source-line byte-budget semantic validation and synthetic JSON
+fixtures using existing .NET and repository dependencies. It adds no
+third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, detector dependency, capability resolver
+dependency, Doctor planner dependency, catalogue-policy decision dependency,
+SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, external tool execution, or AI requirement.

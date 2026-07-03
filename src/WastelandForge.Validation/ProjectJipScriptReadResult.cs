@@ -15,4 +15,9 @@ public sealed record JipScriptDefinition(
     IReadOnlyList<string> RequiredCapabilities,
     long MaxBytes,
     string FormIdResolutionStrategy,
+    IReadOnlyList<JipScriptSourceLine> SourceLines,
+    SourceLocation Source);
+
+public sealed record JipScriptSourceLine(
+    string Text,
     SourceLocation Source);

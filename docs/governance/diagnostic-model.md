@@ -849,5 +849,27 @@ does not change the canonical diagnostic report shape, add generator
 diagnostics, add capability diagnostics, expose JIP script evidence in CLI
 output, or evaluate script contracts.
 
+Gate 203 validates JIP LN text-script source contracts through existing schema
+diagnostics only. It does not change the canonical diagnostic report shape,
+add generator diagnostics, add capability diagnostics, expose JIP script
+evidence in CLI output, or run semantic script checks.
+
+Gate 204 adds two semantic diagnostics without changing the canonical
+diagnostic report shape: `WF-SEM-040` for lifecycle/output prefix mismatch
+and `WF-SEM-041` for missing `runtime.scripting.jip_script_runner` source
+requirement. It does not add generator diagnostics, expose JIP script evidence
+in CLI output, or run runtime capability checks.
+
+Gate 205 adds no new diagnostic rule ID. Invalid opaque body/source-line
+shape is reported through existing schema diagnostics. It does not add
+generator diagnostics, expose JIP script evidence in CLI output, or run
+runtime capability checks.
+
+Gate 206 adds `WF-SEM-042` for source bodies whose opaque source-line text
+exceeds `sizePolicy.maxBytes`. The calculation uses UTF-8 bytes for stored
+source-line text with one LF byte between lines. It does not change the
+canonical diagnostic report shape, add generator diagnostics, expose JIP
+script evidence in CLI output, or run runtime capability checks.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.
