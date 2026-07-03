@@ -36,6 +36,7 @@ internal static class CapabilityCatalogTextRenderer
                 builder.AppendLine($"    Install scope: {provider.InstallScope}");
                 builder.AppendLine($"    Capabilities: {JoinOrNone(provider.Capabilities)}");
                 builder.AppendLine($"    Detector kinds: {JoinOrNone(provider.DetectorKinds)}");
+                builder.AppendLine($"    Version: {ProviderVersionDeclarationProjection.Format(provider.Version)}");
             }
         }
 

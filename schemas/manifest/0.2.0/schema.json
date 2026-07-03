@@ -101,6 +101,9 @@
         },
         "mcm": {
           "$ref": "#/$defs/relativePath"
+        },
+        "jipScripts": {
+          "$ref": "#/$defs/relativePath"
         }
       }
     },
@@ -167,7 +170,8 @@
         "assets": "src/registries/assets/",
         "quests": "src/registries/quests/",
         "dialogue": "src/registries/dialogue/",
-        "mcm": "src/registries/mcm/"
+        "mcm": "src/registries/mcm/",
+        "jipScripts": "src/registries/jip-scripts/"
       },
       "outputs": {
         "plugin": {

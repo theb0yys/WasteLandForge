@@ -89,6 +89,7 @@ public sealed class BuiltInFnvCapabilityExplainer
                 provider.Status,
                 provider.Provider.InstallScope,
                 provider.Provider.Capabilities,
+                provider.Provider.Version,
                 CapabilityDoctorPlanner.BuildProviderActions(provider),
                 provider.Evidence))
             .ToArray();

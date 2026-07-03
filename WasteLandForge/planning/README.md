@@ -198,9 +198,18 @@ Gate status:
 - `gates/gate-191-doctor-operator-handoff-checklist.md` - Gate 191, Doctor operator handoff checklist.
 - `gates/gate-192-doctor-bundle-handoff-summary.md` - Gate 192, Doctor bundle handoff summary sidecar.
 - `gates/gate-193-capability-scan-operator-handoff.md` - Gate 193, capability scan operator handoff checklist.
+- `gates/gate-194-capability-explain-operator-handoff.md` - Gate 194, capability explain operator handoff checklist.
+- `gates/gate-195-doctor-bundle-requirement-explanation-handoff-coverage.md` - Gate 195, Doctor bundle requirement explanation handoff coverage.
+- `gates/gate-196-provider-version-declaration-metadata.md` - Gate 196, provider-version declaration metadata skeleton.
+- `gates/gate-197-provider-version-declarations-scan-doctor-indexes.md` - Gate 197, provider-version declarations in scan and Doctor provider indexes.
+- `gates/gate-198-provider-version-parser-research-checkpoint.md` - Gate 198, provider-version parser research checkpoint.
+- `gates/gate-199-provider-version-parser-contract-skeleton.md` - Gate 199, provider-version parser contract skeleton.
+- `gates/gate-200-provider-version-parser-documentation-projection-notes.md` - Gate 200, provider-version parser documentation and projection notes.
+- `gates/gate-201-provider-version-parsed-evidence-model-skeleton.md` - Gate 201, provider-version parsed-evidence model skeleton.
+- `gates/gate-202-jip-ln-text-script-generator-evidence-checkpoint.md` - Gate 202, JIP LN text-script generator evidence checkpoint.
 
 Next gate:
 
-- Gate 194 - Continue documented capability/Doctor value from existing local metadata. A practical next slice is an explain-side operator checklist projection for `forge capabilities explain` text and Markdown summary output, derived from existing target actions, provider evidence groups, matching project requirements, diagnostic handoff, and catalogue-policy handoff without adding provider-version, runtime, parser, MO2, GECK, or catalogue-policy resolution behavior.
+- Gate 203 - JIP LN text-script source contract skeleton with synthetic validation coverage only, without text emission, package staging, CLI target wiring, runtime probes, GECK automation, MO2 VFS inspection, or external tool execution.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

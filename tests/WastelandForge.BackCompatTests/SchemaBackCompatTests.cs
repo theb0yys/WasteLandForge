@@ -37,6 +37,9 @@ public sealed class SchemaBackCompatTests
             "https://schemas.wastelandforge.dev/fnv/mcm/0.1.0/schema.json",
             WastelandForgeSchemaIds.Mcm010);
         Assert.Equal(
+            "https://schemas.wastelandforge.dev/fnv/jip-scripts/0.1.0/schema.json",
+            WastelandForgeSchemaIds.JipScript010);
+        Assert.Equal(
             "https://schemas.wastelandforge.dev/fnv/mcm-extender-output/0.1.0/schema.json",
             WastelandForgeSchemaIds.McmExtenderOutput010);
         Assert.Equal(
@@ -158,6 +161,7 @@ public sealed class SchemaBackCompatTests
     [InlineData(WastelandForgeSchemaIds.Capability020, "capability", "0.2.0")]
     [InlineData(WastelandForgeSchemaIds.Asset010, "asset", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.Mcm010, "mcm", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.JipScript010, "jip-script", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.McmExtenderOutput010, "mcm-extender-output", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.PackageManifest010, "package-manifest", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.InstallPreview010, "install-preview", "0.1.0")]

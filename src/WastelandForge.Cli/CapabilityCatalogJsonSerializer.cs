@@ -66,6 +66,7 @@ internal static class CapabilityCatalogJsonSerializer
             ["installScope"] = provider.InstallScope,
             ["capabilities"] = new JsonArray(provider.Capabilities.Select(id => JsonValue.Create(id)).ToArray()),
             ["detectorKinds"] = new JsonArray(provider.DetectorKinds.Select(kind => JsonValue.Create(kind)).ToArray()),
+            ["version"] = ProviderVersionDeclarationProjection.ToJson(provider.Version),
             ["notes"] = new JsonArray(provider.Notes.Select(note => JsonValue.Create(note)).ToArray())
         };
 

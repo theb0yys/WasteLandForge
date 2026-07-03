@@ -19,4 +19,24 @@ public sealed record ProviderDefinition(
     string InstallScope,
     IReadOnlyList<string> Capabilities,
     IReadOnlyList<string> DetectorKinds,
-    IReadOnlyList<string> Notes);
+    IReadOnlyList<string> Notes)
+{
+    public ProviderVersionDeclaration Version { get; init; } = ProviderVersionDeclaration.Unspecified;
+}
+
+public sealed record ProviderVersionDeclaration(
+    string Scheme,
+    string Source,
+    string Status,
+    string LocalVersionStatus,
+    string ResolutionStatus,
+    IReadOnlyList<string> Notes)
+{
+    public static ProviderVersionDeclaration Unspecified { get; } = new(
+        "unspecified",
+        "built-in-catalogue",
+        "unspecified",
+        "not-parsed",
+        "not-evaluated",
+        []);
+}

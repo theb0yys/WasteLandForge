@@ -29,6 +29,7 @@ public sealed class ManifestSchemaTests
         Assert.Equal(WastelandForgeSchemaIds.Manifest020, (string?)schema["$id"]);
         Assert.Equal("0.2.0", (string?)schema["properties"]?["schemaVersion"]?["const"]);
         Assert.NotNull(schema["properties"]?["registries"]?["properties"]?["mcm"]);
+        Assert.NotNull(schema["properties"]?["registries"]?["properties"]?["jipScripts"]);
     }
 
     [Fact]
@@ -76,6 +77,7 @@ public sealed class ManifestSchemaTests
     [InlineData("capabilities", "0.2.0", WastelandForgeSchemaIds.Capability020, "capability")]
     [InlineData("assets", "0.1.0", WastelandForgeSchemaIds.Asset010, "asset")]
     [InlineData("mcm", "0.1.0", WastelandForgeSchemaIds.Mcm010, "mcm")]
+    [InlineData("jip-scripts", "0.1.0", WastelandForgeSchemaIds.JipScript010, "jip-script")]
     [InlineData("mcm-extender-output", "0.1.0", WastelandForgeSchemaIds.McmExtenderOutput010, null)]
     [InlineData("package-manifest", "0.1.0", WastelandForgeSchemaIds.PackageManifest010, "wastelandforge.package-manifest")]
     [InlineData("install-preview", "0.1.0", WastelandForgeSchemaIds.InstallPreview010, "wastelandforge.install-preview")]
@@ -131,6 +133,7 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Capability020, "capability", "0.2.0", "schemas/capabilities/0.2.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Asset010, "asset", "0.1.0", "schemas/assets/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.Mcm010, "mcm", "0.1.0", "schemas/mcm/0.1.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.JipScript010, "jip-script", "0.1.0", "schemas/jip-scripts/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.McmExtenderOutput010, "mcm-extender-output", "0.1.0", "schemas/mcm-extender-output/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.PackageManifest010, "package-manifest", "0.1.0", "schemas/package-manifest/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.InstallPreview010, "install-preview", "0.1.0", "schemas/install-preview/0.1.0/schema.json")]
@@ -183,6 +186,7 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Capability020)]
     [InlineData(WastelandForgeSchemaIds.Asset010)]
     [InlineData(WastelandForgeSchemaIds.Mcm010)]
+    [InlineData(WastelandForgeSchemaIds.JipScript010)]
     [InlineData(WastelandForgeSchemaIds.McmExtenderOutput010)]
     [InlineData(WastelandForgeSchemaIds.PackageManifest010)]
     [InlineData(WastelandForgeSchemaIds.InstallPreview010)]

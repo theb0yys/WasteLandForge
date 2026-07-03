@@ -580,3 +580,38 @@ Gate 193 adds no committed provider or project fixtures. Golden CLI tests use
 existing synthetic project fixtures and temporary synthetic local provider
 markers to cover scan-side operator handoff text in plain output and Markdown
 summary sidecars.
+Gate 194 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover explain-side operator handoff text in plain output and
+Markdown summary sidecars.
+Gate 195 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover Doctor bundle requirement explanation Markdown handoff
+sections, generated archive notes, JSON non-contract behavior, and path
+redaction.
+Gate 196 adds no committed provider or project fixtures. Golden CLI tests use
+the built-in synthetic catalogue and existing temporary synthetic local
+provider markers to cover provider-version declaration metadata in catalogue
+list and capability explanation output.
+Gate 197 adds no committed provider or project fixtures. Golden CLI tests use
+the built-in synthetic catalogue, existing synthetic project fixtures, and
+temporary synthetic local provider markers to cover provider-version
+declaration metadata in scan output and Doctor provider indexes.
+Gate 198 adds no committed provider or project fixtures. Future parser tests
+should use synthetic raw version values; real provider DLLs, Bethesda assets,
+and third-party mod files remain out of public fixtures unless explicit
+permission exists.
+Gate 199 adds synthetic parser tests only. It commits no provider DLLs,
+Bethesda assets, third-party mod files, local install snapshots, MO2 profiles,
+GECK outputs, or external tool fixtures.
+Gate 200 adds documentation only. It commits no provider DLLs, Bethesda
+assets, third-party mod files, local install snapshots, MO2 profiles, GECK
+outputs, external tool fixtures, or generated evidence fixtures.
+Gate 201 adds synthetic parsed-evidence unit tests only. It commits no
+provider DLLs, Bethesda assets, third-party mod files, local install
+snapshots, MO2 profiles, GECK outputs, external tool fixtures, or generated
+evidence fixtures.
+Gate 202 adds documentation only. It commits no JIP LN script fixtures,
+provider DLLs, Bethesda assets, third-party mod files, local install
+snapshots, MO2 profiles, GECK outputs, external tool fixtures, generated
+script outputs, or generated evidence fixtures.

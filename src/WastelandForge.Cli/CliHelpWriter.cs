@@ -286,7 +286,7 @@ internal static class CliHelpWriter
         writer.WriteLine("Usage:");
         writer.WriteLine("  forge capabilities list [--kind all|capabilities|providers] [--output <path>] [--format human|plain|json] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Lists the built-in FNV capability and provider catalogue. This does not scan the local machine.");
+        writer.WriteLine("Lists the built-in FNV capability and provider catalogue, including declaration-only provider-version metadata. This does not scan the local machine.");
         writer.WriteLine();
         writer.WriteLine("Examples:");
         writer.WriteLine("  forge capabilities list");
@@ -333,7 +333,7 @@ internal static class CliHelpWriter
         writer.WriteLine();
         writer.WriteLine("Explains a built-in capability or provider using catalogue data and the same path-based evidence as capabilities scan, including target-level next actions, catalogue-policy open questions, and a compact catalogue-policy diagnostic handoff.");
         writer.WriteLine("--summary writes a path-minimized Markdown sidecar for human handoff while preserving the selected primary output format.");
-        writer.WriteLine("When --project is supplied, includes matching declared project requirement context. Runtime probes, MO2 VFS launch, and provider versions are not used.");
+        writer.WriteLine("When --project is supplied, includes matching declared project requirement context. Catalogue provider-version declarations may be shown; runtime probes, MO2 VFS launch, and local provider version parsing/resolution are not used.");
         writer.WriteLine();
         writer.WriteLine("Examples:");
         writer.WriteLine("  forge capabilities explain runtime.ui.mcm_json");

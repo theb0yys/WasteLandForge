@@ -873,6 +873,59 @@ handoff sections in `forge capabilities scan` plain output and Markdown
 summary sidecars, including status, priority/source summaries, command hints,
 work items, and continued local-path omission in Markdown summaries.
 
+Gate 194 extends `WastelandForge.GoldenTests` coverage to explain-side
+operator handoff sections in `forge capabilities explain` plain output and
+Markdown summary sidecars, including blocked status, priority/source
+summaries, command hints, work items, and continued local-path omission in
+Markdown summaries.
+
+Gate 195 extends `WastelandForge.GoldenTests` coverage to Doctor bundle
+requirement explanation Markdown. Archive tests assert that
+`requirement-explanations/<capability>.md` includes the explain-side operator
+handoff checklist, the bundle README and requirement explanation index
+describe that Markdown handoff behavior, paired explanation JSON entries do
+not add `operatorHandoff`, and Markdown entries continue to omit redacted
+project-root tokens.
+
+Gate 196 extends `WastelandForge.GoldenTests` coverage to provider-version
+declaration metadata in `forge capabilities list` JSON/plain output and
+`forge capabilities explain` JSON/plain/Markdown output. The tests assert
+that metadata remains declaration-only with `not-parsed` local-version status
+and `not-evaluated` resolution status.
+
+Gate 197 extends `WastelandForge.GoldenTests` coverage to the same
+declaration-only provider-version metadata in `forge capabilities scan`
+JSON/plain/Markdown output, embedded Doctor export scan JSON, and Doctor
+bundle provider-index JSON/Markdown output. The tests still assert
+`not-parsed` local-version status and `not-evaluated` resolution status.
+
+Gate 198 adds no test fixtures or code tests. It records that Gate 199 should
+use synthetic unit-test inputs for pure provider-version parsing and must not
+commit real provider DLLs, Bethesda assets, or third-party mod files.
+
+Gate 199 adds `WastelandForge.SemanticTests` coverage for the pure
+provider-version parser contract. The tests use synthetic raw values for
+`semver`, `integer`, and `scaled-integer`, assert raw-value preservation on
+failure, and do not add real provider DLLs, Bethesda assets, or third-party
+mod files.
+
+Gate 200 adds documentation only. It adds no test fixtures, no parser tests,
+and no real provider DLLs, Bethesda assets, third-party mod files, local
+install snapshots, MO2 profiles, GECK outputs, or external tool fixtures.
+
+Gate 201 adds `WastelandForge.SemanticTests` coverage for
+`ProviderVersionParsedEvidence`. The tests use synthetic parser results only
+and assert that successful parsed evidence and failed raw evidence preserve
+provider ID, source kind, raw value, parsed state, normalized value, numeric
+components, failure reason, and provenance. It adds no real provider DLLs,
+Bethesda assets, third-party mod files, local install snapshots, MO2 profiles,
+GECK outputs, or external tool fixtures.
+
+Gate 202 adds documentation only. It adds no JIP LN script fixtures, generator
+tests, schema tests, local install snapshots, GECK outputs, MO2 profiles,
+Bethesda assets, third-party mod files, or external tool fixtures. Gate 203
+should use synthetic validation coverage for the source contract skeleton.
+
 Run the full local suite serially:
 
 ```text

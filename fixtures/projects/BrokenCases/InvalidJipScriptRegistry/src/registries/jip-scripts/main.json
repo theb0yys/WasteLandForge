@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "jip-script",
+  "id": "io.github.theboyyss.invalidjipscriptregistry.jip_scripts",
+  "scripts": [
+    {
+      "id": "io.github.theboyyss.invalidjipscriptregistry.jip_scripts.bootstrap",
+      "summary": "Synthetic invalid JIP LN text-script intent fixture.",
+      "lifecyclePrefix": "gr_",
+      "outputFile": "gr_invalid_missing_size_policy.txt",
+      "requires": {
+        "capabilities": [
+          {
+            "id": "runtime.scripting.jip_script_runner"
+          }
+        ]
+      },
+      "formIdResolution": {
+        "strategy": "explicitReferences"
+      }
+    }
+  ]
+}

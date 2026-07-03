@@ -41,6 +41,16 @@ public sealed class ValidationPipelineFixtureTests
     }
 
     [Fact]
+    public void JipScriptExampleFixtureValidatesWithoutIssues()
+    {
+        var report = ValidateFixture("JipScriptExample");
+
+        Assert.False(report.HasErrors);
+        Assert.Empty(report.Issues);
+        Assert.Equal("io.github.theboyyss.jipscriptexample", report.ProjectId?.ToString());
+    }
+
+    [Fact]
     public void InvalidManifestSchemaUsesRuntimeSchemaDiagnostics()
     {
         var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidManifestSchema"));
@@ -96,6 +106,21 @@ public sealed class ValidationPipelineFixtureTests
         Assert.Equal("src/registries/assets/main.json", issue.PrimaryLocation.File);
         Assert.Equal("/assets/0", issue.PrimaryLocation.Pointer?.ToString());
         Assert.Contains("target", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InvalidJipScriptRegistryUsesRuntimeSchemaDiagnostics()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidJipScriptRegistry"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SCHEMA-001", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("schema", issue.Category);
+        Assert.Equal("src/registries/jip-scripts/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/scripts/0", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Contains("sizePolicy", issue.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1057,6 +1082,25 @@ public sealed class ValidationPipelineFixtureTests
         Assert.Equal("/lines/0/resultScripts/0/mutations/0/variableId", issue.PrimaryLocation.Pointer?.ToString());
         Assert.Equal("wf:sem:029:io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.dialogue.intro.hello:io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.dialogue.intro.result.advance:io.github.theboyyss.missingdialogueresultscriptmutationvariablereference.dialogue.intro.result.advance.mutation.missingvariable:variableId", issue.Fingerprint);
         Assert.Contains("variable.missing", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ReadJipScriptsReturnsSourceContractSkeleton()
+    {
+        var path = Path.Combine(RepositoryRoot(), "fixtures", "projects", "JipScriptExample");
+        var result = new ProjectValidationPipeline().ReadJipScripts(path);
+
+        Assert.False(result.Diagnostics.HasErrors);
+        Assert.Equal("io.github.theboyyss.jipscriptexample", result.ProjectId?.ToString());
+        var script = Assert.Single(result.Scripts);
+        Assert.Equal("io.github.theboyyss.jipscriptexample.jip_scripts.bootstrap", script.Id);
+        Assert.Equal("gr_", script.LifecyclePrefix);
+        Assert.Equal("gr_example_bootstrap.txt", script.OutputFile);
+        Assert.Equal(new[] { "runtime.scripting.jip_script_runner" }, script.RequiredCapabilities);
+        Assert.Equal(16384, script.MaxBytes);
+        Assert.Equal("explicitReferences", script.FormIdResolutionStrategy);
+        Assert.Equal("src/registries/jip-scripts/main.json", script.Source.File);
+        Assert.Equal("/scripts/0", script.Source.Pointer?.ToString());
     }
 
     [Fact]

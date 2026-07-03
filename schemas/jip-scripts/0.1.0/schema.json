@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/jip-scripts/0.1.0/schema.json",
+  "title": "WastelandForge JIP LN Text Script Registry",
+  "description": "Source-controlled JIP LN Script Runner text-script intent for future deterministic generation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "scripts"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the JIP LN text-script registry contract.",
+      "const": "0.1.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "jip-script"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "scripts": {
+      "description": "JIP LN text-script declarations for future deterministic text output.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/script"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scriptOutputFile": {
+      "type": "string",
+      "pattern": "^(?:gr|gl|gs|gx|gn|ln)_[A-Za-z0-9._-]+\\.txt$"
+    },
+    "script": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "lifecyclePrefix",
+        "outputFile",
+        "requires",
+        "sizePolicy",
+        "formIdResolution"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "lifecyclePrefix": {
+          "description": "JIP LN Script Runner lifecycle prefix selected by the generated output filename.",
+          "enum": [
+            "gr_",
+            "gl_",
+            "gs_",
+            "gx_",
+            "gn_",
+            "ln_"
+          ]
+        },
+        "outputFile": {
+          "$ref": "#/$defs/scriptOutputFile"
+        },
+        "requires": {
+          "$ref": "#/$defs/requires"
+        },
+        "sizePolicy": {
+          "$ref": "#/$defs/sizePolicy"
+        },
+        "formIdResolution": {
+          "$ref": "#/$defs/formIdResolution"
+        }
+      }
+    },
+    "requires": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capabilities"
+      ],
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capabilityReference"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "capabilityReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        }
+      }
+    },
+    "sizePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxBytes"
+      ],
+      "properties": {
+        "maxBytes": {
+          "description": "Maximum generated script byte budget. JIP LN Script Runner documents a 16,384 byte ceiling.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16384
+        }
+      }
+    },
+    "formIdResolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "strategy"
+      ],
+      "properties": {
+        "strategy": {
+          "description": "Initial non-Editor-ID path for future generation. JohnnyGuitar Editor ID call-through remains a later extension.",
+          "enum": [
+            "explicitReferences"
+          ]
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.1.0",
+      "kind": "jip-script",
+      "id": "io.github.theboyyss.examplemod.jip_scripts",
+      "scripts": [
+        {
+          "id": "io.github.theboyyss.examplemod.jip_scripts.bootstrap",
+          "summary": "Synthetic bootstrap intent for future JIP LN text-script generation.",
+          "lifecyclePrefix": "gr_",
+          "outputFile": "gr_example_bootstrap.txt",
+          "requires": {
+            "capabilities": [
+              {
+                "id": "runtime.scripting.jip_script_runner"
+              }
+            ]
+          },
+          "sizePolicy": {
+            "maxBytes": 16384
+          },
+          "formIdResolution": {
+            "strategy": "explicitReferences"
+          }
+        }
+      ]
+    }
+  ]
+}

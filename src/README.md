@@ -1032,3 +1032,63 @@ scan` plain output and `--summary <path>` Markdown sidecars now include a
 checklist derived from existing requirement resolution, projected diagnostics,
 Doctor actions, wrong-scope counts, and catalogue-policy open questions. Scan
 JSON output is unchanged.
+
+Gate 194 adds an explain-side operator handoff projection. `forge
+capabilities explain` plain output and `--summary <path>` Markdown sidecars
+now include a checklist derived from existing target actions, provider
+evidence groups, matching project requirements, diagnostic handoff, and
+catalogue-policy handoff entries. Explain JSON output and capability
+resolution are unchanged.
+
+Gate 195 extends generated Doctor bundle documentation around existing
+requirement explanation supplements. `requirement-explanations/index.md` and
+bundle `README.md` now state that per-requirement Markdown explanations
+include operator handoff checklists with placeholder commands, while paired
+JSON entries keep the existing `capabilities explain` contract.
+
+Gate 196 adds a declaration-only `ProviderVersionDeclaration` metadata object
+to provider definitions. The built-in catalogue populates provider-version
+scheme, source, status, local-version status, resolution status, and notes;
+CLI list/explain serializers render that metadata without parsing local
+provider versions or changing requirement resolution.
+
+Gate 197 moves the same declaration-only provider-version projection into
+`forge capabilities scan` provider JSON/plain/Markdown output and Doctor
+provider index JSON/Markdown output. The scan Markdown summary now includes a
+path-minimized provider table. Requirement resolution, provider detection,
+runtime probing, unsupported-version diagnostics, and Doctor planning remain
+unchanged.
+
+Gate 198 records the provider-version parser research checkpoint. It keeps
+parser code out of the implementation and decides that the next safe slice is
+a pure parser contract for synthetic raw `semver`, `integer`, and
+`scaled-integer` values. Runtime probes, DLL/EXE file metadata inspection,
+resolver behavior, unsupported-version diagnostics, and Doctor planning remain
+unchanged.
+
+Gate 199 adds `ProviderVersionParser` and `ProviderVersionParseResult` to
+`WastelandForge.Registry`. The parser handles synthetic `semver`, `integer`,
+and `scaled-integer` raw values, normalizes successful parses, and preserves
+raw values on failed parses. No scan detector, Doctor export, CLI renderer,
+capability resolver, runtime probe, DLL/EXE metadata reader, or diagnostic
+rule consumes parser results yet.
+
+Gate 200 adds provider-version parser contract documentation and future
+scan-evidence projection notes under `docs/capabilities/`. It does not change
+source code, parser behavior, detector behavior, CLI renderers, Doctor export,
+capability resolution, runtime probes, DLL/EXE metadata readers, or
+diagnostic rules.
+
+Gate 201 adds `ProviderVersionParsedEvidence` and
+`ProviderVersionEvidenceSourceKinds` to `WastelandForge.Registry`. The model
+maps a `ProviderVersionParseResult` into standalone future scan evidence while
+preserving provider ID, source kind, raw value, parsed status, normalized
+value, numeric components, failure reason, and provenance. No scanner,
+resolver, Doctor planner, CLI renderer, runtime probe, DLL/EXE metadata
+reader, or diagnostic rule consumes it yet.
+
+Gate 202 adds no source code. It records the JIP LN text-script generator
+evidence checkpoint under `docs/generation/` and leaves source contracts,
+schemas, generator code, CLI target wiring, build/package staging, runtime
+probes, GECK automation, MO2 VFS inspection, and external tool execution for
+later gates.

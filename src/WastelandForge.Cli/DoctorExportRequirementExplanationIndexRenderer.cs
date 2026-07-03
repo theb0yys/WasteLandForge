@@ -59,6 +59,7 @@ internal static class DoctorExportRequirementExplanationIndexRenderer
         builder.AppendLine();
         builder.AppendLine("Command: `doctor export`");
         builder.AppendLine("Local paths: omitted from this Markdown index");
+        builder.AppendLine("Markdown entries include `## Operator Handoff` checklists with placeholder commands; JSON entries keep the `capabilities explain` contract.");
         builder.AppendLine();
         builder.AppendLine("## Summary");
         builder.AppendLine();

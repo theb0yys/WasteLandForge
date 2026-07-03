@@ -190,6 +190,7 @@ internal static class CapabilityScanTextRenderer
         foreach (var provider in report.Providers)
         {
             builder.AppendLine($"  {provider.Provider.Id}: {provider.Status}");
+            builder.AppendLine($"    Version: {ProviderVersionDeclarationProjection.Format(provider.Provider.Version)}");
             foreach (var evidence in provider.Evidence)
             {
                 builder.AppendLine($"    {evidence.DetectorKind}/{evidence.Scope}: {evidence.Status}");

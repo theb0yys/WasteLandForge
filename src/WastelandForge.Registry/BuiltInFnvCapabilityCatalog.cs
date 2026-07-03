@@ -186,5 +186,20 @@ public static class BuiltInFnvCapabilityCatalog
         IReadOnlyList<string> capabilities,
         IReadOnlyList<string> detectorKinds,
         IReadOnlyList<string> notes) =>
-        new(id, title, providerType, installScope, capabilities, detectorKinds, notes);
+        new(id, title, providerType, installScope, capabilities, detectorKinds, notes)
+        {
+            Version = DeclaredProviderVersion(title)
+        };
+
+    private static ProviderVersionDeclaration DeclaredProviderVersion(string providerTitle) =>
+        new(
+            "provider-defined",
+            "built-in-catalogue",
+            "declared-only",
+            "not-parsed",
+            "not-evaluated",
+            [
+                $"{providerTitle} provider-version metadata is declared by the built-in catalogue only.",
+                "Local provider version parsing and capability resolution remain open."
+            ]);
 }

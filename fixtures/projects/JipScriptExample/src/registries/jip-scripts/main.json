@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "jip-script",
+  "id": "io.github.theboyyss.jipscriptexample.jip_scripts",
+  "scripts": [
+    {
+      "id": "io.github.theboyyss.jipscriptexample.jip_scripts.bootstrap",
+      "summary": "Synthetic JIP LN text-script intent fixture.",
+      "lifecyclePrefix": "gr_",
+      "outputFile": "gr_example_bootstrap.txt",
+      "requires": {
+        "capabilities": [
+          {
+            "id": "runtime.scripting.jip_script_runner"
+          }
+        ]
+      },
+      "sizePolicy": {
+        "maxBytes": 16384
+      },
+      "formIdResolution": {
+        "strategy": "explicitReferences"
+      }
+    }
+  ]
+}

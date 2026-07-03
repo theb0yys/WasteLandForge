@@ -247,6 +247,7 @@ internal static class CapabilityScanJsonSerializer
             ["providerType"] = provider.Provider.ProviderType,
             ["installScope"] = provider.Provider.InstallScope,
             ["capabilities"] = new JsonArray(provider.Provider.Capabilities.Select(id => JsonValue.Create(id)).ToArray()),
+            ["version"] = ProviderVersionDeclarationProjection.ToJson(provider.Provider.Version),
             ["evidence"] = new JsonArray(provider.Evidence.Select(ToJson).ToArray())
         };
 

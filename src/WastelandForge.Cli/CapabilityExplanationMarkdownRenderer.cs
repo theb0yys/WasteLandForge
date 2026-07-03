@@ -19,6 +19,9 @@ internal static class CapabilityExplanationMarkdownRenderer
         builder.AppendLine("Local paths: omitted from this Markdown summary");
         builder.AppendLine();
 
+        CapabilityExplanationOperatorHandoffProjection.AppendMarkdown(
+            builder,
+            CapabilityExplanationOperatorHandoffProjection.Create(report));
         AppendTarget(builder, report);
         AppendEvidenceGroups(builder, report);
         AppendCapabilities(builder, report);
@@ -58,8 +61,8 @@ internal static class CapabilityExplanationMarkdownRenderer
             return;
         }
 
-        builder.AppendLine("| Provider | Kind | Status | Scope | Capabilities | Evidence | Actions |");
-        builder.AppendLine("|---|---|---|---|---|---:|---|");
+        builder.AppendLine("| Provider | Kind | Status | Scope | Version | Capabilities | Evidence | Actions |");
+        builder.AppendLine("|---|---|---|---|---|---|---:|---|");
         foreach (var group in report.EvidenceGroups)
         {
             builder.Append("| `");
@@ -71,6 +74,8 @@ internal static class CapabilityExplanationMarkdownRenderer
             builder.Append("` | `");
             builder.Append(EscapeInline(group.InstallScope));
             builder.Append("` | ");
+            builder.Append(EscapeTable(ProviderVersionDeclarationProjection.Format(group.Version)));
+            builder.Append(" | ");
             builder.Append(JoinTableInline(group.Capabilities));
             builder.Append(" | ");
             builder.Append(group.Evidence.Count);

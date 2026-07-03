@@ -815,6 +815,39 @@ new diagnostic report fields.
 Gate 193 adds scan-side operator handoff text from existing scan metadata. It
 does not change the canonical diagnostic report shape and adds no new
 diagnostic report fields.
+Gate 194 adds explain-side operator handoff text from existing explanation
+metadata. It does not change the canonical diagnostic report shape and adds no
+new diagnostic report fields.
+Gate 195 adds archive documentation and golden coverage for the same
+explain-side operator handoff text in Doctor bundle requirement explanations.
+It does not change the canonical diagnostic report shape and adds no new
+diagnostic report fields.
+Gate 196 adds declaration-only provider-version metadata to catalogue list and
+capability explanation output. It does not change the canonical diagnostic
+report shape, add provider-version diagnostics, or evaluate version
+constraints.
+Gate 197 projects the same declaration-only provider-version metadata into
+capability scan provider output and Doctor provider indexes. It does not
+change the canonical diagnostic report shape, add provider-version
+diagnostics, or evaluate version constraints.
+Gate 198 records provider-version parser research only. It does not change the
+canonical diagnostic report shape, add provider-version diagnostics, or
+evaluate version constraints.
+Gate 199 adds a pure provider-version parser contract. It does not change the
+canonical diagnostic report shape, add provider-version diagnostics, expose
+parser results in scan/Doctor diagnostics, or evaluate version constraints.
+Gate 200 documents parser failure reasons as parser contract strings only. It
+does not change the canonical diagnostic report shape, add provider-version
+diagnostics, expose parser results in scan/Doctor diagnostics, or evaluate
+version constraints.
+Gate 201 adds a provider-version parsed-evidence model skeleton. It does not
+change the canonical diagnostic report shape, add provider-version
+diagnostics, expose parser results in scan/Doctor diagnostics, or evaluate
+version constraints.
+Gate 202 adds a JIP LN text-script generator evidence checkpoint only. It
+does not change the canonical diagnostic report shape, add generator
+diagnostics, add capability diagnostics, expose JIP script evidence in CLI
+output, or evaluate script contracts.
 
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

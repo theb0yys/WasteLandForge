@@ -80,6 +80,7 @@ internal static class CapabilityExplanationJsonSerializer
             ["status"] = group.Status,
             ["installScope"] = group.InstallScope,
             ["capabilities"] = new JsonArray(group.Capabilities.Select(id => JsonValue.Create(id)).ToArray()),
+            ["version"] = ProviderVersionDeclarationProjection.ToJson(group.Version),
             ["actions"] = new JsonArray(group.Actions.Select(action => JsonValue.Create(action)).ToArray()),
             ["evidence"] = new JsonArray(group.Evidence.Select(ToJson).ToArray())
         };
@@ -94,6 +95,7 @@ internal static class CapabilityExplanationJsonSerializer
             ["installScope"] = provider.Provider.InstallScope,
             ["capabilities"] = new JsonArray(provider.Provider.Capabilities.Select(id => JsonValue.Create(id)).ToArray()),
             ["detectorKinds"] = new JsonArray(provider.Provider.DetectorKinds.Select(kind => JsonValue.Create(kind)).ToArray()),
+            ["version"] = ProviderVersionDeclarationProjection.ToJson(provider.Provider.Version),
             ["notes"] = new JsonArray(provider.Provider.Notes.Select(note => JsonValue.Create(note)).ToArray()),
             ["evidence"] = new JsonArray(provider.Evidence.Select(ToJson).ToArray())
         };

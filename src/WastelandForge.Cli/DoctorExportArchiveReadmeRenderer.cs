@@ -189,6 +189,7 @@ internal static class DoctorExportArchiveReadmeRenderer
         {
             builder.AppendLine("Unavailable project requirements have redacted per-requirement explanation entries under `requirement-explanations/`.");
             builder.AppendLine("Open `requirement-explanations/index.md` first, then follow the listed JSON or Markdown entry paths.");
+            builder.AppendLine("Markdown entries include operator handoff checklists with placeholder commands; JSON entries keep the `capabilities explain` contract.");
         }
         else
         {

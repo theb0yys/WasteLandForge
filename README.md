@@ -2,10 +2,10 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 193 adds a
-scan-side operator handoff checklist to `forge capabilities scan` plain output
-and Markdown summaries, derived from existing requirements, diagnostics,
-Doctor actions, and catalogue-policy open questions.
+The project is currently in gated v0.1 implementation. Gate 202 records the
+JIP LN text-script generator evidence checkpoint while keeping source
+contracts, schemas, generator code, CLI wiring, runtime probes, GECK
+automation, MO2 VFS inspection, and external tool execution out of scope.
 
 ## Architecture Spine
 
@@ -18,7 +18,7 @@ Doctor actions, and catalogue-policy open questions.
 
 ## Current Gate
 
-Gate 193 builds on the closed first game-facing generator path. It keeps
+Gate 202 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -309,6 +309,68 @@ plain output and `--summary <path>` Markdown sidecars. The checklist reports
 ready/review/blocked status, priority/source summaries, copyable canonical
 commands, and immediate work items without changing scan JSON output or
 capability detection behavior.
+
+Gate 194 adds an operator handoff checklist to `forge capabilities explain`
+plain output and `--summary <path>` Markdown sidecars. The checklist reports
+ready/review/blocked status, priority/source summaries, copyable canonical
+commands, and immediate work items without changing explain JSON output,
+capability resolution, or provider detection behavior.
+
+Gate 195 records that Doctor bundle `requirement-explanations/<capability>.md`
+entries inherit the explain-side operator handoff checklist. The bundle README
+and requirement explanation index now tell operators that Markdown entries
+include handoff checklists with placeholder commands while paired JSON entries
+keep the existing `capabilities explain` contract.
+
+Gate 196 adds provider-version declaration metadata to every built-in provider.
+`forge capabilities list` and `forge capabilities explain` now expose each
+provider's version scheme, source, declaration status, local-version status,
+resolution status, and notes. The metadata is catalogue-only: Forge still does
+not parse local provider versions, evaluate version constraints, change
+capability resolution, or add provider-version diagnostics.
+
+Gate 197 reuses that same declaration-only provider-version metadata in
+`forge capabilities scan` provider JSON/plain/Markdown output and Doctor
+provider bundle indexes. The metadata remains catalogue-only: Forge still does
+not parse local provider versions, evaluate version constraints, change
+requirement resolution, add runtime probes, or emit unsupported-version
+diagnostics.
+
+Gate 198 records the provider-version parser research checkpoint. The first
+implementation slice should be a pure parser contract for synthetic raw
+values, not runtime `GetPluginVersion` calls, DLL metadata inspection,
+resolver changes, or unsupported-version diagnostics.
+
+Gate 199 adds that pure provider-version parser contract in
+`WastelandForge.Registry`. It parses synthetic `semver`, `integer`, and
+`scaled-integer` raw values into normalized values and numeric components
+while preserving raw values on success and failure. The parser is not wired
+into provider detection, `forge capabilities` output, Doctor export,
+requirement resolution, unsupported-version diagnostics, runtime probes, or
+local DLL/EXE metadata inspection.
+
+Gate 200 adds durable provider-version parser documentation under
+`docs/capabilities/`. The documentation records the current parser inputs,
+result fields, supported schemes, failure reasons, and non-binding future
+scan-evidence projection notes while preserving the current CLI, scan,
+Doctor, resolver, diagnostic, runtime-probe, and local metadata behavior.
+
+Gate 201 adds `ProviderVersionParsedEvidence` and
+`ProviderVersionEvidenceSourceKinds` as a standalone Registry model for future
+scan data. Synthetic tests cover successful parsed evidence and failed raw
+evidence preservation. The model is not consumed by detectors, `forge
+capabilities` output, Doctor export, requirement resolution,
+unsupported-version diagnostics, runtime probes, or local DLL/EXE metadata
+inspection. Gate 202 pivots to the next real mod-building function slice:
+JIP LN text-script generator evidence.
+
+Gate 202 records the JIP LN text-script generator evidence checkpoint under
+`docs/generation/`. It documents the current Script Runner constraints,
+capability boundaries, generated/dist output limits, and open contract
+questions. No source schema, generator code, CLI target, fixture, runtime
+probe, GECK automation, MO2 VFS inspection, live Data mutation, or external
+tool execution is added. Gate 203 should add the source contract skeleton
+with synthetic validation coverage only.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

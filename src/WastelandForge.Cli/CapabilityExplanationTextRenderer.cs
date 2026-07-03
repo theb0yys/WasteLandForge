@@ -10,6 +10,7 @@ internal static class CapabilityExplanationTextRenderer
     {
         var builder = new StringBuilder();
         var cataloguePolicy = CapabilityCataloguePolicyIndex.CreateView(report.OpenQuestions);
+        var operatorHandoff = CapabilityExplanationOperatorHandoffProjection.Create(report);
         builder.AppendLine($"Capability explanation: {report.Target.Id}");
         builder.AppendLine($"Kind: {report.Target.Kind}");
         builder.AppendLine($"Title: {report.Target.Title}");
@@ -25,6 +26,8 @@ internal static class CapabilityExplanationTextRenderer
         builder.AppendLine($"Tool paths: {JoinOrNone(report.Inputs.ToolPaths)}");
         builder.AppendLine("Runtime probes: disabled");
         builder.AppendLine("MO2 VFS: disabled");
+        builder.AppendLine();
+        CapabilityExplanationOperatorHandoffProjection.AppendText(builder, operatorHandoff);
 
         if (cataloguePolicy.OpenQuestionDetails.Count > 0)
         {
@@ -51,6 +54,7 @@ internal static class CapabilityExplanationTextRenderer
             {
                 builder.AppendLine($"  {group.Id}: {group.Status} ({group.InstallScope})");
                 builder.AppendLine($"    Capabilities: {JoinOrNone(group.Capabilities)}");
+                builder.AppendLine($"    Version: {ProviderVersionDeclarationProjection.Format(group.Version)}");
                 builder.AppendLine($"    Next actions: {JoinOrNone(group.Actions)}");
                 foreach (var evidence in group.Evidence)
                 {
@@ -125,6 +129,7 @@ internal static class CapabilityExplanationTextRenderer
             {
                 builder.AppendLine($"  {provider.Provider.Id}: {provider.Status}");
                 builder.AppendLine($"    Capabilities: {JoinOrNone(provider.Provider.Capabilities)}");
+                builder.AppendLine($"    Version: {ProviderVersionDeclarationProjection.Format(provider.Provider.Version)}");
                 foreach (var evidence in provider.Evidence)
                 {
                     builder.AppendLine($"    {evidence.DetectorKind}/{evidence.Scope}: {evidence.Status}");

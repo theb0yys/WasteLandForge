@@ -96,8 +96,8 @@ internal static class DoctorExportProviderIndexRenderer
     {
         builder.AppendLine("## Providers");
         builder.AppendLine();
-        builder.AppendLine("| Provider | Status | Scope | Type | Capabilities | Evidence |");
-        builder.AppendLine("|---|---|---|---|---|---|");
+        builder.AppendLine("| Provider | Status | Scope | Type | Version | Capabilities | Evidence |");
+        builder.AppendLine("|---|---|---|---|---|---|---|");
         foreach (var provider in report.Capabilities.Providers.OrderBy(item => item.Provider.Id, StringComparer.Ordinal))
         {
             builder.Append("| `");
@@ -111,6 +111,8 @@ internal static class DoctorExportProviderIndexRenderer
             builder.Append("` | `");
             builder.Append(EscapeInline(provider.Provider.ProviderType));
             builder.Append("` | ");
+            builder.Append(EscapeTable(ProviderVersionDeclarationProjection.Format(provider.Provider.Version)));
+            builder.Append(" | ");
             builder.Append(EscapeTable(JoinInline(provider.Provider.Capabilities)));
             builder.Append(" | ");
             builder.Append(EscapeTable(FormatEvidence(provider.Evidence)));
@@ -145,6 +147,7 @@ internal static class DoctorExportProviderIndexRenderer
             ["providerType"] = provider.Provider.ProviderType,
             ["installScope"] = provider.Provider.InstallScope,
             ["status"] = provider.Status,
+            ["version"] = ProviderVersionDeclarationProjection.ToJson(provider.Provider.Version),
             ["capabilities"] = new JsonArray(provider.Provider.Capabilities.Select(capability => JsonValue.Create(capability)).ToArray()),
             ["detectorKinds"] = new JsonArray(provider.Provider.DetectorKinds.Select(detector => JsonValue.Create(detector)).ToArray()),
             ["evidence"] = new JsonArray(provider.Evidence.Select(ToJson).ToArray())

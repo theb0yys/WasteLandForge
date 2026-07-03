@@ -231,9 +231,14 @@ public sealed class CliGoldenTests
         Assert.Equal(2, json["cataloguePolicy"]?["openQuestionDetails"]?.AsArray().Count);
         Assert.Contains("No action needed", (string?)json["target"]?["actions"]?[0], StringComparison.Ordinal);
         Assert.Equal("provider.runtime.mcm_extender", (string?)json["providers"]?[0]?["id"]);
+        Assert.Equal("provider-defined", (string?)json["providers"]?[0]?["version"]?["scheme"]);
+        Assert.Equal("declared-only", (string?)json["providers"]?[0]?["version"]?["status"]);
+        Assert.Equal("not-parsed", (string?)json["providers"]?[0]?["version"]?["localVersionStatus"]);
+        Assert.Equal("not-evaluated", (string?)json["providers"]?[0]?["version"]?["resolutionStatus"]);
         Assert.Equal("probable", (string?)json["providers"]?[0]?["status"]);
         Assert.Equal("probable", (string?)json["providers"]?[0]?["evidence"]?[0]?["status"]);
         Assert.Equal("provider.runtime.mcm_extender", (string?)json["evidenceGroups"]?[0]?["id"]);
+        Assert.Equal("provider-defined", (string?)json["evidenceGroups"]?[0]?["version"]?["scheme"]);
         Assert.Equal("probable", (string?)json["evidenceGroups"]?[0]?["status"]);
         Assert.Equal("data-managed", (string?)json["evidenceGroups"]?[0]?["installScope"]);
         Assert.Contains("No action needed", (string?)json["evidenceGroups"]?[0]?["actions"]?[0], StringComparison.Ordinal);
@@ -263,7 +268,10 @@ public sealed class CliGoldenTests
         Assert.Equal("probable", (string?)json["target"]?["status"]);
         Assert.Contains("No action needed", (string?)json["target"]?["actions"]?[0], StringComparison.Ordinal);
         Assert.Equal("provider.runtime.xnvse", (string?)json["providers"]?[0]?["id"]);
+        Assert.Equal("built-in-catalogue", (string?)json["providers"]?[0]?["version"]?["source"]);
+        Assert.Contains("xNVSE provider-version metadata is declared", (string?)json["providers"]?[0]?["version"]?["notes"]?[0], StringComparison.Ordinal);
         Assert.Equal("provider.runtime.xnvse", (string?)json["evidenceGroups"]?[0]?["id"]);
+        Assert.Equal("declared-only", (string?)json["evidenceGroups"]?[0]?["version"]?["status"]);
         Assert.Equal("root", (string?)json["evidenceGroups"]?[0]?["installScope"]);
         Assert.Equal("runtime.scripting.xnvse", (string?)json["evidenceGroups"]?[0]?["capabilities"]?[0]);
         Assert.Equal("root-file", (string?)json["evidenceGroups"]?[0]?["evidence"]?[0]?["detectorKind"]);
@@ -334,6 +342,7 @@ public sealed class CliGoldenTests
         Assert.Equal(0, result.ExitCode);
         Assert.Contains("Provider evidence groups:", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("provider.runtime.xnvse: unknown (root)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Version: provider-defined (declared-only; local=not-parsed; resolution=not-evaluated)", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Next actions: Provide xNVSE evidence in root scope with --game-root.", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("root-file/root: unknown", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Catalogue policy open questions:", result.Stdout, StringComparison.Ordinal);
@@ -500,6 +509,37 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CapabilitiesExplainProjectPlainIncludesOperatorHandoff()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli(
+            "capabilities",
+            "explain",
+            "runtime.scripting.xnvse",
+            "--project",
+            projectRoot,
+            "--format",
+            "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Operator handoff:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Status: blocked", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Headline: Blocked: 3 blocker item(s) and 3 review item(s) need operator action.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Priorities: blocker=3, review=3", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Sources: inputs=1, projectRequirements=1, diagnosticHandoff=1, target.actions=1, evidenceGroups=1, cataloguePolicy=1", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    [ ] refresh-target-evidence (blocker): Refresh target evidence", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("        Command: forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    [ ] resolve-project-requirement-runtime-scripting-xnvse (blocker): Resolve required project requirement runtime.scripting.xnvse", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("        Command: forge capabilities explain runtime.scripting.xnvse --project <project-root> --game-root <game-root> --tool-path <tool-path> --format plain", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    [ ] review-diagnostic-handoff (blocker): Review project diagnostic handoff", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    [ ] Review 1 additional work item(s) in the full explanation output.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("  Command hints:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    review-catalogue-policy: forge capabilities list --format json", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void CapabilitiesExplainProjectReadFailureReturnsDiagnostics()
     {
         var missingProjectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "missing-project");
@@ -579,8 +619,17 @@ public sealed class CliGoldenTests
         Assert.Contains("# WastelandForge Capability Explanation", markdown, StringComparison.Ordinal);
         Assert.Contains("Command: `capabilities explain`", markdown, StringComparison.Ordinal);
         Assert.Contains("Local paths: omitted from this Markdown summary", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Operator Handoff", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Status: `blocked`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: blocker=3, review=3", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Sources: inputs=1, projectRequirements=1, diagnosticHandoff=1, target.actions=1, evidenceGroups=1, cataloguePolicy=1", markdown, StringComparison.Ordinal);
+        Assert.Contains("- [ ] `refresh-target-evidence` (blocker): Refresh target evidence", markdown, StringComparison.Ordinal);
+        Assert.Contains("Command: `forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- `review-catalogue-policy`: `forge capabilities list --format json`", markdown, StringComparison.Ordinal);
         Assert.Contains("- Id: `runtime.scripting.xnvse`", markdown, StringComparison.Ordinal);
         Assert.Contains("## Provider Evidence Groups", markdown, StringComparison.Ordinal);
+        Assert.Contains("| Provider | Kind | Status | Scope | Version | Capabilities | Evidence | Actions |", markdown, StringComparison.Ordinal);
+        Assert.Contains("provider-defined (declared-only; local=not-parsed; resolution=not-evaluated)", markdown, StringComparison.Ordinal);
         Assert.Contains("## Project Requirements", markdown, StringComparison.Ordinal);
         Assert.Contains("`WF-CAP-002`", markdown, StringComparison.Ordinal);
         Assert.Contains("src/registries/dependencies/main.json#/requires/capabilities/0", markdown, StringComparison.Ordinal);
@@ -700,6 +749,8 @@ public sealed class CliGoldenTests
             StringComparer.Ordinal.Equals("data-managed", (string?)item?["installScope"]));
         var root = installScopes.Single(item =>
             StringComparer.Ordinal.Equals("root", (string?)item?["installScope"]));
+        var xnvseProvider = providers.Single(item =>
+            StringComparer.Ordinal.Equals("provider.runtime.xnvse", (string?)item?["id"]));
 
         Assert.Equal(0, result.ExitCode);
         Assert.Equal(providers.Count, (int?)providerInventorySummary["providers"]);
@@ -714,6 +765,11 @@ public sealed class CliGoldenTests
         Assert.Equal(2, (int?)root?["count"]);
         Assert.Contains(root?["providerIds"]?.AsArray() ?? [], provider =>
             StringComparer.Ordinal.Equals("provider.runtime.xnvse", (string?)provider));
+        Assert.Equal("provider-defined", (string?)xnvseProvider?["version"]?["scheme"]);
+        Assert.Equal("built-in-catalogue", (string?)xnvseProvider?["version"]?["source"]);
+        Assert.Equal("declared-only", (string?)xnvseProvider?["version"]?["status"]);
+        Assert.Equal("not-parsed", (string?)xnvseProvider?["version"]?["localVersionStatus"]);
+        Assert.Equal("not-evaluated", (string?)xnvseProvider?["version"]?["resolutionStatus"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1023,6 +1079,7 @@ public sealed class CliGoldenTests
         Assert.Contains("unknown: 19 capability(ies)", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("runtime.ui.mcm_json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Providers:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Version: provider-defined (declared-only; local=not-parsed; resolution=not-evaluated)", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -1795,6 +1852,9 @@ public sealed class CliGoldenTests
         Assert.Contains("- `review-catalogue-policy`: `forge capabilities list --format json`", markdown, StringComparison.Ordinal);
         Assert.Contains("## Doctor Areas", markdown, StringComparison.Ordinal);
         Assert.Contains("| `project-requirements` | `ready` | 2 | 0 | 0 |", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Providers", markdown, StringComparison.Ordinal);
+        Assert.Contains("| Provider | Status | Scope | Type | Version | Capabilities | Evidence |", markdown, StringComparison.Ordinal);
+        Assert.Contains("provider-defined (declared-only; local=not-parsed; resolution=not-evaluated)", markdown, StringComparison.Ordinal);
         Assert.Contains("## Action Summary", markdown, StringComparison.Ordinal);
         Assert.Contains("No actions.", markdown, StringComparison.Ordinal);
         Assert.Contains("## Project Requirements", markdown, StringComparison.Ordinal);
@@ -2026,6 +2086,9 @@ public sealed class CliGoldenTests
             StringComparer.Ordinal.Equals("data-managed", (string?)item?["installScope"]));
         var root = installScopes.Single(item =>
             StringComparer.Ordinal.Equals("root", (string?)item?["installScope"]));
+        var xnvseProvider = json["capabilities"]?["providers"]?.AsArray()
+            .Single(item => StringComparer.Ordinal.Equals("provider.runtime.xnvse", (string?)item?["id"]))
+            ?? throw new InvalidOperationException("Doctor export capability scan did not include xNVSE provider.");
 
         Assert.Equal(0, result.ExitCode);
         Assert.Equal(15, (int?)providerInventorySummary["providers"]);
@@ -2040,6 +2103,10 @@ public sealed class CliGoldenTests
         Assert.Equal(2, (int?)root?["count"]);
         Assert.Contains(root?["providerIds"]?.AsArray() ?? [], provider =>
             StringComparer.Ordinal.Equals("provider.runtime.xnvse", (string?)provider));
+        Assert.Equal("provider-defined", (string?)xnvseProvider["version"]?["scheme"]);
+        Assert.Equal("declared-only", (string?)xnvseProvider["version"]?["status"]);
+        Assert.Equal("not-parsed", (string?)xnvseProvider["version"]?["localVersionStatus"]);
+        Assert.Equal("not-evaluated", (string?)xnvseProvider["version"]?["resolutionStatus"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -2611,6 +2678,7 @@ public sealed class CliGoldenTests
         Assert.Contains("Scope data-managed: 9 provider(s)", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Scope root: 2 provider(s)", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("provider.runtime.mcm_extender", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Version: provider-defined (declared-only; local=not-parsed; resolution=not-evaluated)", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -3230,8 +3298,18 @@ public sealed class CliGoldenTests
         Assert.Equal(15, providerIndexJson["providers"]?.AsArray().Count);
         Assert.Equal("provider.editor.geck", (string?)providerIndexJson["providers"]?[0]?["id"]);
         Assert.Equal("executable-tool", (string?)providerIndexJson["providers"]?[0]?["evidence"]?[0]?["detectorKind"]);
+        var xnvseProviderIndex = providerIndexJson["providers"]?.AsArray()
+            .Single(item => StringComparer.Ordinal.Equals("provider.runtime.xnvse", (string?)item?["id"]))
+            ?? throw new InvalidOperationException("Doctor provider index did not include xNVSE provider.");
+        Assert.Equal("provider-defined", (string?)xnvseProviderIndex["version"]?["scheme"]);
+        Assert.Equal("built-in-catalogue", (string?)xnvseProviderIndex["version"]?["source"]);
+        Assert.Equal("declared-only", (string?)xnvseProviderIndex["version"]?["status"]);
+        Assert.Equal("not-parsed", (string?)xnvseProviderIndex["version"]?["localVersionStatus"]);
+        Assert.Equal("not-evaluated", (string?)xnvseProviderIndex["version"]?["resolutionStatus"]);
         Assert.Contains("# WastelandForge Doctor Providers", providerIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("| Provider | Status | Scope | Type | Version | Capabilities | Evidence |", providerIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("provider.runtime.xnvse", providerIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("provider-defined (declared-only; local=not-parsed; resolution=not-evaluated)", providerIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-redaction-index/v1", (string?)redactionIndexJson["kind"]);
         Assert.Equal("local-paths", (string?)redactionIndexJson["redaction"]?["mode"]);
         Assert.Equal("redacted", (string?)redactionIndexJson["redaction"]?["paths"]);
@@ -3443,6 +3521,7 @@ public sealed class CliGoldenTests
         Assert.Contains("`triage/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`requirement-explanations/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`requirement-explanations/runtime.scripting.xnvse.json`", readme, StringComparison.Ordinal);
+        Assert.Contains("Markdown entries include operator handoff checklists with placeholder commands; JSON entries keep the `capabilities explain` contract.", readme, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-action-index/v1", (string?)actionIndexJson["kind"]);
         Assert.True((int?)actionIndexJson["summary"]?["actions"] > 0);
         Assert.Contains("# WastelandForge Doctor Actions", actionIndexMarkdown, StringComparison.Ordinal);
@@ -3585,8 +3664,15 @@ public sealed class CliGoldenTests
         Assert.Equal("wastelandforge/doctor-provider-index/v1", (string?)providerIndexJson["kind"]);
         Assert.Equal(15, (int?)providerIndexJson["summary"]?["providers"]);
         Assert.Equal(15, providerIndexJson["providers"]?.AsArray().Count);
+        var xnvseProviderIndex = providerIndexJson["providers"]?.AsArray()
+            .Single(item => StringComparer.Ordinal.Equals("provider.runtime.xnvse", (string?)item?["id"]))
+            ?? throw new InvalidOperationException("Doctor provider index did not include xNVSE provider.");
+        Assert.Equal("declared-only", (string?)xnvseProviderIndex["version"]?["status"]);
+        Assert.Equal("not-evaluated", (string?)xnvseProviderIndex["version"]?["resolutionStatus"]);
         Assert.Contains("# WastelandForge Doctor Providers", providerIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("| Provider | Status | Scope | Type | Version | Capabilities | Evidence |", providerIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("provider.runtime.xnvse", providerIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("provider-defined (declared-only; local=not-parsed; resolution=not-evaluated)", providerIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-redaction-index/v1", (string?)redactionIndexJson["kind"]);
         Assert.Equal("local-paths", (string?)redactionIndexJson["redaction"]?["mode"]);
         Assert.Equal("redacted", (string?)redactionIndexJson["redaction"]?["paths"]);
@@ -3623,14 +3709,27 @@ public sealed class CliGoldenTests
         Assert.Equal("runtime.scripting.xnvse", (string?)indexJson["requirements"]?[0]?["id"]);
         Assert.Equal("requirement-explanations/runtime.scripting.xnvse.json", (string?)indexJson["requirements"]?[0]?["entries"]?["json"]);
         Assert.Contains("# WastelandForge Requirement Explanations", indexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Markdown entries include `## Operator Handoff` checklists with placeholder commands; JSON entries keep the `capabilities explain` contract.", indexMarkdown, StringComparison.Ordinal);
         Assert.Contains("`requirement-explanations/runtime.scripting.xnvse.json`", indexMarkdown, StringComparison.Ordinal);
         Assert.Equal("capabilities explain", (string?)xnvseExplanationJson["command"]);
         Assert.Equal("runtime.scripting.xnvse", (string?)xnvseExplanationJson["target"]?["id"]);
         Assert.Equal("<redacted:project-root>", (string?)xnvseExplanationJson["projectRequirements"]?["project"]?["root"]);
+        Assert.DoesNotContain("\"operatorHandoff\"", xnvseExplanationJsonText, StringComparison.Ordinal);
         Assert.Contains("# WastelandForge Capability Explanation", xnvseExplanation, StringComparison.Ordinal);
+        Assert.Contains("## Operator Handoff", xnvseExplanation, StringComparison.Ordinal);
+        Assert.Contains("- Status: `blocked`", xnvseExplanation, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: blocker=3, review=3", xnvseExplanation, StringComparison.Ordinal);
+        Assert.Contains("- Sources: inputs=1, projectRequirements=1, diagnosticHandoff=1, target.actions=1, evidenceGroups=1, cataloguePolicy=1", xnvseExplanation, StringComparison.Ordinal);
+        Assert.Contains("- [ ] `refresh-target-evidence` (blocker): Refresh target evidence", xnvseExplanation, StringComparison.Ordinal);
+        Assert.Contains("Command: `forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json`", xnvseExplanation, StringComparison.Ordinal);
+        Assert.Contains("Command: `forge capabilities explain runtime.scripting.xnvse --project <project-root> --game-root <game-root> --tool-path <tool-path> --format plain`", xnvseExplanation, StringComparison.Ordinal);
+        Assert.Contains("- `review-catalogue-policy`: `forge capabilities list --format json`", xnvseExplanation, StringComparison.Ordinal);
         Assert.Contains("- Id: `runtime.scripting.xnvse`", xnvseExplanation, StringComparison.Ordinal);
         Assert.Contains("`WF-CAP-002`", xnvseExplanation, StringComparison.Ordinal);
+        Assert.DoesNotContain("<redacted:project-root>", xnvseExplanation, StringComparison.Ordinal);
         Assert.Contains("- Id: `runtime.ui.mcm_json`", mcmExplanation, StringComparison.Ordinal);
+        Assert.Contains("## Operator Handoff", mcmExplanation, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"operatorHandoff\"", mcmExplanationJsonText, StringComparison.Ordinal);
         Assert.Contains("  README.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  actions/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  actions/index.md", checksums, StringComparison.Ordinal);
@@ -3708,6 +3807,14 @@ public sealed class CliGoldenTests
             StringComparer.Ordinal.Equals("runtime.ui.mcm_json", (string?)item?["id"]));
         Assert.Contains(json["providers"]?.AsArray() ?? throw new InvalidOperationException("Providers array missing."), item =>
             StringComparer.Ordinal.Equals("provider.runtime.mcm_extender", (string?)item?["id"]));
+        var xnvseProvider = json["providers"]?.AsArray()
+            .Single(item => StringComparer.Ordinal.Equals("provider.runtime.xnvse", (string?)item?["id"]))
+            ?? throw new InvalidOperationException("xNVSE provider missing.");
+        Assert.Equal("provider-defined", (string?)xnvseProvider["version"]?["scheme"]);
+        Assert.Equal("built-in-catalogue", (string?)xnvseProvider["version"]?["source"]);
+        Assert.Equal("declared-only", (string?)xnvseProvider["version"]?["status"]);
+        Assert.Equal("not-parsed", (string?)xnvseProvider["version"]?["localVersionStatus"]);
+        Assert.Equal("not-evaluated", (string?)xnvseProvider["version"]?["resolutionStatus"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -3720,6 +3827,19 @@ public sealed class CliGoldenTests
         Assert.Equal(0, result.ExitCode);
         Assert.Null(json["capabilities"]);
         Assert.Equal(15, json["providers"]?.AsArray().Count);
+        Assert.Equal("declared-only", (string?)json["providers"]?[0]?["version"]?["status"]);
+        Assert.Equal("not-evaluated", (string?)json["providers"]?[0]?["version"]?["resolutionStatus"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CapabilitiesListPlainIncludesProviderVersionDeclarations()
+    {
+        var result = RunCli("capabilities", "list", "--kind", "providers", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("provider.runtime.xnvse", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Version: provider-defined (declared-only; local=not-parsed; resolution=not-evaluated)", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 

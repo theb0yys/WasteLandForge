@@ -33,6 +33,7 @@ public sealed record CapabilityExplanationEvidenceGroup(
     string Status,
     string InstallScope,
     IReadOnlyList<string> Capabilities,
+    ProviderVersionDeclaration Version,
     IReadOnlyList<string> Actions,
     IReadOnlyList<CapabilityScanEvidence> Evidence);
 

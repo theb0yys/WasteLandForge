@@ -631,3 +631,65 @@ integration, provider-version parser, detector dependency, capability
 resolver dependency, Doctor planner dependency, catalogue-policy decision
 dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
 release-publishing dependency, or AI requirement.
+Gate 194 derives explain-side operator handoff text from existing capability
+explanation metadata using .NET platform libraries. It adds no third-party
+dependency, download, rehosted runtime binary, network call, runtime probe,
+MO2/GECK integration, provider-version parser, detector dependency,
+capability resolver dependency, Doctor planner dependency, catalogue-policy
+decision dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, or AI requirement.
+Gate 195 derives Doctor bundle requirement explanation handoff coverage and
+generated archive notes from existing capability explanation metadata using
+.NET platform libraries. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, detector dependency, capability resolver dependency,
+Doctor planner dependency, catalogue-policy decision dependency, SARIF/GitHub
+dependency, GitHub step-summary dependency, release-publishing dependency, or
+AI requirement.
+Gate 196 derives declaration-only provider-version metadata from the built-in
+catalogue using existing .NET platform libraries. It adds no third-party
+dependency, download, rehosted runtime binary, network call, runtime probe,
+MO2/GECK integration, provider-version parser, detector dependency,
+capability resolver dependency, Doctor planner dependency, catalogue-policy
+decision dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, or AI requirement.
+Gate 197 projects existing declaration-only provider-version metadata through
+scan and Doctor provider indexes using existing .NET platform libraries. It
+adds no third-party dependency, download, rehosted runtime binary, network
+call, runtime probe, MO2/GECK integration, provider-version parser, detector
+dependency, capability resolver dependency, Doctor planner dependency,
+catalogue-policy decision dependency, SARIF/GitHub dependency, GitHub
+step-summary dependency, release-publishing dependency, or AI requirement.
+Gate 198 records provider-version parser research only. It adds no
+third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, provider-version parser, detector
+dependency, capability resolver dependency, Doctor planner dependency,
+catalogue-policy decision dependency, SARIF/GitHub dependency, GitHub
+step-summary dependency, release-publishing dependency, or AI requirement.
+Gate 199 adds the provider-version parser contract using existing .NET
+platform libraries and existing WastelandForge domain types. It adds no
+third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, detector dependency, capability resolver
+dependency, Doctor planner dependency, catalogue-policy decision dependency,
+SARIF/GitHub dependency, GitHub step-summary dependency, release-publishing
+dependency, or AI requirement.
+Gate 200 documents the parser contract and future projection notes using
+Markdown only. It adds no third-party dependency, download, rehosted runtime
+binary, network call, runtime probe, MO2/GECK integration, detector
+dependency, capability resolver dependency, Doctor planner dependency,
+catalogue-policy decision dependency, SARIF/GitHub dependency, GitHub
+step-summary dependency, release-publishing dependency, or AI requirement.
+Gate 201 adds the parsed-evidence model using existing .NET platform
+libraries and existing WastelandForge parser types. It adds no third-party
+dependency, download, rehosted runtime binary, network call, runtime probe,
+MO2/GECK integration, detector dependency, capability resolver dependency,
+Doctor planner dependency, catalogue-policy decision dependency,
+SARIF/GitHub dependency, GitHub step-summary dependency, release-publishing
+dependency, or AI requirement.
+Gate 202 adds documentation only for the JIP LN text-script generator
+evidence checkpoint. It adds no third-party dependency, download, rehosted
+runtime binary, network call, runtime probe, MO2/GECK integration, detector
+dependency, capability resolver dependency, Doctor planner dependency,
+catalogue-policy decision dependency, SARIF/GitHub dependency, GitHub
+step-summary dependency, release-publishing dependency, external tool
+execution, or AI requirement.

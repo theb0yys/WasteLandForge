@@ -62,6 +62,9 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> McmRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Mcm010,
         "MCM registry schema 0.1.0"));
+    private static readonly Lazy<JsonSchema> JipScriptRegistrySchema = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.JipScript010,
+        "JIP LN text script registry schema 0.1.0"));
     private static readonly Lazy<JsonSchema> QuestRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Quest010,
         "Quest registry schema 0.1.0"));
@@ -315,6 +318,50 @@ public sealed class ProjectValidationPipeline
             projectId,
             new DiagnosticReport(projectId, issues),
             assets);
+    }
+
+    public ProjectJipScriptReadResult ReadJipScripts(string projectPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectPath);
+
+        var projectRoot = Path.GetFullPath(projectPath);
+        var issues = new List<DiagnosticIssue>();
+        var scripts = new List<JipScriptDefinition>();
+        var manifestLoad = LoadManifest(projectRoot, issues);
+        LogicalId? projectId = null;
+
+        if (manifestLoad is not null)
+        {
+            projectId = ReadProjectId(manifestLoad.Manifest);
+            var issueCountBeforeSchemaValidation = issues.Count;
+            ValidateManifestSchema(manifestLoad, issues, projectId);
+            if (!HasErrorSince(issues, issueCountBeforeSchemaValidation))
+            {
+                var registries = manifestLoad.Manifest["registries"] as JsonObject;
+                var jipScriptsPath = GetString(registries, "jipScripts");
+                if (jipScriptsPath is not null)
+                {
+                    var registryIssueStart = issues.Count;
+                    var jipScriptDocuments = LoadRegistryDocuments(
+                        manifestLoad.ProjectRoot,
+                        jipScriptsPath,
+                        "jip-script",
+                        "jipScripts",
+                        issues,
+                        projectId);
+                    if (!HasErrorSince(issues, registryIssueStart))
+                    {
+                        scripts.AddRange(jipScriptDocuments.SelectMany(ReadJipScripts));
+                    }
+                }
+            }
+        }
+
+        return new ProjectJipScriptReadResult(
+            projectRoot,
+            projectId,
+            new DiagnosticReport(projectId, issues),
+            scripts);
     }
 
     private static LoadedManifest? LoadManifest(string projectRoot, List<DiagnosticIssue> issues)
@@ -762,6 +809,7 @@ public sealed class ProjectValidationPipeline
             "capability" => "Capability registry",
             "asset" => "Asset registry",
             "mcm" => "MCM registry",
+            "jip-script" => "JIP LN text script registry",
             "quest" => "Quest registry",
             "dialogue" => "Dialogue registry",
             _ => "Registry"
@@ -787,6 +835,7 @@ public sealed class ProjectValidationPipeline
             "capability" => CapabilityRegistrySchema.Value,
             "asset" => AssetRegistrySchema.Value,
             "mcm" => McmRegistrySchema.Value,
+            "jip-script" => JipScriptRegistrySchema.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.6.0") => QuestRegistrySchema060.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.5.0") => QuestRegistrySchema050.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.4.0") => QuestRegistrySchema040.Value,
@@ -938,6 +987,7 @@ public sealed class ProjectValidationPipeline
         var questPath = GetString(registries, "quests");
         var dialoguePath = GetString(registries, "dialogue");
         var mcmPath = GetString(registries, "mcm");
+        var jipScriptsPath = GetString(registries, "jipScripts");
         if (dependencyPath is null || capabilityPath is null)
         {
             return;
@@ -999,6 +1049,16 @@ public sealed class ProjectValidationPipeline
                 mcmPath,
                 "mcm",
                 "mcm",
+                issues,
+                projectId);
+        }
+        if (jipScriptsPath is not null)
+        {
+            _ = LoadRegistryDocuments(
+                manifestLoad.ProjectRoot,
+                jipScriptsPath,
+                "jip-script",
+                "jipScripts",
                 issues,
                 projectId);
         }
@@ -2396,6 +2456,60 @@ public sealed class ProjectValidationPipeline
     {
         return assetDocuments
             .SelectMany(document => ReadAssetEntries(document).Select(asset => new AssetRecord(document, asset)))
+            .ToArray();
+    }
+
+    private static IEnumerable<JipScriptDefinition> ReadJipScripts(RegistryDocument document)
+    {
+        if (document.Root["scripts"] is not JsonArray scripts)
+        {
+            yield break;
+        }
+
+        for (var index = 0; index < scripts.Count; index++)
+        {
+            if (scripts[index] is not JsonObject script)
+            {
+                continue;
+            }
+
+            var id = GetString(script, "id");
+            var lifecyclePrefix = GetString(script, "lifecyclePrefix");
+            var outputFile = GetString(script, "outputFile");
+            var maxBytes = script["sizePolicy"] is JsonObject sizePolicy
+                ? GetInteger(sizePolicy, "maxBytes")
+                : null;
+            var formIdResolutionStrategy = script["formIdResolution"] is JsonObject formIdResolution
+                ? GetString(formIdResolution, "strategy")
+                : null;
+            if (id is null || lifecyclePrefix is null || outputFile is null || maxBytes is null || formIdResolutionStrategy is null)
+            {
+                continue;
+            }
+
+            yield return new JipScriptDefinition(
+                id,
+                lifecyclePrefix,
+                outputFile,
+                ReadCapabilityReferences(script["requires"] as JsonObject),
+                maxBytes.Value,
+                formIdResolutionStrategy,
+                CreateSourceLocation(document.DisplayPath, $"/scripts/{index}", document.SourceLocations));
+        }
+    }
+
+    private static IReadOnlyList<string> ReadCapabilityReferences(JsonObject? requires)
+    {
+        if (requires?["capabilities"] is not JsonArray capabilities)
+        {
+            return [];
+        }
+
+        return capabilities
+            .OfType<JsonObject>()
+            .Select(capability => GetString(capability, "id"))
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Cast<string>()
             .ToArray();
     }
 

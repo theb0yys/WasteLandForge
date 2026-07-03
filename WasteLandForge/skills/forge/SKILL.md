@@ -298,6 +298,108 @@ behavior, provider-version evidence, runtime confirmation, catalogue-policy
 resolution, SARIF/GitHub output change, GitHub step-summary behavior, release
 publishing, or `--format markdown`.
 
+Gate 194 option routing:
+
+Gate 194 keeps the Gate 193 command behavior and adds explain-side operator
+handoff sections to `forge capabilities explain` plain output and Markdown
+summary sidecars. Treat `Operator handoff:` and Markdown `Operator Handoff`
+sections in explain output as derived checklist text over existing target
+actions, provider evidence groups, matching project requirements, diagnostic
+handoff, and catalogue-policy handoff entries. Do not treat this as a new
+slash-command alias, primary JSON contract, detector, resolver behavior,
+diagnostic rule, Doctor planning behavior, provider-version evidence, runtime
+confirmation, catalogue-policy resolution, SARIF/GitHub output change, GitHub
+step-summary behavior, release publishing, command execution, or
+`--format markdown`.
+
+Gate 195 option routing:
+
+Gate 195 keeps the Gate 194 command behavior and makes Doctor bundle
+requirement explanation Markdown explicitly document and test the explain-side
+operator handoff projection. Treat `requirement-explanations/index.md`,
+bundle `README.md`, and `requirement-explanations/<capability-id>.md`
+operator handoff text as generated archive documentation over existing
+redacted explanation reports. Do not treat this as a new slash-command alias,
+primary JSON contract, detector, resolver behavior, diagnostic rule, Doctor
+planning behavior, provider-version evidence, runtime confirmation,
+catalogue-policy resolution, SARIF/GitHub output change, GitHub step-summary
+behavior, release publishing, command execution, or `--format markdown`.
+
+Gate 196 option routing:
+
+Gate 196 keeps the Gate 195 command behavior and adds declaration-only
+provider-version metadata to built-in provider catalogue output. Treat
+`version.scheme`, `version.source`, `version.status`,
+`version.localVersionStatus`, `version.resolutionStatus`, and version notes in
+`forge capabilities list` and `forge capabilities explain` as catalogue
+metadata only. Do not treat this as detected local provider-version evidence,
+runtime confirmation, resolver behavior, unsupported-version diagnostics,
+catalogue-policy resolution, detector behavior, MO2/GECK automation, command
+execution, a new slash-command alias, or a new format.
+
+Gate 197 option routing:
+
+Gate 197 keeps the Gate 196 command behavior and surfaces the same
+declaration-only provider-version metadata in `forge capabilities scan`
+provider output and Doctor provider indexes. Treat scan/Doctor `version.*`
+fields as catalogue metadata only. Do not treat this as detected local
+provider-version evidence, runtime confirmation, resolver behavior,
+unsupported-version diagnostics, catalogue-policy resolution, detector
+behavior, MO2/GECK automation, command execution, a new slash-command alias,
+or a new format.
+
+Gate 198 option routing:
+
+Gate 198 keeps the Gate 197 command behavior and records a provider-version
+parser research checkpoint. Treat it as planning for a later pure parser
+contract with synthetic raw inputs only. Do not treat this as parser code,
+detected local provider-version evidence, runtime confirmation, DLL/EXE file
+metadata inspection, resolver behavior, unsupported-version diagnostics,
+catalogue-policy resolution, detector behavior, MO2/GECK automation, command
+execution, a new slash-command alias, or a new format.
+
+Gate 199 option routing:
+
+Gate 199 adds the pure provider-version parser contract in Registry. Treat it
+as library-only parser groundwork for synthetic raw `semver`, `integer`, and
+`scaled-integer` values, not as detected local provider-version evidence,
+`forge capabilities` output behavior, resolver behavior, unsupported-version
+diagnostics, runtime confirmation, DLL/EXE file metadata inspection,
+MO2/GECK automation, catalogue-policy resolution, command execution, a new
+slash-command alias, or a new format.
+
+Gate 200 option routing:
+
+Gate 200 documents the parser contract and non-binding future scan-evidence
+projection notes under `docs/capabilities/`. Treat it as documentation only,
+not as detected local provider-version evidence, `forge capabilities` output
+behavior, resolver behavior, unsupported-version diagnostics, runtime
+confirmation, DLL/EXE file metadata inspection, MO2/GECK automation,
+catalogue-policy resolution, command execution, a new slash-command alias, or
+a new format.
+
+Gate 201 option routing:
+
+Gate 201 adds a standalone parsed-evidence model for future provider-version
+scan data. Treat it as model-only groundwork and the stopping point for the
+current provider-version mini-slice, not as detected local provider-version
+evidence, `forge capabilities` output behavior, resolver behavior,
+unsupported-version diagnostics, runtime confirmation, DLL/EXE file metadata
+inspection, MO2/GECK automation, catalogue-policy resolution, command
+execution, a new slash-command alias, or a new format.
+
+Gate 202 option routing:
+
+Gate 202 records the JIP LN text-script generator evidence checkpoint under
+`docs/generation/`. Treat it as documentation and planning for the next real
+mod-building generator slice, not as a JIP LN source contract, schema,
+generator implementation, generated script output, `forge generate` target
+wiring, `forge build` target wiring, package staging, runtime probe, GECK
+automation, MO2 VFS inspection, live Data mutation, external tool execution,
+command alias, new output format, or AI behavior. The next safe slice is Gate
+203: a JIP LN text-script source contract skeleton with synthetic validation
+coverage only.
+
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a
   compact top-level scan index with `index.providerStatuses` and
@@ -351,10 +453,11 @@ publishing, or `--format markdown`.
 - `/forge capabilities explain <capability-or-provider-id>` maps to the real
   `forge capabilities explain` behavior when available. It includes
   target-level next actions and grouped provider evidence derived from the
-  same local scan evidence. JSON output includes `evidenceGroups`, and
+  same local scan evidence. JSON output includes `evidenceGroups` with
+  declaration-only provider-version metadata, and
   `cataloguePolicy.openQuestionDetails` and
   `cataloguePolicy.diagnosticHandoff`; human/plain output includes provider
-  status, install scope, actions, detector evidence, catalogue-policy
+  status, install scope, provider-version declarations, actions, detector evidence, catalogue-policy
   open-question details, and catalogue-policy diagnostic handoff entries. With
   `--project`, it also includes matching declared project requirement source,
   phase/reason metadata, resolution status, provider statuses, resolver
@@ -363,8 +466,10 @@ publishing, or `--format markdown`.
   requirements. With `--summary <path>`, it also writes a path-minimized
   Markdown explanation summary with target metadata, next actions, provider
   evidence group summaries, related capability statuses, matching project
-  requirements, diagnostic handoff issues, and catalogue-policy handoff
-  entries while omitting raw local paths. Do not route this to `/forge scan`,
+  requirements, diagnostic handoff issues, catalogue-policy handoff entries,
+  and an operator handoff checklist with ready/review/blocked status,
+  priority/source summaries, immediate work items, and copyable command hints
+  while omitting raw local paths. Do not route this to `/forge scan`,
   `forge doctor`, or any non-canonical alias.
 - `/forge doctor export` maps to the real `forge doctor export` behavior when
   available. It writes a redacted local handoff bundle from capability scan
@@ -417,7 +522,9 @@ publishing, or `--format markdown`.
   `requirement-explanations/index.md`,
   path-minimized `requirement-explanations/<capability-id>.json` and
   `requirement-explanations/<capability-id>.md` entries listed in the
-  manifest and checksums.
+  manifest and checksums. The Markdown requirement explanation entries include
+  operator handoff checklists with placeholder commands; paired JSON entries
+  keep the existing `capabilities explain` contract.
   It does not run runtime probes, MO2 VFS launch, provider version checks,
   GECK automation, network checks, AI calls, `--format markdown`, or
   `--format zip`, SARIF/GitHub Doctor bundle mode, GitHub step-summary

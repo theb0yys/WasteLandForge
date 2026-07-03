@@ -28,6 +28,7 @@ internal static class CapabilityScanMarkdownRenderer
             builder,
             CapabilityScanOperatorHandoffProjection.Create(report, diagnostics));
         AppendDoctorAreas(builder, doctorAreaSummary);
+        AppendProviders(builder, report);
         AppendActionSummary(builder, report);
         AppendRequirements(builder, report);
         AppendDiagnostics(builder, diagnostics);
@@ -81,6 +82,36 @@ internal static class CapabilityScanMarkdownRenderer
             builder.Append(area.Providers);
             builder.Append(" | ");
             builder.Append(area.Actions);
+            builder.AppendLine(" |");
+        }
+
+        builder.AppendLine();
+    }
+
+    private static void AppendProviders(StringBuilder builder, CapabilityScanReport report)
+    {
+        builder.AppendLine("## Providers");
+        builder.AppendLine();
+        builder.AppendLine("| Provider | Status | Scope | Type | Version | Capabilities | Evidence |");
+        builder.AppendLine("|---|---|---|---|---|---:|---:|");
+        foreach (var provider in report.Providers.OrderBy(item => item.Provider.Id, StringComparer.Ordinal))
+        {
+            builder.Append("| `");
+            builder.Append(EscapeInline(provider.Provider.Id));
+            builder.Append("` ");
+            builder.Append(EscapeTable(provider.Provider.Title));
+            builder.Append(" | `");
+            builder.Append(EscapeInline(provider.Status));
+            builder.Append("` | `");
+            builder.Append(EscapeInline(provider.Provider.InstallScope));
+            builder.Append("` | `");
+            builder.Append(EscapeInline(provider.Provider.ProviderType));
+            builder.Append("` | ");
+            builder.Append(EscapeTable(ProviderVersionDeclarationProjection.Format(provider.Provider.Version)));
+            builder.Append(" | ");
+            builder.Append(provider.Provider.Capabilities.Count);
+            builder.Append(" | ");
+            builder.Append(provider.Evidence.Count);
             builder.AppendLine(" |");
         }
 

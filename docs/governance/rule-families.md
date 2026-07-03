@@ -317,6 +317,31 @@ Gate 192 adds no new rule ID. It only adds a Doctor bundle
 `handoff-summary.md` sidecar derived from existing redacted triage metadata.
 Gate 193 adds no new rule ID. It only adds scan-side operator handoff text
 derived from existing capability scan metadata.
+Gate 194 adds no new rule ID. It only adds explain-side operator handoff text
+derived from existing capability explanation metadata.
+Gate 195 adds no new rule ID. It only documents and tests that Doctor bundle
+requirement explanation Markdown includes the explain-side operator handoff
+projection from existing capability explanation metadata.
+Gate 196 adds no new rule ID. It only exposes declaration-only
+provider-version metadata in catalogue list and capability explanation output;
+provider-version parsing and unsupported-version diagnostics remain future
+work.
+Gate 197 adds no new rule ID. It only exposes the same declaration-only
+provider-version metadata in capability scan provider output and Doctor
+provider indexes; provider-version parsing and unsupported-version diagnostics
+remain future work.
+Gate 198 adds no new rule ID. It only records provider-version parser research
+and keeps parser code, version evaluation, and unsupported-version diagnostics
+for later gates.
+Gate 199 adds no new rule ID. It adds a pure parser contract and synthetic
+tests only; version evaluation and unsupported-version diagnostics remain for
+later gates.
+Gate 200 adds no new rule ID. It documents parser failure reasons as parser
+contract strings only; version evaluation and unsupported-version diagnostics
+remain for later gates.
+Gate 201 adds no new rule ID. It adds a parsed-evidence model skeleton and
+synthetic tests only; version evaluation and unsupported-version diagnostics
+remain for later gates.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths
@@ -349,3 +374,9 @@ Gate 67 adds no new rule ID. Unsupported header generation continues to use
 
 Gate 68 adds no new rule ID. Unsupported or under-specified image generation
 continues to use `WF-GEN-005`.
+
+Gate 202 adds no new rule ID. It records that future JIP LN text-script
+source contracts may need `WF-GEN-*`, `WF-CAP-*`, or `WF-SEM-*` diagnostics
+for script size, unsafe output paths, missing capabilities, and unresolved
+references, but it does not allocate those IDs or change current diagnostic
+behavior.

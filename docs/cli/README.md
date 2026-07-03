@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 193 capability scan operator handoff checklist
+Status: Gate 202 JIP LN text-script generator evidence checkpoint
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -134,7 +134,9 @@ forge --version
 - `forge validate` emits `WF-SEM-039` when duplicate response route keys are
   authored on the same dialogue line.
 - `forge capabilities list` lists the built-in Fallout: New Vegas capability
-  and provider catalogue. It does not scan the local machine.
+  and provider catalogue. Provider entries include declaration-only
+  provider-version metadata from the built-in catalogue. It does not scan the
+  local machine.
 - `forge capabilities list --kind all|capabilities|providers` filters list
   output.
 - `forge capabilities list --format human|plain|json` selects text or
@@ -218,11 +220,15 @@ forge --version
   a sidecar summary, not a `--format` value.
 - `forge capabilities explain` reports the target kind, target status,
   related providers or capabilities, grouped provider evidence, provider
-  actions, scan evidence, catalogue-policy open-question details,
+  version declarations, actions, scan evidence, catalogue-policy open-question details,
   catalogue-policy diagnostic handoff metadata, optional matching project
-  requirement context, and optional project requirement diagnostic handoff
-  context. It does not run runtime probes, MO2 VFS launch, provider version
-  checks, or SARIF/GitHub diagnostic projection output.
+  requirement context, optional project requirement diagnostic handoff
+  context, and an operator handoff checklist in plain output and Markdown
+  sidecars. The checklist reports ready/review/blocked status,
+  priority/source summaries, immediate work items, and copyable canonical
+  command hints derived from existing explanation metadata. It does not run
+  runtime probes, MO2 VFS launch, local provider version parsing/checks, or
+  SARIF/GitHub diagnostic projection output.
 - `forge doctor export [project-root]` writes a redacted local Doctor handoff
   bundle from the same deterministic path-based evidence used by
   `forge capabilities scan`.
@@ -1734,6 +1740,78 @@ canonical command hints. It does not change scan JSON output, add aliases,
 resolver behavior, provider-version behavior, runtime probes, MO2 VFS checks,
 GECK automation, catalogue-policy decisions, release publishing, or AI
 behavior.
+
+Gate 194 keeps the same canonical command surface while adding an operator
+handoff checklist to `forge capabilities explain` plain output and
+`--summary <path>` Markdown sidecars. The checklist derives from existing
+target actions, provider evidence groups, matching project requirements,
+diagnostic handoff, and catalogue-policy handoff entries. It reports
+ready/review/blocked status, priority/source summaries, immediate work items,
+and copyable canonical command hints. It does not change explain JSON output,
+add aliases, `--format markdown`, new diagnostic rules, provider detection
+behavior, resolver behavior, provider-version behavior, runtime probes, MO2
+VFS checks, GECK automation, catalogue-policy decisions, release publishing,
+or AI behavior.
+
+Gate 195 keeps the same canonical command surface while making Doctor bundle
+requirement explanation Markdown explicitly cover that explain-side operator
+handoff projection. `requirement-explanations/index.md` and the bundle
+`README.md` now note that Markdown entries include operator handoff
+checklists with placeholder commands, while paired JSON entries keep the
+existing `capabilities explain` contract. It does not add aliases,
+`--format markdown`, new JSON contracts, new diagnostic rules, provider
+detection behavior, resolver behavior, provider-version behavior, runtime
+probes, MO2 VFS checks, GECK automation, catalogue-policy decisions, release
+publishing, or AI behavior.
+
+Gate 196 keeps the same canonical command surface while adding
+declaration-only provider-version metadata to the built-in provider catalogue.
+`forge capabilities list` provider output and `forge capabilities explain`
+provider/evidence-group output now show version scheme, source, declaration
+status, local-version status, resolution status, and notes. It does not parse
+local provider versions, evaluate version constraints, change detector or
+resolver behavior, add diagnostics, add runtime probes, add MO2/GECK
+automation, decide catalogue-policy questions, or execute external tools.
+
+Gate 197 keeps the same canonical command surface while surfacing that
+declaration-only provider-version metadata in `forge capabilities scan`
+provider output and Doctor provider indexes. It adds no local provider
+version parser, version constraint evaluation, detector or resolver behavior
+change, diagnostics, runtime probes, MO2/GECK automation, catalogue-policy
+decision, new alias, new output format, or external tool execution.
+
+Gate 198 keeps the same canonical command surface while recording the
+provider-version parser research checkpoint. It adds no command behavior,
+parser code, runtime probes, DLL/EXE metadata inspection, resolver behavior,
+diagnostics, MO2/GECK automation, catalogue-policy decision, new alias, new
+output format, or external tool execution.
+
+Gate 199 keeps the same canonical command surface while adding the pure
+provider-version parser contract behind the Registry layer. No CLI command
+calls the parser yet, and no `forge capabilities` or Doctor output includes
+parsed local provider-version evidence, unsupported-version diagnostics,
+runtime probes, DLL/EXE metadata inspection, MO2/GECK automation,
+catalogue-policy decisions, aliases, formats, or external tool execution.
+
+Gate 200 keeps the same canonical command surface while documenting the parser
+contract and non-binding future scan-evidence projection notes under
+`docs/capabilities/`. It adds no CLI command behavior, CLI output field,
+diagnostic projection, runtime probe, DLL/EXE metadata inspection,
+MO2/GECK automation, catalogue-policy decision, alias, format, or external
+tool execution.
+
+Gate 201 keeps the same canonical command surface while adding a standalone
+parsed-evidence model for future provider-version scan data. No CLI command
+uses the model yet, and no `forge capabilities` or Doctor output includes
+parsed local provider-version evidence, unsupported-version diagnostics,
+runtime probes, DLL/EXE metadata inspection, MO2/GECK automation,
+catalogue-policy decisions, aliases, formats, or external tool execution.
+
+Gate 202 keeps the same canonical command surface while recording the JIP LN
+text-script generator evidence checkpoint. It does not add aliases, new
+commands, new formats, CLI output fields, `forge generate` target wiring,
+`forge build` target wiring, generated script output, runtime probes,
+MO2/GECK automation, live Data mutation, or external tool execution.
 
 ## Exit Codes
 
