@@ -2,10 +2,10 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 165 adds a
-path-minimized Markdown sidecar summary for
-`forge capabilities scan --summary <path>`, derived from the existing
-capability scan report and projected diagnostics.
+The project is currently in gated v0.1 implementation. Gate 174 adds
+deterministic `requirements/index.json` and `requirements/index.md` entries to
+`forge doctor export --bundle <path>` archives so project requirement handoff
+data has a direct redacted bundle path.
 
 ## Architecture Spine
 
@@ -18,7 +18,7 @@ capability scan report and projected diagnostics.
 
 ## Current Gate
 
-Gate 165 builds on the closed first game-facing generator path. It keeps
+Gate 174 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -171,6 +171,46 @@ path-minimized Markdown scan summary derived from the same capability scan
 report and projected diagnostics, including summary counts, Doctor areas,
 action summary counts, unavailable requirements, diagnostics, and open
 questions, without adding a new primary output format.
+Gate 166 adds `forge doctor export --bundle <path>`. It writes a deterministic
+redacted ZIP handoff archive containing `doctor-export.json`,
+`doctor-export.md`, `doctor-bundle-manifest.json`, and `checksums.sha256`,
+without adding a new primary output format or release package behavior.
+Gate 167 adds `forge capabilities explain --summary <path>`. It writes a
+path-minimized Markdown handoff summary for one capability or provider,
+including target metadata, next actions, provider evidence group summaries,
+related capability statuses, matching project requirements, diagnostic
+handoff issues, and catalogue-policy handoff entries without adding a new
+primary output format.
+Gate 168 extends `forge doctor export --bundle <path>` so archives with
+unavailable project capability requirements include
+`requirement-explanations/<capability-id>.md` entries. These entries reuse the
+existing capability explanation Markdown summary path, are listed in the
+bundle manifest and checksums, and omit raw local paths.
+Gate 169 adds matching
+`requirement-explanations/<capability-id>.json` entries beside those Markdown
+entries. The JSON entries reuse the existing `capabilities explain` JSON
+shape, redact local paths before archiving, and are listed in the bundle
+manifest and checksums.
+Gate 170 adds `requirement-explanations/index.json` and
+`requirement-explanations/index.md` to the same archives. The index lists
+unavailable requirement IDs, statuses, source pointers, diagnostic handoff
+counts, and the matching per-requirement JSON/Markdown paths.
+Gate 171 adds `README.md` to the same archives. The README points to the
+redacted Doctor reports, requirement explanation index when present, bundle
+manifest, and checksums while summarizing existing redacted counts and keeping
+raw local paths out of the archive payload.
+Gate 172 adds `diagnostics/index.json` and `diagnostics/index.md` to the same
+archives. The diagnostic index reuses the redacted Doctor export diagnostic
+summary and compact `WF-CAP-*` diagnostic entries, is listed in the manifest
+and checksums, and is linked from the bundle README.
+Gate 173 adds `actions/index.json` and `actions/index.md` to the same
+archives. The action index reuses the redacted Doctor export action summary
+and compact action entries, is listed in the manifest and checksums, and is
+linked from the bundle README.
+Gate 174 adds `requirements/index.json` and `requirements/index.md` to the
+same archives. The requirement index reuses the redacted Doctor export
+requirement summary and compact unavailable requirement entries, is listed in
+the manifest and checksums, and is linked from the bundle README.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under
@@ -600,7 +640,9 @@ limits as open capability questions where relevant.
 Gate 128 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
 runtime session, parse provider versions, emit `WF-CAP-*` diagnostics, resolve
 GECK Extender safe markers, resolve JIP PP LN aliases, call AI, or create a
-Doctor bundle archive. It exports the current local evidence only.
+Doctor bundle archive. It exports the current local evidence only. Gate 166
+later adds the redacted local archive sidecar without changing those provider
+and runtime boundaries.
 
 Gate 129 still does not inspect MO2 profiles, launch through MO2 VFS, probe a
 runtime session, parse provider versions, resolve wrong-scope installs,
@@ -1292,6 +1334,34 @@ detectors, resolver behavior, Doctor planning behavior, rule IDs, aliases,
 runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
 decisions, SARIF/GitHub changes, `--format markdown`, GitHub step-summary
 behavior, or external tool execution.
+Gate 166 adds a Doctor export archive writer without adding new detectors,
+resolver behavior, Doctor planning behavior, rule IDs, aliases, runtime
+probes, MO2 VFS checks, provider version checks, catalogue-policy decisions,
+SARIF/GitHub changes, `--format zip`, `--format markdown`, GitHub
+step-summary behavior, release publishing, or external tool execution.
+Gate 167 adds a capability explain Markdown summary renderer without adding
+new detectors, resolver behavior, Doctor planning behavior, rule IDs,
+aliases, runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, SARIF/GitHub changes, `--format markdown`,
+GitHub step-summary behavior, or external tool execution.
+Gate 168 extends the Doctor export archive writer with per-requirement
+explanation Markdown entries without adding new detectors, resolver behavior,
+Doctor planning behavior, rule IDs, aliases, runtime probes, MO2 VFS checks,
+provider version checks, catalogue-policy decisions, SARIF/GitHub changes,
+`--format zip`, `--format markdown`, GitHub step-summary behavior, release
+publishing, or external tool execution.
+Gate 169 extends those per-requirement archive entries with redacted JSON
+without adding new detectors, resolver behavior, Doctor planning behavior,
+rule IDs, aliases, runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, SARIF/GitHub changes, `--format zip`,
+`--format markdown`, GitHub step-summary behavior, release publishing, or
+external tool execution.
+Gate 170 adds a requirement explanation index to the Doctor export archive
+without adding new detectors, resolver behavior, Doctor planning behavior,
+rule IDs, aliases, runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, SARIF/GitHub changes, `--format zip`,
+`--format markdown`, GitHub step-summary behavior, release publishing, or
+external tool execution.
 
 It intentionally does not create:
 

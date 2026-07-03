@@ -505,6 +505,7 @@ internal static class ForgeCli
             ? CapabilityExplanationJsonSerializer.Serialize(report)
             : CapabilityExplanationTextRenderer.Render(report);
 
+        WriteCapabilityExplanationMarkdownSummary(parse.SummaryPath, report);
         WritePayload(parse.OutputPath, payload, appendFinalNewline: !CliConstants.IsTextFormat(parse.Format));
         return (int)CliExitCode.Success;
     }
@@ -545,6 +546,7 @@ internal static class ForgeCli
 
         var export = DoctorExportRedactor.Create(scanReport);
         WriteDoctorExportMarkdownSummary(parse.SummaryPath, export);
+        WriteDoctorExportArchive(parse.BundlePath, export, scanReport);
 
         var payload = CliConstants.IsMachineFormat(parse.Format)
             ? DoctorExportJsonSerializer.Serialize(export)
@@ -1305,6 +1307,7 @@ internal static class ForgeCli
         string? gameRoot = null;
         string? dataRoot = null;
         string? outputPath = null;
+        string? summaryPath = null;
         var toolPaths = new List<string>();
 
         for (var index = 0; index < args.Length; index++)
@@ -1403,6 +1406,17 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--summary"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitSummaryPath))
+                {
+                    return CapabilitiesExplainParseResult.Fail(format, "Missing value for --summary.");
+                }
+
+                summaryPath = explicitSummaryPath;
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--no-input"))
             {
                 continue;
@@ -1423,7 +1437,7 @@ internal static class ForgeCli
 
         return string.IsNullOrWhiteSpace(targetId)
             ? CapabilitiesExplainParseResult.Fail(format, "Missing capability or provider id.")
-            : CapabilitiesExplainParseResult.Ok(targetId, projectPath, gameRoot, dataRoot, toolPaths, outputPath, format);
+            : CapabilitiesExplainParseResult.Ok(targetId, projectPath, gameRoot, dataRoot, toolPaths, outputPath, summaryPath, format);
     }
 
     private static DoctorExportParseResult ParseDoctorExportOptions(string[] args)
@@ -1433,6 +1447,7 @@ internal static class ForgeCli
         string? dataRoot = null;
         string? outputPath = null;
         string? summaryPath = null;
+        string? bundlePath = null;
         string? projectPath = null;
         var toolPaths = new List<string>();
 
@@ -1543,6 +1558,17 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--bundle"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitBundlePath))
+                {
+                    return DoctorExportParseResult.Fail(format, "Missing value for --bundle.");
+                }
+
+                bundlePath = explicitBundlePath;
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--no-input"))
             {
                 continue;
@@ -1561,7 +1587,7 @@ internal static class ForgeCli
             projectPath = arg;
         }
 
-        return DoctorExportParseResult.Ok(projectPath, gameRoot, dataRoot, toolPaths, outputPath, summaryPath, format);
+        return DoctorExportParseResult.Ok(projectPath, gameRoot, dataRoot, toolPaths, outputPath, summaryPath, bundlePath, format);
     }
 
     private static string ParseReservedFormat(string[] args, out string? error)
@@ -1712,6 +1738,213 @@ internal static class ForgeCli
         File.WriteAllText(fullSummaryPath, DoctorExportMarkdownRenderer.Render(report));
     }
 
+    private static void WriteDoctorExportArchive(
+        string? bundlePath,
+        DoctorExportReport report,
+        CapabilityScanReport scanReport)
+    {
+        if (string.IsNullOrWhiteSpace(bundlePath))
+        {
+            return;
+        }
+
+        DoctorExportArchiveWriter.Write(bundlePath, report, CreateDoctorExportArchiveSupplements(report, scanReport));
+    }
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateDoctorExportArchiveSupplements(
+        DoctorExportReport report,
+        CapabilityScanReport scanReport)
+    {
+        var baseSupplements = CreateActionIndexSupplements(report)
+            .Concat(CreateDiagnosticIndexSupplements(report))
+            .Concat(CreateRequirementIndexSupplements(report))
+            .ToArray();
+        if (scanReport.Requirements is null)
+        {
+            return baseSupplements;
+        }
+
+        var requirementIds = scanReport.Requirements.Requirements
+            .Where(requirement => !StringComparer.Ordinal.Equals(
+                requirement.Status,
+                CapabilityRequirementResolutionStatuses.Satisfied))
+            .Select(requirement => requirement.Id)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        if (requirementIds.Length == 0)
+        {
+            return baseSupplements;
+        }
+
+        var explainer = new BuiltInFnvCapabilityExplainer();
+        return baseSupplements
+            .Concat(CreateRequirementExplanationIndexSupplements(scanReport.Requirements, requirementIds))
+            .Concat(requirementIds
+                .SelectMany(requirementId => CreateRequirementExplanationSupplement(explainer, scanReport, requirementId)))
+            .ToArray();
+    }
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateActionIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "actions/index.json",
+                "application/json",
+                DoctorExportActionIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "actions/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportActionIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateDiagnosticIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "diagnostics/index.json",
+                "application/json",
+                DoctorExportDiagnosticIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "diagnostics/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportDiagnosticIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateRequirementIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "requirements/index.json",
+                "application/json",
+                DoctorExportRequirementIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "requirements/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportRequirementIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateRequirementExplanationIndexSupplements(
+        CapabilityRequirementResolutionReport requirements,
+        IReadOnlyList<string> requirementIds) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "requirement-explanations/index.json",
+                "application/json",
+                DoctorExportRequirementExplanationIndexRenderer.RenderJson(requirements, requirementIds)),
+            new DoctorExportArchiveSupplement(
+                "requirement-explanations/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportRequirementExplanationIndexRenderer.RenderMarkdown(requirements, requirementIds))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateRequirementExplanationSupplement(
+        BuiltInFnvCapabilityExplainer explainer,
+        CapabilityScanReport scanReport,
+        string requirementId)
+    {
+        var report = explainer.Explain(new CapabilityExplanationOptions(
+            requirementId,
+            scanReport.Inputs.GameRoot,
+            scanReport.Inputs.DataRoot,
+            scanReport.Inputs.ToolPaths));
+        if (report is null || scanReport.Requirements is null)
+        {
+            return [];
+        }
+
+        var relevantRequirements = scanReport.Requirements.Requirements
+            .Where(requirement => StringComparer.Ordinal.Equals(requirement.Id, requirementId))
+            .OrderBy(requirement => requirement.Source.File, StringComparer.Ordinal)
+            .ThenBy(requirement => requirement.Source.Pointer, StringComparer.Ordinal)
+            .ToArray();
+        var diagnosticHandoff = relevantRequirements
+            .Select(requirement => CapabilityDiagnosticProjector.ProjectRequirement(requirement, scanReport.Requirements.ProjectId))
+            .OfType<DiagnosticIssue>()
+            .ToArray();
+
+        report = report with
+        {
+            ProjectRequirements = new CapabilityExplanationProjectRequirements(
+                scanReport.Requirements.ProjectRoot,
+                scanReport.Requirements.ProjectId,
+                relevantRequirements,
+                diagnosticHandoff)
+        };
+
+        var pathStem = ToArchiveFileStem(requirementId);
+        var redactedReport = RedactArchiveExplanation(report);
+
+        return
+        [
+            new DoctorExportArchiveSupplement(
+                $"requirement-explanations/{pathStem}.json",
+                "application/json",
+                CapabilityExplanationJsonSerializer.Serialize(redactedReport)),
+            new DoctorExportArchiveSupplement(
+                $"requirement-explanations/{pathStem}.md",
+                "text/markdown; charset=utf-8",
+                CapabilityExplanationMarkdownRenderer.Render(redactedReport))
+        ];
+    }
+
+    private static CapabilityExplanationReport RedactArchiveExplanation(CapabilityExplanationReport report) =>
+        report with
+        {
+            Inputs = report.Inputs with
+            {
+                GameRoot = report.Inputs.GameRoot is null ? null : "<redacted:game-root>",
+                DataRoot = report.Inputs.DataRoot is null ? null : "<redacted:data-root>",
+                ToolPaths = report.Inputs.ToolPaths
+                    .Select((_, index) => $"<redacted:tool-path:{index + 1}>")
+                    .ToArray()
+            },
+            EvidenceGroups = report.EvidenceGroups
+                .Select(group => group with
+                {
+                    Evidence = RedactEvidence(group.Evidence)
+                })
+                .ToArray(),
+            Providers = report.Providers
+                .Select(provider => provider with
+                {
+                    Evidence = RedactEvidence(provider.Evidence)
+                })
+                .ToArray(),
+            ProjectRequirements = report.ProjectRequirements is null
+                ? null
+                : report.ProjectRequirements with
+                {
+                    ProjectRoot = "<redacted:project-root>",
+                    Requirements = report.ProjectRequirements.Requirements
+                        .Select(requirement => requirement with
+                        {
+                            ProviderEvidence = requirement.ProviderEvidence
+                                .Select(provider => provider with
+                                {
+                                    Evidence = RedactEvidence(provider.Evidence)
+                                })
+                                .ToArray()
+                        })
+                        .ToArray()
+                }
+        };
+
+    private static IReadOnlyList<CapabilityScanEvidence> RedactEvidence(IReadOnlyList<CapabilityScanEvidence> evidence) =>
+        evidence
+            .Select(item => item with { Path = RedactEvidencePath(item.Path) })
+            .ToArray();
+
+    private static string? RedactEvidencePath(string? path) =>
+        string.IsNullOrWhiteSpace(path)
+            ? null
+            : "<redacted:evidence-path>";
+
+    private static string ToArchiveFileStem(string value)
+    {
+        var chars = value
+            .Select(ch => char.IsLetterOrDigit(ch) || ch is '.' or '_' or '-' ? ch : '-')
+            .ToArray();
+        return new string(chars);
+    }
+
     private static void WriteCapabilityScanMarkdownSummary(
         string? summaryPath,
         CapabilityScanReport report,
@@ -1725,6 +1958,20 @@ internal static class ForgeCli
         var fullSummaryPath = Path.GetFullPath(summaryPath);
         Directory.CreateDirectory(Path.GetDirectoryName(fullSummaryPath) ?? ".");
         File.WriteAllText(fullSummaryPath, CapabilityScanMarkdownRenderer.Render(report, diagnostics));
+    }
+
+    private static void WriteCapabilityExplanationMarkdownSummary(
+        string? summaryPath,
+        CapabilityExplanationReport report)
+    {
+        if (string.IsNullOrWhiteSpace(summaryPath))
+        {
+            return;
+        }
+
+        var fullSummaryPath = Path.GetFullPath(summaryPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(fullSummaryPath) ?? ".");
+        File.WriteAllText(fullSummaryPath, CapabilityExplanationMarkdownRenderer.Render(report));
     }
 
     private static bool HasHelpFlag(IEnumerable<string> args)
@@ -1904,6 +2151,7 @@ internal static class ForgeCli
         string? DataRoot,
         IReadOnlyList<string> ToolPaths,
         string? OutputPath,
+        string? SummaryPath,
         string Format,
         string Message)
     {
@@ -1914,11 +2162,12 @@ internal static class ForgeCli
             string? dataRoot,
             IReadOnlyList<string> toolPaths,
             string? outputPath,
+            string? summaryPath,
             string format) =>
-            new(true, targetId, projectPath, gameRoot, dataRoot, toolPaths, outputPath, format, string.Empty);
+            new(true, targetId, projectPath, gameRoot, dataRoot, toolPaths, outputPath, summaryPath, format, string.Empty);
 
         public static CapabilitiesExplainParseResult Fail(string format, string message) =>
-            new(false, string.Empty, null, null, null, [], null, format, message);
+            new(false, string.Empty, null, null, null, [], null, null, format, message);
     }
 
     private sealed record DoctorExportParseResult(
@@ -1929,6 +2178,7 @@ internal static class ForgeCli
         IReadOnlyList<string> ToolPaths,
         string? OutputPath,
         string? SummaryPath,
+        string? BundlePath,
         string Format,
         string Message)
     {
@@ -1939,10 +2189,11 @@ internal static class ForgeCli
             IReadOnlyList<string> toolPaths,
             string? outputPath,
             string? summaryPath,
+            string? bundlePath,
             string format) =>
-            new(true, projectPath, gameRoot, dataRoot, toolPaths, outputPath, summaryPath, format, string.Empty);
+            new(true, projectPath, gameRoot, dataRoot, toolPaths, outputPath, summaryPath, bundlePath, format, string.Empty);
 
         public static DoctorExportParseResult Fail(string format, string message) =>
-            new(false, null, null, null, [], null, null, format, message);
+            new(false, null, null, null, [], null, null, null, format, message);
     }
 }

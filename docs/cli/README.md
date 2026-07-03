@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 165 capability scan Markdown summary
+Status: Gate 174 Doctor bundle requirement index
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -213,6 +213,9 @@ forge --version
   diagnostic-only and are rejected for capability explanations.
 - `forge capabilities explain --output <path>` writes explanation output to a
   file.
+- `forge capabilities explain --summary <path>` writes a path-minimized
+  Markdown explanation summary beside the selected primary output. Markdown is
+  a sidecar summary, not a `--format` value.
 - `forge capabilities explain` reports the target kind, target status,
   related providers or capabilities, grouped provider evidence, provider
   actions, scan evidence, catalogue-policy open-question details,
@@ -241,6 +244,20 @@ forge --version
 - `forge doctor export --summary <path>` writes a redacted Markdown handoff
   summary beside the selected primary output. Markdown is a sidecar summary,
   not a `--format` value.
+- `forge doctor export --bundle <path>` writes a deterministic redacted ZIP
+  handoff archive beside the selected primary output. The archive contains
+  `README.md`, `doctor-export.json`, `doctor-export.md`,
+  `actions/index.json`, `actions/index.md`,
+  `diagnostics/index.json`, `diagnostics/index.md`,
+  `requirements/index.json`, `requirements/index.md`,
+  `doctor-bundle-manifest.json`, and `checksums.sha256`. When project
+  requirements are included and any requirements are not satisfied, the
+  archive also includes path-minimized
+  `requirement-explanations/index.json`,
+  `requirement-explanations/index.md`,
+  `requirement-explanations/<capability-id>.json` and
+  `requirement-explanations/<capability-id>.md` entries for those
+  requirements.
 - `forge doctor export` replaces local game, data, tool, project, and
   provider evidence paths with deterministic placeholders. It does not run
   runtime probes, MO2 VFS launch, GECK automation, provider version checks,
@@ -494,6 +511,7 @@ forge --version
 - repeated `--tool-path <path>`
 - `--output <path>`
 - `--summary <path>`
+- `--summary <path>`
 
 `forge capabilities explain` supports:
 
@@ -521,6 +539,7 @@ forge --version
 - `--output <path>`
 - `-o <path>`
 - `--summary <path>`
+- `--bundle <path>`
 - `--no-input`
 
 `forge generate` supports:
@@ -604,10 +623,27 @@ scan summary derived from the existing scan report and projected diagnostics.
 It is not a diagnostic projection mode, does not enable scan SARIF/GitHub
 changes, and does not expose raw local paths.
 
+`forge capabilities explain --summary <path>` writes a path-minimized Markdown
+explanation summary derived from the existing explanation report, project
+requirement context, and catalogue-policy handoff metadata. It is not a
+diagnostic projection mode, does not enable explain SARIF/GitHub output, and
+does not expose raw local paths.
+
 `forge doctor export --summary <path>` writes a redacted Markdown handoff
 summary derived from the existing Doctor export report. It is not a
 diagnostic projection mode and does not enable Doctor export SARIF or GitHub
 annotation output.
+
+`forge doctor export --bundle <path>` writes a deterministic redacted ZIP
+handoff archive derived from the existing Doctor export report and Markdown
+summary. It includes deterministic `README.md`, `actions/index.json`,
+`actions/index.md`, `diagnostics/index.json`, and `diagnostics/index.md`
+entries, plus `requirements/index.json` and `requirements/index.md`, and is
+not a release package, diagnostic projection mode, or new primary format.
+When project requirements are included and any are not satisfied, the archive
+also includes a path-minimized requirement explanation index plus
+per-requirement capability explanation JSON and Markdown entries listed in the
+manifest and checksums.
 
 Markdown is not a `--format` value because ADR-010/R006 defines the current
 format set as `human`, `plain`, `json`, `sarif`, and `github`.
@@ -1360,6 +1396,99 @@ It still does not add runtime probes, MO2 VFS checks, provider version checks,
 catalogue-policy decisions, new rule IDs, scan SARIF/GitHub changes,
 `--format markdown`, GitHub step-summary output, Doctor planning changes, or
 AI behavior.
+
+Gate 166 keeps the same canonical command surface while adding
+`forge doctor export --bundle <path>`. The sidecar ZIP archive is derived from
+the already redacted Doctor export report and Markdown summary, and contains
+JSON, Markdown, manifest, and checksum entries with deterministic ZIP
+metadata. It still does not add runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, new rule IDs, Doctor export
+SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub step-summary
+output, Doctor planning changes, release publishing, or AI behavior.
+
+Gate 167 keeps the same canonical command surface while adding
+`forge capabilities explain --summary <path>`. The sidecar Markdown report is
+derived from the existing capability/provider explanation report and
+summarizes target metadata, next actions, provider evidence groups, related
+capability statuses, matching project requirements, diagnostic handoff issues,
+and catalogue-policy handoff entries while omitting raw local paths. It still
+does not add runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, new rule IDs, explain SARIF/GitHub output,
+`--format markdown`, GitHub step-summary output, Doctor planning changes, or
+AI behavior.
+
+Gate 168 keeps the same canonical command surface while extending
+`forge doctor export --bundle <path>`. When project requirements are included
+and any requirements are not satisfied, the sidecar ZIP archive includes
+`requirement-explanations/<capability-id>.md` entries derived from the
+existing capability explanation report and Gate 167 Markdown renderer. Those
+entries are included in `doctor-bundle-manifest.json` and `checksums.sha256`
+and omit raw local paths. It still does not add runtime probes, MO2 VFS
+checks, provider version checks, catalogue-policy decisions, new rule IDs,
+Doctor export SARIF/GitHub output, `--format zip`, `--format markdown`,
+GitHub step-summary output, Doctor planning changes, release publishing, or
+AI behavior.
+
+Gate 169 keeps the same canonical command surface while adding matching
+`requirement-explanations/<capability-id>.json` entries beside the Gate 168
+Markdown entries in `forge doctor export --bundle <path>`. The JSON entries
+use the existing `capabilities explain` JSON contract shape, redact local
+paths before archiving, and are included in `doctor-bundle-manifest.json` and
+`checksums.sha256`. It still does not add runtime probes, MO2 VFS checks,
+provider version checks, catalogue-policy decisions, new rule IDs, Doctor
+export SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub
+step-summary output, Doctor planning changes, release publishing, or AI
+behavior.
+
+Gate 170 keeps the same canonical command surface while adding
+`requirement-explanations/index.json` and
+`requirement-explanations/index.md` to `forge doctor export --bundle <path>`.
+The index lists unavailable requirement IDs, statuses, source pointers,
+diagnostic handoff summaries, and matching per-requirement JSON/Markdown
+paths. It still does not add runtime probes, MO2 VFS checks, provider version
+checks, catalogue-policy decisions, new rule IDs, Doctor export SARIF/GitHub
+output, `--format zip`, `--format markdown`, GitHub step-summary output,
+Doctor planning changes, release publishing, or AI behavior.
+
+Gate 171 keeps the same canonical command surface while adding `README.md` to
+`forge doctor export --bundle <path>` archives. The README points to the
+redacted Doctor reports, requirement explanation index when present, bundle
+manifest, and checksums, and summarizes existing redacted counts. It still
+does not add runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, new rule IDs, Doctor export SARIF/GitHub output,
+`--format zip`, `--format markdown`, GitHub step-summary output, Doctor
+planning changes, release publishing, or AI behavior.
+
+Gate 172 keeps the same canonical command surface while adding
+`diagnostics/index.json` and `diagnostics/index.md` to
+`forge doctor export --bundle <path>` archives. The diagnostic index derives
+from existing redacted Doctor diagnostic summary and compact diagnostic
+metadata, is linked from `README.md`, and is listed in the manifest and
+checksums. It still does not add runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, new rule IDs, Doctor export
+SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub step-summary
+output, Doctor planning changes, release publishing, or AI behavior.
+
+Gate 173 keeps the same canonical command surface while adding
+`actions/index.json` and `actions/index.md` to
+`forge doctor export --bundle <path>` archives. The action index derives from
+existing redacted Doctor action summary and compact action metadata, is linked
+from `README.md`, and is listed in the manifest and checksums. It still does
+not add runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, new rule IDs, Doctor export SARIF/GitHub output,
+`--format zip`, `--format markdown`, GitHub step-summary output, Doctor
+planning changes, release publishing, or AI behavior.
+
+Gate 174 keeps the same canonical command surface while adding
+`requirements/index.json` and `requirements/index.md` to
+`forge doctor export --bundle <path>` archives. The requirement index derives
+from existing redacted Doctor requirement summary and compact unavailable
+requirement metadata, is linked from `README.md`, and is listed in the
+manifest and checksums. It still does not add runtime probes, MO2 VFS checks,
+provider version checks, catalogue-policy decisions, new rule IDs, Doctor
+export SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub
+step-summary output, Doctor planning changes, release publishing, or AI
+behavior.
 
 ## Exit Codes
 

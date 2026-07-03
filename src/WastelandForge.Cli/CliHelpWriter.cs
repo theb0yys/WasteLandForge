@@ -329,9 +329,10 @@ internal static class CliHelpWriter
         writer.WriteLine("forge capabilities explain");
         writer.WriteLine();
         writer.WriteLine("Usage:");
-        writer.WriteLine("  forge capabilities explain <capability-or-provider-id> [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--format human|plain|json] [--no-input]");
+        writer.WriteLine("  forge capabilities explain <capability-or-provider-id> [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--summary <path>] [--format human|plain|json] [--no-input]");
         writer.WriteLine();
         writer.WriteLine("Explains a built-in capability or provider using catalogue data and the same path-based evidence as capabilities scan, including target-level next actions, catalogue-policy open questions, and a compact catalogue-policy diagnostic handoff.");
+        writer.WriteLine("--summary writes a path-minimized Markdown sidecar for human handoff while preserving the selected primary output format.");
         writer.WriteLine("When --project is supplied, includes matching declared project requirement context. Runtime probes, MO2 VFS launch, and provider versions are not used.");
         writer.WriteLine();
         writer.WriteLine("Examples:");
@@ -399,11 +400,12 @@ internal static class CliHelpWriter
         writer.WriteLine("forge doctor export");
         writer.WriteLine();
         writer.WriteLine("Usage:");
-        writer.WriteLine("  forge doctor export [project-root] [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--summary <path>] [--format human|plain|json] [--no-input]");
+        writer.WriteLine("  forge doctor export [project-root] [--project <path>] [--game <path>|--game-root <path>] [--data-root <path>] [--tool-path <path>]... [--output <path>] [--summary <path>] [--bundle <path>] [--format human|plain|json] [--no-input]");
         writer.WriteLine();
         writer.WriteLine("Writes a redacted Doctor handoff bundle from the same deterministic path-based evidence used by capabilities scan.");
         writer.WriteLine("Includes compact catalogue-policy open-question groups, details, and diagnostic handoff metadata.");
         writer.WriteLine("--summary writes a redacted Markdown handoff summary beside the selected primary output.");
+        writer.WriteLine("--bundle writes a deterministic redacted ZIP handoff archive with JSON, Markdown, manifest, checksums, and indexed per-requirement explanation JSON/Markdown when project requirements are unavailable.");
         writer.WriteLine("Absolute local game, data, tool, project, and evidence paths are replaced with placeholders.");
         writer.WriteLine("Runtime probes, MO2 VFS launch, GECK automation, network checks, and AI calls are not used.");
         writer.WriteLine();
@@ -412,6 +414,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge doctor export --project fixtures/projects/ExampleMod --game-root fnv --tool-path tools/FNVEdit.exe --format json");
         writer.WriteLine("  forge doctor export . --output dist/doctor-handoff.json --format json --no-input");
         writer.WriteLine("  forge doctor export . --format json --summary dist/doctor-handoff.md --no-input");
+        writer.WriteLine("  forge doctor export . --format json --bundle dist/doctor-handoff.zip --no-input");
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
         writer.WriteLine("  0 export written");

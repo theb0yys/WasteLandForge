@@ -706,6 +706,41 @@ Gate 165 adds a capability scan Markdown sidecar summary derived from the
 existing capability scan report and projected diagnostics. It does not change
 the canonical diagnostic report shape and adds no new diagnostic report
 fields.
+Gate 166 adds a Doctor export ZIP sidecar archive derived from the existing
+redacted Doctor export report and Markdown summary. It does not change the
+canonical diagnostic report shape and adds no new diagnostic report fields.
+Gate 167 adds a capability explain Markdown sidecar summary derived from the
+existing explanation report and project diagnostic handoff metadata. It does
+not change the canonical diagnostic report shape and adds no new diagnostic
+report fields.
+Gate 168 adds per-requirement capability explanation Markdown entries to
+Doctor export archives by reusing existing diagnostic handoff metadata. It
+does not change the canonical diagnostic report shape and adds no new
+diagnostic report fields.
+Gate 169 adds matching per-requirement capability explanation JSON entries to
+Doctor export archives by reusing existing diagnostic handoff metadata. It
+does not change the canonical diagnostic report shape and adds no new
+diagnostic report fields.
+Gate 170 adds requirement explanation index entries to Doctor export archives
+by reusing existing diagnostic handoff metadata. It does not change the
+canonical diagnostic report shape and adds no new diagnostic report fields.
+Gate 171 adds a README entry to Doctor export archives by summarizing existing
+redacted Doctor export metadata and archive entry paths. It does not change
+the canonical diagnostic report shape and adds no new diagnostic report
+fields.
+Gate 172 adds diagnostic index entries to Doctor export archives by projecting
+the existing redacted Doctor diagnostic summary and compact diagnostic entries
+into archive-local JSON and Markdown. It does not change the canonical
+diagnostic report shape and adds no new diagnostic report fields.
+Gate 173 adds action index entries to Doctor export archives by projecting
+existing redacted Doctor action summary and compact action metadata into
+archive-local JSON and Markdown. It does not change the canonical diagnostic
+report shape and adds no new diagnostic report fields.
+Gate 174 adds requirement index entries to Doctor export archives by
+projecting existing redacted Doctor requirement summary and compact
+unavailable requirement metadata into archive-local JSON and Markdown. It
+does not change the canonical diagnostic report shape and adds no new
+diagnostic report fields.
 
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

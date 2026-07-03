@@ -170,9 +170,18 @@ Gate status:
 - `gates/gate-163-doctor-area-capability-summary-index.md` - Gate 163, Doctor area capability summary index.
 - `gates/gate-164-doctor-export-markdown-summary.md` - Gate 164, Doctor export Markdown summary.
 - `gates/gate-165-capability-scan-markdown-summary.md` - Gate 165, capability scan Markdown summary.
+- `gates/gate-166-doctor-export-bundle-archive.md` - Gate 166, Doctor export bundle archive.
+- `gates/gate-167-capability-explain-markdown-summary.md` - Gate 167, capability explain Markdown summary.
+- `gates/gate-168-doctor-bundle-requirement-explanations.md` - Gate 168, Doctor bundle requirement explanations.
+- `gates/gate-169-doctor-bundle-requirement-explanation-json.md` - Gate 169, Doctor bundle requirement explanation JSON.
+- `gates/gate-170-doctor-bundle-requirement-explanation-index.md` - Gate 170, Doctor bundle requirement explanation index.
+- `gates/gate-171-doctor-bundle-readme.md` - Gate 171, Doctor bundle README.
+- `gates/gate-172-doctor-bundle-diagnostic-index.md` - Gate 172, Doctor bundle diagnostic index.
+- `gates/gate-173-doctor-bundle-action-index.md` - Gate 173, Doctor bundle action index.
+- `gates/gate-174-doctor-bundle-requirement-index.md` - Gate 174, Doctor bundle requirement index.
 
 Next gate:
 
-- Gate 166 - Continue documented capability/Doctor value without resolving open provider policy questions. Provider-version evidence should only start when documented file/runtime/parser/catalogue-policy evidence is ready.
+- Gate 175 - Continue documented capability/Doctor value without resolving open provider policy questions. Provider-version evidence should only start when documented file/runtime/parser/catalogue-policy evidence is ready.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

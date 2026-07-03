@@ -187,15 +187,17 @@ Gate 126 option routing:
   picker, FOMOD package creation, capability-derived runtime requirements, MO2
   installation, or in-game verification exist until later gates implement them.
 
-Gate 165 option routing:
+Gate 174 option routing:
 
-Gate 165 keeps the Gate 164 command behavior and adds
-`forge capabilities scan --summary <path>` as a path-minimized Markdown
-sidecar summary. Treat it as a summary of the existing capability scan report
-and already-projected diagnostics, not as new provider detection, diagnostic
-projection behavior, rule IDs, Doctor planning, provider-version evidence,
-runtime confirmation, catalogue-policy resolution, scan SARIF/GitHub changes,
-GitHub step-summary behavior, or `--format markdown`.
+Gate 174 keeps the Gate 173 command behavior and extends
+`forge doctor export --bundle <path>` with deterministic
+`requirements/index.json` and `requirements/index.md` entries. Treat those
+entries as redacted derived reporting over existing Doctor requirement summary
+and compact unavailable requirement metadata, not as new provider detection,
+diagnostic projection behavior, rule IDs, Doctor planning,
+provider-version evidence, runtime confirmation, catalogue-policy resolution,
+Doctor export SARIF/GitHub mode, GitHub step-summary behavior, release
+publishing, `--format zip`, `--format markdown`, or a command alias.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a
@@ -255,8 +257,12 @@ GitHub step-summary behavior, or `--format markdown`.
   phase/reason metadata, resolution status, provider statuses, resolver
   message, and diagnostic handoff metadata showing the `WF-CAP-*` rule that
   `forge capabilities scan --project` would project for unavailable matching
-  requirements. Do not route this to `/forge scan`, `forge doctor`, or any
-  non-canonical alias.
+  requirements. With `--summary <path>`, it also writes a path-minimized
+  Markdown explanation summary with target metadata, next actions, provider
+  evidence group summaries, related capability statuses, matching project
+  requirements, diagnostic handoff issues, and catalogue-policy handoff
+  entries while omitting raw local paths. Do not route this to `/forge scan`,
+  `forge doctor`, or any non-canonical alias.
 - `/forge doctor export` maps to the real `forge doctor export` behavior when
   available. It writes a redacted local handoff bundle from capability scan
   evidence, including top-level summary/index sections, compact
@@ -283,10 +289,23 @@ GitHub step-summary behavior, or `--format markdown`.
   provider evidence. With `--summary <path>`, it also writes a redacted
   Markdown handoff summary derived from that same Doctor export report,
   including summary counts, Doctor areas, next actions, unavailable
-  requirements, diagnostics, and open questions.
+  requirements, diagnostics, and open questions. With `--bundle <path>`, it
+  writes a deterministic redacted ZIP handoff archive containing
+  `README.md`, `doctor-export.json`, `doctor-export.md`,
+  `actions/index.json`, `actions/index.md`,
+  `diagnostics/index.json`, `diagnostics/index.md`,
+  `requirements/index.json`, `requirements/index.md`,
+  `doctor-bundle-manifest.json`, and `checksums.sha256`. When unavailable
+  project capability requirements are present, that archive also includes
+  path-minimized `requirement-explanations/index.json`,
+  `requirement-explanations/index.md`,
+  path-minimized `requirement-explanations/<capability-id>.json` and
+  `requirement-explanations/<capability-id>.md` entries listed in the
+  manifest and checksums.
   It does not run runtime probes, MO2 VFS launch, provider version checks,
   GECK automation, network checks, AI calls, `--format markdown`, or
-  SARIF/GitHub Doctor bundle mode.
+  `--format zip`, SARIF/GitHub Doctor bundle mode, GitHub step-summary
+  output, or release publishing.
 
 - `/forge package --target mcm-json --verify-existing` maps to the real
   `forge package --target mcm-json --verify-existing` CLI behavior when

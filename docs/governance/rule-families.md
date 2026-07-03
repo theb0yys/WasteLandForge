@@ -246,6 +246,27 @@ Gate 164 adds no new rule ID. It only writes a redacted Markdown sidecar
 summary for Doctor export output.
 Gate 165 adds no new rule ID. It only writes a path-minimized Markdown sidecar
 summary for capability scan output.
+Gate 166 adds no new rule ID. It only writes a deterministic redacted ZIP
+sidecar archive for Doctor export output.
+Gate 167 adds no new rule ID. It only writes a path-minimized Markdown sidecar
+summary for capability explain output.
+Gate 168 adds no new rule ID. It only adds path-minimized requirement
+explanation Markdown entries to Doctor export ZIP archives.
+Gate 169 adds no new rule ID. It only adds redacted requirement explanation
+JSON entries to Doctor export ZIP archives.
+Gate 170 adds no new rule ID. It only adds requirement explanation index JSON
+and Markdown entries to Doctor export ZIP archives.
+Gate 171 adds no new rule ID. It only adds README entries to Doctor export
+ZIP archives.
+Gate 172 adds no new rule ID. It only adds diagnostic index JSON and Markdown
+entries to Doctor export ZIP archives from existing redacted Doctor diagnostic
+metadata.
+Gate 173 adds no new rule ID. It only adds action index JSON and Markdown
+entries to Doctor export ZIP archives from existing redacted Doctor action
+metadata.
+Gate 174 adds no new rule ID. It only adds requirement index JSON and
+Markdown entries to Doctor export ZIP archives from existing redacted Doctor
+requirement metadata.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths

@@ -735,6 +735,53 @@ Gate 165 adds `WastelandForge.GoldenTests` coverage for
 `forge capabilities scan --summary <path>` Markdown sidecar output, omission
 of local paths in that summary, and missing summary-path usage errors.
 
+Gate 166 adds `WastelandForge.GoldenTests` coverage for
+`forge doctor export --bundle <path>` deterministic ZIP sidecar output,
+redaction of local paths inside archive payloads, manifest/checksum entries,
+stable ZIP timestamps, and missing bundle-path usage errors.
+
+Gate 167 adds `WastelandForge.GoldenTests` coverage for
+`forge capabilities explain --summary <path>` Markdown sidecar output,
+omission of local paths in that summary, and missing summary-path usage
+errors.
+
+Gate 168 adds `WastelandForge.GoldenTests` coverage for
+`forge doctor export --bundle <path>` archives that include
+`requirement-explanations/<capability-id>.md` entries for unavailable project
+requirements, manifest/checksum coverage for those entries, stable ZIP
+timestamps, and omission of local paths inside the supplemental Markdown.
+
+Gate 169 extends that `WastelandForge.GoldenTests` coverage to matching
+`requirement-explanations/<capability-id>.json` entries, including
+manifest/checksum coverage, `capabilities explain` JSON command metadata,
+redacted project roots, stable ZIP timestamps, and omission of local paths.
+
+Gate 170 extends that `WastelandForge.GoldenTests` coverage to
+`requirement-explanations/index.json` and
+`requirement-explanations/index.md`, including manifest/checksum coverage,
+entry-path references, summary counts, stable ZIP timestamps, and omission of
+local paths.
+
+Gate 171 extends that `WastelandForge.GoldenTests` coverage to the Doctor
+bundle `README.md`, including manifest/checksum coverage, base report links,
+requirement explanation index links when present, stable ZIP timestamps, and
+omission of local paths.
+
+Gate 172 extends that `WastelandForge.GoldenTests` coverage to
+`diagnostics/index.json` and `diagnostics/index.md` entries in Doctor bundle
+archives, including manifest/checksum coverage, README links, summary counts,
+stable ZIP timestamps, and omission of local paths.
+
+Gate 173 extends that `WastelandForge.GoldenTests` coverage to
+`actions/index.json` and `actions/index.md` entries in Doctor bundle archives,
+including manifest/checksum coverage, README links, summary counts, stable ZIP
+timestamps, and omission of local paths.
+
+Gate 174 extends that `WastelandForge.GoldenTests` coverage to
+`requirements/index.json` and `requirements/index.md` entries in Doctor bundle
+archives, including manifest/checksum coverage, README links, summary counts,
+stable ZIP timestamps, and omission of local paths.
+
 Run the full local suite serially:
 
 ```text

@@ -487,3 +487,31 @@ markers to cover the redacted Doctor export Markdown sidecar.
 Gate 165 adds no committed provider or project fixtures. Golden CLI tests use
 existing synthetic project fixtures and temporary synthetic local provider
 markers to cover the path-minimized capability scan Markdown sidecar.
+Gate 166 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover the redacted Doctor export ZIP sidecar.
+Gate 167 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover the path-minimized capability explain Markdown sidecar.
+Gate 168 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover supplemental Doctor bundle requirement explanation entries.
+Gate 169 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover redacted JSON supplements for Doctor bundle requirement
+explanations.
+Gate 170 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover Doctor bundle requirement explanation index supplements.
+Gate 171 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover Doctor bundle README entries.
+Gate 172 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover Doctor bundle diagnostic index entries.
+Gate 173 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover Doctor bundle action index entries.
+Gate 174 adds no committed provider or project fixtures. Golden CLI tests use
+existing synthetic project fixtures and temporary synthetic local provider
+markers to cover Doctor bundle requirement index entries.

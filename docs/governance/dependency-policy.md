@@ -414,3 +414,72 @@ rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
 provider-version parser, detector dependency, capability resolver dependency,
 Doctor planner dependency, catalogue-policy decision dependency,
 SARIF/GitHub dependency, GitHub step-summary dependency, or AI requirement.
+Gate 166 derives a deterministic ZIP sidecar archive from the existing
+redacted Doctor export report and Markdown summary using .NET platform
+libraries. It adds no third-party dependency, download, rehosted runtime
+binary, network call, runtime probe, MO2/GECK integration, provider-version
+parser, detector dependency, capability resolver dependency, Doctor planner
+dependency, catalogue-policy decision dependency, SARIF/GitHub dependency,
+GitHub step-summary dependency, release-publishing dependency, or AI
+requirement.
+Gate 167 derives a Markdown sidecar summary from the existing capability
+explanation report using .NET platform libraries. It adds no third-party
+dependency, download, rehosted runtime binary, network call, runtime probe,
+MO2/GECK integration, provider-version parser, detector dependency,
+capability resolver dependency, Doctor planner dependency, catalogue-policy
+decision dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
+or AI requirement.
+Gate 168 derives supplemental Markdown archive entries from the existing
+capability explanation report using .NET platform libraries. It adds no
+third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, provider-version parser, detector
+dependency, capability resolver dependency, Doctor planner dependency,
+catalogue-policy decision dependency, SARIF/GitHub dependency, GitHub
+step-summary dependency, release-publishing dependency, or AI requirement.
+Gate 169 derives supplemental JSON archive entries from the existing
+capability explanation report using .NET platform libraries. It adds no
+third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, provider-version parser, detector
+dependency, capability resolver dependency, Doctor planner dependency,
+catalogue-policy decision dependency, SARIF/GitHub dependency, GitHub
+step-summary dependency, release-publishing dependency, or AI requirement.
+Gate 170 derives supplemental index archive entries from existing
+requirement-resolution and diagnostic-handoff data using .NET platform
+libraries. It adds no third-party dependency, download, rehosted runtime
+binary, network call, runtime probe, MO2/GECK integration, provider-version
+parser, detector dependency, capability resolver dependency, Doctor planner
+dependency, catalogue-policy decision dependency, SARIF/GitHub dependency,
+GitHub step-summary dependency, release-publishing dependency, or AI
+requirement.
+Gate 171 derives a Doctor bundle README archive entry from the existing
+redacted Doctor report and archive supplement paths using .NET platform
+libraries. It adds no third-party dependency, download, rehosted runtime
+binary, network call, runtime probe, MO2/GECK integration, provider-version
+parser, detector dependency, capability resolver dependency, Doctor planner
+dependency, catalogue-policy decision dependency, SARIF/GitHub dependency,
+GitHub step-summary dependency, release-publishing dependency, or AI
+requirement.
+Gate 172 derives Doctor bundle diagnostic index archive entries from the
+existing redacted Doctor diagnostic summary and compact diagnostic entries
+using .NET platform libraries. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+provider-version parser, detector dependency, capability resolver dependency,
+Doctor planner dependency, catalogue-policy decision dependency, SARIF/GitHub
+dependency, GitHub step-summary dependency, release-publishing dependency, or
+AI requirement.
+Gate 173 derives Doctor bundle action index archive entries from the existing
+redacted Doctor action summary and compact action entries using .NET platform
+libraries. It adds no third-party dependency, download, rehosted runtime
+binary, network call, runtime probe, MO2/GECK integration, provider-version
+parser, detector dependency, capability resolver dependency, Doctor planner
+dependency, catalogue-policy decision dependency, SARIF/GitHub dependency,
+GitHub step-summary dependency, release-publishing dependency, or AI
+requirement.
+Gate 174 derives Doctor bundle requirement index archive entries from the
+existing redacted Doctor requirement summary and compact unavailable
+requirement entries using .NET platform libraries. It adds no third-party
+dependency, download, rehosted runtime binary, network call, runtime probe,
+MO2/GECK integration, provider-version parser, detector dependency,
+capability resolver dependency, Doctor planner dependency, catalogue-policy
+decision dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, or AI requirement.

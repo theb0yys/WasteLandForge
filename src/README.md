@@ -876,3 +876,56 @@ Gate 165 adds a capability scan Markdown summary renderer. `forge capabilities
 scan --summary <path>` now writes a path-minimized Markdown sidecar derived
 from the existing capability scan report and projected diagnostics while
 preserving the selected primary scan output behavior.
+
+Gate 166 adds a Doctor export archive writer. `forge doctor export --bundle
+<path>` now writes a deterministic redacted ZIP sidecar containing
+`doctor-export.json`, `doctor-export.md`, `doctor-bundle-manifest.json`, and
+`checksums.sha256` while preserving the selected primary Doctor export output
+behavior.
+
+Gate 167 adds a capability explain Markdown summary renderer. `forge
+capabilities explain --summary <path>` now writes a path-minimized Markdown
+sidecar derived from the existing capability/provider explanation report while
+preserving the selected primary explanation output behavior.
+
+Gate 168 extends the Doctor export archive writer. `forge doctor export
+--bundle <path>` now adds deterministic
+`requirement-explanations/<capability-id>.md` entries when project
+requirements are included and unavailable, reusing the existing capability
+explanation Markdown renderer while preserving the base Doctor archive output
+behavior.
+
+Gate 169 extends the same Doctor export archive supplements with deterministic
+`requirement-explanations/<capability-id>.json` entries. Those entries reuse
+the existing capability explanation JSON serializer after path redaction, and
+are listed in the bundle manifest and checksums.
+
+Gate 170 adds a Doctor export requirement explanation index renderer. Doctor
+bundle archives with unavailable project requirements now include
+`requirement-explanations/index.json` and
+`requirement-explanations/index.md`, which point to the per-requirement JSON
+and Markdown explanations while preserving deterministic archive output.
+
+Gate 171 adds a Doctor export archive README renderer. `forge doctor export
+--bundle <path>` archives now include `README.md`, which points to the
+redacted Doctor reports, optional requirement explanation index, manifest, and
+checksums while preserving deterministic archive output and local path
+redaction.
+
+Gate 172 adds a Doctor export diagnostic index renderer. `forge doctor export
+--bundle <path>` archives now include `diagnostics/index.json` and
+`diagnostics/index.md`, derived from the already redacted Doctor diagnostic
+summary and compact diagnostic entries while preserving deterministic archive
+output and local path redaction.
+
+Gate 173 adds a Doctor export action index renderer. `forge doctor export
+--bundle <path>` archives now include `actions/index.json` and
+`actions/index.md`, derived from the already redacted Doctor action summary
+and compact action entries while preserving deterministic archive output and
+local path redaction.
+
+Gate 174 adds a Doctor export requirement index renderer. `forge doctor
+export --bundle <path>` archives now include `requirements/index.json` and
+`requirements/index.md`, derived from the already redacted Doctor requirement
+summary and compact unavailable requirement entries while preserving
+deterministic archive output and local path redaction.
