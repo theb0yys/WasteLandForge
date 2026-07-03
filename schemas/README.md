@@ -32,6 +32,7 @@ Do not overwrite a released schema in place. Schema migrations are explicit tool
 - `mcm/0.1.0/schema.json` - MCM menu source registry schema.
 - `jip-scripts/0.1.0/schema.json` - JIP LN text-script source registry schema.
 - `jip-script-emission-manifest/0.1.0/schema.json` - generated JIP LN text-script emission evidence manifest schema.
+- `xedit-audit/0.1.0/schema.json` - xEdit audit source registry schema.
 - `mcm-extender-output/0.1.0/schema.json` - minimal MCM Extender runtime JSON output schema emitted by Forge.
 - `package-manifest/0.1.0/schema.json` - deterministic generated package manifest schema for the first MCM Extender loose-file package target.
 - `install-preview/0.1.0/schema.json` - deterministic generated install-preview report schema for the first MCM Extender loose-file package target.
@@ -308,3 +309,9 @@ build-manifest shape and keeps future package evidence schemas out of scope.
 Gate 216 adds no schema. It records JIP package evidence with local
 package-manifest, install-plan, build-manifest, and checksum files while
 keeping published JIP package evidence schemas out of scope.
+
+Gate 218 adds `xedit-audit/0.1.0/schema.json` as a source registry schema and
+adds optional manifest `registries.xeditAudit` loading. It records xEdit audit
+and inspection evidence intent only; generated script/report output schemas,
+xEdit process execution, report parsing, patch generation, and plugin mutation
+remain future work.

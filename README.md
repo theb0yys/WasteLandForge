@@ -2,12 +2,11 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 217 closes the
-JIP LN text-script command slice after `forge generate|build|package
---target jip-scripts` reached deterministic local output evidence. The next
-implementation lane moves to xEdit audit and inspection support, starting with
-an evidence checkpoint and adapter boundary rather than patch generation or
-plugin mutation.
+The project is currently in gated v0.1 implementation. Gate 222 adds the
+non-executing xEdit audit report parser contract for synthetic JSON report
+fixtures. It still does not execute xEdit, generate real xEdit reports,
+generate patches, mutate plugins, automate MO2 or GECK, run runtime probes, or
+use real third-party plugin fixtures.
 
 ## Architecture Spine
 
@@ -477,6 +476,41 @@ unless explicitly reopened for JIP-specific work. The next gate starts xEdit
 audit and inspection support with synthetic fixtures and local evidence only;
 it must not execute xEdit, generate patches, mutate plugins, automate MO2 or
 GECK, run runtime probes, or use real third-party plugin fixtures.
+
+Gate 218 adds the first xEdit audit source contract and adapter evidence
+checkpoint. Manifests may now declare optional `registries.xeditAudit` roots
+containing `xedit-audit/0.1.0` documents. Validation loads those registries,
+requires `tool.xedit.record_inspection` for each audit, and the generation
+project exposes a non-emitting `XEditAuditAdapterPlanner` that returns
+future script/report evidence paths under `generated/xedit-audit`. Gate 218
+does not wire a CLI target or execute xEdit.
+
+Gate 219 adds `XEditAuditScriptScaffoldEmitter`. It writes UTF-8 no-BOM
+Pascal scaffold files to the validated `outputs.script` path under
+`generated/xedit-audit/scripts`, records output digests, keeps expected report
+paths as metadata only, and writes no report, plugin, MO2, GECK, runtime, or
+`Data` output.
+
+Gate 220 extends that emitter with `xedit-audit-script-manifest.json` and
+`checksums.sha256` under `generated/xedit-audit`. The manifest records
+scaffold intent, expected report paths, source pointers, required
+capabilities, safety flags, and output digests; the checksum sidecar covers
+the generated scaffold files and manifest only.
+
+Gate 221 wires the same local scaffold emitter to canonical
+`forge generate --target xedit-audit`. CLI JSON and text output report the
+generated scaffold, manifest, checksum, diagnostic, and digest evidence while
+still rejecting custom output roots, dry-run mode, `forge build --target
+xedit-audit`, xEdit execution, report parsing, plugin patch generation,
+plugin mutation, MO2/GECK automation, runtime probes, and real third-party
+plugin fixtures.
+
+Gate 222 adds `XEditAuditReportParser` and typed synthetic report evidence for
+future xEdit report handling. The parser reads JSON reports from
+`generated/xedit-audit/reports`, emits `WF-GEN-009` for missing or malformed
+synthetic report evidence, and does not emit scaffolds, write manifest or
+checksum sidecars, execute xEdit, generate reports, mutate plugins, or write
+`Data`.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

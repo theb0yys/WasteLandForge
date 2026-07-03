@@ -278,6 +278,31 @@ internal static class ForgeCli
                 : (int)CliExitCode.Success;
         }
 
+        if (StringComparer.Ordinal.Equals(parse.Target, XEditAuditScriptScaffoldEmitter.Target))
+        {
+            if (parse.OutputDirectory is not null)
+            {
+                WriteUsage(parse.Format, commandPath, $"Target '{XEditAuditScriptScaffoldEmitter.Target}' writes to generated/{XEditAuditScriptScaffoldEmitter.Target} in the current gate; --output is not supported.");
+                return (int)CliExitCode.Usage;
+            }
+
+            if (parse.DryRun)
+            {
+                WriteUsage(parse.Format, commandPath, $"Target '{XEditAuditScriptScaffoldEmitter.Target}' does not support --dry-run in the current gate.");
+                return (int)CliExitCode.Usage;
+            }
+
+            var xeditResult = new XEditAuditScriptScaffoldEmitter().Emit(parse.ProjectPath);
+            var xeditPayload = CliConstants.IsMachineFormat(parse.Format)
+                ? XEditAuditGenerateJsonSerializer.Serialize(commandPath, xeditResult)
+                : XEditAuditGenerateTextRenderer.Render(commandPath, xeditResult);
+            Console.Write(xeditPayload);
+
+            return xeditResult.HasErrors
+                ? (int)CliExitCode.BlockingDiagnostics
+                : (int)CliExitCode.Success;
+        }
+
         var result = new MetadataReportGenerator().Run(new MetadataReportOptions(
             commandPath,
             parse.ProjectPath,
@@ -989,10 +1014,14 @@ internal static class ForgeCli
     private static bool IsMetadataReportTargetImplemented(string commandPath, string target) =>
         StringComparer.Ordinal.Equals(target, "reports") ||
         StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target) ||
-        StringComparer.Ordinal.Equals(target, JipScriptFileEmitter.Target);
+        StringComparer.Ordinal.Equals(target, JipScriptFileEmitter.Target) ||
+        (StringComparer.Ordinal.Equals(commandPath, "generate") &&
+            StringComparer.Ordinal.Equals(target, XEditAuditScriptScaffoldEmitter.Target));
 
     private static string ImplementedMetadataReportTargets(string commandPath) =>
-        $"'reports', '{McmJsonGenerator.Target}', and '{JipScriptFileEmitter.Target}'";
+        StringComparer.Ordinal.Equals(commandPath, "generate")
+            ? $"'reports', '{McmJsonGenerator.Target}', '{JipScriptFileEmitter.Target}', and '{XEditAuditScriptScaffoldEmitter.Target}'"
+            : $"'reports', '{McmJsonGenerator.Target}', and '{JipScriptFileEmitter.Target}'";
 
     private static PackageParseResult ParsePackageOptions(string[] args)
     {

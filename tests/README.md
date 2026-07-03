@@ -119,6 +119,30 @@ Gate 30 adds dialogue registry schema `0.7.0` schema/catalog coverage in
 dialogue Link From schema and source topic-reference fixture coverage in
 `WastelandForge.SemanticTests`.
 
+Gate 218 adds xEdit audit schema/catalog and back-compat coverage, semantic
+fixture coverage for `WF-SEM-044`, and unit coverage for the non-emitting
+`XEditAuditAdapterPlanner`.
+
+Gate 219 extends `WastelandForge.UnitTests` with scaffold emission coverage
+for generated file placement, content, output digests, no report output, no
+`Data` writes, and validation-error no-write behavior.
+
+Gate 220 extends the same xEdit audit unit coverage with manifest and checksum
+sidecar assertions, including safety flags, expected report metadata, output
+digest entries, checksum paths relative to `generated/xedit-audit`, no report
+output, no `Data` writes, and validation-error no-write behavior.
+
+Gate 221 extends `WastelandForge.GoldenTests` with CLI coverage for
+`forge generate --target xedit-audit`, including JSON output, generated
+scaffold files, manifest/checksum evidence, no report output, no `Data`
+writes, unsupported `--output`, and unsupported `forge build --target
+xedit-audit`.
+
+Gate 222 extends `WastelandForge.UnitTests` with xEdit audit report parser
+coverage for synthetic JSON report fixtures, typed parsed evidence,
+`WF-GEN-009` missing-report diagnostics, `WF-GEN-009` malformed JSON
+diagnostics, no scaffold/sidecar emission, and no `Data` writes.
+
 Gate 31 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
 dialogue link graph endpoints: `linkTo` targets and `linkFrom` sources that are
 declared topics but have no authored dialogue line.

@@ -9,6 +9,11 @@ Fixture policy:
 - no third-party mod files without explicit permission,
 - no private user installs in public fixtures.
 
+Gate 222 adds `xedit-audit-reports/synthetic-record-inspection.json`, a
+redistributable synthetic JSON report fixture for the non-executing xEdit
+audit report parser contract. It is not a Bethesda asset, third-party plugin
+file, real xEdit output, or local install snapshot.
+
 Gate 5 adds the first JSON-only synthetic fixture projects used by the loader
 and validation pipeline:
 
@@ -623,3 +628,15 @@ Gate 207 adds:
 It still adds no generated JIP script files, Bethesda assets, third-party mod
 files, local install snapshots, MO2 profiles, GECK outputs, or external tool
 fixtures.
+
+Gate 218 adds:
+
+- `projects/XEditAuditExample` - valid synthetic xEdit audit source fixture
+  with no plugin file payloads.
+- `projects/BrokenCases/MissingXEditAuditRecordInspectionRequirement` -
+  deterministic `WF-SEM-044` failure case for an xEdit audit that omits
+  `tool.xedit.record_inspection`.
+
+It still adds no Bethesda assets, third-party mod files, local install
+snapshots, MO2 profiles, GECK outputs, xEdit outputs, plugin files, or
+external tool fixtures.

@@ -1,0 +1,49 @@
+{
+  "kind": "wastelandforge.xedit-audit-report",
+  "auditId": "io.github.theboyyss.xeditauditexample.xedit_audits.record_inspection",
+  "intent": "record-inspection",
+  "reportFormat": "json",
+  "source": {
+    "synthetic": true,
+    "usesRealPluginFixture": false
+  },
+  "safety": {
+    "executesXEdit": false,
+    "mutatesPlugins": false,
+    "writesPatches": false
+  },
+  "records": [
+    {
+      "plugin": "SyntheticAuditSubject.esp",
+      "recordType": "QUST",
+      "editorId": "SyntheticQuest",
+      "formId": "xx000800"
+    },
+    {
+      "plugin": "SyntheticAuditSubject.esp",
+      "recordType": "DIAL",
+      "editorId": "SyntheticTopic",
+      "formId": "xx000801"
+    }
+  ],
+  "findings": [
+    {
+      "id": "synthetic.quest.inspectable",
+      "severity": "note",
+      "plugin": "SyntheticAuditSubject.esp",
+      "recordType": "QUST",
+      "editorId": "SyntheticQuest",
+      "formId": "xx000800",
+      "message": "Synthetic quest record is available for report parser contract coverage."
+    },
+    {
+      "id": "synthetic.dialogue.inspectable",
+      "severity": "warning",
+      "plugin": "SyntheticAuditSubject.esp",
+      "recordType": "DIAL",
+      "editorId": "SyntheticTopic",
+      "formId": "xx000801",
+      "message": "Synthetic dialogue record has a placeholder warning for parser summary coverage."
+    }
+  ]
+}

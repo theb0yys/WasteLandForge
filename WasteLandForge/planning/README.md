@@ -222,9 +222,14 @@ Gate status:
 - `gates/gate-215-jip-ln-text-script-build-command.md` - Gate 215, canonical `forge build --target jip-scripts` dist/build-manifest wiring.
 - `gates/gate-216-jip-ln-text-script-package-command.md` - Gate 216, canonical `forge package --target jip-scripts` package staging and install-plan skeleton.
 - `gates/gate-217-jip-ln-command-slice-closeout.md` - Gate 217, JIP LN text-script command-slice closeout and next-value transition.
+- `gates/gate-218-xedit-audit-inspection-adapter-evidence-checkpoint.md` - Gate 218, xEdit audit inspection adapter evidence checkpoint.
+- `gates/gate-219-xedit-audit-script-scaffold-rendering.md` - Gate 219, non-executing xEdit audit script scaffold rendering.
+- `gates/gate-220-xedit-audit-scaffold-manifest-checksums.md` - Gate 220, xEdit audit scaffold manifest and checksum evidence.
+- `gates/gate-221-xedit-audit-generate-command.md` - Gate 221, canonical `forge generate --target xedit-audit` CLI wiring.
+- `gates/gate-222-xedit-audit-report-parser-contract.md` - Gate 222, non-executing xEdit audit report parser contract.
 
 Next gate:
 
-- Gate 218 - xEdit audit and inspection adapter evidence checkpoint, stopping before xEdit process execution, plugin patch generation, plugin mutation, MO2 automation, GECK automation, runtime probes, or real third-party plugin fixtures.
+- Gate 223 - xEdit audit report parser evidence projection for machine/human handoff without CLI command wiring, stopping before xEdit process execution, report generation, plugin patch generation, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, `forge build --target xedit-audit`, package/release behavior, or applying parsed report findings to plugins.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

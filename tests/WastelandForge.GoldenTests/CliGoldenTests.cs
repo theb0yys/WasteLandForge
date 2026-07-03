@@ -4027,6 +4027,78 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void GenerateXEditAuditWritesScaffoldEvidence()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+
+        var result = RunCli("generate", projectRoot, "--target", "xedit-audit", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Generate xEdit audit JSON did not parse.");
+        var scaffoldPath = (string?)json["outputs"]?["scaffolds"]?[0]
+            ?? throw new InvalidOperationException("xEdit audit scaffold output missing.");
+        var scaffold = json["scaffolds"]?[0]
+            ?? throw new InvalidOperationException("xEdit audit scaffold evidence missing.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("generate", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("xedit-audit", (string?)json["target"]);
+        Assert.Equal("generated/xedit-audit", (string?)json["outputs"]?["root"]);
+        Assert.Equal("generated/xedit-audit/scripts/synthetic-record-inspection.pas", scaffoldPath);
+        Assert.Equal("generated/xedit-audit/xedit-audit-script-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal("generated/xedit-audit/checksums.sha256", (string?)json["outputs"]?["checksums"]);
+        Assert.Equal("generated/xedit-audit/reports/synthetic-record-inspection.json", (string?)scaffold["expectedReportPath"]);
+        Assert.Equal(string.Empty, result.Stderr);
+
+        var generatedPath = Path.Combine(projectRoot, scaffoldPath.Replace('/', Path.DirectorySeparatorChar));
+        Assert.True(File.Exists(generatedPath));
+        Assert.Contains("Gate 219 does not execute xEdit", File.ReadAllText(generatedPath), StringComparison.Ordinal);
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "reports", "synthetic-record-inspection.json")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+
+        var manifestPath = Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-script-manifest.json");
+        var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))
+            ?? throw new InvalidOperationException("Generated xEdit audit script manifest did not parse.");
+        Assert.Equal("wastelandforge.xedit-audit-script-manifest", (string?)manifest["kind"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["executesXEdit"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["parsesReports"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["generatesPatches"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["mutatesPlugins"]);
+        Assert.Equal("generated/xedit-audit/scripts/synthetic-record-inspection.pas", (string?)manifest["outputs"]?[0]?["path"]);
+
+        var checksums = File.ReadAllText(Path.Combine(projectRoot, "generated", "xedit-audit", "checksums.sha256"));
+        Assert.Contains("xedit-audit-script-manifest.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("scripts/synthetic-record-inspection.pas", checksums, StringComparison.Ordinal);
+        Assert.DoesNotContain("reports/", checksums, StringComparison.Ordinal);
+        Assert.True(json["outputDigests"]?.AsArray().Any(digest =>
+            StringComparer.Ordinal.Equals("generated/xedit-audit/xedit-audit-script-manifest.json", (string?)digest?["path"])) ?? false);
+        Assert.False(json["outputDigests"]?.AsArray().Any(digest =>
+            StringComparer.Ordinal.Equals("generated/xedit-audit/checksums.sha256", (string?)digest?["path"])) ?? false);
+    }
+
+    [Fact]
+    public void GenerateXEditAuditRejectsOutputOverride()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+
+        var result = RunCli("generate", projectRoot, "--target", "xedit-audit", "--output", "generated/custom", "--no-input");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Contains("Target 'xedit-audit' writes to generated/xedit-audit in the current gate; --output is not supported.", result.Stderr, StringComparison.Ordinal);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+    }
+
+    [Fact]
+    public void BuildXEditAuditRemainsUnsupported()
+    {
+        var result = RunCli("build", "--target", "xedit-audit", "--no-input");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Contains("Only targets 'reports', 'mcm-json', and 'jip-scripts' are implemented for forge build in the current gate.", result.Stderr, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BuildJipScriptsWritesBuildManifestAndChecksums()
     {
         var projectRoot = CopyFixtureProject("JipScriptExample");

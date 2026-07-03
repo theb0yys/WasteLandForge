@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 217 JIP LN command-slice closeout
+Status: Gate 222 xEdit audit report parser contract, no CLI behavior change
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -361,6 +361,9 @@ forge --version
   under project `generated/reports`.
 - `forge build --target reports` writes deterministic metadata reports, a
   build manifest, and checksums under project `dist/build`.
+- `forge generate --target xedit-audit` writes non-executing xEdit audit
+  script scaffolds, a scaffold manifest, and checksum evidence under project
+  `generated/xedit-audit`.
 - `forge generate --target mcm-json` writes deterministic MCM Extender JSON
   files, translation INI files when declared, a schema-validated package
   manifest, a schema-validated install-preview report, a human summary,
@@ -569,12 +572,17 @@ forge --version
 - `--format plain`
 - `--format json`
 - `--project <path>`
-- `--target reports|mcm-json|jip-scripts`
+- `--target reports|mcm-json|jip-scripts|xedit-audit`
 - `--output <path>`
 - `--dry-run`
 
 For `--target jip-scripts`, `forge generate` writes to
 `generated/jip-scripts` and reports generated script, manifest, checksum,
+diagnostic, and digest evidence. `--output` and `--dry-run` are not supported
+for that target in the current gate.
+
+For `--target xedit-audit`, `forge generate` writes to
+`generated/xedit-audit` and reports generated scaffold, manifest, checksum,
 diagnostic, and digest evidence. `--output` and `--dry-run` are not supported
 for that target in the current gate.
 
@@ -741,7 +749,21 @@ under project `generated/`. `--output` is accepted for `forge build` and
 `forge package` only when the resolved path stays under project `dist/`.
 
 The current `reports` target does not emit MCM Extender JSON, JIP text
-scripts, package archives, plugin records, or external tool output.
+scripts, xEdit audit scaffolds, package archives, plugin records, or external
+tool output.
+
+`forge generate --target xedit-audit` writes:
+
+```text
+generated/xedit-audit/scripts/<audit>.pas
+generated/xedit-audit/xedit-audit-script-manifest.json
+generated/xedit-audit/checksums.sha256
+```
+
+The current `xedit-audit` target writes scaffold evidence only. It does not
+execute xEdit, parse reports, generate patches, mutate plugins, automate MO2
+or GECK, run runtime probes, use real third-party plugin fixtures, implement
+`forge build --target xedit-audit`, or implement package/release behavior.
 
 `forge generate --target mcm-json` writes:
 

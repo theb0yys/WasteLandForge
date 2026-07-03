@@ -738,6 +738,58 @@ Data mutation, external tool execution, FOMOD generation, archive generation,
 or AI behavior. Route the next implementation slice to Gate 218: xEdit audit
 and inspection adapter evidence checkpoint with synthetic fixtures only.
 
+Gate 218 starts xEdit audit and inspection support with
+`xedit-audit/0.1.0` source contracts, optional `registries.xeditAudit`
+manifest loading, synthetic fixtures, `WF-SEM-044`, and a non-emitting
+`XEditAuditAdapterPlanner`. Do not route this as `forge generate --target
+xedit-audit`, xEdit process execution, report parsing, plugin patch
+generation, plugin mutation, MO2 automation, GECK automation, runtime probes,
+real third-party plugin fixtures, command alias, or AI behavior. The follow-up
+slice was Gate 219: non-executing xEdit audit script scaffold rendering under
+`generated/xedit-audit/scripts`.
+
+Gate 219 renders non-executing xEdit audit script scaffolds through
+`XEditAuditScriptScaffoldEmitter`. Treat generated `.pas` scaffold files under
+`generated/xedit-audit/scripts` and output digests as local generated evidence
+only. Do not route this as `forge generate --target xedit-audit`, generated
+manifest/checksum sidecars, xEdit process execution, report parsing, plugin
+patch generation, plugin mutation, MO2 automation, GECK automation, runtime
+probes, real third-party plugin fixtures, command alias, or AI behavior. The
+follow-up slice was Gate 220: xEdit audit scaffold manifest and checksum
+evidence under `generated/xedit-audit`.
+
+Gate 220 writes `xedit-audit-script-manifest.json` and `checksums.sha256` for
+generated xEdit audit scaffolds under `generated/xedit-audit`. Treat those
+sidecars as local generated evidence only. Do not route this as `forge
+generate --target xedit-audit`, xEdit process execution, report parsing,
+plugin patch generation, plugin mutation, MO2 automation, GECK automation,
+runtime probes, real third-party plugin fixtures, command alias, `forge build
+--target xedit-audit`, package/release behavior, or AI behavior. The follow-up
+slice was Gate 221: canonical `forge generate --target xedit-audit` CLI
+wiring for local scaffold evidence.
+
+Gate 221 wires canonical `forge generate --target xedit-audit` to local
+scaffold evidence under `generated/xedit-audit`. Treat CLI JSON/text output as
+generated scaffold, manifest, checksum, diagnostic, and digest evidence only.
+Do not route this as xEdit process execution, report parsing, plugin patch
+generation, plugin mutation, MO2 automation, GECK automation, runtime probes,
+real third-party plugin fixtures, command alias, `forge build --target
+xedit-audit`, package/release behavior, or AI behavior. The follow-up slice
+was Gate 222: non-executing xEdit audit report parser contract using
+synthetic JSON report fixtures only.
+
+Gate 222 adds `XEditAuditReportParser`, typed synthetic report evidence, the
+synthetic `fixtures/xedit-audit-reports/synthetic-record-inspection.json`
+fixture, and `WF-GEN-009` diagnostics for missing or invalid synthetic report
+evidence. Treat this as internal parser-contract evidence only. Do not route
+this as xEdit process execution, report generation, real xEdit report parsing,
+plugin patch generation, plugin mutation, MO2 automation, GECK automation,
+runtime probes, real third-party plugin fixtures, command alias, parser CLI
+wiring, `forge build --target xedit-audit`, package/release behavior, applying
+parsed findings to plugins, or AI behavior. Route the next implementation
+slice to Gate 223: xEdit audit report parser evidence projection for
+machine/human handoff without CLI command wiring.
+
 ## Required output
 
 Return:

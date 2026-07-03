@@ -98,6 +98,35 @@ in `WastelandForge.Schema`.
 
 Gate 29 adds dialogue registry schema `0.6.0` runtime validation for dialogue
 result-script quest-variable mutation skeletons in `WastelandForge.Validation`.
+
+Gate 218 adds xEdit audit source registry validation in
+`WastelandForge.Validation` and a non-emitting `XEditAuditAdapterPlanner` in
+`WastelandForge.Generation`. The planner returns future generated script and
+report evidence paths only; it does not write files, execute xEdit, parse real
+reports, generate patches, or mutate plugins.
+
+Gate 219 adds `XEditAuditScriptScaffoldEmitter` and scaffold document/file
+result records in `WastelandForge.Generation`. The emitter writes only
+generated `.pas` scaffold files under `generated/xedit-audit/scripts` and
+returns output digest evidence.
+
+Gate 220 extends `XEditAuditScriptScaffoldEmitter` with scaffold manifest and
+checksum sidecars under `generated/xedit-audit`. The result now exposes
+manifest and checksum paths while still avoiding xEdit execution, report
+parsing, plugin patch generation, plugin mutation, MO2/GECK automation,
+runtime probes, and `Data` writes.
+
+Gate 221 adds CLI serialization and text rendering for
+`forge generate --target xedit-audit` in `WastelandForge.Cli`. The command
+delegates to `XEditAuditScriptScaffoldEmitter`, reports scaffold evidence, and
+keeps custom output roots, dry-run mode, build/package behavior, xEdit
+execution, report parsing, and plugin mutation outside the gate.
+
+Gate 222 adds `XEditAuditReportParser` and typed synthetic report records in
+`WastelandForge.Generation`. The parser reads existing JSON report fixtures
+from `generated/xedit-audit/reports`, reports `WF-GEN-009` for missing or
+invalid report evidence, and does not write scaffolds, manifest/checksum
+sidecars, `Data`, plugins, or external tool output.
 It adds semantic checks for mutation variable references while preserving
 earlier dialogue registry schema versions in `WastelandForge.Schema`.
 

@@ -158,9 +158,12 @@ implementation lane to xEdit audit and inspection support.
 
 ## Next implementation slice
 
-Gate 218 should start the xEdit audit and inspection lane with an evidence
-checkpoint and adapter boundary. It should define the first synthetic fixture
-and output contract for xEdit audit script/report support while stopping
-before xEdit process execution, plugin patch generation, plugin mutation,
-MO2 automation, GECK automation, runtime probes, or real third-party plugin
-fixtures.
+Gate 218 starts the xEdit audit and inspection lane with an evidence
+checkpoint, source contract, synthetic fixtures, and non-emitting adapter
+planner. Gate 219 adds non-executing xEdit audit script scaffold rendering
+under `generated/xedit-audit/scripts`. Gate 220 adds local manifest and
+checksum evidence for those scaffolds. Gate 221 wires canonical
+`forge generate --target xedit-audit`. The next xEdit slice should stay in
+non-executing report-parser contract work before xEdit process execution,
+plugin patch generation, plugin mutation, MO2 automation, GECK automation,
+runtime probes, or real third-party plugin fixtures.
