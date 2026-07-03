@@ -238,6 +238,23 @@ internal static class ForgeCli
 
         if (StringComparer.Ordinal.Equals(parse.Target, JipScriptFileEmitter.Target))
         {
+            if (StringComparer.Ordinal.Equals(commandPath, "build"))
+            {
+                var buildResult = new JipScriptBuildEmitter().Build(new JipScriptBuildOptions(
+                    parse.ProjectPath,
+                    parse.OutputDirectory,
+                    CliConstants.Version,
+                    parse.DryRun));
+                var buildPayload = CliConstants.IsMachineFormat(parse.Format)
+                    ? JipScriptBuildJsonSerializer.Serialize(buildResult)
+                    : JipScriptBuildTextRenderer.Render(buildResult);
+                Console.Write(buildPayload);
+
+                return buildResult.HasErrors
+                    ? (int)CliExitCode.BlockingDiagnostics
+                    : (int)CliExitCode.Success;
+            }
+
             if (parse.OutputDirectory is not null)
             {
                 WriteUsage(parse.Format, commandPath, $"Target '{JipScriptFileEmitter.Target}' writes to generated/{JipScriptFileEmitter.Target} in the current gate; --output is not supported.");
@@ -290,7 +307,30 @@ internal static class ForgeCli
 
         if (parse.VerifyExisting)
         {
+            if (!StringComparer.Ordinal.Equals(parse.Target, McmJsonGenerator.Target))
+            {
+                WriteUsage(parse.Format, "package", $"Package verify-existing is only implemented for target '{McmJsonGenerator.Target}' in the current gate.");
+                return (int)CliExitCode.Usage;
+            }
+
             return RunPackageVerifyExisting(parse);
+        }
+
+        if (StringComparer.Ordinal.Equals(parse.Target, JipScriptPackageEmitter.Target))
+        {
+            var jipResult = new JipScriptPackageEmitter().Package(new JipScriptPackageOptions(
+                parse.ProjectPath,
+                parse.OutputDirectory,
+                CliConstants.Version,
+                parse.DryRun));
+            var jipPayload = CliConstants.IsMachineFormat(parse.Format)
+                ? JipScriptPackageJsonSerializer.Serialize(jipResult)
+                : JipScriptPackageTextRenderer.Render(jipResult);
+            Console.Write(jipPayload);
+
+            return jipResult.HasErrors
+                ? (int)CliExitCode.BlockingDiagnostics
+                : (int)CliExitCode.Success;
         }
 
         var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
@@ -949,13 +989,10 @@ internal static class ForgeCli
     private static bool IsMetadataReportTargetImplemented(string commandPath, string target) =>
         StringComparer.Ordinal.Equals(target, "reports") ||
         StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target) ||
-        (StringComparer.Ordinal.Equals(commandPath, "generate") &&
-            StringComparer.Ordinal.Equals(target, JipScriptFileEmitter.Target));
+        StringComparer.Ordinal.Equals(target, JipScriptFileEmitter.Target);
 
     private static string ImplementedMetadataReportTargets(string commandPath) =>
-        StringComparer.Ordinal.Equals(commandPath, "generate")
-            ? $"'reports', '{McmJsonGenerator.Target}', and '{JipScriptFileEmitter.Target}'"
-            : $"'reports' and '{McmJsonGenerator.Target}'";
+        $"'reports', '{McmJsonGenerator.Target}', and '{JipScriptFileEmitter.Target}'";
 
     private static PackageParseResult ParsePackageOptions(string[] args)
     {
@@ -1010,9 +1047,10 @@ internal static class ForgeCli
                     return PackageParseResult.Fail(format, "Missing value for --target.");
                 }
 
-                if (!StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target))
+                if (!StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target) &&
+                    !StringComparer.Ordinal.Equals(target, JipScriptPackageEmitter.Target))
                 {
-                    return PackageParseResult.Fail(format, $"Only target '{McmJsonGenerator.Target}' is implemented for forge package in the current gate.");
+                    return PackageParseResult.Fail(format, $"Only targets '{McmJsonGenerator.Target}' and '{JipScriptPackageEmitter.Target}' are implemented for forge package in the current gate.");
                 }
 
                 continue;

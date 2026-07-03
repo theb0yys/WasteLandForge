@@ -104,6 +104,9 @@
         },
         "jipScripts": {
           "$ref": "#/$defs/relativePath"
+        },
+        "xeditAudit": {
+          "$ref": "#/$defs/relativePath"
         }
       }
     },

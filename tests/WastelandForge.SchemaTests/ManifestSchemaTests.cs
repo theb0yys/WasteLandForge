@@ -86,6 +86,22 @@ public sealed class ManifestSchemaTests
         Assert.Equal("^[^\\r\\n]*$", (string?)schema["$defs"]?["sourceLine"]?["properties"]?["text"]?["pattern"]);
     }
 
+    [Fact]
+    public void XEditAuditSchemaDefinesEvidenceOnlySafetyFlags()
+    {
+        var schemaPath = Path.Combine(RepositoryRoot(), "schemas", "xedit-audit", "0.1.0", "schema.json");
+        var schema = JsonNode.Parse(File.ReadAllText(schemaPath)) as JsonObject;
+
+        Assert.NotNull(schema);
+        Assert.Equal(WastelandForgeSchemaIds.XEditAudit010, (string?)schema["$id"]);
+        Assert.Equal("xedit-audit", (string?)schema["properties"]?["kind"]?["const"]);
+        Assert.Equal("record-inspection", (string?)schema["$defs"]?["audit"]?["properties"]?["intent"]?["enum"]?[0]);
+        Assert.Equal("script-report-evidence", (string?)schema["$defs"]?["audit"]?["properties"]?["mode"]?["const"]);
+        Assert.Equal(false, (bool?)schema["$defs"]?["safety"]?["properties"]?["executesXEdit"]?["const"]);
+        Assert.Equal(false, (bool?)schema["$defs"]?["safety"]?["properties"]?["mutatesPlugins"]?["const"]);
+        Assert.Equal(false, (bool?)schema["$defs"]?["safety"]?["properties"]?["writesPatches"]?["const"]);
+    }
+
     [Theory]
     [InlineData("dependencies", "0.1.0", WastelandForgeSchemaIds.Dependency010, "dependency")]
     [InlineData("dependencies", "0.2.0", WastelandForgeSchemaIds.Dependency020, "dependency")]
@@ -95,6 +111,7 @@ public sealed class ManifestSchemaTests
     [InlineData("mcm", "0.1.0", WastelandForgeSchemaIds.Mcm010, "mcm")]
     [InlineData("jip-scripts", "0.1.0", WastelandForgeSchemaIds.JipScript010, "jip-script")]
     [InlineData("jip-script-emission-manifest", "0.1.0", WastelandForgeSchemaIds.JipScriptEmissionManifest010, "wastelandforge.jip-script-emission-manifest")]
+    [InlineData("xedit-audit", "0.1.0", WastelandForgeSchemaIds.XEditAudit010, "xedit-audit")]
     [InlineData("mcm-extender-output", "0.1.0", WastelandForgeSchemaIds.McmExtenderOutput010, null)]
     [InlineData("package-manifest", "0.1.0", WastelandForgeSchemaIds.PackageManifest010, "wastelandforge.package-manifest")]
     [InlineData("install-preview", "0.1.0", WastelandForgeSchemaIds.InstallPreview010, "wastelandforge.install-preview")]
@@ -152,6 +169,7 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Mcm010, "mcm", "0.1.0", "schemas/mcm/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.JipScript010, "jip-script", "0.1.0", "schemas/jip-scripts/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.JipScriptEmissionManifest010, "jip-script-emission-manifest", "0.1.0", "schemas/jip-script-emission-manifest/0.1.0/schema.json")]
+    [InlineData(WastelandForgeSchemaIds.XEditAudit010, "xedit-audit", "0.1.0", "schemas/xedit-audit/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.McmExtenderOutput010, "mcm-extender-output", "0.1.0", "schemas/mcm-extender-output/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.PackageManifest010, "package-manifest", "0.1.0", "schemas/package-manifest/0.1.0/schema.json")]
     [InlineData(WastelandForgeSchemaIds.InstallPreview010, "install-preview", "0.1.0", "schemas/install-preview/0.1.0/schema.json")]
@@ -206,6 +224,7 @@ public sealed class ManifestSchemaTests
     [InlineData(WastelandForgeSchemaIds.Mcm010)]
     [InlineData(WastelandForgeSchemaIds.JipScript010)]
     [InlineData(WastelandForgeSchemaIds.JipScriptEmissionManifest010)]
+    [InlineData(WastelandForgeSchemaIds.XEditAudit010)]
     [InlineData(WastelandForgeSchemaIds.McmExtenderOutput010)]
     [InlineData(WastelandForgeSchemaIds.PackageManifest010)]
     [InlineData(WastelandForgeSchemaIds.InstallPreview010)]

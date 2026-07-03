@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "xedit-audit",
+  "id": "io.github.theboyyss.missingxeditauditrecordinspectionrequirement.xedit_audits",
+  "audits": [
+    {
+      "id": "io.github.theboyyss.missingxeditauditrecordinspectionrequirement.xedit_audits.record_inspection",
+      "summary": "Synthetic invalid audit missing the record-inspection capability.",
+      "intent": "record-inspection",
+      "mode": "script-report-evidence",
+      "scriptLanguage": "pascal",
+      "reportFormat": "json",
+      "targetPlugins": [
+        {
+          "name": "SyntheticAuditSubject.esp",
+          "role": "subject"
+        }
+      ],
+      "recordTypes": [
+        "QUST"
+      ],
+      "requires": {
+        "capabilities": [
+          {
+            "id": "tool.xedit"
+          }
+        ]
+      },
+      "outputs": {
+        "script": "generated/xedit-audit/scripts/synthetic-record-inspection.pas",
+        "report": "generated/xedit-audit/reports/synthetic-record-inspection.json"
+      },
+      "safety": {
+        "executesXEdit": false,
+        "mutatesPlugins": false,
+        "writesPatches": false,
+        "usesRealPluginFixture": false
+      }
+    }
+  ]
+}

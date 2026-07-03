@@ -681,3 +681,21 @@ fixtures for generated checksum sidecar revalidation tests and commits no
 generated JIP script outputs, provider DLLs, Bethesda assets, third-party mod
 files, local install snapshots, MO2 profiles, GECK outputs, external tool
 fixtures, or generated evidence fixtures.
+
+Gate 214 commits no new fixture files. It uses temp-copied synthetic JSON
+fixtures for JIP generate CLI coverage and commits no generated JIP script
+outputs, provider DLLs, Bethesda assets, third-party mod files, local install
+snapshots, MO2 profiles, GECK outputs, external tool fixtures, or generated
+evidence fixtures.
+
+Gate 215 commits no new fixture files. It uses temp-copied synthetic JSON
+fixtures for JIP build unit and CLI coverage and commits no built JIP script
+outputs, provider DLLs, Bethesda assets, third-party mod files, local install
+snapshots, MO2 profiles, GECK outputs, external tool fixtures, or generated
+evidence fixtures.
+
+Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
+fixtures for JIP package unit and CLI coverage and commits no staged package
+outputs, provider DLLs, Bethesda assets, third-party mod files, local install
+snapshots, MO2 profiles, GECK outputs, external tool fixtures, or generated
+evidence fixtures.

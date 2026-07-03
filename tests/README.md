@@ -994,6 +994,31 @@ evidence, edited digest drift, missing expected entries, and unexpected
 entries. It adds no local install snapshots, GECK outputs, MO2 profiles,
 Bethesda assets, third-party mod files, or external tool fixtures.
 
+Gate 214 extends `CliGoldenTests` for
+`forge generate --target jip-scripts` and the unsupported
+`forge build --target jip-scripts` boundary. The tests use temp-copied
+synthetic fixtures to assert generated script output, manifest/checksum
+evidence, CLI JSON shape, output digest evidence, and no live Data writes. It
+adds no local install snapshots, GECK outputs, MO2 profiles, Bethesda assets,
+third-party mod files, or external tool fixtures.
+
+Gate 215 extends focused JIP unit tests and `CliGoldenTests` for
+`forge build --target jip-scripts`. The tests use temp-copied synthetic
+fixtures to assert dist script output, build-manifest evidence, checksum
+evidence, dry-run no-write behavior, output containment diagnostics,
+validation-error no-write behavior, and no live Data writes. It adds no local
+install snapshots, GECK outputs, MO2 profiles, Bethesda assets, third-party
+mod files, or external tool fixtures.
+
+Gate 216 extends focused JIP unit tests and `CliGoldenTests` for
+`forge package --target jip-scripts`. The tests use temp-copied synthetic
+fixtures to assert package staging under `dist/jip-scripts/package/Data`,
+package-manifest evidence, install-plan evidence, build-manifest evidence,
+checksum evidence, dry-run no-write behavior, output containment diagnostics,
+validation-error no-write behavior, and no live Data writes. It adds no local
+install snapshots, GECK outputs, MO2 profiles, Bethesda assets, third-party
+mod files, or external tool fixtures.
+
 Run the full local suite serially:
 
 ```text

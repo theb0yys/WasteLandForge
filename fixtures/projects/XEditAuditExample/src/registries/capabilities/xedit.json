@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "capability",
+  "id": "tool.xedit",
+  "title": "xEdit tool",
+  "satisfiedBy": [
+    {
+      "id": "provider.tool.xedit",
+      "providerType": "external-tool"
+    }
+  ],
+  "requires": {
+    "capabilities": []
+  },
+  "scope": "external-tool",
+  "stability": "community-standard",
+  "features": [
+    "tool-availability"
+  ]
+}

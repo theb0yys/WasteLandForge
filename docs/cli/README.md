@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 202 JIP LN text-script generator evidence checkpoint
+Status: Gate 217 JIP LN command-slice closeout
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -569,9 +569,14 @@ forge --version
 - `--format plain`
 - `--format json`
 - `--project <path>`
-- `--target reports|mcm-json`
+- `--target reports|mcm-json|jip-scripts`
 - `--output <path>`
 - `--dry-run`
+
+For `--target jip-scripts`, `forge generate` writes to
+`generated/jip-scripts` and reports generated script, manifest, checksum,
+diagnostic, and digest evidence. `--output` and `--dry-run` are not supported
+for that target in the current gate.
 
 `forge build` supports:
 
@@ -579,9 +584,14 @@ forge --version
 - `--format plain`
 - `--format json`
 - `--project <path>`
-- `--target reports|mcm-json`
+- `--target reports|mcm-json|jip-scripts`
 - `--output <path>`
 - `--dry-run`
+
+For `--target jip-scripts`, `forge build` writes to `dist/jip-scripts` by
+default and reports built script, build-manifest, checksum, diagnostic, source
+digest, and output digest evidence. Custom `--output` values must stay under
+`dist/`.
 
 `forge package` supports:
 
@@ -592,10 +602,17 @@ forge --version
 - `--format github` for verify-existing diagnostics only
 - `--summary <path>` for verify-existing diagnostics only
 - `--project <path>`
-- `--target mcm-json`
+- `--target mcm-json|jip-scripts`
 - `--output <path>`
 - `--dry-run`
 - `--verify-existing`
+
+For `--target jip-scripts`, `forge package` writes to `dist/jip-scripts` by
+default and stages scripts under
+`dist/jip-scripts/package/Data/nvse/plugins/scripts`. It reports packaged
+script, package-manifest, install-plan, build-manifest, checksum, diagnostic,
+source digest, and output digest evidence. Custom `--output` values must stay
+under `dist/`. `--verify-existing` remains implemented only for `mcm-json`.
 
 Unimplemented reserved skeleton commands support human/plain text and JSON status output.
 SARIF and GitHub formats are available only for diagnostic commands in the

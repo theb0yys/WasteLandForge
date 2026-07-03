@@ -218,9 +218,13 @@ Gate status:
 - `gates/gate-211-jip-ln-text-script-emission-manifest-digests.md` - Gate 211, JIP LN text-script emission manifest and digest skeleton.
 - `gates/gate-212-jip-ln-text-script-emission-manifest-schema-validation.md` - Gate 212, JIP LN text-script emission manifest schema and validation skeleton.
 - `gates/gate-213-jip-ln-text-script-emission-checksum-revalidation.md` - Gate 213, JIP LN text-script emission checksum sidecar revalidation.
+- `gates/gate-214-jip-ln-text-script-generate-command.md` - Gate 214, canonical `forge generate --target jip-scripts` CLI target wiring.
+- `gates/gate-215-jip-ln-text-script-build-command.md` - Gate 215, canonical `forge build --target jip-scripts` dist/build-manifest wiring.
+- `gates/gate-216-jip-ln-text-script-package-command.md` - Gate 216, canonical `forge package --target jip-scripts` package staging and install-plan skeleton.
+- `gates/gate-217-jip-ln-command-slice-closeout.md` - Gate 217, JIP LN text-script command-slice closeout and next-value transition.
 
 Next gate:
 
-- Gate 214 - Canonical `forge generate --target jip-scripts` CLI target wiring, without `forge build` target wiring, package staging, runtime probes, GECK automation, MO2 VFS inspection, live Data mutation, or external tool execution.
+- Gate 218 - xEdit audit and inspection adapter evidence checkpoint, stopping before xEdit process execution, plugin patch generation, plugin mutation, MO2 automation, GECK automation, runtime probes, or real third-party plugin fixtures.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

@@ -51,6 +51,33 @@ public sealed class ValidationPipelineFixtureTests
     }
 
     [Fact]
+    public void XEditAuditExampleFixtureValidatesWithoutIssues()
+    {
+        var report = ValidateFixture("XEditAuditExample");
+
+        Assert.False(report.HasErrors);
+        Assert.Empty(report.Issues);
+        Assert.Equal("io.github.theboyyss.xeditauditexample", report.ProjectId?.ToString());
+    }
+
+    [Fact]
+    public void MissingXEditAuditRecordInspectionRequirementEmitsSemanticIssue()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "MissingXEditAuditRecordInspectionRequirement"));
+
+        var issue = Assert.Single(report.Issues);
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-044", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/xedit-audit/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/audits/0/requires/capabilities", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal(
+            "wf:sem:044:io.github.theboyyss.missingxeditauditrecordinspectionrequirement.xedit_audits.record_inspection:tool.xedit.record_inspection",
+            issue.Fingerprint);
+    }
+
+    [Fact]
     public void InvalidManifestSchemaUsesRuntimeSchemaDiagnostics()
     {
         var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidManifestSchema"));

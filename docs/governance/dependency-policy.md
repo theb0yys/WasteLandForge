@@ -781,3 +781,25 @@ integration, detector dependency, capability resolver dependency, Doctor
 planner dependency, catalogue-policy decision dependency, SARIF/GitHub
 dependency, GitHub step-summary dependency, release-publishing dependency,
 external tool execution, or AI requirement.
+
+Gate 214 adds JIP generate CLI wiring using existing repository code only. It
+adds no new third-party dependency, download, rehosted runtime binary, network
+call, runtime probe, MO2/GECK integration, detector dependency, capability
+resolver dependency, Doctor planner dependency, catalogue-policy decision
+dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, external tool execution, or AI requirement.
+
+Gate 215 adds JIP build CLI wiring using existing repository code only. It
+adds no new third-party dependency, download, rehosted runtime binary, network
+call, runtime probe, MO2/GECK integration, detector dependency, capability
+resolver dependency, Doctor planner dependency, catalogue-policy decision
+dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, external tool execution, or AI requirement.
+
+Gate 216 adds JIP package CLI wiring using existing repository code only. It
+adds no new third-party dependency, download, rehosted runtime binary, network
+call, runtime probe, MO2/GECK integration, detector dependency, capability
+resolver dependency, Doctor planner dependency, catalogue-policy decision
+dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, external tool execution, archive/FOMOD
+dependency, or AI requirement.

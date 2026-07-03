@@ -907,5 +907,18 @@ Gate 213 adds `WF-GEN-008` for generated JIP emission checksum sidecar
 failures. It keeps the same canonical diagnostic report shape, does not expose
 JIP script evidence in CLI output, and does not run runtime capability checks.
 
+Gate 214 adds no new diagnostic rule ID. It exposes existing JIP generation
+diagnostics through `forge generate --target jip-scripts` JSON/text output and
+keeps runtime capability checks out of scope.
+
+Gate 215 adds no new diagnostic rule ID. It reuses `WF-BUILD-001` for JIP
+build output containment and exposes existing validation, semantic, and build
+diagnostics through `forge build --target jip-scripts` JSON/text output.
+
+Gate 216 adds no new diagnostic rule ID. It reuses `WF-BUILD-001` for JIP
+package output containment and exposes existing validation, semantic, and
+build diagnostics through `forge package --target jip-scripts` JSON/text
+output.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

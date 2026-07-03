@@ -1,15 +1,15 @@
 # JIP LN Text Script Generator Evidence Checkpoint
 
-Status: Gate 213 emission checksum revalidation added
+Status: Gate 217 command slice closed
 Research classification: Documented / Inferred / Open
 Source: R005, R006 / ADR-008, ADR-009, ADR-010, ADR-011
 
 ## Purpose
 
 Record the evidence and implementation limits for the JIP LN text-script
-mod-building function slice while source contracts, validation, and
-non-emitting planning are introduced ahead of script text emission, CLI
-output, and package output.
+mod-building function slice while source contracts, validation, generated-file
+emission, canonical generate-command access, and canonical build-command
+access are introduced ahead of package and runtime output.
 
 Gate 203 adds the first source contract skeleton and synthetic validation
 coverage. Gate 204 adds semantic checks for lifecycle/output prefix
@@ -23,9 +23,17 @@ for opaque source lines. Gate 210 writes rendered files under
 checksum, and digest evidence under that same generated root. Gate 212 adds
 an embedded generated-evidence schema and manifest validation before checksum
 sidecar emission. Gate 213 adds checksum sidecar revalidation for the emitted
-manifest and generated script files. CLI targets, package staging, runtime
-probes, GECK automation, MO2 VFS inspection, live Data mutation, and external
-tool execution remain out of scope.
+manifest and generated script files. Gate 214 wires that emitter into
+`forge generate --target jip-scripts`. Gate 215 wires rendered JIP script
+payloads into `forge build --target jip-scripts` under `dist/jip-scripts`,
+with local build-manifest and checksum evidence. Gate 216 wires rendered JIP
+script payloads into `forge package --target jip-scripts` under
+`dist/jip-scripts/package/Data/nvse/plugins/scripts`, with package-manifest,
+install-plan, build-manifest, and checksum evidence. Runtime probes, GECK
+automation, MO2 VFS inspection, live Data mutation, external tool execution,
+FOMOD generation, archive generation, and JIP package verify-existing remain
+out of scope. Gate 217 closes this command slice and moves the next
+implementation lane to xEdit audit and inspection support.
 
 ## Documented
 
@@ -100,15 +108,34 @@ tool execution remain out of scope.
   generated checksum sidecar drift. It verifies expected manifest/script
   entries, rejects missing or unexpected entries, rejects malformed or
   escaping checksum paths, and recomputes SHA-256 for local generated files.
+- Gate 214 adds canonical `forge generate --target jip-scripts` CLI target
+  wiring for the existing generated-root emitter. CLI output reports generated
+  script metadata, manifest/checksum evidence, diagnostics, and output
+  digests. The target rejects `--output` and `--dry-run` in this gate instead
+  of silently ignoring unsupported options.
+- Gate 215 adds canonical `forge build --target jip-scripts` CLI target
+  wiring. It writes rendered scripts under
+  `dist/jip-scripts/nvse/plugins/scripts/...`, records
+  `build-manifest.json` and `checksums.sha256`, supports dry-run planning, and
+  validates custom build output containment under `dist/`.
+- Gate 216 adds canonical `forge package --target jip-scripts` CLI target
+  wiring. It writes rendered scripts under
+  `dist/jip-scripts/package/Data/nvse/plugins/scripts/...`, records
+  `package-manifest.json`, `install-plan.json`, `build-manifest.json`, and
+  `checksums.sha256`, supports dry-run planning, and validates custom package
+  output containment under `dist/`.
+- Gate 217 parks the current JIP command lane after generate, build, and
+  package target wiring. Further JIP verify-existing, runtime probe, syntax
+  parser, installer, archive, or live install work must be explicitly
+  requested before it reopens.
 
 ## Open
 
 - Exact safe script syntax subset for the first emitted text files.
 - Exact line ending, encoding, header, comment, and deterministic formatting
   policy for generated scripts.
-- Exact generated output report/schema shape for JIP generation planning and
-  emitted script evidence.
-- Exact canonical CLI output contract for `forge generate --target jip-scripts`.
+- Exact generated output report/schema shape for future JIP package evidence
+  beyond dist build emission.
 - Exact future FormID-resolution fields beyond the initial explicit-reference
   strategy.
 - Exact JohnnyGuitar-backed Editor ID call-through extension point.
@@ -118,9 +145,9 @@ tool execution remain out of scope.
 
 ## Non-goals
 
-- No CLI target wiring.
-- No build graph target.
-- No CLI behavior or output contract change.
+- No install preview for JIP script payloads.
+- No JIP package verify-existing mode.
+- No installer or archive generation.
 - No runtime probe.
 - No GECK automation.
 - No MO2 VFS inspection or installation.
@@ -131,7 +158,9 @@ tool execution remain out of scope.
 
 ## Next implementation slice
 
-Gate 214 should add canonical `forge generate --target jip-scripts` CLI target
-wiring for the existing JIP emitter. It should stop before `forge build`
-target wiring, package staging, runtime probes, GECK automation, MO2 VFS
-inspection, live Data mutation, or external tool execution.
+Gate 218 should start the xEdit audit and inspection lane with an evidence
+checkpoint and adapter boundary. It should define the first synthetic fixture
+and output contract for xEdit audit script/report support while stopping
+before xEdit process execution, plugin patch generation, plugin mutation,
+MO2 automation, GECK automation, runtime probes, or real third-party plugin
+fixtures.

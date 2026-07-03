@@ -422,3 +422,15 @@ Gate 213 adds `WF-GEN-008` when the generated JIP emission checksum sidecar
 does not match the generated manifest and emitted files. It covers malformed,
 escaping, duplicate, missing, unexpected, unreadable, and digest-mismatched
 checksum entries under `generated/jip-scripts`.
+
+Gate 214 adds no new rule family or diagnostic ID. `forge generate --target
+jip-scripts` reports existing validation, semantic, `WF-GEN-007`, and
+`WF-GEN-008` diagnostics through the CLI.
+
+Gate 215 adds no new rule family or diagnostic ID. `forge build --target
+jip-scripts` reuses `WF-BUILD-001` for output containment and reports existing
+validation and semantic diagnostics through the CLI.
+
+Gate 216 adds no new rule family or diagnostic ID. `forge package --target
+jip-scripts` reuses `WF-BUILD-001` for output containment and reports
+existing validation and semantic diagnostics through the CLI.

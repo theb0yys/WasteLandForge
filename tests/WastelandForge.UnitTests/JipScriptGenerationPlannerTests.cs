@@ -246,6 +246,271 @@ public sealed class JipScriptGenerationPlannerTests
         Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
     }
 
+    [Fact]
+    public void BuildWritesDistScriptsBuildManifestAndChecksums()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+        var previousSourceDateEpoch = Environment.GetEnvironmentVariable("SOURCE_DATE_EPOCH");
+        Environment.SetEnvironmentVariable("SOURCE_DATE_EPOCH", "0");
+
+        try
+        {
+            var result = new JipScriptBuildEmitter().Build(new JipScriptBuildOptions(
+                projectRoot,
+                null,
+                "0.1.0",
+                DryRun: false));
+
+            Assert.False(result.HasErrors);
+            Assert.Equal("passed", result.Status);
+            Assert.False(result.DryRun);
+            Assert.NotNull(result.Outputs);
+            Assert.Equal("dist/jip-scripts", result.Outputs!.Root);
+            Assert.Equal("dist/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt", Assert.Single(result.Outputs.Scripts));
+            Assert.Equal("dist/jip-scripts/build-manifest.json", result.Outputs.BuildManifest);
+            Assert.Equal("dist/jip-scripts/checksums.sha256", result.Outputs.Checksums);
+            var builtFile = Assert.Single(result.BuiltFiles);
+            Assert.Equal("dist/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt", builtFile.OutputPath);
+            Assert.Equal("Data/nvse/plugins/scripts/gr_example_bootstrap.txt", builtFile.InstallPath);
+            Assert.True(File.Exists(Path.Combine(projectRoot, builtFile.OutputPath.Replace('/', Path.DirectorySeparatorChar))));
+            Assert.Equal("synthetic opaque source line", File.ReadAllText(Path.Combine(projectRoot, builtFile.OutputPath.Replace('/', Path.DirectorySeparatorChar))));
+            Assert.False(File.Exists(Path.Combine(projectRoot, "Data", "nvse", "plugins", "scripts", "gr_example_bootstrap.txt")));
+            Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+
+            var manifestPath = Path.Combine(projectRoot, result.Outputs.BuildManifest.Replace('/', Path.DirectorySeparatorChar));
+            var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))
+                ?? throw new InvalidOperationException("JIP build manifest did not parse.");
+            Assert.Equal("wastelandforge.build-manifest", (string?)manifest["kind"]);
+            Assert.Equal("wastelandforge/build-jip-scripts/v1", (string?)manifest["buildType"]);
+            Assert.Equal("build", (string?)manifest["command"]);
+            Assert.Equal("jip-scripts", (string?)manifest["target"]);
+            Assert.Equal("declared-only", (string?)manifest["capabilities"]?["status"]);
+            Assert.Equal("runtime.scripting.jip_script_runner", (string?)manifest["capabilities"]?["declaredRequirements"]?[0]?["id"]);
+            Assert.Equal(false, (bool?)manifest["package"]?["writesToGameData"]);
+            Assert.Equal("not-created", (string?)manifest["package"]?["archive"]);
+            Assert.Equal("dist/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt", (string?)manifest["scripts"]?[0]?["outputPath"]);
+            Assert.Equal("dist/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt", (string?)manifest["outputs"]?[0]?["path"]);
+            Assert.Equal(28, (long?)manifest["outputs"]?[0]?["length"]);
+            Assert.Contains(result.SourceDigests, digest => digest.Path == "wastelandforge.json");
+            Assert.Contains(result.OutputDigests, digest => digest.Path == "dist/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt");
+            Assert.Contains(result.OutputDigests, digest => digest.Path == "dist/jip-scripts/build-manifest.json");
+            Assert.Contains(result.OutputDigests, digest => digest.Path == "dist/jip-scripts/checksums.sha256");
+
+            var checksums = File.ReadAllText(Path.Combine(projectRoot, result.Outputs.Checksums.Replace('/', Path.DirectorySeparatorChar)));
+            Assert.Contains("  build-manifest.json", checksums, StringComparison.Ordinal);
+            Assert.Contains("  nvse/plugins/scripts/gr_example_bootstrap.txt", checksums, StringComparison.Ordinal);
+            Assert.DoesNotContain("checksums.sha256", checksums, StringComparison.Ordinal);
+            Assert.DoesNotContain("Data/nvse", checksums, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SOURCE_DATE_EPOCH", previousSourceDateEpoch);
+        }
+    }
+
+    [Fact]
+    public void BuildDryRunPlansDistOutputsWithoutWriting()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+
+        var result = new JipScriptBuildEmitter().Build(new JipScriptBuildOptions(
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: true));
+
+        Assert.False(result.HasErrors);
+        Assert.Equal("planned", result.Status);
+        Assert.True(result.DryRun);
+        Assert.NotNull(result.Outputs);
+        Assert.Equal("dist/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt", Assert.Single(result.Outputs!.Scripts));
+        Assert.Empty(result.OutputDigests);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+    }
+
+    [Fact]
+    public void BuildRejectsOutputOutsideDist()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+
+        var result = new JipScriptBuildEmitter().Build(new JipScriptBuildOptions(
+            projectRoot,
+            "../outside-dist",
+            "0.1.0",
+            DryRun: false));
+
+        Assert.True(result.HasErrors);
+        Assert.Null(result.Outputs);
+        var issue = Assert.Single(result.Diagnostics.Issues, issue => issue.RuleId.ToString() == "WF-BUILD-001");
+        Assert.Equal("build", issue.Category);
+        Assert.Equal("../outside-dist", issue.PrimaryLocation.File);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+    }
+
+    [Fact]
+    public void BuildStopsBeforeWritingWhenValidationHasErrors()
+    {
+        var projectRoot = CopyFixtureProject(Path.Combine("BrokenCases", "DuplicateJipScriptOutputFile"));
+
+        var result = new JipScriptBuildEmitter().Build(new JipScriptBuildOptions(
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+
+        Assert.True(result.HasErrors);
+        Assert.Empty(result.BuiltFiles);
+        Assert.Empty(result.Documents);
+        Assert.Null(result.Outputs);
+        Assert.Empty(result.OutputDigests);
+        Assert.Contains(result.Diagnostics.Issues, issue => issue.RuleId.ToString() == "WF-SEM-043");
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+    }
+
+    [Fact]
+    public void PackageWritesStagedScriptsInstallPlanManifestAndChecksums()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+        var previousSourceDateEpoch = Environment.GetEnvironmentVariable("SOURCE_DATE_EPOCH");
+        Environment.SetEnvironmentVariable("SOURCE_DATE_EPOCH", "0");
+
+        try
+        {
+            var result = new JipScriptPackageEmitter().Package(new JipScriptPackageOptions(
+                projectRoot,
+                null,
+                "0.1.0",
+                DryRun: false));
+
+            Assert.False(result.HasErrors);
+            Assert.Equal("passed", result.Status);
+            Assert.False(result.DryRun);
+            Assert.NotNull(result.Outputs);
+            Assert.Equal("dist/jip-scripts", result.Outputs!.Root);
+            Assert.Equal("dist/jip-scripts/package", result.Outputs.PackageRoot);
+            Assert.Equal("dist/jip-scripts/package/Data/nvse/plugins/scripts/gr_example_bootstrap.txt", Assert.Single(result.Outputs.Scripts));
+            Assert.Equal("dist/jip-scripts/package-manifest.json", result.Outputs.PackageManifest);
+            Assert.Equal("dist/jip-scripts/install-plan.json", result.Outputs.InstallPlan);
+            Assert.Equal("dist/jip-scripts/build-manifest.json", result.Outputs.BuildManifest);
+            Assert.Equal("dist/jip-scripts/checksums.sha256", result.Outputs.Checksums);
+
+            var packageFile = Assert.Single(result.PackageFiles);
+            Assert.Equal("dist/jip-scripts/package/Data/nvse/plugins/scripts/gr_example_bootstrap.txt", packageFile.StagedPath);
+            Assert.Equal("Data/nvse/plugins/scripts/gr_example_bootstrap.txt", packageFile.PackagePath);
+            Assert.Equal("Data/nvse/plugins/scripts/gr_example_bootstrap.txt", packageFile.InstallPath);
+            var stagedPath = Path.Combine(projectRoot, packageFile.StagedPath.Replace('/', Path.DirectorySeparatorChar));
+            Assert.True(File.Exists(stagedPath));
+            Assert.Equal("synthetic opaque source line", File.ReadAllText(stagedPath));
+            Assert.False(File.Exists(Path.Combine(projectRoot, "Data", "nvse", "plugins", "scripts", "gr_example_bootstrap.txt")));
+            Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+
+            var packageManifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, result.Outputs.PackageManifest.Replace('/', Path.DirectorySeparatorChar))))
+                ?? throw new InvalidOperationException("JIP package manifest did not parse.");
+            Assert.Equal("wastelandforge.package-manifest", (string?)packageManifest["kind"]);
+            Assert.Equal("wastelandforge/jip-scripts-loose-files/v1", (string?)packageManifest["packageType"]);
+            Assert.Equal("package", (string?)packageManifest["command"]);
+            Assert.Equal("dist/jip-scripts/package", (string?)packageManifest["packageRoot"]);
+            Assert.Equal(false, (bool?)packageManifest["package"]?["writesToGameData"]);
+            Assert.Equal("not-created", (string?)packageManifest["archive"]?["status"]);
+            Assert.Equal("Data/nvse/plugins/scripts/gr_example_bootstrap.txt", (string?)packageManifest["entries"]?[0]?["path"]);
+            Assert.Equal("dist/jip-scripts/package/Data/nvse/plugins/scripts/gr_example_bootstrap.txt", (string?)packageManifest["payloads"]?[0]?["path"]);
+
+            var installPlan = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, result.Outputs.InstallPlan.Replace('/', Path.DirectorySeparatorChar))))
+                ?? throw new InvalidOperationException("JIP install plan did not parse.");
+            Assert.Equal("wastelandforge.install-plan", (string?)installPlan["kind"]);
+            Assert.Equal("wastelandforge/jip-scripts-loose-file-install-plan/v1", (string?)installPlan["planType"]);
+            Assert.Equal("copy-loose-file-if-user-approved", (string?)installPlan["entries"]?[0]?["action"]);
+            Assert.Equal(true, (bool?)installPlan["approval"]?["required"]);
+            Assert.Equal(false, (bool?)installPlan["package"]?["writesToGameData"]);
+
+            var buildManifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, result.Outputs.BuildManifest.Replace('/', Path.DirectorySeparatorChar))))
+                ?? throw new InvalidOperationException("JIP package build manifest did not parse.");
+            Assert.Equal("wastelandforge.build-manifest", (string?)buildManifest["kind"]);
+            Assert.Equal("wastelandforge/package-jip-scripts/v1", (string?)buildManifest["buildType"]);
+            Assert.Equal("package", (string?)buildManifest["command"]);
+            Assert.True(buildManifest["outputs"]?.AsArray().Any(output =>
+                StringComparer.Ordinal.Equals("dist/jip-scripts/install-plan.json", (string?)output?["path"])) ?? false);
+            Assert.Equal(false, (bool?)buildManifest["package"]?["writesToGameData"]);
+
+            var checksums = File.ReadAllText(Path.Combine(projectRoot, result.Outputs.Checksums.Replace('/', Path.DirectorySeparatorChar)));
+            Assert.Contains("  build-manifest.json", checksums, StringComparison.Ordinal);
+            Assert.Contains("  install-plan.json", checksums, StringComparison.Ordinal);
+            Assert.Contains("  package-manifest.json", checksums, StringComparison.Ordinal);
+            Assert.Contains("  package/Data/nvse/plugins/scripts/gr_example_bootstrap.txt", checksums, StringComparison.Ordinal);
+            Assert.DoesNotContain("checksums.sha256", checksums, StringComparison.Ordinal);
+            Assert.Contains(result.OutputDigests, digest => digest.Path == "dist/jip-scripts/checksums.sha256");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SOURCE_DATE_EPOCH", previousSourceDateEpoch);
+        }
+    }
+
+    [Fact]
+    public void PackageDryRunPlansStagedOutputsWithoutWriting()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+
+        var result = new JipScriptPackageEmitter().Package(new JipScriptPackageOptions(
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: true));
+
+        Assert.False(result.HasErrors);
+        Assert.Equal("planned", result.Status);
+        Assert.True(result.DryRun);
+        Assert.NotNull(result.Outputs);
+        Assert.Equal("dist/jip-scripts/package/Data/nvse/plugins/scripts/gr_example_bootstrap.txt", Assert.Single(result.Outputs!.Scripts));
+        Assert.Empty(result.OutputDigests);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+    }
+
+    [Fact]
+    public void PackageRejectsOutputOutsideDist()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+
+        var result = new JipScriptPackageEmitter().Package(new JipScriptPackageOptions(
+            projectRoot,
+            "../outside-dist",
+            "0.1.0",
+            DryRun: false));
+
+        Assert.True(result.HasErrors);
+        Assert.Null(result.Outputs);
+        var issue = Assert.Single(result.Diagnostics.Issues, issue => issue.RuleId.ToString() == "WF-BUILD-001");
+        Assert.Equal("build", issue.Category);
+        Assert.Equal("../outside-dist", issue.PrimaryLocation.File);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+    }
+
+    [Fact]
+    public void PackageStopsBeforeWritingWhenValidationHasErrors()
+    {
+        var projectRoot = CopyFixtureProject(Path.Combine("BrokenCases", "DuplicateJipScriptOutputFile"));
+
+        var result = new JipScriptPackageEmitter().Package(new JipScriptPackageOptions(
+            projectRoot,
+            null,
+            "0.1.0",
+            DryRun: false));
+
+        Assert.True(result.HasErrors);
+        Assert.Empty(result.PackageFiles);
+        Assert.Empty(result.Documents);
+        Assert.Null(result.Outputs);
+        Assert.Empty(result.OutputDigests);
+        Assert.Contains(result.Diagnostics.Issues, issue => issue.RuleId.ToString() == "WF-SEM-043");
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+    }
+
     private static string CopyFixtureProject(string name)
     {
         var source = Path.Combine(RepositoryRoot(), "fixtures", "projects", name);

@@ -297,3 +297,14 @@ revalidation remains future work.
 Gate 213 adds no schema. It revalidates the generated JIP emission
 `checksums.sha256` sidecar against `jip-script-emission-manifest/0.1.0`
 evidence and local generated files.
+
+Gate 214 adds no schema. It exposes the existing generated JIP emission
+contract through `forge generate --target jip-scripts` and keeps future
+build/package evidence schemas out of scope.
+
+Gate 215 adds no schema. It records JIP build evidence with the existing local
+build-manifest shape and keeps future package evidence schemas out of scope.
+
+Gate 216 adds no schema. It records JIP package evidence with local
+package-manifest, install-plan, build-manifest, and checksum files while
+keeping published JIP package evidence schemas out of scope.

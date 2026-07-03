@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/xedit-audit/0.1.0/schema.json",
+  "title": "WastelandForge xEdit Audit Registry",
+  "description": "Source-controlled xEdit audit and inspection intent for deterministic script/report evidence planning.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "audits"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema compatibility version for the xEdit audit registry contract.",
+      "const": "0.1.0"
+    },
+    "kind": {
+      "description": "Document kind discriminator.",
+      "const": "xedit-audit"
+    },
+    "id": {
+      "$ref": "#/$defs/logicalId"
+    },
+    "audits": {
+      "description": "xEdit audit declarations for future deterministic script and report evidence.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/audit"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedScriptPath": {
+      "type": "string",
+      "pattern": "^generated/xedit-audit/scripts/[A-Za-z0-9._/-]+\\.pas$"
+    },
+    "generatedReportPath": {
+      "type": "string",
+      "pattern": "^generated/xedit-audit/reports/[A-Za-z0-9._/-]+\\.json$"
+    },
+    "pluginName": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_ .'-]+\\.(?:esm|esp|esl)$"
+    },
+    "recordType": {
+      "description": "Four-character record signature to inspect in xEdit reports.",
+      "type": "string",
+      "pattern": "^[A-Z0-9]{4}$"
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "intent",
+        "mode",
+        "targetPlugins",
+        "recordTypes",
+        "requires",
+        "outputs",
+        "safety"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "intent": {
+          "description": "Initial xEdit audit intent. Gate 218 only supports inspection, not patching.",
+          "enum": [
+            "record-inspection"
+          ]
+        },
+        "mode": {
+          "description": "Initial adapter mode. Forge plans script/report evidence without executing xEdit.",
+          "const": "script-report-evidence"
+        },
+        "scriptLanguage": {
+          "description": "xEdit scripting language recorded as evidence metadata only.",
+          "const": "pascal"
+        },
+        "reportFormat": {
+          "description": "Expected generated report format for future parser support.",
+          "const": "json"
+        },
+        "targetPlugins": {
+          "description": "Synthetic plugin names that the audit script/report evidence is shaped around.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pluginTarget"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "recordTypes": {
+          "description": "Record signatures the audit intends to inspect.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recordType"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "requires": {
+          "$ref": "#/$defs/requires"
+        },
+        "outputs": {
+          "$ref": "#/$defs/outputs"
+        },
+        "safety": {
+          "$ref": "#/$defs/safety"
+        }
+      }
+    },
+    "pluginTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "role"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/pluginName"
+        },
+        "role": {
+          "enum": [
+            "subject",
+            "master"
+          ]
+        }
+      }
+    },
+    "requires": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capabilities"
+      ],
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capabilityReference"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "capabilityReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        }
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "script",
+        "report"
+      ],
+      "properties": {
+        "script": {
+          "$ref": "#/$defs/generatedScriptPath"
+        },
+        "report": {
+          "$ref": "#/$defs/generatedReportPath"
+        }
+      }
+    },
+    "safety": {
+      "description": "Mandatory non-mutation boundary for the initial xEdit adapter evidence gate.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executesXEdit",
+        "mutatesPlugins",
+        "writesPatches",
+        "usesRealPluginFixture"
+      ],
+      "properties": {
+        "executesXEdit": {
+          "const": false
+        },
+        "mutatesPlugins": {
+          "const": false
+        },
+        "writesPatches": {
+          "const": false
+        },
+        "usesRealPluginFixture": {
+          "const": false
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "0.1.0",
+      "kind": "xedit-audit",
+      "id": "io.github.theboyyss.examplemod.xedit_audits",
+      "audits": [
+        {
+          "id": "io.github.theboyyss.examplemod.xedit_audits.record_inspection",
+          "summary": "Synthetic record inspection audit evidence for future xEdit adapter support.",
+          "intent": "record-inspection",
+          "mode": "script-report-evidence",
+          "scriptLanguage": "pascal",
+          "reportFormat": "json",
+          "targetPlugins": [
+            {
+              "name": "SyntheticAuditSubject.esp",
+              "role": "subject"
+            }
+          ],
+          "recordTypes": [
+            "QUST",
+            "DIAL"
+          ],
+          "requires": {
+            "capabilities": [
+              {
+                "id": "tool.xedit.record_inspection"
+              }
+            ]
+          },
+          "outputs": {
+            "script": "generated/xedit-audit/scripts/synthetic-record-inspection.pas",
+            "report": "generated/xedit-audit/reports/synthetic-record-inspection.json"
+          },
+          "safety": {
+            "executesXEdit": false,
+            "mutatesPlugins": false,
+            "writesPatches": false,
+            "usesRealPluginFixture": false
+          }
+        }
+      ]
+    }
+  ]
+}

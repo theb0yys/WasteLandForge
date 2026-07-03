@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "manifest",
+  "id": "io.github.theboyyss.missingxeditauditrecordinspectionrequirement",
+  "name": "Missing xEdit Audit Record Inspection Requirement",
+  "version": "0.1.0",
+  "game": "falloutnv",
+  "registries": {
+    "dependencies": "src/registries/dependencies/",
+    "capabilities": "src/registries/capabilities/",
+    "xeditAudit": "src/registries/xedit-audit/"
+  }
+}

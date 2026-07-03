@@ -4027,15 +4027,109 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
-    public void BuildJipScriptsTargetRemainsUnsupported()
+    public void BuildJipScriptsWritesBuildManifestAndChecksums()
     {
         var projectRoot = CopyFixtureProject("JipScriptExample");
 
-        var result = RunCli("build", projectRoot, "--target", "jip-scripts", "--format", "plain", "--no-input");
+        var result = RunCli("build", projectRoot, "--target", "jip-scripts", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Build JIP scripts JSON did not parse.");
+        var scriptPath = (string?)json["outputs"]?["scripts"]?[0]
+            ?? throw new InvalidOperationException("JIP script build output missing.");
+        var builtScript = json["scripts"]?[0]
+            ?? throw new InvalidOperationException("Built JIP script evidence missing.");
 
-        Assert.Equal(2, result.ExitCode);
-        Assert.Equal(string.Empty, result.Stdout);
-        Assert.Contains("Only targets 'reports' and 'mcm-json' are implemented for forge build in the current gate.", result.Stderr, StringComparison.Ordinal);
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("build", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("jip-scripts", (string?)json["target"]);
+        Assert.Equal("dist/jip-scripts", (string?)json["outputs"]?["root"]);
+        Assert.Equal("dist/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt", scriptPath);
+        Assert.Equal("dist/jip-scripts/build-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal("dist/jip-scripts/checksums.sha256", (string?)json["outputs"]?["checksums"]);
+        Assert.Equal("Data/nvse/plugins/scripts/gr_example_bootstrap.txt", (string?)builtScript["installPath"]);
+        Assert.Equal(28, (long?)builtScript["contentBytes"]);
+        Assert.Equal(string.Empty, result.Stderr);
+
+        var outputPath = Path.Combine(projectRoot, scriptPath.Replace('/', Path.DirectorySeparatorChar));
+        Assert.True(File.Exists(outputPath));
+        Assert.Equal("synthetic opaque source line", File.ReadAllText(outputPath));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "Data", "nvse", "plugins", "scripts", "gr_example_bootstrap.txt")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+
+        var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "jip-scripts", "build-manifest.json")))
+            ?? throw new InvalidOperationException("JIP build manifest did not parse.");
+        Assert.Equal("wastelandforge.build-manifest", (string?)manifest["kind"]);
+        Assert.Equal("wastelandforge/build-jip-scripts/v1", (string?)manifest["buildType"]);
+        Assert.Equal("dist/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt", (string?)manifest["outputs"]?[0]?["path"]);
+        Assert.Equal(false, (bool?)manifest["package"]?["writesToGameData"]);
+
+        var checksums = File.ReadAllText(Path.Combine(projectRoot, "dist", "jip-scripts", "checksums.sha256"));
+        Assert.Contains("build-manifest.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("nvse/plugins/scripts/gr_example_bootstrap.txt", checksums, StringComparison.Ordinal);
+        Assert.True(json["outputDigests"]?.AsArray().Any(digest =>
+            StringComparer.Ordinal.Equals("dist/jip-scripts/checksums.sha256", (string?)digest?["path"])) ?? false);
+    }
+
+    [Fact]
+    public void PackageJipScriptsWritesInstallPlanAndPackageEvidence()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+
+        var result = RunCli("package", projectRoot, "--target", "jip-scripts", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Package JIP scripts JSON did not parse.");
+        var scriptPath = (string?)json["outputs"]?["scripts"]?[0]
+            ?? throw new InvalidOperationException("JIP script package output missing.");
+        var packagedScript = json["scripts"]?[0]
+            ?? throw new InvalidOperationException("Packaged JIP script evidence missing.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("package", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("jip-scripts", (string?)json["target"]);
+        Assert.Equal("dist/jip-scripts", (string?)json["outputs"]?["root"]);
+        Assert.Equal("dist/jip-scripts/package", (string?)json["outputs"]?["packageRoot"]);
+        Assert.Equal("dist/jip-scripts/package/Data/nvse/plugins/scripts/gr_example_bootstrap.txt", scriptPath);
+        Assert.Equal("dist/jip-scripts/package-manifest.json", (string?)json["outputs"]?["packageManifest"]);
+        Assert.Equal("dist/jip-scripts/install-plan.json", (string?)json["outputs"]?["installPlan"]);
+        Assert.Equal("dist/jip-scripts/build-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal("dist/jip-scripts/checksums.sha256", (string?)json["outputs"]?["checksums"]);
+        Assert.Equal("Data/nvse/plugins/scripts/gr_example_bootstrap.txt", (string?)packagedScript["installPath"]);
+        Assert.Equal("Data/nvse/plugins/scripts/gr_example_bootstrap.txt", (string?)packagedScript["packagePath"]);
+        Assert.Equal(28, (long?)packagedScript["contentBytes"]);
+        Assert.Equal(string.Empty, result.Stderr);
+
+        var outputPath = Path.Combine(projectRoot, scriptPath.Replace('/', Path.DirectorySeparatorChar));
+        Assert.True(File.Exists(outputPath));
+        Assert.Equal("synthetic opaque source line", File.ReadAllText(outputPath));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "Data", "nvse", "plugins", "scripts", "gr_example_bootstrap.txt")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "dist", "jip-scripts", "package.zip")));
+
+        var packageManifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "jip-scripts", "package-manifest.json")))
+            ?? throw new InvalidOperationException("JIP package manifest did not parse.");
+        Assert.Equal("wastelandforge.package-manifest", (string?)packageManifest["kind"]);
+        Assert.Equal("wastelandforge/jip-scripts-loose-files/v1", (string?)packageManifest["packageType"]);
+        Assert.Equal(false, (bool?)packageManifest["package"]?["writesToGameData"]);
+        Assert.Equal("not-created", (string?)packageManifest["archive"]?["status"]);
+
+        var installPlan = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "jip-scripts", "install-plan.json")))
+            ?? throw new InvalidOperationException("JIP install plan did not parse.");
+        Assert.Equal("wastelandforge.install-plan", (string?)installPlan["kind"]);
+        Assert.Equal("copy-loose-file-if-user-approved", (string?)installPlan["entries"]?[0]?["action"]);
+        Assert.Equal(false, (bool?)installPlan["package"]?["writesToGameData"]);
+
+        var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "jip-scripts", "build-manifest.json")))
+            ?? throw new InvalidOperationException("JIP package build manifest did not parse.");
+        Assert.Equal("wastelandforge/package-jip-scripts/v1", (string?)manifest["buildType"]);
+        Assert.Equal("package", (string?)manifest["command"]);
+        Assert.Equal(false, (bool?)manifest["package"]?["writesToGameData"]);
+
+        var checksums = File.ReadAllText(Path.Combine(projectRoot, "dist", "jip-scripts", "checksums.sha256"));
+        Assert.Contains("install-plan.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("package-manifest.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("package/Data/nvse/plugins/scripts/gr_example_bootstrap.txt", checksums, StringComparison.Ordinal);
+        Assert.True(json["outputDigests"]?.AsArray().Any(digest =>
+            StringComparer.Ordinal.Equals("dist/jip-scripts/checksums.sha256", (string?)digest?["path"])) ?? false);
     }
 
     [Fact]

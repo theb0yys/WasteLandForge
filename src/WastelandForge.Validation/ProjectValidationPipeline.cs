@@ -14,6 +14,7 @@ namespace WastelandForge.Validation;
 public sealed class ProjectValidationPipeline
 {
     private const string JipScriptRunnerCapabilityId = "runtime.scripting.jip_script_runner";
+    private const string XEditRecordInspectionCapabilityId = "tool.xedit.record_inspection";
 
     private static readonly IReadOnlyDictionary<string, string[]> AssetTargetExtensions = new Dictionary<string, string[]>(StringComparer.Ordinal)
     {
@@ -68,6 +69,9 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> JipScriptRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.JipScript010,
         "JIP LN text script registry schema 0.1.0"));
+    private static readonly Lazy<JsonSchema> XEditAuditRegistrySchema = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.XEditAudit010,
+        "xEdit audit registry schema 0.1.0"));
     private static readonly Lazy<JsonSchema> QuestRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Quest010,
         "Quest registry schema 0.1.0"));
@@ -365,6 +369,50 @@ public sealed class ProjectValidationPipeline
             projectId,
             new DiagnosticReport(projectId, issues),
             scripts);
+    }
+
+    public ProjectXEditAuditReadResult ReadXEditAudits(string projectPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectPath);
+
+        var projectRoot = Path.GetFullPath(projectPath);
+        var issues = new List<DiagnosticIssue>();
+        var audits = new List<XEditAuditDefinition>();
+        var manifestLoad = LoadManifest(projectRoot, issues);
+        LogicalId? projectId = null;
+
+        if (manifestLoad is not null)
+        {
+            projectId = ReadProjectId(manifestLoad.Manifest);
+            var issueCountBeforeSchemaValidation = issues.Count;
+            ValidateManifestSchema(manifestLoad, issues, projectId);
+            if (!HasErrorSince(issues, issueCountBeforeSchemaValidation))
+            {
+                var registries = manifestLoad.Manifest["registries"] as JsonObject;
+                var xeditAuditPath = GetString(registries, "xeditAudit");
+                if (xeditAuditPath is not null)
+                {
+                    var registryIssueStart = issues.Count;
+                    var xeditAuditDocuments = LoadRegistryDocuments(
+                        manifestLoad.ProjectRoot,
+                        xeditAuditPath,
+                        "xedit-audit",
+                        "xeditAudit",
+                        issues,
+                        projectId);
+                    if (!HasErrorSince(issues, registryIssueStart))
+                    {
+                        audits.AddRange(xeditAuditDocuments.SelectMany(ReadXEditAudits));
+                    }
+                }
+            }
+        }
+
+        return new ProjectXEditAuditReadResult(
+            projectRoot,
+            projectId,
+            new DiagnosticReport(projectId, issues),
+            audits);
     }
 
     private static LoadedManifest? LoadManifest(string projectRoot, List<DiagnosticIssue> issues)
@@ -813,6 +861,7 @@ public sealed class ProjectValidationPipeline
             "asset" => "Asset registry",
             "mcm" => "MCM registry",
             "jip-script" => "JIP LN text script registry",
+            "xedit-audit" => "xEdit audit registry",
             "quest" => "Quest registry",
             "dialogue" => "Dialogue registry",
             _ => "Registry"
@@ -839,6 +888,7 @@ public sealed class ProjectValidationPipeline
             "asset" => AssetRegistrySchema.Value,
             "mcm" => McmRegistrySchema.Value,
             "jip-script" => JipScriptRegistrySchema.Value,
+            "xedit-audit" => XEditAuditRegistrySchema.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.6.0") => QuestRegistrySchema060.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.5.0") => QuestRegistrySchema050.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.4.0") => QuestRegistrySchema040.Value,
@@ -991,6 +1041,7 @@ public sealed class ProjectValidationPipeline
         var dialoguePath = GetString(registries, "dialogue");
         var mcmPath = GetString(registries, "mcm");
         var jipScriptsPath = GetString(registries, "jipScripts");
+        var xeditAuditPath = GetString(registries, "xeditAudit");
         if (dependencyPath is null || capabilityPath is null)
         {
             return;
@@ -1066,6 +1117,17 @@ public sealed class ProjectValidationPipeline
                 issues,
                 projectId);
         }
+        IReadOnlyList<RegistryDocument> xeditAuditDocuments = [];
+        if (xeditAuditPath is not null)
+        {
+            xeditAuditDocuments = LoadRegistryDocuments(
+                manifestLoad.ProjectRoot,
+                xeditAuditPath,
+                "xedit-audit",
+                "xeditAudit",
+                issues,
+                projectId);
+        }
 
         if (HasErrorSince(issues, registryIssueStart))
         {
@@ -1083,6 +1145,7 @@ public sealed class ProjectValidationPipeline
         RunQuestSemanticValidation(questDocuments, issues, projectId);
         RunDialogueSemanticValidation(dialogueDocuments, questDocuments, assetRecords, issues, projectId);
         RunJipScriptSemanticValidation(jipScriptDocuments, issues, projectId);
+        RunXEditAuditSemanticValidation(xeditAuditDocuments, issues, projectId);
 
         var capabilityIds = capabilityDocuments
             .SelectMany(document => ReadCapabilityIds(document.Root))
@@ -1172,6 +1235,47 @@ public sealed class ProjectValidationPipeline
 
                 ValidateJipScriptSourceLineBudget(document, script, index, id, issues, projectId);
                 ValidateJipScriptOutputFileUnique(document, index, id, outputFile, outputFiles, issues, projectId);
+            }
+        }
+    }
+
+    private static void RunXEditAuditSemanticValidation(
+        IReadOnlyList<RegistryDocument> xeditAuditDocuments,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        foreach (var document in xeditAuditDocuments)
+        {
+            if (document.Root["audits"] is not JsonArray audits)
+            {
+                continue;
+            }
+
+            for (var index = 0; index < audits.Count; index++)
+            {
+                if (audits[index] is not JsonObject audit)
+                {
+                    continue;
+                }
+
+                var id = GetString(audit, "id") ?? $"{document.DisplayPath}:{index}";
+                var capabilityReferences = ReadCapabilityReferences(audit["requires"] as JsonObject);
+                if (capabilityReferences.Contains(XEditRecordInspectionCapabilityId, StringComparer.Ordinal))
+                {
+                    continue;
+                }
+
+                issues.Add(CreateIssue(
+                    "WF-SEM-044",
+                    DiagnosticSeverity.Error,
+                    "semantic",
+                    "Missing xEdit record inspection capability requirement",
+                    $"xEdit audit '{id}' must declare required capability '{XEditRecordInspectionCapabilityId}'.",
+                    CreateSourceLocation(document.DisplayPath, $"/audits/{index}/requires/capabilities", document.SourceLocations),
+                    projectId,
+                    suggestedFix: $"Add '{XEditRecordInspectionCapabilityId}' to the audit requires.capabilities list.",
+                    docsRule: "WF-SEM-044",
+                    fingerprint: $"wf:sem:044:{id}:{XEditRecordInspectionCapabilityId}"));
             }
         }
     }
@@ -2670,6 +2774,79 @@ public sealed class ProjectValidationPipeline
                 CreateSourceLocation(document.DisplayPath, $"/scripts/{index}", document.SourceLocations));
         }
     }
+
+    private static IEnumerable<XEditAuditDefinition> ReadXEditAudits(RegistryDocument document)
+    {
+        if (document.Root["audits"] is not JsonArray audits)
+        {
+            yield break;
+        }
+
+        for (var index = 0; index < audits.Count; index++)
+        {
+            if (audits[index] is not JsonObject audit)
+            {
+                continue;
+            }
+
+            var id = GetString(audit, "id");
+            var intent = GetString(audit, "intent");
+            var mode = GetString(audit, "mode");
+            var scriptLanguage = GetString(audit, "scriptLanguage") ?? "pascal";
+            var reportFormat = GetString(audit, "reportFormat") ?? "json";
+            var outputs = audit["outputs"] is JsonObject outputObject
+                ? ReadXEditAuditOutputs(outputObject)
+                : null;
+            if (id is null || intent is null || mode is null || outputs is null)
+            {
+                continue;
+            }
+
+            yield return new XEditAuditDefinition(
+                id,
+                intent,
+                mode,
+                scriptLanguage,
+                reportFormat,
+                ReadXEditTargetPlugins(audit),
+                ReadStringArray(audit, "recordTypes"),
+                ReadCapabilityReferences(audit["requires"] as JsonObject),
+                outputs,
+                ReadXEditAuditSafety(audit["safety"] as JsonObject),
+                CreateSourceLocation(document.DisplayPath, $"/audits/{index}", document.SourceLocations));
+        }
+    }
+
+    private static IReadOnlyList<XEditPluginTargetDefinition> ReadXEditTargetPlugins(JsonObject audit)
+    {
+        if (audit["targetPlugins"] is not JsonArray targetPlugins)
+        {
+            return [];
+        }
+
+        return targetPlugins
+            .OfType<JsonObject>()
+            .Select(plugin => new XEditPluginTargetDefinition(
+                GetString(plugin, "name") ?? string.Empty,
+                GetString(plugin, "role") ?? string.Empty))
+            .ToArray();
+    }
+
+    private static XEditAuditOutputDefinition? ReadXEditAuditOutputs(JsonObject outputs)
+    {
+        var script = GetString(outputs, "script");
+        var report = GetString(outputs, "report");
+        return script is null || report is null
+            ? null
+            : new XEditAuditOutputDefinition(script, report);
+    }
+
+    private static XEditAuditSafetyDefinition ReadXEditAuditSafety(JsonObject? safety) =>
+        new(
+            GetBoolean(safety, "executesXEdit") ?? false,
+            GetBoolean(safety, "mutatesPlugins") ?? false,
+            GetBoolean(safety, "writesPatches") ?? false,
+            GetBoolean(safety, "usesRealPluginFixture") ?? false);
 
     private static IReadOnlyList<JipScriptSourceLine> ReadJipScriptSourceLines(
         RegistryDocument document,

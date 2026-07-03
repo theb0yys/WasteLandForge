@@ -1170,3 +1170,29 @@ recomputes SHA-256 for generated manifest/script files, and emits
 `WF-GEN-008` for checksum sidecar drift. It still does not wire CLI targets,
 stage packages, probe runtimes, inspect MO2, automate GECK, mutate live Data,
 or execute external tools.
+
+Gate 214 adds `JipScriptGenerateJsonSerializer` and
+`JipScriptGenerateTextRenderer` in `WastelandForge.Cli`, and routes
+`forge generate --target jip-scripts` through `JipScriptFileEmitter`. The
+command reports generated script metadata, manifest/checksum paths,
+diagnostics, and output digests while keeping `forge build --target
+jip-scripts`, package staging, runtime probes, GECK automation, MO2 VFS
+inspection, live Data mutation, and external tool execution out of scope.
+
+Gate 215 adds `JipScriptBuildEmitter` plus JIP build result/output/file option
+records in `WastelandForge.Generation`, and `JipScriptBuildJsonSerializer`
+plus `JipScriptBuildTextRenderer` in `WastelandForge.Cli`. `forge build
+--target jip-scripts` now writes dist scripts, `build-manifest.json`, and
+`checksums.sha256` while keeping package staging, runtime probes, GECK
+automation, MO2 VFS inspection, live Data mutation, external tool execution,
+FOMOD generation, and archive generation out of scope.
+
+Gate 216 adds `JipScriptPackageEmitter` plus JIP package result/output/file
+option records in `WastelandForge.Generation`, and
+`JipScriptPackageJsonSerializer` plus `JipScriptPackageTextRenderer` in
+`WastelandForge.Cli`. `forge package --target jip-scripts` now writes staged
+package scripts under `dist/jip-scripts/package/Data/nvse/plugins/scripts`,
+`package-manifest.json`, `install-plan.json`, `build-manifest.json`, and
+`checksums.sha256` while keeping runtime probes, GECK automation, MO2 VFS
+inspection, live Data mutation, external tool execution, FOMOD generation,
+archive generation, and JIP package verify-existing out of scope.

@@ -2,11 +2,12 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 213 adds generated
-JIP LN text-script emission checksum sidecar revalidation under
-`generated/jip-scripts` only while keeping package staging, CLI target wiring,
-runtime probes, GECK automation, MO2 VFS inspection, live Data mutation, and
-external tool execution out of scope.
+The project is currently in gated v0.1 implementation. Gate 217 closes the
+JIP LN text-script command slice after `forge generate|build|package
+--target jip-scripts` reached deterministic local output evidence. The next
+implementation lane moves to xEdit audit and inspection support, starting with
+an evidence checkpoint and adapter boundary rather than patch generation or
+plugin mutation.
 
 ## Architecture Spine
 
@@ -447,10 +448,35 @@ Malformed generated manifests produce `WF-GEN-007`.
 
 Gate 213 adds generated JIP emission checksum sidecar revalidation. It verifies
 `checksums.sha256` entries for the generated manifest and emitted script files,
-recomputes SHA-256 locally, and reports `WF-GEN-008` for drift. Gate 214
-should add `forge generate --target jip-scripts` CLI wiring without adding
-`forge build` target wiring, package staging, runtime probes, GECK automation,
-MO2 VFS inspection, live Data mutation, or external tool execution.
+recomputes SHA-256 locally, and reports `WF-GEN-008` for drift.
+
+Gate 214 wires the existing generated-root JIP emitter into
+`forge generate --target jip-scripts`. The command emits generated script
+files, `jip-script-emission-manifest.json`, `checksums.sha256`, CLI JSON/text
+output, and digest evidence while rejecting unsupported `--output` and
+`--dry-run` options for this target.
+
+Gate 215 wires `forge build --target jip-scripts` through a dist-only build
+emitter. The command writes scripts under
+`dist/jip-scripts/nvse/plugins/scripts/...`, emits `build-manifest.json` and
+`checksums.sha256`, supports `--dry-run`, validates custom build output stays
+under `dist/`, and still does not package, install to Data, probe runtimes,
+automate GECK, inspect MO2 VFS, mutate live Data, or execute external tools.
+
+Gate 216 wires `forge package --target jip-scripts` through a package staging
+emitter. The command writes scripts under
+`dist/jip-scripts/package/Data/nvse/plugins/scripts/...`, emits
+`package-manifest.json`, `install-plan.json`, `build-manifest.json`, and
+`checksums.sha256`, supports `--dry-run`, validates custom package output stays
+under `dist/`, and still does not install to Data, probe runtimes, automate
+GECK, inspect MO2 VFS, execute external tools, create FOMOD installers, create
+archives, or add JIP package verify-existing behavior.
+
+Gate 217 closes the Gate 202-216 JIP LN command lane. The slice is parked
+unless explicitly reopened for JIP-specific work. The next gate starts xEdit
+audit and inspection support with synthetic fixtures and local evidence only;
+it must not execute xEdit, generate patches, mutate plugins, automate MO2 or
+GECK, run runtime probes, or use real third-party plugin fixtures.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

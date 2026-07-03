@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "capability",
+  "id": "tool.xedit.record_inspection",
+  "title": "xEdit record inspection",
+  "satisfiedBy": [
+    {
+      "id": "provider.tool.xedit",
+      "providerType": "external-tool"
+    }
+  ],
+  "requires": {
+    "capabilities": [
+      {
+        "id": "tool.xedit"
+      }
+    ]
+  },
+  "scope": "external-tool",
+  "stability": "community-standard",
+  "features": [
+    "record-inspection",
+    "script-report-evidence"
+  ]
+}

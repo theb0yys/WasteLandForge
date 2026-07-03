@@ -494,6 +494,43 @@ inspection, live Data mutation, external tool execution, command alias, or
 new output format. Route the next implementation slice to Gate 214: canonical
 `forge generate --target jip-scripts` target wiring.
 
+Gate 214 adds canonical `forge generate --target jip-scripts` wiring for the
+existing generated-root JIP emitter. Treat generated script files, the emission
+manifest, checksums, CLI JSON/text output, and output digests as generated
+evidence only. Do not route this as `forge build` target wiring, package
+staging, runtime probe, GECK automation, MO2 VFS inspection, live Data
+mutation, external tool execution, command alias, or AI behavior. Gate 215
+adds the later build target wiring.
+
+Gate 215 adds canonical `forge build --target jip-scripts` wiring for dist-only
+JIP text-script build output. Treat scripts under `dist/jip-scripts`,
+`build-manifest.json`, `checksums.sha256`, CLI JSON/text output, source
+digests, and output digests as local build evidence only. Do not route this as
+package staging, runtime probe, GECK automation, MO2 VFS inspection, live Data
+mutation, external tool execution, command alias, FOMOD generation, archive
+generation, or AI behavior. Route the next implementation slice to Gate 216:
+canonical `forge package --target jip-scripts` package staging and
+install-plan skeleton evidence.
+
+Gate 216 adds canonical `forge package --target jip-scripts` wiring for local
+JIP loose-file package staging. Treat scripts under
+`dist/jip-scripts/package/Data/nvse/plugins/scripts`,
+`package-manifest.json`, `install-plan.json`, `build-manifest.json`,
+`checksums.sha256`, CLI JSON/text output, source digests, and output digests
+as local package evidence only. Do not route this as JIP package
+verify-existing, runtime probe, GECK automation, MO2 VFS inspection, live Data
+mutation, external tool execution, command alias, FOMOD generation, archive
+generation, or AI behavior. Route the next implementation slice to Gate 217:
+JIP LN text-script command-slice closeout and next-value transition.
+
+Gate 217 closes the JIP LN text-script command slice. Treat
+`forge generate|build|package --target jip-scripts` as implemented local
+evidence paths, and do not route ordinary next-step work into JIP
+verify-existing, runtime probes, GECK automation, MO2 VFS inspection, live
+Data mutation, external tool execution, FOMOD generation, archive generation,
+or AI behavior. Route the next implementation slice to Gate 218: xEdit audit
+and inspection adapter evidence checkpoint with synthetic fixtures only.
+
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider
   evidence plus compact `index.providerStatuses`,

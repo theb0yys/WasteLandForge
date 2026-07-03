@@ -564,6 +564,24 @@ synthetic valid JIP source fixture for generated checksum sidecar revalidation
 unit tests. It still adds no Bethesda assets, third-party mod files, local
 install snapshots, MO2 profiles, GECK outputs, or external tool fixtures.
 
+Gate 214 adds no fixture files. It reuses temp copies of the existing
+synthetic valid JIP source fixture for `forge generate --target jip-scripts`
+CLI golden coverage. It still commits no generated JIP script outputs,
+Bethesda assets, third-party mod files, local install snapshots, MO2 profiles,
+GECK outputs, or external tool fixtures.
+
+Gate 215 adds no fixture files. It reuses temp copies of the existing
+synthetic valid and broken JIP source fixtures for `forge build --target
+jip-scripts` unit and CLI coverage. It still commits no built JIP script
+outputs, Bethesda assets, third-party mod files, local install snapshots, MO2
+profiles, GECK outputs, or external tool fixtures.
+
+Gate 216 adds no fixture files. It reuses temp copies of the existing
+synthetic valid and broken JIP source fixtures for `forge package --target
+jip-scripts` unit and CLI coverage. It still commits no staged JIP package
+outputs, Bethesda assets, third-party mod files, local install snapshots, MO2
+profiles, GECK outputs, or external tool fixtures.
+
 Gate 204 adds:
 
 - `projects/BrokenCases/JipScriptLifecyclePrefixMismatch` - deterministic
