@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using WastelandForge.Core;
 using WastelandForge.Generation;
 
 namespace WastelandForge.UnitTests;
@@ -110,8 +111,9 @@ public sealed class JipScriptGenerationPlannerTests
         Assert.DoesNotContain(result.OutputDigests, digest => digest.Path == result.ChecksumsPath);
         var manifestPath = Path.Combine(projectRoot, result.ManifestPath!.Replace('/', Path.DirectorySeparatorChar));
         Assert.True(File.Exists(manifestPath));
-        var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))
+        var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))?.AsObject()
             ?? throw new InvalidOperationException("JIP emission manifest did not parse.");
+        Assert.Empty(JipScriptFileEmitter.ValidateManifestJson(projectRoot, manifestPath, manifest, result.ProjectId));
         Assert.Equal("wastelandforge.jip-script-emission-manifest", (string?)manifest["kind"]);
         Assert.Equal("wastelandforge/jip-script-emission/v0-skeleton", (string?)manifest["manifestType"]);
         Assert.Equal("jip-scripts", (string?)manifest["target"]);
@@ -127,11 +129,104 @@ public sealed class JipScriptGenerationPlannerTests
         Assert.Equal(28, (long?)manifest["outputs"]?[0]?["length"]);
         var checksumsPath = Path.Combine(projectRoot, result.ChecksumsPath!.Replace('/', Path.DirectorySeparatorChar));
         Assert.True(File.Exists(checksumsPath));
+        Assert.Empty(JipScriptEmissionChecksumVerifier.Verify(projectRoot, manifestPath, checksumsPath, result.ProjectId));
         var checksums = File.ReadAllText(checksumsPath);
         Assert.Contains("  jip-script-emission-manifest.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  nvse/plugins/scripts/gr_example_bootstrap.txt", checksums, StringComparison.Ordinal);
         Assert.DoesNotContain("Data/nvse", checksums, StringComparison.Ordinal);
         Assert.False(File.Exists(Path.Combine(projectRoot, generatedFile.InstallPath.Replace('/', Path.DirectorySeparatorChar))));
+    }
+
+    [Fact]
+    public void EmitChecksumVerifierReportsEditedDigest()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+        var result = new JipScriptFileEmitter().Emit(projectRoot);
+        RewriteChecksumEntrySha256(
+            Path.Combine(projectRoot, result.ChecksumsPath!.Replace('/', Path.DirectorySeparatorChar)),
+            "nvse/plugins/scripts/gr_example_bootstrap.txt",
+            new string('0', 64));
+
+        var issues = JipScriptEmissionChecksumVerifier.Verify(
+            projectRoot,
+            result.ManifestPath!,
+            result.ChecksumsPath!,
+            result.ProjectId);
+
+        var issue = Assert.Single(issues, issue => issue.Title == "JIP emission checksum digest does not match file");
+        Assert.Equal(JipScriptEmissionChecksumVerifier.RuleId, issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("generation", issue.Category);
+        Assert.Equal("generated/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt", issue.PrimaryLocation.File);
+        Assert.Contains("nvse/plugins/scripts/gr_example_bootstrap.txt", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EmitChecksumVerifierReportsMissingEntry()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+        var result = new JipScriptFileEmitter().Emit(projectRoot);
+        RemoveChecksumEntry(
+            Path.Combine(projectRoot, result.ChecksumsPath!.Replace('/', Path.DirectorySeparatorChar)),
+            "jip-script-emission-manifest.json");
+
+        var issues = JipScriptEmissionChecksumVerifier.Verify(
+            projectRoot,
+            result.ManifestPath!,
+            result.ChecksumsPath!,
+            result.ProjectId);
+
+        var issue = Assert.Single(issues, issue => issue.Title == "JIP emission checksum entry is missing");
+        Assert.Equal(JipScriptEmissionChecksumVerifier.RuleId, issue.RuleId.ToString());
+        Assert.Equal("generated/jip-scripts/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("jip-script-emission-manifest.json", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EmitChecksumVerifierReportsUnexpectedEntry()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+        var result = new JipScriptFileEmitter().Emit(projectRoot);
+        var stalePath = Path.Combine(projectRoot, "generated", "jip-scripts", "stale-output.txt");
+        File.WriteAllText(stalePath, "stale");
+        AppendChecksumEntry(
+            Path.Combine(projectRoot, result.ChecksumsPath!.Replace('/', Path.DirectorySeparatorChar)),
+            "stale-output.txt",
+            new string('0', 64));
+
+        var issues = JipScriptEmissionChecksumVerifier.Verify(
+            projectRoot,
+            result.ManifestPath!,
+            result.ChecksumsPath!,
+            result.ProjectId);
+
+        var issue = Assert.Single(issues, issue => issue.Title == "JIP emission checksum entry is not expected");
+        Assert.Equal(JipScriptEmissionChecksumVerifier.RuleId, issue.RuleId.ToString());
+        Assert.Equal("generated/jip-scripts/checksums.sha256", issue.PrimaryLocation.File);
+        Assert.Contains("stale-output.txt", issue.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EmitManifestSchemaValidatorReportsMalformedGeneratedManifest()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+        var result = new JipScriptFileEmitter().Emit(projectRoot);
+        var manifestPath = Path.Combine(projectRoot, result.ManifestPath!.Replace('/', Path.DirectorySeparatorChar));
+        var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))?.AsObject()
+            ?? throw new InvalidOperationException("JIP emission manifest did not parse.");
+        var package = manifest["package"]?.AsObject()
+            ?? throw new InvalidOperationException("JIP emission manifest package block did not parse.");
+        package["writesToGameData"] = true;
+
+        var issues = JipScriptFileEmitter.ValidateManifestJson(projectRoot, manifestPath, manifest, result.ProjectId);
+
+        var issue = Assert.Single(issues);
+        Assert.Equal(JipScriptFileEmitter.EmissionManifestValidationRuleId, issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("generation", issue.Category);
+        Assert.Equal("JIP emission manifest validation failed", issue.Title);
+        Assert.Equal("generated/jip-scripts/jip-script-emission-manifest.json", issue.PrimaryLocation.File);
+        Assert.Contains("embedded JIP emission manifest schema", issue.SuggestedFix ?? string.Empty, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -173,6 +268,35 @@ public sealed class JipScriptGenerationPlannerTests
             Directory.CreateDirectory(Path.GetDirectoryName(destination) ?? target);
             File.Copy(file, destination, overwrite: true);
         }
+    }
+
+    private static void RewriteChecksumEntrySha256(string checksumsPath, string entryPath, string sha256)
+    {
+        var lines = File.ReadAllLines(checksumsPath);
+        for (var index = 0; index < lines.Length; index++)
+        {
+            if (lines[index].EndsWith($"  {entryPath}", StringComparison.Ordinal))
+            {
+                lines[index] = $"{sha256}  {entryPath}";
+                File.WriteAllLines(checksumsPath, lines);
+                return;
+            }
+        }
+
+        throw new InvalidOperationException($"Checksum entry '{entryPath}' was not found.");
+    }
+
+    private static void RemoveChecksumEntry(string checksumsPath, string entryPath)
+    {
+        var lines = File.ReadAllLines(checksumsPath)
+            .Where(line => !line.EndsWith($"  {entryPath}", StringComparison.Ordinal))
+            .ToArray();
+        File.WriteAllLines(checksumsPath, lines);
+    }
+
+    private static void AppendChecksumEntry(string checksumsPath, string entryPath, string sha256)
+    {
+        File.AppendAllText(checksumsPath, $"{sha256}  {entryPath}{Environment.NewLine}");
     }
 
     private static string RepositoryRoot()

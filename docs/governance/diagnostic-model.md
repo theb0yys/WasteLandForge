@@ -899,5 +899,13 @@ manifest, checksum, or digest output when validation has errors. It does not
 change the canonical diagnostic report shape, expose JIP script evidence in
 CLI output, or run runtime capability checks.
 
+Gate 212 adds `WF-GEN-007` for generated JIP emission manifest schema
+failures. It keeps the same canonical diagnostic report shape, does not expose
+JIP script evidence in CLI output, and does not run runtime capability checks.
+
+Gate 213 adds `WF-GEN-008` for generated JIP emission checksum sidecar
+failures. It keeps the same canonical diagnostic report shape, does not expose
+JIP script evidence in CLI output, and does not run runtime capability checks.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

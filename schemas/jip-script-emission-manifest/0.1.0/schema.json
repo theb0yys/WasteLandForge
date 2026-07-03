@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/jip-script-emission-manifest/0.1.0/schema.json",
+  "title": "WastelandForge JIP LN Text-Script Emission Manifest",
+  "description": "Generated evidence manifest for local JIP LN text-script emission under generated/jip-scripts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "manifestType",
+    "target",
+    "root",
+    "project",
+    "package",
+    "scripts",
+    "outputs",
+    "limitations"
+  ],
+  "properties": {
+    "kind": {
+      "const": "wastelandforge.jip-script-emission-manifest"
+    },
+    "manifestType": {
+      "const": "wastelandforge/jip-script-emission/v0-skeleton"
+    },
+    "target": {
+      "const": "jip-scripts"
+    },
+    "root": {
+      "const": "generated/jip-scripts"
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        }
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "installRoot",
+        "writesToGameData",
+        "writesToMo2Profile",
+        "launchesGame"
+      ],
+      "properties": {
+        "installRoot": {
+          "const": "Data"
+        },
+        "writesToGameData": {
+          "const": false
+        },
+        "writesToMo2Profile": {
+          "const": false
+        },
+        "launchesGame": {
+          "const": false
+        }
+      }
+    },
+    "scripts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/script"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/fileDigest"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "logicalId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "^(?:[a-zA-Z]:|/|\\\\)"
+      }
+    },
+    "generatedJipPath": {
+      "type": "string",
+      "pattern": "^generated/jip-scripts/nvse/plugins/scripts/[^\\\\/]+\\.txt$"
+    },
+    "dataJipPath": {
+      "type": "string",
+      "pattern": "^nvse/plugins/scripts/[^\\\\/]+\\.txt$"
+    },
+    "installJipPath": {
+      "type": "string",
+      "pattern": "^Data/nvse/plugins/scripts/[^\\\\/]+\\.txt$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceLocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file"
+      ],
+      "properties": {
+        "file": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "pointer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^(?:|/.*)$"
+        }
+      }
+    },
+    "script": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "outputFile",
+        "generatedPath",
+        "dataPath",
+        "installPath",
+        "contentBytes",
+        "source"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/logicalId"
+        },
+        "outputFile": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+\\.txt$"
+        },
+        "generatedPath": {
+          "$ref": "#/$defs/generatedJipPath"
+        },
+        "dataPath": {
+          "$ref": "#/$defs/dataJipPath"
+        },
+        "installPath": {
+          "$ref": "#/$defs/installJipPath"
+        },
+        "contentBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16384
+        },
+        "source": {
+          "$ref": "#/$defs/sourceLocation"
+        }
+      }
+    },
+    "fileDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "length"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/generatedJipPath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16384
+        }
+      }
+    }
+  }
+}

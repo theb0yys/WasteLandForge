@@ -50,6 +50,11 @@ public static class WastelandForgeSchemaCatalog
             "0.1.0",
             "schemas/jip-scripts/0.1.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.JipScriptEmissionManifest010,
+            "jip-script-emission-manifest",
+            "0.1.0",
+            "schemas/jip-script-emission-manifest/0.1.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.McmExtenderOutput010,
             "mcm-extender-output",
             "0.1.0",

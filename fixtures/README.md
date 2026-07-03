@@ -554,6 +554,16 @@ manifest, checksum, and digest emission unit tests. It still adds no Bethesda
 assets, third-party mod files, local install snapshots, MO2 profiles, GECK
 outputs, or external tool fixtures.
 
+Gate 212 adds no fixture files. It reuses temp copies of the existing
+synthetic valid JIP source fixture for generated manifest schema validation
+unit tests. It still adds no Bethesda assets, third-party mod files, local
+install snapshots, MO2 profiles, GECK outputs, or external tool fixtures.
+
+Gate 213 adds no fixture files. It reuses temp copies of the existing
+synthetic valid JIP source fixture for generated checksum sidecar revalidation
+unit tests. It still adds no Bethesda assets, third-party mod files, local
+install snapshots, MO2 profiles, GECK outputs, or external tool fixtures.
+
 Gate 204 adds:
 
 - `projects/BrokenCases/JipScriptLifecyclePrefixMismatch` - deterministic

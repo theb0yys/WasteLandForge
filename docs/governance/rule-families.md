@@ -413,3 +413,12 @@ Gate 211 adds no new rule ID. The generated-file emitter reuses existing
 source, schema, semantic, and render diagnostics before writing generated
 script, manifest, checksum, or digest evidence. Future manifest schema
 validation can introduce explicit generated-evidence diagnostics.
+
+Gate 212 adds `WF-GEN-007` when the generated JIP emission manifest does not
+validate against `jip-script-emission-manifest/0.1.0/schema.json`. It still
+adds no `WF-CAP-*` diagnostics and does not run runtime probes.
+
+Gate 213 adds `WF-GEN-008` when the generated JIP emission checksum sidecar
+does not match the generated manifest and emitted files. It covers malformed,
+escaping, duplicate, missing, unexpected, unreadable, and digest-mismatched
+checksum entries under `generated/jip-scripts`.

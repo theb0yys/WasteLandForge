@@ -236,6 +236,31 @@ internal static class ForgeCli
                 : (int)CliExitCode.Success;
         }
 
+        if (StringComparer.Ordinal.Equals(parse.Target, JipScriptFileEmitter.Target))
+        {
+            if (parse.OutputDirectory is not null)
+            {
+                WriteUsage(parse.Format, commandPath, $"Target '{JipScriptFileEmitter.Target}' writes to generated/{JipScriptFileEmitter.Target} in the current gate; --output is not supported.");
+                return (int)CliExitCode.Usage;
+            }
+
+            if (parse.DryRun)
+            {
+                WriteUsage(parse.Format, commandPath, $"Target '{JipScriptFileEmitter.Target}' does not support --dry-run in the current gate.");
+                return (int)CliExitCode.Usage;
+            }
+
+            var jipResult = new JipScriptFileEmitter().Emit(parse.ProjectPath);
+            var jipPayload = CliConstants.IsMachineFormat(parse.Format)
+                ? JipScriptGenerateJsonSerializer.Serialize(commandPath, jipResult)
+                : JipScriptGenerateTextRenderer.Render(commandPath, jipResult);
+            Console.Write(jipPayload);
+
+            return jipResult.HasErrors
+                ? (int)CliExitCode.BlockingDiagnostics
+                : (int)CliExitCode.Success;
+        }
+
         var result = new MetadataReportGenerator().Run(new MetadataReportOptions(
             commandPath,
             parse.ProjectPath,
@@ -873,10 +898,9 @@ internal static class ForgeCli
                     return MetadataReportParseResult.Fail(format, "Missing value for --target.");
                 }
 
-                if (!StringComparer.Ordinal.Equals(target, "reports") &&
-                    !StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target))
+                if (!IsMetadataReportTargetImplemented(commandPath, target))
                 {
-                    return MetadataReportParseResult.Fail(format, $"Only targets 'reports' and '{McmJsonGenerator.Target}' are implemented for forge {commandPath} in the current gate.");
+                    return MetadataReportParseResult.Fail(format, $"Only targets {ImplementedMetadataReportTargets(commandPath)} are implemented for forge {commandPath} in the current gate.");
                 }
 
                 continue;
@@ -921,6 +945,17 @@ internal static class ForgeCli
 
         return MetadataReportParseResult.Ok(projectPath, outputDirectory, target, dryRun, format);
     }
+
+    private static bool IsMetadataReportTargetImplemented(string commandPath, string target) =>
+        StringComparer.Ordinal.Equals(target, "reports") ||
+        StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target) ||
+        (StringComparer.Ordinal.Equals(commandPath, "generate") &&
+            StringComparer.Ordinal.Equals(target, JipScriptFileEmitter.Target));
+
+    private static string ImplementedMetadataReportTargets(string commandPath) =>
+        StringComparer.Ordinal.Equals(commandPath, "generate")
+            ? $"'reports', '{McmJsonGenerator.Target}', and '{JipScriptFileEmitter.Target}'"
+            : $"'reports' and '{McmJsonGenerator.Target}'";
 
     private static PackageParseResult ParsePackageOptions(string[] args)
     {

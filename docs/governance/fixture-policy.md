@@ -669,3 +669,15 @@ fixtures for manifest, checksum, and digest emission unit tests and commits no
 generated JIP script outputs, provider DLLs, Bethesda assets, third-party mod
 files, local install snapshots, MO2 profiles, GECK outputs, external tool
 fixtures, or generated evidence fixtures.
+
+Gate 212 commits no new fixture files. It uses temp-copied synthetic JSON
+fixtures for generated manifest schema validation tests and commits no
+generated JIP script outputs, provider DLLs, Bethesda assets, third-party mod
+files, local install snapshots, MO2 profiles, GECK outputs, external tool
+fixtures, or generated evidence fixtures.
+
+Gate 213 commits no new fixture files. It uses temp-copied synthetic JSON
+fixtures for generated checksum sidecar revalidation tests and commits no
+generated JIP script outputs, provider DLLs, Bethesda assets, third-party mod
+files, local install snapshots, MO2 profiles, GECK outputs, external tool
+fixtures, or generated evidence fixtures.

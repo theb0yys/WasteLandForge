@@ -982,6 +982,18 @@ digests, package non-mutation flags, and validation-error no-manifest behavior.
 It adds no local install snapshots, GECK outputs, MO2 profiles, Bethesda
 assets, third-party mod files, or external tool fixtures.
 
+Gate 212 extends schema catalog tests for
+`jip-script-emission-manifest/0.1.0` and focused `JipScriptFileEmitter` unit
+coverage for generated manifest schema validation and `WF-GEN-007` malformed
+manifest diagnostics. It adds no local install snapshots, GECK outputs, MO2
+profiles, Bethesda assets, third-party mod files, or external tool fixtures.
+
+Gate 213 extends focused `JipScriptFileEmitter` unit coverage for generated
+checksum sidecar revalidation and `WF-GEN-008` diagnostics covering clean
+evidence, edited digest drift, missing expected entries, and unexpected
+entries. It adds no local install snapshots, GECK outputs, MO2 profiles,
+Bethesda assets, third-party mod files, or external tool fixtures.
+
 Run the full local suite serially:
 
 ```text

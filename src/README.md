@@ -1154,3 +1154,19 @@ records for generated script files plus the manifest while leaving the
 checksum file out of the digest list. It still does not wire CLI targets, stage
 packages, probe runtimes, inspect MO2, automate GECK, mutate live Data, or
 execute external tools.
+
+Gate 212 adds embedded schema validation for the generated JIP emission
+manifest. `JipScriptFileEmitter` validates
+`jip-script-emission-manifest.json` against
+`jip-script-emission-manifest/0.1.0` before writing checksum evidence and
+emits `WF-GEN-007` for malformed generated manifest contracts. It still does
+not wire CLI targets, stage packages, probe runtimes, inspect MO2, automate
+GECK, mutate live Data, or execute external tools.
+
+Gate 213 adds `JipScriptEmissionChecksumVerifier` in
+`WastelandForge.Generation`. The verifier parses generated
+`checksums.sha256`, derives expected entries from the JIP emission manifest,
+recomputes SHA-256 for generated manifest/script files, and emits
+`WF-GEN-008` for checksum sidecar drift. It still does not wire CLI targets,
+stage packages, probe runtimes, inspect MO2, automate GECK, mutate live Data,
+or execute external tools.

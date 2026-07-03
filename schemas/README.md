@@ -31,6 +31,7 @@ Do not overwrite a released schema in place. Schema migrations are explicit tool
 - `assets/0.1.0/schema.json` - asset registry schema.
 - `mcm/0.1.0/schema.json` - MCM menu source registry schema.
 - `jip-scripts/0.1.0/schema.json` - JIP LN text-script source registry schema.
+- `jip-script-emission-manifest/0.1.0/schema.json` - generated JIP LN text-script emission evidence manifest schema.
 - `mcm-extender-output/0.1.0/schema.json` - minimal MCM Extender runtime JSON output schema emitted by Forge.
 - `package-manifest/0.1.0/schema.json` - deterministic generated package manifest schema for the first MCM Extender loose-file package target.
 - `install-preview/0.1.0/schema.json` - deterministic generated install-preview report schema for the first MCM Extender loose-file package target.
@@ -287,3 +288,12 @@ future work.
 Gate 211 adds no schema. It writes a generated JIP emission manifest and
 checksum sidecar under `generated/jip-scripts`; the manifest schema and
 revalidation rules remain future work.
+
+Gate 212 adds `jip-script-emission-manifest/0.1.0/schema.json` as a generated
+evidence schema, not a source registry schema. Forge uses it to validate the
+JIP emission manifest before writing checksum evidence; checksum sidecar
+revalidation remains future work.
+
+Gate 213 adds no schema. It revalidates the generated JIP emission
+`checksums.sha256` sidecar against `jip-script-emission-manifest/0.1.0`
+evidence and local generated files.

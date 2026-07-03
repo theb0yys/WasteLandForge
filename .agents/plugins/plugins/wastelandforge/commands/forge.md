@@ -475,6 +475,25 @@ mutation, external tool execution, command alias, or new output format. Route
 the next implementation slice to Gate 212: generated JIP emission manifest
 schema and validation skeleton.
 
+Gate 212 adds generated JIP LN text-script emission manifest schema validation
+under `generated/jip-scripts` only. Treat
+`jip-script-emission-manifest/0.1.0` and `WF-GEN-007` as internal generated
+evidence validation, not as package staging or live install output. Do not
+route this as `forge generate` target wiring, `forge build` target wiring,
+package staging, runtime probe, GECK automation, MO2 VFS inspection, live Data
+mutation, external tool execution, command alias, or new output format. Route
+the next implementation slice to Gate 213: JIP emission checksum sidecar
+revalidation skeleton.
+
+Gate 213 adds generated JIP LN text-script emission checksum sidecar
+revalidation under `generated/jip-scripts` only. Treat `WF-GEN-008` as
+internal generated evidence validation, not as package staging or live install
+output. Do not route this as `forge generate` target wiring, `forge build`
+target wiring, package staging, runtime probe, GECK automation, MO2 VFS
+inspection, live Data mutation, external tool execution, command alias, or
+new output format. Route the next implementation slice to Gate 214: canonical
+`forge generate --target jip-scripts` target wiring.
+
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider
   evidence plus compact `index.providerStatuses`,

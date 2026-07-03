@@ -1,6 +1,6 @@
 # JIP LN Text Script Generator Evidence Checkpoint
 
-Status: Gate 211 emission manifest and digest skeleton added
+Status: Gate 213 emission checksum revalidation added
 Research classification: Documented / Inferred / Open
 Source: R005, R006 / ADR-008, ADR-009, ADR-010, ADR-011
 
@@ -20,9 +20,12 @@ lines. Gate 207 adds duplicate output filename validation. Gate 208 adds a
 non-emitting generation planning model. Gate 209 adds an in-memory renderer
 for opaque source lines. Gate 210 writes rendered files under
 `generated/jip-scripts` only. Gate 211 adds local emission manifest,
-checksum, and digest evidence under that same generated root. CLI targets,
-package staging, runtime probes, GECK automation, MO2 VFS inspection, live
-Data mutation, and external tool execution remain out of scope.
+checksum, and digest evidence under that same generated root. Gate 212 adds
+an embedded generated-evidence schema and manifest validation before checksum
+sidecar emission. Gate 213 adds checksum sidecar revalidation for the emitted
+manifest and generated script files. CLI targets, package staging, runtime
+probes, GECK automation, MO2 VFS inspection, live Data mutation, and external
+tool execution remain out of scope.
 
 ## Documented
 
@@ -89,6 +92,14 @@ Data mutation, and external tool execution remain out of scope.
   flags, script output metadata, generated payload digests, and known
   limitations. The result output digest list covers generated script files and
   the manifest, but not the checksum file itself.
+- Gate 212 adds `jip-script-emission-manifest/0.1.0/schema.json` as a
+  generated-evidence schema, embeds it through `WastelandForgeSchemaCatalog`,
+  validates emitted manifest JSON before writing checksum evidence, and uses
+  `WF-GEN-007` for generated JIP emission manifest schema failures.
+- Gate 213 adds `JipScriptEmissionChecksumVerifier` and `WF-GEN-008` for
+  generated checksum sidecar drift. It verifies expected manifest/script
+  entries, rejects missing or unexpected entries, rejects malformed or
+  escaping checksum paths, and recomputes SHA-256 for local generated files.
 
 ## Open
 
@@ -97,7 +108,7 @@ Data mutation, and external tool execution remain out of scope.
   policy for generated scripts.
 - Exact generated output report/schema shape for JIP generation planning and
   emitted script evidence.
-- Exact generated JIP emission manifest schema and validation rules.
+- Exact canonical CLI output contract for `forge generate --target jip-scripts`.
 - Exact future FormID-resolution fields beyond the initial explicit-reference
   strategy.
 - Exact JohnnyGuitar-backed Editor ID call-through extension point.
@@ -107,8 +118,7 @@ Data mutation, and external tool execution remain out of scope.
 
 ## Non-goals
 
-- No generated JIP emission manifest schema.
-- No generated JIP emission manifest validation.
+- No CLI target wiring.
 - No build graph target.
 - No CLI behavior or output contract change.
 - No runtime probe.
@@ -121,7 +131,7 @@ Data mutation, and external tool execution remain out of scope.
 
 ## Next implementation slice
 
-Gate 212 should add a generated JIP emission manifest schema and validation
-skeleton. It should stop before package staging, CLI target wiring, runtime
-probes, GECK automation, MO2 VFS inspection, live Data mutation, or external
-tool execution.
+Gate 214 should add canonical `forge generate --target jip-scripts` CLI target
+wiring for the existing JIP emitter. It should stop before `forge build`
+target wiring, package staging, runtime probes, GECK automation, MO2 VFS
+inspection, live Data mutation, or external tool execution.

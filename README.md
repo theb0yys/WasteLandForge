@@ -2,11 +2,11 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 211 adds generated
-JIP LN text-script emission manifests, output digests, and checksum sidecars
-under `generated/jip-scripts` only while keeping package staging, CLI target
-wiring, runtime probes, GECK automation, MO2 VFS inspection, live Data
-mutation, and external tool execution out of scope.
+The project is currently in gated v0.1 implementation. Gate 213 adds generated
+JIP LN text-script emission checksum sidecar revalidation under
+`generated/jip-scripts` only while keeping package staging, CLI target wiring,
+runtime probes, GECK automation, MO2 VFS inspection, live Data mutation, and
+external tool execution out of scope.
 
 ## Architecture Spine
 
@@ -439,10 +439,18 @@ Gate 211 adds `jip-script-emission-manifest.json`, `checksums.sha256`, and
 non-self-referential output digest records for generated JIP text-script
 emission under `generated/jip-scripts`. The manifest records project, package
 non-mutation flags, script output metadata, script payload digests, and known
-limitations. Gate 212 should add a schema and validation skeleton for that
-manifest without adding CLI target wiring, package staging, runtime probes,
-GECK automation, MO2 VFS inspection, live Data mutation, or external tool
-execution.
+limitations.
+
+Gate 212 adds `jip-script-emission-manifest/0.1.0/schema.json` and validates
+the generated JIP emission manifest before checksum evidence is written.
+Malformed generated manifests produce `WF-GEN-007`.
+
+Gate 213 adds generated JIP emission checksum sidecar revalidation. It verifies
+`checksums.sha256` entries for the generated manifest and emitted script files,
+recomputes SHA-256 locally, and reports `WF-GEN-008` for drift. Gate 214
+should add `forge generate --target jip-scripts` CLI wiring without adding
+`forge build` target wiring, package staging, runtime probes, GECK automation,
+MO2 VFS inspection, live Data mutation, or external tool execution.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

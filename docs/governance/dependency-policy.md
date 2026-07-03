@@ -765,3 +765,19 @@ integration, detector dependency, capability resolver dependency, Doctor
 planner dependency, catalogue-policy decision dependency, SARIF/GitHub
 dependency, GitHub step-summary dependency, release-publishing dependency,
 external tool execution, or AI requirement.
+
+Gate 212 adds generated JIP emission manifest schema validation using the
+existing JsonSchema.Net dependency and repository schema catalog. It adds no
+new third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, detector dependency, capability resolver
+dependency, Doctor planner dependency, catalogue-policy decision dependency,
+SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, external tool execution, or AI requirement.
+
+Gate 213 adds generated JIP emission checksum revalidation using existing .NET
+cryptography and repository code only. It adds no new third-party dependency,
+download, rehosted runtime binary, network call, runtime probe, MO2/GECK
+integration, detector dependency, capability resolver dependency, Doctor
+planner dependency, catalogue-policy decision dependency, SARIF/GitHub
+dependency, GitHub step-summary dependency, release-publishing dependency,
+external tool execution, or AI requirement.

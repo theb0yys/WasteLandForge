@@ -216,9 +216,11 @@ Gate status:
 - `gates/gate-209-jip-ln-text-script-in-memory-renderer-skeleton.md` - Gate 209, JIP LN text-script in-memory renderer skeleton.
 - `gates/gate-210-jip-ln-text-script-generated-file-emission.md` - Gate 210, JIP LN text-script generated-file emission.
 - `gates/gate-211-jip-ln-text-script-emission-manifest-digests.md` - Gate 211, JIP LN text-script emission manifest and digest skeleton.
+- `gates/gate-212-jip-ln-text-script-emission-manifest-schema-validation.md` - Gate 212, JIP LN text-script emission manifest schema and validation skeleton.
+- `gates/gate-213-jip-ln-text-script-emission-checksum-revalidation.md` - Gate 213, JIP LN text-script emission checksum sidecar revalidation.
 
 Next gate:
 
-- Gate 212 - JIP LN text-script emission manifest schema and validation skeleton, without package staging, CLI target wiring, runtime probes, GECK automation, MO2 VFS inspection, live Data mutation, or external tool execution.
+- Gate 214 - Canonical `forge generate --target jip-scripts` CLI target wiring, without `forge build` target wiring, package staging, runtime probes, GECK automation, MO2 VFS inspection, live Data mutation, or external tool execution.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

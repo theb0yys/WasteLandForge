@@ -3984,6 +3984,61 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void GenerateJipScriptsWritesEmissionEvidence()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+
+        var result = RunCli("generate", projectRoot, "--target", "jip-scripts", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Generate JIP scripts JSON did not parse.");
+        var scriptPath = (string?)json["outputs"]?["scripts"]?[0]
+            ?? throw new InvalidOperationException("JIP script output missing.");
+        var generatedScript = json["scripts"]?[0]
+            ?? throw new InvalidOperationException("Generated JIP script evidence missing.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("generate", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("jip-scripts", (string?)json["target"]);
+        Assert.Equal("generated/jip-scripts", (string?)json["outputs"]?["root"]);
+        Assert.Equal("generated/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt", scriptPath);
+        Assert.Equal("generated/jip-scripts/jip-script-emission-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal("generated/jip-scripts/checksums.sha256", (string?)json["outputs"]?["checksums"]);
+        Assert.Equal("Data/nvse/plugins/scripts/gr_example_bootstrap.txt", (string?)generatedScript["installPath"]);
+        Assert.Equal(28, (long?)generatedScript["contentBytes"]);
+        Assert.Equal(string.Empty, result.Stderr);
+
+        var generatedPath = Path.Combine(projectRoot, scriptPath.Replace('/', Path.DirectorySeparatorChar));
+        Assert.True(File.Exists(generatedPath));
+        Assert.Equal("synthetic opaque source line", File.ReadAllText(generatedPath));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "Data", "nvse", "plugins", "scripts", "gr_example_bootstrap.txt")));
+
+        var manifestPath = Path.Combine(projectRoot, "generated", "jip-scripts", "jip-script-emission-manifest.json");
+        var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))
+            ?? throw new InvalidOperationException("Generated JIP emission manifest did not parse.");
+        Assert.Equal("wastelandforge.jip-script-emission-manifest", (string?)manifest["kind"]);
+        Assert.Equal(false, (bool?)manifest["package"]?["writesToGameData"]);
+        Assert.Equal("generated/jip-scripts/nvse/plugins/scripts/gr_example_bootstrap.txt", (string?)manifest["outputs"]?[0]?["path"]);
+
+        var checksums = File.ReadAllText(Path.Combine(projectRoot, "generated", "jip-scripts", "checksums.sha256"));
+        Assert.Contains("jip-script-emission-manifest.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("nvse/plugins/scripts/gr_example_bootstrap.txt", checksums, StringComparison.Ordinal);
+        Assert.True(json["outputDigests"]?.AsArray().Any(digest =>
+            StringComparer.Ordinal.Equals("generated/jip-scripts/jip-script-emission-manifest.json", (string?)digest?["path"])) ?? false);
+    }
+
+    [Fact]
+    public void BuildJipScriptsTargetRemainsUnsupported()
+    {
+        var projectRoot = CopyFixtureProject("JipScriptExample");
+
+        var result = RunCli("build", projectRoot, "--target", "jip-scripts", "--format", "plain", "--no-input");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Contains("Only targets 'reports' and 'mcm-json' are implemented for forge build in the current gate.", result.Stderr, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BuildMcmJsonWritesManifestAndChecksums()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");

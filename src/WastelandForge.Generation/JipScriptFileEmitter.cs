@@ -2,8 +2,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Json.Schema;
 using WastelandForge.Core;
 using WastelandForge.Provenance;
+using WastelandForge.Schema;
 
 namespace WastelandForge.Generation;
 
@@ -12,6 +14,10 @@ public sealed class JipScriptFileEmitter
     public const string Target = JipScriptTextRenderer.Target;
     public const string ManifestFileName = "jip-script-emission-manifest.json";
     public const string ChecksumsFileName = "checksums.sha256";
+    public const string EmissionManifestSchemaId = WastelandForgeSchemaIds.JipScriptEmissionManifest010;
+    public const string EmissionManifestValidationRuleId = "WF-GEN-007";
+
+    private static readonly Lazy<JsonSchema> EmissionManifestSchema = new(LoadEmissionManifestSchema);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -60,9 +66,18 @@ public sealed class JipScriptFileEmitter
             .OrderBy(digest => digest.Path, StringComparer.Ordinal)
             .ToArray();
         var manifestPath = Path.Combine(outputRoot, ManifestFileName);
-        WriteUtf8NoBom(
-            manifestPath,
-            CreateManifestJson(renderResult, generatedFiles, payloadDigests).ToJsonString(JsonOptions) + Environment.NewLine);
+        var manifestJson = CreateManifestJson(renderResult, generatedFiles, payloadDigests);
+        var manifestIssues = ValidateManifestJson(renderResult.ProjectRoot, manifestPath, manifestJson, renderResult.ProjectId);
+        if (manifestIssues.Count > 0)
+        {
+            var diagnostics = new DiagnosticReport(
+                renderResult.ProjectId,
+                renderResult.Diagnostics.Issues.Concat(manifestIssues));
+
+            return CreateResult(renderResult, generatedFiles, null, null, [], diagnostics);
+        }
+
+        WriteUtf8NoBom(manifestPath, manifestJson.ToJsonString(JsonOptions) + Environment.NewLine);
 
         var outputFiles = generatedPayloadPaths.Append(manifestPath).ToArray();
         var checksumsPath = Path.Combine(outputRoot, ChecksumsFileName);
@@ -71,13 +86,64 @@ public sealed class JipScriptFileEmitter
             .Select(path => ComputeDigest(renderResult.ProjectRoot, path))
             .OrderBy(digest => digest.Path, StringComparer.Ordinal)
             .ToArray();
+        var checksumIssues = JipScriptEmissionChecksumVerifier.Verify(
+            renderResult.ProjectRoot,
+            manifestPath,
+            checksumsPath,
+            renderResult.ProjectId);
+        var checksumDiagnostics = checksumIssues.Count > 0
+            ? new DiagnosticReport(renderResult.ProjectId, renderResult.Diagnostics.Issues.Concat(checksumIssues))
+            : renderResult.Diagnostics;
 
         return CreateResult(
             renderResult,
             generatedFiles,
             ToDisplayPath(renderResult.ProjectRoot, manifestPath),
             ToDisplayPath(renderResult.ProjectRoot, checksumsPath),
-            outputDigests);
+            outputDigests,
+            checksumDiagnostics);
+    }
+
+    public static IReadOnlyList<DiagnosticIssue> ValidateManifestJson(
+        string projectRoot,
+        string manifestPath,
+        JsonObject manifestJson,
+        LogicalId? projectId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectRoot);
+        ArgumentException.ThrowIfNullOrWhiteSpace(manifestPath);
+        ArgumentNullException.ThrowIfNull(manifestJson);
+
+        using var jsonDocument = JsonDocument.Parse(manifestJson.ToJsonString());
+        var results = EmissionManifestSchema.Value.Evaluate(
+            jsonDocument.RootElement,
+            new EvaluationOptions
+            {
+                OutputFormat = OutputFormat.Hierarchical
+            });
+        if (results.IsValid)
+        {
+            return [];
+        }
+
+        var issues = new List<DiagnosticIssue>();
+        foreach (var failure in EnumerateSchemaFailures(results))
+        {
+            issues.Add(new DiagnosticIssue(
+                RuleId.Parse(EmissionManifestValidationRuleId),
+                DiagnosticSeverity.Error,
+                "generation",
+                "JIP emission manifest validation failed",
+                FormatSchemaErrors(failure),
+                new SourceLocation(
+                    ToDisplayPath(projectRoot, manifestPath),
+                    JsonPointer.Parse(NormalizeJsonPointer(failure.InstanceLocation.ToString()))),
+                projectId,
+                suggestedFix: "Fix the generated JIP emission manifest contract so it matches the embedded JIP emission manifest schema.",
+                docsUri: new Uri("https://docs.wastelandforge.dev/rules/WF-GEN-007")));
+        }
+
+        return issues;
     }
 
     private static JipScriptFileEmissionResult CreateResult(
@@ -85,12 +151,13 @@ public sealed class JipScriptFileEmitter
         IReadOnlyList<JipScriptGeneratedFile> generatedFiles,
         string? manifestPath,
         string? checksumsPath,
-        IReadOnlyList<FileDigest> outputDigests) =>
+        IReadOnlyList<FileDigest> outputDigests,
+        DiagnosticReport? diagnostics = null) =>
         new(
             renderResult.ProjectRoot,
             Target,
             renderResult.ProjectId,
-            renderResult.Diagnostics,
+            diagnostics ?? renderResult.Diagnostics,
             renderResult.PlanEntries,
             renderResult.Documents,
             generatedFiles,
@@ -121,7 +188,7 @@ public sealed class JipScriptFileEmitter
             ["limitations"] = new JsonArray
             {
                 "No package staging.",
-                "No CLI target wiring.",
+                "No build target wiring.",
                 "No runtime probes.",
                 "No GECK automation.",
                 "No MO2 VFS inspection.",
@@ -172,6 +239,55 @@ public sealed class JipScriptFileEmitter
 
         return array;
     }
+
+    private static JsonSchema LoadEmissionManifestSchema()
+    {
+        if (!WastelandForgeSchemaCatalog.TryGetById(EmissionManifestSchemaId, out var resource) ||
+            resource is null)
+        {
+            throw new InvalidOperationException($"Built-in schema '{EmissionManifestSchemaId}' was not found.");
+        }
+
+        return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource));
+    }
+
+    private static IEnumerable<EvaluationResults> EnumerateSchemaFailures(EvaluationResults results)
+    {
+        if (results.IsValid)
+        {
+            yield break;
+        }
+
+        if (results.Errors is { Count: > 0 })
+        {
+            yield return results;
+        }
+
+        foreach (var detail in results.Details ?? [])
+        {
+            foreach (var failure in EnumerateSchemaFailures(detail))
+            {
+                yield return failure;
+            }
+        }
+    }
+
+    private static string FormatSchemaErrors(EvaluationResults result)
+    {
+        if (result.Errors is not { Count: > 0 })
+        {
+            return "Generated JIP emission manifest failed output schema validation.";
+        }
+
+        return string.Join(
+            " ",
+            result.Errors
+                .OrderBy(error => error.Key, StringComparer.Ordinal)
+                .Select(error => error.Value));
+    }
+
+    private static string NormalizeJsonPointer(string pointer) =>
+        string.IsNullOrWhiteSpace(pointer) ? string.Empty : pointer;
 
     private static string ResolveGeneratedPath(
         string projectRoot,
