@@ -20,6 +20,7 @@ internal static class CapabilityScanTextRenderer
         var requirementSummary = CapabilityRequirementSummaryIndex.Create(report.Requirements);
         var diagnostics = CapabilityDiagnosticProjector.Project(report);
         var diagnosticSummary = CapabilityDiagnosticSummaryIndex.Create(diagnostics);
+        var operatorHandoff = CapabilityScanOperatorHandoffProjection.Create(report, diagnostics);
         builder.AppendLine($"Capability scan: {report.Catalog.CatalogId} {report.Catalog.Version}");
         builder.AppendLine($"Game root: {report.Inputs.GameRoot ?? "(not provided)"}");
         builder.AppendLine($"Data root: {report.Inputs.DataRoot ?? "(not provided)"}");
@@ -86,6 +87,7 @@ internal static class CapabilityScanTextRenderer
         CapabilityDoctorActionSummaryIndex.AppendText(builder, actionSummary, "  ", "    ", "      ");
         CapabilityRequirementSummaryIndex.AppendText(builder, requirementSummary, "  ", "    ", "      ");
         CapabilityDiagnosticSummaryIndex.AppendText(builder, diagnosticSummary, "  ", "    ", "      ");
+        CapabilityScanOperatorHandoffProjection.AppendText(builder, operatorHandoff);
 
         var unavailableRequirements = report.Requirements is null
             ? []

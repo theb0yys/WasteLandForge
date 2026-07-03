@@ -183,17 +183,116 @@ Gate 126 option routing:
   installation, or in-game verification exist until later gates implement
   them.
 
-Gate 174 option routing:
+Gate 186 option routing:
 
-Gate 174 keeps the Gate 173 command behavior and extends
-`forge doctor export --bundle <path>` with deterministic
-`requirements/index.json` and `requirements/index.md` entries. Treat those
-entries as redacted derived reporting over existing Doctor requirement summary
-and compact unavailable requirement metadata, not new provider detection,
-diagnostic projection behavior, rule IDs, provider-version evidence, Doctor
-planning, runtime confirmation, catalogue-policy resolution, Doctor export
-SARIF/GitHub mode, GitHub step-summary behavior, release publishing,
-`--format zip`, `--format markdown`, or a command alias.
+Gate 186 keeps the Gate 185 command behavior and adds primary Doctor export
+triage projection to JSON, plain text, and Markdown summary outputs. Treat
+top-level `triage`, plain `Triage:`, and Markdown `## Triage` as redacted
+derived triage over existing Doctor export summary, diagnostic, requirement,
+action, wrong-scope, and open-question metadata. Primary triage uses report
+sections; archive `triage/index.*` entries keep archive paths. Do not treat
+this as new provider detection, resolver behavior, diagnostic projection
+behavior, rule IDs, provider-version evidence, Doctor planning, runtime
+confirmation, catalogue-policy resolution, Doctor export SARIF/GitHub mode,
+GitHub step-summary behavior, release publishing, `--format zip`,
+`--format markdown`, or a command alias.
+
+Gate 187 option routing:
+
+Gate 187 keeps the Gate 186 command behavior and adds Doctor triage command
+hints to primary JSON, plain text, Markdown summaries, and archive
+`triage/index.*` entries. Treat `triage.commands` and `summary.commandHints`
+as deterministic guidance for existing canonical commands only:
+`forge capabilities scan`, `forge capabilities explain`, `forge doctor export`,
+and `forge capabilities list`. Hints must use placeholders such as
+`<project-root>`, `<game-root>`, and `<tool-path>`, not raw local paths. Do not
+treat this as slash-command aliasing, new provider detection, resolver
+behavior, diagnostic projection behavior, rule IDs, Doctor planning,
+provider-version evidence, runtime confirmation, catalogue-policy resolution,
+Doctor export SARIF/GitHub mode, GitHub step-summary behavior, release
+publishing, `--format zip`, or `--format markdown`.
+
+Gate 188 option routing:
+
+Gate 188 keeps the Gate 187 command behavior and adds ordered Doctor triage
+worklist entries to primary JSON, plain text, Markdown summaries, and archive
+`triage/index.*` entries. Treat `triage.worklist` and `summary.workItems` as
+deterministic operator guidance derived from existing redacted Doctor metadata
+and command-hint IDs. Primary worklist items point to report sections; archive
+worklist items point to bundle paths. Do not treat this as command execution,
+slash-command aliasing, new provider detection, resolver behavior, diagnostic
+projection behavior, rule IDs, Doctor planning, provider-version evidence,
+runtime confirmation, catalogue-policy resolution, Doctor export SARIF/GitHub
+mode, GitHub step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+
+Gate 189 option routing:
+
+Gate 189 keeps the Gate 188 command behavior and adds Doctor worklist summary
+metadata to primary JSON, plain text, Markdown summaries, and archive
+`triage/index.*` entries. Treat `worklistSummary.priorities`,
+`worklistSummary.sources`, `summary.worklistPriorityGroups`, and
+`summary.worklistSourceGroups` as deterministic grouping metadata over
+existing worklist items. Primary sources are report sections; archive sources
+are bundle paths. Do not treat this as command execution, slash-command
+aliasing, new provider detection, resolver behavior, diagnostic projection
+behavior, rule IDs, Doctor planning, provider-version evidence, runtime
+confirmation, catalogue-policy resolution, Doctor export SARIF/GitHub mode,
+GitHub step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+
+Gate 190 option routing:
+
+Gate 190 keeps the Gate 189 command behavior and adds a compact Doctor
+remediation status header to primary JSON, plain text, Markdown summaries, and
+archive `triage/index.*` entries. Treat `triage.remediation` and
+`Remediation:` as deterministic status metadata derived from existing worklist
+and command-hint data. Primary output uses a report section; archive output
+uses a bundle path. Do not treat this as command execution, slash-command
+aliasing, new provider detection, resolver behavior, diagnostic projection
+behavior, rule IDs, Doctor planning, provider-version evidence, runtime
+confirmation, catalogue-policy resolution, Doctor export SARIF/GitHub mode,
+GitHub step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+
+Gate 191 option routing:
+
+Gate 191 keeps the Gate 190 command behavior and adds human operator handoff
+sections to plain text, Markdown summaries, and archive triage Markdown. Treat
+`Operator handoff:` and Markdown `Operator Handoff` sections as copyable
+checklists derived from existing remediation, worklist-summary, and
+command-hint data. Primary output uses report sections; archive output uses
+bundle paths. Do not treat this as command execution, slash-command aliasing,
+new provider detection, resolver behavior, diagnostic projection behavior,
+rule IDs, Doctor planning, provider-version evidence, runtime confirmation,
+catalogue-policy resolution, Doctor export SARIF/GitHub mode, GitHub
+step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+
+Gate 192 option routing:
+
+Gate 192 keeps the Gate 191 command behavior and adds `handoff-summary.md` to
+Doctor bundle archives. Treat it as a concise Markdown sidecar derived from
+existing redacted triage metadata that points at remediation, immediate
+worklist items, command hints, and key archive paths. Do not treat this as a
+new slash-command alias, primary output format, JSON contract, detector,
+resolver behavior, diagnostic rule, Doctor planning behavior,
+provider-version evidence, runtime confirmation, catalogue-policy resolution,
+Doctor export SARIF/GitHub mode, GitHub step-summary behavior, release
+publishing, `--format zip`, or `--format markdown`.
+
+Gate 193 option routing:
+
+Gate 193 keeps the Gate 192 command behavior and adds scan-side operator
+handoff sections to `forge capabilities scan` plain output and Markdown
+summary sidecars. Treat `Operator handoff:` and Markdown `Operator Handoff`
+sections in scan output as derived checklist text over existing requirements,
+diagnostics, Doctor actions, wrong-scope counts, and catalogue-policy open
+questions. Do not treat this as a new slash-command alias, primary JSON
+contract, detector, resolver behavior, diagnostic rule, Doctor planning
+behavior, provider-version evidence, runtime confirmation, catalogue-policy
+resolution, SARIF/GitHub output change, GitHub step-summary behavior, release
+publishing, or `--format markdown`.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider
@@ -228,7 +327,11 @@ SARIF/GitHub mode, GitHub step-summary behavior, release publishing,
   `index.openQuestionDetails` as those IDs mapped to existing question text
   before the full open-question list. Treat
   `index.cataloguePolicyDiagnosticHandoff` as those IDs mapped to open
-  catalogue-policy evidence handoff entries. With `--project`, it also
+  catalogue-policy evidence handoff entries. Treat plain output and
+  `--summary <path>` Markdown operator handoff sections as ready/review/blocked
+  checklist text with priority/source summaries, immediate work items, and
+  copyable command hints derived from the same scan metadata. With
+  `--project`, it also
   projects unavailable capability requirements to
   `WF-CAP-001`, `WF-CAP-002`, `WF-CAP-003`, and `WF-CAP-004`, including
   provider evidence detail in JSON, SARIF, GitHub, and text output.
@@ -259,7 +362,7 @@ SARIF/GitHub mode, GitHub step-summary behavior, release publishing,
   entries while omitting raw local paths.
 - `/forge doctor export` routes to the real `forge doctor export` behavior
   when available. Treat it as a redacted local handoff bundle over capability
-  scan evidence, including top-level summary/index sections, compact
+  scan evidence, including top-level summary/triage/index sections, compact
   `index.doctorAreaStatuses` groups by Doctor area readiness status,
   `index.providerStatuses` groups by provider status and install scope,
   compact `index.capabilityStatuses` groups by capability status,
@@ -279,16 +382,29 @@ SARIF/GitHub mode, GitHub step-summary behavior, release publishing,
   compact `index.cataloguePolicy` groups by open-question source type,
   structured `index.openQuestionDetails` for current catalogue policy gaps,
   compact `index.cataloguePolicyDiagnosticHandoff` entries for open
-  catalogue-policy evidence handoff, and redacted nested project requirement
-  provider evidence, not as runtime/session proof. With `--summary <path>`,
+  catalogue-policy evidence handoff, top-level `triage` with report-section
+  references for blocking/review items and next actions, and redacted nested
+  project requirement provider evidence, not as runtime/session proof. With `--summary <path>`,
   it writes a redacted Markdown handoff summary derived from the same Doctor
-  export report, including summary counts, Doctor areas, next actions,
+  export report, including summary counts, triage, Doctor areas, next actions,
   unavailable requirements, diagnostics, and open questions. With
   `--bundle <path>`, it writes a deterministic redacted ZIP handoff archive
   containing `README.md`, `doctor-export.json`, `doctor-export.md`,
   `actions/index.json`, `actions/index.md`,
+  `bundle/index.json`, `bundle/index.md`,
+  `capabilities/index.json`, `capabilities/index.md`,
+  `catalogue-policy/index.json`, `catalogue-policy/index.md`,
   `diagnostics/index.json`, `diagnostics/index.md`,
+  `doctor-areas/index.json`, `doctor-areas/index.md`,
+  `evidence/index.json`, `evidence/index.md`,
+  `handoff-summary.md`,
+  `open-questions/index.json`, `open-questions/index.md`,
+  `providers/index.json`, `providers/index.md`,
+  `redaction/index.json`, `redaction/index.md`,
   `requirements/index.json`, `requirements/index.md`,
+  `scan-inputs/index.json`, `scan-inputs/index.md`,
+  `summary/index.json`, `summary/index.md`,
+  `triage/index.json`, `triage/index.md`,
   `doctor-bundle-manifest.json`, and `checksums.sha256`. When unavailable
   project capability requirements are present, the archive also includes
   path-minimized `requirement-explanations/index.json`,

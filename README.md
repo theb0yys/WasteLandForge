@@ -2,10 +2,10 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 174 adds
-deterministic `requirements/index.json` and `requirements/index.md` entries to
-`forge doctor export --bundle <path>` archives so project requirement handoff
-data has a direct redacted bundle path.
+The project is currently in gated v0.1 implementation. Gate 193 adds a
+scan-side operator handoff checklist to `forge capabilities scan` plain output
+and Markdown summaries, derived from existing requirements, diagnostics,
+Doctor actions, and catalogue-policy open questions.
 
 ## Architecture Spine
 
@@ -18,7 +18,7 @@ data has a direct redacted bundle path.
 
 ## Current Gate
 
-Gate 174 builds on the closed first game-facing generator path. It keeps
+Gate 193 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
 the path-based `forge capabilities scan` evidence from Gate 58, the
 `forge capabilities explain <capability-or-provider-id>` command from Gate 59,
@@ -211,6 +211,104 @@ Gate 174 adds `requirements/index.json` and `requirements/index.md` to the
 same archives. The requirement index reuses the redacted Doctor export
 requirement summary and compact unavailable requirement entries, is listed in
 the manifest and checksums, and is linked from the bundle README.
+Gate 175 adds `providers/index.json` and `providers/index.md` to the same
+archives. The provider index reuses the redacted Doctor export provider
+summary, provider-status groups, provider inventory summary, evidence summary,
+and compact provider scan entries, is listed in the manifest and checksums,
+and is linked from the bundle README.
+Gate 176 adds `capabilities/index.json` and `capabilities/index.md` to the
+same archives. The capability index reuses the redacted Doctor export
+capability summary, capability-status groups, Doctor area capability summary,
+and compact capability scan entries, is listed in the manifest and checksums,
+and is linked from the bundle README.
+Gate 177 adds `doctor-areas/index.json` and `doctor-areas/index.md` to the
+same archives. The Doctor area index reuses the redacted Doctor export
+readiness summary, area-status groups, Doctor area capability summary, and
+compact Doctor area entries, is listed in the manifest and checksums, and is
+linked from the bundle README.
+Gate 178 adds `catalogue-policy/index.json` and `catalogue-policy/index.md`
+to the same archives. The catalogue-policy index reuses the redacted Doctor
+export source-type index, structured open-question details, diagnostic
+handoff entries, and raw open-question text, is listed in the manifest and
+checksums, and is linked from the bundle README.
+Gate 179 adds `summary/index.json` and `summary/index.md` to the same
+archives. The summary index reuses the redacted Doctor export report summary
+and already-derived action, requirement, diagnostic, provider inventory,
+evidence, Doctor area capability, and catalogue-policy summary metadata, is
+listed in the manifest and checksums, and is linked from the bundle README.
+Gate 180 adds `evidence/index.json` and `evidence/index.md` to the same
+archives. The evidence index reuses the redacted Doctor export evidence
+summary and compact provider detector evidence entries, omits raw evidence
+paths, is listed in the manifest and checksums, and is linked from the bundle
+README.
+Gate 181 adds `redaction/index.json` and `redaction/index.md` to the same
+archives. The redaction index reuses the existing Doctor export redaction
+mode, path policy, placeholder tokens, and redaction notes, is listed in the
+manifest and checksums, and is linked from the bundle README.
+Gate 182 adds `open-questions/index.json` and `open-questions/index.md` to
+the same archives. The open-question index reuses the existing Doctor export
+source-type groups, structured open-question details, diagnostic handoff
+metadata, and raw open-question text, is listed in the manifest and
+checksums, and is linked from the bundle README.
+Gate 183 adds `scan-inputs/index.json` and `scan-inputs/index.md` to the same
+archives. The scan-input index reuses the existing redacted capability scan
+input metadata, including game/data placeholders, tool-path placeholders,
+detector families, runtime-probe flag, and MO2 VFS flag, is listed in the
+manifest and checksums, and is linked from the bundle README.
+Gate 184 adds `bundle/index.json` and `bundle/index.md` to the same archives.
+The bundle index reuses the existing archive supplement paths and redacted
+bundle metadata, lists the Doctor reports, archive indexes, optional
+requirement-explanation entries, manifest, and checksums, and is itself listed
+in the manifest and checksums.
+Gate 185 adds `triage/index.json` and `triage/index.md` to the same archives.
+The triage index reuses existing redacted summary, diagnostic, requirement,
+action, wrong-scope, and open-question metadata to classify the handoff as
+`ready`, `review`, or `blocked`, list blocking/review items, and point to the
+archive paths to inspect next.
+Gate 186 adds the same derived triage view to primary `forge doctor export`
+JSON, plain text, and Markdown summary outputs. The primary triage projection
+uses report-section references such as `index.requirements` and
+`index.actions`; archive triage entries keep archive paths.
+
+Gate 187 adds deterministic command hints to that triage view. Primary JSON
+uses `triage.commands` and `summary.commandHints`; plain and Markdown outputs
+list the same canonical command strings; archive triage entries add
+archive-path-aware hints. The hints use placeholders such as `<project-root>`,
+`<game-root>`, and `<tool-path>` and do not add command aliases or new
+provider detection behavior.
+
+Gate 188 adds an ordered remediation worklist to that triage view. Primary
+JSON uses `triage.worklist` and `summary.workItems`; plain and Markdown
+outputs include worklist sections; archive triage entries add path-aware
+worklist items. Work items reference existing command-hint IDs and existing
+redacted report sections or bundle paths.
+
+Gate 189 adds deterministic summary metadata for that worklist. Primary JSON
+uses `worklistSummary.priorities`, `worklistSummary.sources`,
+`summary.worklistPriorityGroups`, and `summary.worklistSourceGroups`; primary
+sources are report sections, while archive triage sources are bundle paths.
+
+Gate 190 adds a compact remediation header to that triage view. Primary JSON
+uses `triage.remediation` with a report `section`; archive triage uses the
+same header with a bundle `path`. The header reports status, headline, work
+item counts, first work item, first command hint, and first canonical command.
+
+Gate 191 adds human operator handoff sections to plain text, Markdown
+summaries, and archive triage Markdown. The checklist combines remediation
+status, priority/source summaries, and resolved canonical command strings
+without changing the JSON contract or executing commands.
+
+Gate 192 adds `handoff-summary.md` to Doctor bundle archives. The sidecar is
+derived from the same redacted triage projection and lists remediation status,
+immediate worklist items, command hints, and key archive paths. It is linked
+from `README.md`, included in `bundle/index.*`, and covered by the archive
+manifest and checksums.
+
+Gate 193 adds an operator handoff checklist to `forge capabilities scan`
+plain output and `--summary <path>` Markdown sidecars. The checklist reports
+ready/review/blocked status, priority/source summaries, copyable canonical
+commands, and immediate work items without changing scan JSON output or
+capability detection behavior.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

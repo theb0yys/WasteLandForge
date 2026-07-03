@@ -741,6 +741,80 @@ projecting existing redacted Doctor requirement summary and compact
 unavailable requirement metadata into archive-local JSON and Markdown. It
 does not change the canonical diagnostic report shape and adds no new
 diagnostic report fields.
+Gate 175 adds provider index entries to Doctor export archives by projecting
+existing redacted Doctor provider summary, provider-status groups, provider
+inventory summary, evidence summary, and compact provider scan entries into
+archive-local JSON and Markdown. It does not change the canonical diagnostic
+report shape and adds no new diagnostic report fields.
+Gate 176 adds capability index entries to Doctor export archives by
+projecting existing redacted Doctor capability summary, capability-status
+groups, Doctor area capability summary, and compact capability scan entries
+into archive-local JSON and Markdown. It does not change the canonical
+diagnostic report shape and adds no new diagnostic report fields.
+Gate 177 adds Doctor area index entries to Doctor export archives by
+projecting existing redacted Doctor readiness summary, area-status groups,
+Doctor area capability summary, and compact Doctor area entries into
+archive-local JSON and Markdown. It does not change the canonical diagnostic
+report shape and adds no new diagnostic report fields.
+Gate 178 adds catalogue-policy index entries to Doctor export archives by
+projecting existing redacted source-type groups, open-question details,
+diagnostic handoff entries, and open-question text into archive-local JSON and
+Markdown. It does not change the canonical diagnostic report shape and adds no
+new diagnostic report fields.
+Gate 179 adds summary index entries to Doctor export archives by projecting
+existing redacted report summary data and already-derived summary metadata
+into archive-local JSON and Markdown. It does not change the canonical
+diagnostic report shape and adds no new diagnostic report fields.
+Gate 180 adds evidence index entries to Doctor export archives by projecting
+existing redacted provider evidence summary data and compact provider evidence
+entries into archive-local JSON and Markdown. It does not change the
+canonical diagnostic report shape and adds no new diagnostic report fields.
+Gate 181 adds redaction index entries to Doctor export archives by projecting
+existing Doctor export redaction metadata into archive-local JSON and
+Markdown. It does not change the canonical diagnostic report shape and adds
+no new diagnostic report fields.
+Gate 182 adds open-question index entries to Doctor export archives by
+projecting existing Doctor export open-question metadata into archive-local
+JSON and Markdown. It does not change the canonical diagnostic report shape
+and adds no new diagnostic report fields.
+Gate 183 adds scan-input index entries to Doctor export archives by
+projecting existing redacted capability scan input metadata into archive-local
+JSON and Markdown. It does not change the canonical diagnostic report shape
+and adds no new diagnostic report fields.
+Gate 184 adds bundle navigation index entries to Doctor export archives by
+projecting existing archive supplement paths and redacted bundle metadata
+into archive-local JSON and Markdown. It does not change the canonical
+diagnostic report shape and adds no new diagnostic report fields.
+Gate 185 adds triage index entries to Doctor export archives by projecting
+existing redacted summary, diagnostic, requirement, action, wrong-scope, and
+open-question metadata into archive-local JSON and Markdown. It does not
+change the canonical diagnostic report shape and adds no new diagnostic
+report fields.
+Gate 186 adds primary Doctor export triage JSON, plain text, and Markdown
+summary projection from the same existing redacted metadata. It does not
+change the canonical diagnostic report shape and adds no new diagnostic
+report fields.
+Gate 187 adds Doctor triage command hints from the same existing redacted
+metadata. It does not change the canonical diagnostic report shape and adds no
+new diagnostic report fields.
+Gate 188 adds Doctor triage worklist entries from the same existing redacted
+metadata and command-hint IDs. It does not change the canonical diagnostic
+report shape and adds no new diagnostic report fields.
+Gate 189 adds Doctor worklist summary metadata from existing worklist items.
+It does not change the canonical diagnostic report shape and adds no new
+diagnostic report fields.
+Gate 190 adds a Doctor remediation status header from existing worklist and
+command-hint data. It does not change the canonical diagnostic report shape
+and adds no new diagnostic report fields.
+Gate 191 adds human operator handoff sections from existing remediation,
+worklist-summary, and command-hint data. It does not change the canonical
+diagnostic report shape and adds no new diagnostic report fields.
+Gate 192 adds `handoff-summary.md` from existing redacted Doctor triage
+metadata. It does not change the canonical diagnostic report shape and adds no
+new diagnostic report fields.
+Gate 193 adds scan-side operator handoff text from existing scan metadata. It
+does not change the canonical diagnostic report shape and adds no new
+diagnostic report fields.
 
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

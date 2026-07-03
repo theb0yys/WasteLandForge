@@ -782,6 +782,97 @@ Gate 174 extends that `WastelandForge.GoldenTests` coverage to
 archives, including manifest/checksum coverage, README links, summary counts,
 stable ZIP timestamps, and omission of local paths.
 
+Gate 175 extends that `WastelandForge.GoldenTests` coverage to
+`providers/index.json` and `providers/index.md` entries in Doctor bundle
+archives, including manifest/checksum coverage, README links, summary counts,
+provider evidence summaries, stable ZIP timestamps, and omission of local
+paths.
+
+Gate 176 extends that `WastelandForge.GoldenTests` coverage to
+`capabilities/index.json` and `capabilities/index.md` entries in Doctor bundle
+archives, including manifest/checksum coverage, README links, summary counts,
+capability status groups, stable ZIP timestamps, and omission of local paths.
+
+Gate 177 extends that `WastelandForge.GoldenTests` coverage to
+`doctor-areas/index.json` and `doctor-areas/index.md` entries in Doctor bundle
+archives, including manifest/checksum coverage, README links, summary counts,
+area status groups, stable ZIP timestamps, and omission of local paths.
+
+Gate 178 extends that `WastelandForge.GoldenTests` coverage to
+`catalogue-policy/index.json` and `catalogue-policy/index.md` entries in
+Doctor bundle archives, including manifest/checksum coverage, README links,
+open-question counts, diagnostic handoff counts, stable ZIP timestamps, and
+omission of local paths.
+
+Gate 179 extends that `WastelandForge.GoldenTests` coverage to
+`summary/index.json` and `summary/index.md` entries in Doctor bundle archives,
+including manifest/checksum coverage, README links, report summary counts,
+derived summary counts, stable ZIP timestamps, and omission of local paths.
+
+Gate 180 extends that `WastelandForge.GoldenTests` coverage to
+`evidence/index.json` and `evidence/index.md` entries in Doctor bundle
+archives, including manifest/checksum coverage, README links, evidence
+summary counts, compact provider evidence entries, stable ZIP timestamps, and
+omission of local paths.
+Gate 181 extends that `WastelandForge.GoldenTests` coverage to
+`redaction/index.json` and `redaction/index.md` entries in Doctor bundle
+archives, including manifest/checksum coverage, README links, redaction token
+and note counts, stable ZIP timestamps, and omission of local paths.
+Gate 182 extends that `WastelandForge.GoldenTests` coverage to
+`open-questions/index.json` and `open-questions/index.md` entries in Doctor
+bundle archives, including manifest/checksum coverage, README links,
+open-question counts, diagnostic handoff counts, stable ZIP timestamps, and
+omission of local paths.
+Gate 183 extends that `WastelandForge.GoldenTests` coverage to
+`scan-inputs/index.json` and `scan-inputs/index.md` entries in Doctor bundle
+archives, including manifest/checksum coverage, README links, redacted input
+placeholders, detector-family counts, runtime/MO2 flags, stable ZIP
+timestamps, and omission of local paths.
+Gate 184 extends that `WastelandForge.GoldenTests` coverage to
+`bundle/index.json` and `bundle/index.md` entries in Doctor bundle archives,
+including manifest/checksum coverage, README links, archive entry path
+coverage, requirement-explanation path coverage, stable ZIP timestamps, and
+omission of local paths.
+Gate 185 extends that `WastelandForge.GoldenTests` coverage to
+`triage/index.json` and `triage/index.md` entries in Doctor bundle archives,
+including manifest/checksum coverage, README links, bundle-index coverage,
+blocking/review/action counts, requirement-explanation review paths, stable
+ZIP timestamps, and omission of local paths.
+Gate 186 extends that `WastelandForge.GoldenTests` coverage to primary Doctor
+export triage JSON, plain text, and Markdown summary output, including
+blocking/review/action counts, report-section references, bundle-path
+separation, and omission of local paths.
+Gate 187 extends that `WastelandForge.GoldenTests` coverage to Doctor triage
+command hints in primary JSON, plain text, Markdown summaries, and bundle
+triage entries, including canonical command strings, placeholder usage,
+section/path separation, and omission of local paths.
+Gate 188 extends that `WastelandForge.GoldenTests` coverage to Doctor triage
+worklist entries in primary JSON, plain text, Markdown summaries, and bundle
+triage entries, including order, priority, command-hint links, section/path
+separation, and omission of local paths.
+Gate 189 extends that `WastelandForge.GoldenTests` coverage to Doctor worklist
+summary metadata in primary JSON, plain text, Markdown summaries, and bundle
+triage entries, including priority groups, section/path source groups, and
+omission of local paths.
+Gate 190 extends that `WastelandForge.GoldenTests` coverage to Doctor
+remediation status headers in primary JSON, plain text, Markdown summaries,
+and bundle triage entries, including status, headline, first command,
+section/path separation, and omission of local paths.
+Gate 191 extends that `WastelandForge.GoldenTests` coverage to human operator
+handoff sections in plain text, Markdown summaries, and bundle triage
+Markdown, including checklist commands, priority/source summaries,
+section/path separation, and omission of local paths.
+
+Gate 192 extends that `WastelandForge.GoldenTests` coverage to
+`handoff-summary.md` in Doctor bundle archives, including archive entry,
+README, bundle-index, manifest, checksum, command-hint, key-path, and
+redaction coverage.
+
+Gate 193 extends `WastelandForge.GoldenTests` coverage to scan-side operator
+handoff sections in `forge capabilities scan` plain output and Markdown
+summary sidecars, including status, priority/source summaries, command hints,
+work items, and continued local-path omission in Markdown summaries.
+
 Run the full local suite serially:
 
 ```text

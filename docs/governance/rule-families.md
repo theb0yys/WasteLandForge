@@ -267,6 +267,56 @@ metadata.
 Gate 174 adds no new rule ID. It only adds requirement index JSON and
 Markdown entries to Doctor export ZIP archives from existing redacted Doctor
 requirement metadata.
+Gate 175 adds no new rule ID. It only adds provider index JSON and Markdown
+entries to Doctor export ZIP archives from existing redacted Doctor provider
+metadata.
+Gate 176 adds no new rule ID. It only adds capability index JSON and Markdown
+entries to Doctor export ZIP archives from existing redacted Doctor
+capability metadata.
+Gate 177 adds no new rule ID. It only adds Doctor area index JSON and
+Markdown entries to Doctor export ZIP archives from existing redacted Doctor
+readiness metadata.
+Gate 178 adds no new rule ID. It only adds catalogue-policy index JSON and
+Markdown entries to Doctor export ZIP archives from existing redacted
+catalogue-policy metadata.
+Gate 179 adds no new rule ID. It only adds summary index JSON and Markdown
+entries to Doctor export ZIP archives from existing redacted summary
+metadata.
+Gate 180 adds no new rule ID. It only adds evidence index JSON and Markdown
+entries to Doctor export ZIP archives from existing redacted provider evidence
+metadata.
+Gate 181 adds no new rule ID. It only adds redaction index JSON and Markdown
+entries to Doctor export ZIP archives from existing Doctor export redaction
+metadata.
+Gate 182 adds no new rule ID. It only adds open-question index JSON and
+Markdown entries to Doctor export ZIP archives from existing Doctor export
+open-question metadata.
+Gate 183 adds no new rule ID. It only adds scan-input index JSON and Markdown
+entries to Doctor export ZIP archives from existing redacted capability scan
+input metadata.
+Gate 184 adds no new rule ID. It only adds bundle navigation index JSON and
+Markdown entries to Doctor export ZIP archives from existing archive
+supplement paths and redacted bundle metadata.
+Gate 185 adds no new rule ID. It only adds triage index JSON and Markdown
+entries to Doctor export ZIP archives from existing redacted summary,
+diagnostic, requirement, action, wrong-scope, and open-question metadata.
+Gate 186 adds no new rule ID. It only adds primary Doctor export triage JSON,
+plain text, and Markdown summary projection from existing redacted summary,
+diagnostic, requirement, action, wrong-scope, and open-question metadata.
+Gate 187 adds no new rule ID. It only adds Doctor triage command hints derived
+from existing redacted Doctor metadata.
+Gate 188 adds no new rule ID. It only adds Doctor triage worklist entries
+derived from existing redacted Doctor metadata and command-hint IDs.
+Gate 189 adds no new rule ID. It only adds Doctor worklist summary metadata
+derived from existing worklist items.
+Gate 190 adds no new rule ID. It only adds a Doctor remediation status header
+derived from existing worklist and command-hint data.
+Gate 191 adds no new rule ID. It only adds human operator handoff sections
+derived from existing remediation, worklist-summary, and command-hint data.
+Gate 192 adds no new rule ID. It only adds a Doctor bundle
+`handoff-summary.md` sidecar derived from existing redacted triage metadata.
+Gate 193 adds no new rule ID. It only adds scan-side operator handoff text
+derived from existing capability scan metadata.
 
 Gate 61 adds `WF-GEN-001` for `forge generate` output paths that resolve
 outside project `generated/` and `WF-BUILD-001` for `forge build` output paths

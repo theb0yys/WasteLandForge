@@ -1676,6 +1676,30 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CapabilitiesScanProjectPlainIncludesOperatorHandoff()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("capabilities", "scan", "--project", projectRoot, "--format", "plain");
+
+        Assert.Equal(4, result.ExitCode);
+        Assert.Contains("  Operator handoff:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    Status: blocked", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    Headline: Blocked: 4 blocker item(s) and 2 review item(s) need operator action.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    Priorities: blocker=4, review=2", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    Sources: capabilities.inputs=1, index.requirements=2, index.diagnostics=1, index.actions=1, index.openQuestionDetails=1", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("      [ ] refresh-capability-evidence (blocker): Refresh capability evidence", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("          Command: forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("      [ ] resolve-requirement-runtime-scripting-xnvse (blocker): Resolve required project requirement runtime.scripting.xnvse", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("          Command: forge capabilities explain runtime.scripting.xnvse --project <project-root> --game-root <game-root> --tool-path <tool-path> --format plain", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("      [ ] review-diagnostics (blocker): Review projected scan diagnostics", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("      [ ] Review 1 additional work item(s) in the full scan output.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("    Command hints:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("      review-catalogue-policy: forge capabilities list --format json", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void CapabilitiesScanCanWriteToOutputFile()
     {
         var outputPath = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "capability-scan.json");
@@ -1762,6 +1786,13 @@ public sealed class CliGoldenTests
         Assert.Contains("## Summary", markdown, StringComparison.Ordinal);
         Assert.Contains("- Doctor: 5 area(s); 5 ready; 0 action-needed; 0 unknown; 0 action(s)", markdown, StringComparison.Ordinal);
         Assert.Contains("- Requirements: 2 total; 2 satisfied; 0 missing; 0 unknown; 0 wrong-scope; 0 required unavailable; 0 optional unavailable", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Operator Handoff", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Status: `review`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: review=1", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Sources: index.openQuestionDetails=1", markdown, StringComparison.Ordinal);
+        Assert.Contains("- [ ] `review-catalogue-policy` (review): Review catalogue-policy open questions", markdown, StringComparison.Ordinal);
+        Assert.Contains("Command: `forge capabilities list --format json`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- `review-catalogue-policy`: `forge capabilities list --format json`", markdown, StringComparison.Ordinal);
         Assert.Contains("## Doctor Areas", markdown, StringComparison.Ordinal);
         Assert.Contains("| `project-requirements` | `ready` | 2 | 0 | 0 |", markdown, StringComparison.Ordinal);
         Assert.Contains("## Action Summary", markdown, StringComparison.Ordinal);
@@ -1839,6 +1870,65 @@ public sealed class CliGoldenTests
         Assert.True(json["index"]?["capabilityStatuses"]?.AsArray().Count > 0);
         Assert.True(json["index"]?["cataloguePolicy"]?.AsArray().Count > 0);
         Assert.Equal(2, (int?)json["index"]?["cataloguePolicyDiagnosticHandoff"]?["questions"]);
+        Assert.Equal("wastelandforge/doctor-triage/v1", (string?)json["triage"]?["kind"]);
+        Assert.Equal("review", (string?)json["triage"]?["summary"]?["status"]);
+        Assert.Equal(0, (int?)json["triage"]?["summary"]?["blockingItems"]);
+        Assert.Equal(1, (int?)json["triage"]?["summary"]?["reviewItems"]);
+        Assert.Equal(0, (int?)json["triage"]?["summary"]?["actions"]);
+        Assert.Equal(2, (int?)json["triage"]?["summary"]?["commandHints"]);
+        Assert.Equal(1, (int?)json["triage"]?["summary"]?["workItems"]);
+        Assert.Equal(1, (int?)json["triage"]?["summary"]?["worklistPriorityGroups"]);
+        Assert.Equal(1, (int?)json["triage"]?["summary"]?["worklistSourceGroups"]);
+        Assert.Equal("review", (string?)json["triage"]?["remediation"]?["status"]);
+        Assert.Equal("Review: 1 work item(s) need operator review.", (string?)json["triage"]?["remediation"]?["headline"]);
+        Assert.Equal(1, (int?)json["triage"]?["remediation"]?["workItems"]);
+        Assert.Equal(0, (int?)json["triage"]?["remediation"]?["blockerItems"]);
+        Assert.Equal(1, (int?)json["triage"]?["remediation"]?["reviewItems"]);
+        Assert.Equal("review-catalogue-policy", (string?)json["triage"]?["remediation"]?["firstWorkItem"]);
+        Assert.Equal("review-catalogue-policy", (string?)json["triage"]?["remediation"]?["firstCommandHint"]);
+        Assert.Equal("forge capabilities list --format json", (string?)json["triage"]?["remediation"]?["firstCommand"]);
+        Assert.Equal("index.openQuestionDetails", (string?)json["triage"]?["remediation"]?["section"]);
+        Assert.Contains(
+            json["triage"]?["review"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage review array missing."),
+            item => StringComparer.Ordinal.Equals("open-questions", (string?)item?["id"]));
+        Assert.Contains(
+            json["triage"]?["commands"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage commands missing."),
+            item =>
+                StringComparer.Ordinal.Equals("rescan-capabilities", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals(
+                    "forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json",
+                    (string?)item?["command"]));
+        Assert.Contains(
+            json["triage"]?["commands"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage commands missing."),
+            item =>
+                StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("forge capabilities list --format json", (string?)item?["command"]));
+        Assert.Contains(
+            json["triage"]?["worklist"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage worklist missing."),
+            item =>
+                StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("review", (string?)item?["priority"]) &&
+                StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["commandHint"]) &&
+                StringComparer.Ordinal.Equals("index.openQuestionDetails", (string?)item?["section"]));
+        Assert.Contains(
+            json["triage"]?["worklistSummary"]?["priorities"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage worklist priority summary missing."),
+            item =>
+                StringComparer.Ordinal.Equals("review", (string?)item?["priority"]) &&
+                (int?)item?["count"] == 1 &&
+                (item?["workItems"]?.AsArray().Any(workItem =>
+                    StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)workItem)) ?? false));
+        Assert.Contains(
+            json["triage"]?["worklistSummary"]?["sources"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage worklist source summary missing."),
+            item =>
+                StringComparer.Ordinal.Equals("index.openQuestionDetails", (string?)item?["section"]) &&
+                (int?)item?["count"] == 1 &&
+                (item?["workItems"]?.AsArray().Any(workItem =>
+                    StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)workItem)) ?? false));
+        Assert.Contains(
+            json["triage"]?["reviewSections"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage review sections missing."),
+            item => StringComparer.Ordinal.Equals("index.openQuestionDetails", (string?)item?["section"]));
+        Assert.DoesNotContain("triage/index.md", json["triage"]?.ToJsonString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("open-questions/index.md", json["triage"]?.ToJsonString(), StringComparison.Ordinal);
         Assert.Equal("base-game", (string?)json["index"]?["doctorAreas"]?[0]?["id"]);
         Assert.Equal("ready", (string?)json["index"]?["doctorAreas"]?[0]?["status"]);
         Assert.Equal("project-requirements", (string?)json["index"]?["doctorAreas"]?[4]?["id"]);
@@ -2289,6 +2379,129 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void DoctorExportJsonIncludesPrimaryTriageProjection()
+    {
+        var projectRoot = Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod");
+
+        var result = RunCli("doctor", "export", projectRoot, "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var triage = json["triage"] ?? throw new InvalidOperationException("Doctor export did not include primary triage.");
+        var remediation = triage["remediation"] ??
+            throw new InvalidOperationException("Doctor export triage did not include remediation header.");
+        var blocking = triage["blocking"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export triage did not include blocking items.");
+        var review = triage["review"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export triage did not include review items.");
+        var actions = triage["actions"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export triage did not include actions.");
+        var commands = triage["commands"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export triage did not include command hints.");
+        var worklist = triage["worklist"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export triage did not include worklist.");
+        var worklistPrioritySummary = triage["worklistSummary"]?["priorities"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export triage did not include worklist priority summary.");
+        var worklistSourceSummary = triage["worklistSummary"]?["sources"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export triage did not include worklist source summary.");
+        var reviewSections = triage["reviewSections"]?.AsArray() ??
+            throw new InvalidOperationException("Doctor export triage did not include review sections.");
+        var requiredUnavailable = blocking.Single(item =>
+            StringComparer.Ordinal.Equals("required-requirements-unavailable", (string?)item?["id"]));
+        var diagnosticErrors = blocking.Single(item =>
+            StringComparer.Ordinal.Equals("diagnostic-errors", (string?)item?["id"]));
+        var xnvseExplain = commands.Single(item =>
+            StringComparer.Ordinal.Equals("explain-requirement-runtime-scripting-xnvse", (string?)item?["id"]));
+        var refreshWorkItem = worklist.Single(item =>
+            StringComparer.Ordinal.Equals("refresh-capability-evidence", (string?)item?["id"]));
+        var xnvseWorkItem = worklist.Single(item =>
+            StringComparer.Ordinal.Equals("resolve-requirement-runtime-scripting-xnvse", (string?)item?["id"]));
+        var blockerWorklistSummary = worklistPrioritySummary.Single(item =>
+            StringComparer.Ordinal.Equals("blocker", (string?)item?["priority"]));
+        var requirementWorklistSummary = worklistSourceSummary.Single(item =>
+            StringComparer.Ordinal.Equals("index.requirements", (string?)item?["section"]));
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("wastelandforge/doctor-triage/v1", (string?)triage["kind"]);
+        Assert.Equal("blocked", (string?)triage["summary"]?["status"]);
+        Assert.Equal(2, (int?)triage["summary"]?["blockingItems"]);
+        Assert.Equal(2, (int?)triage["summary"]?["reviewItems"]);
+        Assert.Equal(18, (int?)triage["summary"]?["actions"]);
+        Assert.Equal(6, (int?)triage["summary"]?["commandHints"]);
+        Assert.Equal(6, (int?)triage["summary"]?["workItems"]);
+        Assert.Equal(2, (int?)triage["summary"]?["worklistPriorityGroups"]);
+        Assert.Equal(5, (int?)triage["summary"]?["worklistSourceGroups"]);
+        Assert.Equal(14, (int?)triage["summary"]?["reviewSections"]);
+        Assert.Equal(2, (int?)triage["summary"]?["requiredUnavailable"]);
+        Assert.Equal(2, (int?)triage["summary"]?["diagnosticErrors"]);
+        Assert.Equal("blocked", (string?)remediation["status"]);
+        Assert.Equal("Blocked: 4 blocker item(s) and 2 review item(s) need operator action.", (string?)remediation["headline"]);
+        Assert.Equal(6, (int?)remediation["workItems"]);
+        Assert.Equal(4, (int?)remediation["blockerItems"]);
+        Assert.Equal(2, (int?)remediation["reviewItems"]);
+        Assert.Equal("refresh-capability-evidence", (string?)remediation["firstWorkItem"]);
+        Assert.Equal("rescan-capabilities", (string?)remediation["firstCommandHint"]);
+        Assert.Equal(
+            "forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json",
+            (string?)remediation["firstCommand"]);
+        Assert.Equal("capabilities", (string?)remediation["section"]);
+        Assert.Equal(2, blocking.Count);
+        Assert.Equal(2, review.Count);
+        Assert.Equal(18, actions.Count);
+        Assert.Equal(6, commands.Count);
+        Assert.Equal(6, worklist.Count);
+        Assert.Equal(2, worklistPrioritySummary.Count);
+        Assert.Equal(5, worklistSourceSummary.Count);
+        Assert.Contains(
+            requiredUnavailable?["sections"]?.AsArray() ?? throw new InvalidOperationException("Requirement triage sections missing."),
+            section => StringComparer.Ordinal.Equals("index.requirements", (string?)section));
+        Assert.Contains(
+            diagnosticErrors?["sections"]?.AsArray() ?? throw new InvalidOperationException("Diagnostic triage sections missing."),
+            section => StringComparer.Ordinal.Equals("index.diagnostics", (string?)section));
+        Assert.Equal("index.actions", (string?)actions[0]?["section"]);
+        Assert.Equal(
+            "forge capabilities explain runtime.scripting.xnvse --project <project-root> --game-root <game-root> --tool-path <tool-path> --format plain",
+            (string?)xnvseExplain?["command"]);
+        Assert.Equal("index.requirements", (string?)xnvseExplain?["section"]);
+        Assert.Contains("required project requirement runtime.scripting.xnvse", (string?)xnvseExplain?["purpose"], StringComparison.Ordinal);
+        Assert.Equal(10, (int?)refreshWorkItem?["order"]);
+        Assert.Equal("blocker", (string?)refreshWorkItem?["priority"]);
+        Assert.Equal("rescan-capabilities", (string?)refreshWorkItem?["commandHint"]);
+        Assert.Equal("capabilities", (string?)refreshWorkItem?["section"]);
+        Assert.Equal(20, (int?)xnvseWorkItem?["order"]);
+        Assert.Equal("blocker", (string?)xnvseWorkItem?["priority"]);
+        Assert.Equal("explain-requirement-runtime-scripting-xnvse", (string?)xnvseWorkItem?["commandHint"]);
+        Assert.Equal("index.requirements", (string?)xnvseWorkItem?["section"]);
+        Assert.Contains("current scan does not have enough evidence", (string?)xnvseWorkItem?["reason"], StringComparison.Ordinal);
+        Assert.Equal(4, (int?)blockerWorklistSummary?["count"]);
+        Assert.Contains(
+            blockerWorklistSummary?["workItems"]?.AsArray() ?? throw new InvalidOperationException("Blocker worklist summary items missing."),
+            item => StringComparer.Ordinal.Equals("resolve-requirement-runtime-scripting-xnvse", (string?)item));
+        Assert.Equal(2, (int?)requirementWorklistSummary?["count"]);
+        Assert.Contains(
+            requirementWorklistSummary?["workItems"]?.AsArray() ?? throw new InvalidOperationException("Requirement worklist summary items missing."),
+            item => StringComparer.Ordinal.Equals("resolve-requirement-runtime-scripting-xnvse", (string?)item));
+        Assert.Contains(
+            commands,
+            item => StringComparer.Ordinal.Equals("review-diagnostics", (string?)item?["id"]));
+        Assert.Contains(
+            commands,
+            item => StringComparer.Ordinal.Equals("review-actions", (string?)item?["id"]));
+        Assert.Contains(
+            commands,
+            item => StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["id"]));
+        Assert.Contains(
+            reviewSections,
+            section => StringComparer.Ordinal.Equals("index.diagnostics", (string?)section?["section"]));
+        Assert.Contains(
+            reviewSections,
+            section => StringComparer.Ordinal.Equals("redaction", (string?)section?["section"]));
+        Assert.DoesNotContain("requirements/index.md", triage.ToJsonString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("requirement-explanations/runtime.scripting.xnvse.md", triage.ToJsonString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(EscapeJsonPath(projectRoot), result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void DoctorExportPlainIncludesSummaryAndIndex()
     {
         var layout = CreateSyntheticCapabilityLayout();
@@ -2312,6 +2525,36 @@ public sealed class CliGoldenTests
         Assert.Contains("Catalog: wastelandforge.fnv.builtin 0.1.0", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Requirements: 2 satisfied, 0 missing, 0 unknown, 0 wrong-scope", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Diagnostics: 0 error(s), 0 warning(s), 0 note(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Triage:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status: review", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Command hints: 2", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Work items: 1", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Remediation: review; 1 work item(s); 0 blocker(s); 1 review item(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Headline: Review: 1 work item(s) need operator review.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("First work item: review-catalogue-policy", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("First command: forge capabilities list --format json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Operator handoff:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Priorities: review=1", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Sources: index.openQuestionDetails=1", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("[ ] review-catalogue-policy (review): Review catalogue-policy open questions", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Command: forge capabilities list --format json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Section: index.openQuestionDetails", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Worklist summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Priority review: 1 item(s) - review-catalogue-policy", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Section index.openQuestionDetails: 1 item(s) - review-catalogue-policy", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Worklist:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(
+            "review-catalogue-policy (review): Review catalogue-policy open questions",
+            result.Stdout,
+            StringComparison.Ordinal);
+        Assert.Contains("Command hint: review-catalogue-policy", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(
+            "rescan-capabilities: forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json",
+            result.Stdout,
+            StringComparison.Ordinal);
+        Assert.Contains("review-catalogue-policy: forge capabilities list --format json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("open-questions (note, 2): Catalogue-policy questions remain unresolved.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Sections: index.openQuestionDetails, index.cataloguePolicy", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Doctor index:", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("project-requirements: ready", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("  Doctor area statuses:", result.Stdout, StringComparison.Ordinal);
@@ -2655,6 +2898,39 @@ public sealed class CliGoldenTests
         Assert.Contains("## Summary", markdown, StringComparison.Ordinal);
         Assert.Contains("- Doctor: 5 area(s); 5 ready; 0 action-needed; 0 unknown; 0 action(s)", markdown, StringComparison.Ordinal);
         Assert.Contains("- Requirements: 2 total; 2 satisfied; 0 missing; 0 unknown; 0 wrong-scope; 0 required unavailable; 0 optional unavailable", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Triage", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Status: `review`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Command hints: 2", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Work items: 1", markdown, StringComparison.Ordinal);
+        Assert.Contains("### Remediation", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Headline: Review: 1 work item(s) need operator review.", markdown, StringComparison.Ordinal);
+        Assert.Contains("- First work item: `review-catalogue-policy`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- First command: `forge capabilities list --format json`", markdown, StringComparison.Ordinal);
+        Assert.Contains("### Operator Handoff", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: review=1", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Sources: index.openQuestionDetails=1", markdown, StringComparison.Ordinal);
+        Assert.Contains("- [ ] `review-catalogue-policy` (review): Review catalogue-policy open questions", markdown, StringComparison.Ordinal);
+        Assert.Contains("Command: `forge capabilities list --format json`", markdown, StringComparison.Ordinal);
+        Assert.Contains("Section: `index.openQuestionDetails`", markdown, StringComparison.Ordinal);
+        Assert.Contains("### Worklist Summary", markdown, StringComparison.Ordinal);
+        Assert.Contains("Priorities:", markdown, StringComparison.Ordinal);
+        Assert.Contains("- `review`: 1 item(s) - `review-catalogue-policy`", markdown, StringComparison.Ordinal);
+        Assert.Contains("Sources:", markdown, StringComparison.Ordinal);
+        Assert.Contains("- `index.openQuestionDetails`: 1 item(s) - `review-catalogue-policy`", markdown, StringComparison.Ordinal);
+        Assert.Contains("### Worklist", markdown, StringComparison.Ordinal);
+        Assert.Contains(
+            "`review-catalogue-policy` (review): Review catalogue-policy open questions",
+            markdown,
+            StringComparison.Ordinal);
+        Assert.Contains("Command hint: `review-catalogue-policy`", markdown, StringComparison.Ordinal);
+        Assert.Contains("### Command Hints", markdown, StringComparison.Ordinal);
+        Assert.Contains(
+            "`rescan-capabilities`: `forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json`",
+            markdown,
+            StringComparison.Ordinal);
+        Assert.Contains("`review-catalogue-policy`: `forge capabilities list --format json`", markdown, StringComparison.Ordinal);
+        Assert.Contains("### Review Sections", markdown, StringComparison.Ordinal);
+        Assert.Contains("`index.openQuestionDetails`", markdown, StringComparison.Ordinal);
         Assert.Contains("## Doctor Areas", markdown, StringComparison.Ordinal);
         Assert.Contains("| `project-requirements` | `ready` | 2 | 0 | 0 |", markdown, StringComparison.Ordinal);
         Assert.Contains("## Next Actions", markdown, StringComparison.Ordinal);
@@ -2706,14 +2982,37 @@ public sealed class CliGoldenTests
                 "README.md",
                 "actions/index.json",
                 "actions/index.md",
+                "bundle/index.json",
+                "bundle/index.md",
+                "capabilities/index.json",
+                "capabilities/index.md",
+                "catalogue-policy/index.json",
+                "catalogue-policy/index.md",
                 "checksums.sha256",
                 "diagnostics/index.json",
                 "diagnostics/index.md",
+                "doctor-areas/index.json",
+                "doctor-areas/index.md",
                 "doctor-bundle-manifest.json",
                 "doctor-export.json",
                 "doctor-export.md",
+                "evidence/index.json",
+                "evidence/index.md",
+                "handoff-summary.md",
+                "open-questions/index.json",
+                "open-questions/index.md",
+                "providers/index.json",
+                "providers/index.md",
+                "redaction/index.json",
+                "redaction/index.md",
                 "requirements/index.json",
-                "requirements/index.md"
+                "requirements/index.md",
+                "scan-inputs/index.json",
+                "scan-inputs/index.md",
+                "summary/index.json",
+                "summary/index.md",
+                "triage/index.json",
+                "triage/index.md"
             },
             archive.Entries.Select(entry => entry.FullName).Order(StringComparer.Ordinal).ToArray());
         Assert.All(archive.Entries, entry => Assert.Equal(new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero), entry.LastWriteTime));
@@ -2723,18 +3022,52 @@ public sealed class CliGoldenTests
         var readme = ReadZipEntry(archive, "README.md");
         var actionIndexJsonText = ReadZipEntry(archive, "actions/index.json");
         var actionIndexMarkdown = ReadZipEntry(archive, "actions/index.md");
+        var bundleIndexJsonText = ReadZipEntry(archive, "bundle/index.json");
+        var bundleIndexMarkdown = ReadZipEntry(archive, "bundle/index.md");
+        var capabilityIndexJsonText = ReadZipEntry(archive, "capabilities/index.json");
+        var capabilityIndexMarkdown = ReadZipEntry(archive, "capabilities/index.md");
+        var cataloguePolicyIndexJsonText = ReadZipEntry(archive, "catalogue-policy/index.json");
+        var cataloguePolicyIndexMarkdown = ReadZipEntry(archive, "catalogue-policy/index.md");
         var diagnosticIndexJsonText = ReadZipEntry(archive, "diagnostics/index.json");
         var diagnosticIndexMarkdown = ReadZipEntry(archive, "diagnostics/index.md");
+        var doctorAreaIndexJsonText = ReadZipEntry(archive, "doctor-areas/index.json");
+        var doctorAreaIndexMarkdown = ReadZipEntry(archive, "doctor-areas/index.md");
+        var evidenceIndexJsonText = ReadZipEntry(archive, "evidence/index.json");
+        var evidenceIndexMarkdown = ReadZipEntry(archive, "evidence/index.md");
+        var handoffSummary = ReadZipEntry(archive, "handoff-summary.md");
+        var openQuestionIndexJsonText = ReadZipEntry(archive, "open-questions/index.json");
+        var openQuestionIndexMarkdown = ReadZipEntry(archive, "open-questions/index.md");
+        var providerIndexJsonText = ReadZipEntry(archive, "providers/index.json");
+        var providerIndexMarkdown = ReadZipEntry(archive, "providers/index.md");
+        var redactionIndexJsonText = ReadZipEntry(archive, "redaction/index.json");
+        var redactionIndexMarkdown = ReadZipEntry(archive, "redaction/index.md");
         var requirementIndexJsonText = ReadZipEntry(archive, "requirements/index.json");
         var requirementIndexMarkdown = ReadZipEntry(archive, "requirements/index.md");
+        var scanInputIndexJsonText = ReadZipEntry(archive, "scan-inputs/index.json");
+        var scanInputIndexMarkdown = ReadZipEntry(archive, "scan-inputs/index.md");
+        var summaryIndexJsonText = ReadZipEntry(archive, "summary/index.json");
+        var summaryIndexMarkdown = ReadZipEntry(archive, "summary/index.md");
+        var triageIndexJsonText = ReadZipEntry(archive, "triage/index.json");
+        var triageIndexMarkdown = ReadZipEntry(archive, "triage/index.md");
         var manifestText = ReadZipEntry(archive, "doctor-bundle-manifest.json");
         var checksums = ReadZipEntry(archive, "checksums.sha256");
         var exportJson = JsonNode.Parse(exportJsonText) ?? throw new InvalidOperationException("Doctor export archive JSON did not parse.");
         var actionIndexJson = JsonNode.Parse(actionIndexJsonText) ?? throw new InvalidOperationException("Doctor action index JSON did not parse.");
+        var bundleIndexJson = JsonNode.Parse(bundleIndexJsonText) ?? throw new InvalidOperationException("Doctor bundle index JSON did not parse.");
+        var capabilityIndexJson = JsonNode.Parse(capabilityIndexJsonText) ?? throw new InvalidOperationException("Doctor capability index JSON did not parse.");
+        var cataloguePolicyIndexJson = JsonNode.Parse(cataloguePolicyIndexJsonText) ?? throw new InvalidOperationException("Doctor catalogue-policy index JSON did not parse.");
         var diagnosticIndexJson = JsonNode.Parse(diagnosticIndexJsonText) ?? throw new InvalidOperationException("Doctor diagnostic index JSON did not parse.");
+        var doctorAreaIndexJson = JsonNode.Parse(doctorAreaIndexJsonText) ?? throw new InvalidOperationException("Doctor area index JSON did not parse.");
+        var evidenceIndexJson = JsonNode.Parse(evidenceIndexJsonText) ?? throw new InvalidOperationException("Doctor evidence index JSON did not parse.");
+        var openQuestionIndexJson = JsonNode.Parse(openQuestionIndexJsonText) ?? throw new InvalidOperationException("Doctor open-question index JSON did not parse.");
+        var providerIndexJson = JsonNode.Parse(providerIndexJsonText) ?? throw new InvalidOperationException("Doctor provider index JSON did not parse.");
+        var redactionIndexJson = JsonNode.Parse(redactionIndexJsonText) ?? throw new InvalidOperationException("Doctor redaction index JSON did not parse.");
         var requirementIndexJson = JsonNode.Parse(requirementIndexJsonText) ?? throw new InvalidOperationException("Doctor requirement index JSON did not parse.");
+        var scanInputIndexJson = JsonNode.Parse(scanInputIndexJsonText) ?? throw new InvalidOperationException("Doctor scan-input index JSON did not parse.");
+        var summaryIndexJson = JsonNode.Parse(summaryIndexJsonText) ?? throw new InvalidOperationException("Doctor summary index JSON did not parse.");
+        var triageIndexJson = JsonNode.Parse(triageIndexJsonText) ?? throw new InvalidOperationException("Doctor triage index JSON did not parse.");
         var manifestJson = JsonNode.Parse(manifestText) ?? throw new InvalidOperationException("Doctor export archive manifest did not parse.");
-        var combined = string.Concat(exportJsonText, exportMarkdown, readme, actionIndexJsonText, actionIndexMarkdown, diagnosticIndexJsonText, diagnosticIndexMarkdown, requirementIndexJsonText, requirementIndexMarkdown, manifestText, checksums);
+        var combined = string.Concat(exportJsonText, exportMarkdown, readme, actionIndexJsonText, actionIndexMarkdown, bundleIndexJsonText, bundleIndexMarkdown, capabilityIndexJsonText, capabilityIndexMarkdown, cataloguePolicyIndexJsonText, cataloguePolicyIndexMarkdown, diagnosticIndexJsonText, diagnosticIndexMarkdown, doctorAreaIndexJsonText, doctorAreaIndexMarkdown, evidenceIndexJsonText, evidenceIndexMarkdown, handoffSummary, openQuestionIndexJsonText, openQuestionIndexMarkdown, providerIndexJsonText, providerIndexMarkdown, redactionIndexJsonText, redactionIndexMarkdown, requirementIndexJsonText, requirementIndexMarkdown, scanInputIndexJsonText, scanInputIndexMarkdown, summaryIndexJsonText, summaryIndexMarkdown, triageIndexJsonText, triageIndexMarkdown, manifestText, checksums);
 
         Assert.Equal("doctor export", (string?)exportJson["command"]);
         Assert.Equal("doctor export", (string?)manifestJson["command"]);
@@ -2743,30 +3076,224 @@ public sealed class CliGoldenTests
         Assert.Equal("zip", (string?)manifestJson["bundle"]?["archiveFormat"]);
         Assert.Equal("local-paths", (string?)manifestJson["redaction"]?["mode"]);
         Assert.Equal("redacted", (string?)manifestJson["redaction"]?["paths"]);
-        Assert.Equal(9, manifestJson["entries"]?.AsArray().Count);
+        Assert.Equal(32, manifestJson["entries"]?.AsArray().Count);
         Assert.Contains("# WastelandForge Doctor Handoff Bundle", readme, StringComparison.Ordinal);
         Assert.Contains("`actions/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`bundle/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`capabilities/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`catalogue-policy/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`diagnostics/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`doctor-areas/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`evidence/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`handoff-summary.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`open-questions/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`providers/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`redaction/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`requirements/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`scan-inputs/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`summary/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`triage/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("No per-requirement explanation entries are included", readme, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-action-index/v1", (string?)actionIndexJson["kind"]);
         Assert.Contains("# WastelandForge Doctor Actions", actionIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-bundle-index/v1", (string?)bundleIndexJson["kind"]);
+        Assert.Equal(34, (int?)bundleIndexJson["summary"]?["entries"]);
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item => StringComparer.Ordinal.Equals("doctor-export.json", (string?)item?["path"]));
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item => StringComparer.Ordinal.Equals("bundle/index.json", (string?)item?["path"]));
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item => StringComparer.Ordinal.Equals("checksums.sha256", (string?)item?["path"]));
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item => StringComparer.Ordinal.Equals("triage/index.json", (string?)item?["path"]));
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("handoff-summary.md", (string?)item?["path"]) &&
+                StringComparer.Ordinal.Equals("root", (string?)item?["category"]));
+        Assert.Contains("# WastelandForge Doctor Bundle Index", bundleIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`doctor-export.json`", bundleIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`handoff-summary.md`", bundleIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`checksums.sha256`", bundleIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("# WastelandForge Doctor Handoff Summary", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("Status: `review`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("## Immediate Worklist", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("Command: `forge capabilities list --format json`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("## Command Hints", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`review-catalogue-policy`: `forge capabilities list --format json`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("## Key Archive Paths", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`triage/index.md`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`bundle/index.md`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`open-questions/index.md`", handoffSummary, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-triage-index/v1", (string?)triageIndexJson["kind"]);
+        Assert.Equal("review", (string?)triageIndexJson["summary"]?["status"]);
+        Assert.Equal(0, (int?)triageIndexJson["summary"]?["blockingItems"]);
+        Assert.Equal(1, (int?)triageIndexJson["summary"]?["reviewItems"]);
+        Assert.Equal(0, (int?)triageIndexJson["summary"]?["actions"]);
+        Assert.Equal(2, (int?)triageIndexJson["summary"]?["commandHints"]);
+        Assert.Equal(1, (int?)triageIndexJson["summary"]?["workItems"]);
+        Assert.Equal(1, (int?)triageIndexJson["summary"]?["worklistPriorityGroups"]);
+        Assert.Equal(1, (int?)triageIndexJson["summary"]?["worklistSourceGroups"]);
+        Assert.Equal("review", (string?)triageIndexJson["remediation"]?["status"]);
+        Assert.Equal("review-catalogue-policy", (string?)triageIndexJson["remediation"]?["firstWorkItem"]);
+        Assert.Equal("review-catalogue-policy", (string?)triageIndexJson["remediation"]?["firstCommandHint"]);
+        Assert.Equal("forge capabilities list --format json", (string?)triageIndexJson["remediation"]?["firstCommand"]);
+        Assert.Equal("open-questions/index.md", (string?)triageIndexJson["remediation"]?["path"]);
+        Assert.Contains(
+            triageIndexJson["review"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage review array missing."),
+            item => StringComparer.Ordinal.Equals("open-questions", (string?)item?["id"]));
+        Assert.Contains(
+            triageIndexJson["commands"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage commands array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("open-questions/index.md", (string?)item?["path"]));
+        Assert.Contains(
+            triageIndexJson["worklist"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage worklist array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["commandHint"]) &&
+                StringComparer.Ordinal.Equals("open-questions/index.md", (string?)item?["path"]));
+        Assert.Contains(
+            triageIndexJson["worklistSummary"]?["priorities"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage priority summary array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("review", (string?)item?["priority"]) &&
+                (int?)item?["count"] == 1);
+        Assert.Contains(
+            triageIndexJson["worklistSummary"]?["sources"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage source summary array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("open-questions/index.md", (string?)item?["path"]) &&
+                (int?)item?["count"] == 1);
+        Assert.Contains("# WastelandForge Doctor Triage", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Status: `review`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Command Hints", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`review-catalogue-policy`: `forge capabilities list --format json`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Remediation", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- First command: `forge capabilities list --format json`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Path: `open-questions/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Operator Handoff", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: review=1", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Sources: open-questions/index.md=1", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- [ ] `review-catalogue-policy` (review): Review catalogue-policy open questions", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Path: `open-questions/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Worklist Summary", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- `review`: 1 item(s) - `review-catalogue-policy`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- `open-questions/index.md`: 1 item(s) - `review-catalogue-policy`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Worklist", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`review-catalogue-policy` (review): Review catalogue-policy open questions", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`open-questions/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-capability-index/v1", (string?)capabilityIndexJson["kind"]);
+        Assert.Equal(19, (int?)capabilityIndexJson["summary"]?["capabilities"]);
+        Assert.Equal(19, capabilityIndexJson["capabilities"]?.AsArray().Count);
+        Assert.Contains(
+            capabilityIndexJson["capabilities"]?.AsArray() ?? throw new InvalidOperationException("Doctor capability index capabilities array missing."),
+            item => StringComparer.Ordinal.Equals("runtime.scripting.xnvse", (string?)item?["id"]));
+        Assert.Contains("# WastelandForge Doctor Capabilities", capabilityIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("runtime.scripting.xnvse", capabilityIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-catalogue-policy-index/v1", (string?)cataloguePolicyIndexJson["kind"]);
+        Assert.Equal(2, (int?)cataloguePolicyIndexJson["summary"]?["openQuestions"]);
+        Assert.Equal(2, cataloguePolicyIndexJson["openQuestionDetails"]?.AsArray().Count);
+        Assert.Equal(2, (int?)cataloguePolicyIndexJson["diagnosticHandoff"]?["questions"]);
+        Assert.Contains("# WastelandForge Doctor Catalogue Policy", cataloguePolicyIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("catalogue-policy.jip-pp-ln-alias", cataloguePolicyIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-diagnostic-index/v1", (string?)diagnosticIndexJson["kind"]);
         Assert.Equal(0, (int?)diagnosticIndexJson["summary"]?["issues"]);
         Assert.Contains("# WastelandForge Doctor Diagnostics", diagnosticIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("No diagnostics.", diagnosticIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-area-index/v1", (string?)doctorAreaIndexJson["kind"]);
+        Assert.Equal(5, (int?)doctorAreaIndexJson["summary"]?["areas"]);
+        Assert.Equal(5, doctorAreaIndexJson["areas"]?.AsArray().Count);
+        Assert.Contains(
+            doctorAreaIndexJson["areas"]?.AsArray() ?? throw new InvalidOperationException("Doctor area index areas array missing."),
+            item => StringComparer.Ordinal.Equals("project-requirements", (string?)item?["id"]));
+        Assert.Contains("# WastelandForge Doctor Areas", doctorAreaIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("project-requirements", doctorAreaIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-evidence-index/v1", (string?)evidenceIndexJson["kind"]);
+        Assert.Equal(
+            (int?)evidenceIndexJson["summary"]?["evidenceEntries"],
+            evidenceIndexJson["evidence"]?.AsArray().Count);
+        Assert.Equal("provider.editor.geck", (string?)evidenceIndexJson["evidence"]?[0]?["provider"]?["id"]);
+        Assert.Equal("executable-tool", (string?)evidenceIndexJson["evidence"]?[0]?["evidence"]?["detectorKind"]);
+        Assert.Contains("# WastelandForge Doctor Evidence", evidenceIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("provider.editor.geck", evidenceIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-open-question-index/v1", (string?)openQuestionIndexJson["kind"]);
+        Assert.Equal(2, (int?)openQuestionIndexJson["summary"]?["openQuestions"]);
+        Assert.Equal(2, openQuestionIndexJson["openQuestionDetails"]?.AsArray().Count);
+        Assert.Equal(2, (int?)openQuestionIndexJson["diagnosticHandoff"]?["questions"]);
+        Assert.Contains("# WastelandForge Doctor Open Questions", openQuestionIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("catalogue-policy.jip-pp-ln-alias", openQuestionIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-provider-index/v1", (string?)providerIndexJson["kind"]);
+        Assert.Equal(15, (int?)providerIndexJson["summary"]?["providers"]);
+        Assert.Equal(15, providerIndexJson["providers"]?.AsArray().Count);
+        Assert.Equal("provider.editor.geck", (string?)providerIndexJson["providers"]?[0]?["id"]);
+        Assert.Equal("executable-tool", (string?)providerIndexJson["providers"]?[0]?["evidence"]?[0]?["detectorKind"]);
+        Assert.Contains("# WastelandForge Doctor Providers", providerIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("provider.runtime.xnvse", providerIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-redaction-index/v1", (string?)redactionIndexJson["kind"]);
+        Assert.Equal("local-paths", (string?)redactionIndexJson["redaction"]?["mode"]);
+        Assert.Equal("redacted", (string?)redactionIndexJson["redaction"]?["paths"]);
+        Assert.True((int?)redactionIndexJson["summary"]?["tokens"] > 0);
+        Assert.True((int?)redactionIndexJson["summary"]?["notes"] > 0);
+        Assert.Contains(
+            redactionIndexJson["tokens"]?.AsArray() ?? throw new InvalidOperationException("Doctor redaction tokens array missing."),
+            item => StringComparer.Ordinal.Equals("<redacted:project-root>", (string?)item));
+        Assert.Contains("# WastelandForge Doctor Redaction", redactionIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("<redacted:project-root>", redactionIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-requirement-index/v1", (string?)requirementIndexJson["kind"]);
         Assert.Equal(2, (int?)requirementIndexJson["summary"]?["requirements"]);
         Assert.Equal(0, (int?)requirementIndexJson["summary"]?["unavailable"]);
         Assert.Contains("# WastelandForge Doctor Requirements", requirementIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("No unavailable requirements.", requirementIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-scan-input-index/v1", (string?)scanInputIndexJson["kind"]);
+        Assert.Equal(true, (bool?)scanInputIndexJson["summary"]?["gameRootProvided"]);
+        Assert.Equal(true, (bool?)scanInputIndexJson["summary"]?["dataRootProvided"]);
+        Assert.Equal(2, (int?)scanInputIndexJson["summary"]?["toolPaths"]);
+        Assert.Equal("<redacted:game-root>", (string?)scanInputIndexJson["inputs"]?["gameRoot"]);
+        Assert.Equal("<redacted:data-root>", (string?)scanInputIndexJson["inputs"]?["dataRoot"]);
+        Assert.Equal("<redacted:tool-path:1>", (string?)scanInputIndexJson["inputs"]?["toolPaths"]?[0]);
+        Assert.Equal("<redacted:tool-path:2>", (string?)scanInputIndexJson["inputs"]?["toolPaths"]?[1]);
+        Assert.Contains("# WastelandForge Doctor Scan Inputs", scanInputIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("<redacted:game-root>", scanInputIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-summary-index/v1", (string?)summaryIndexJson["kind"]);
+        Assert.Equal(15, (int?)summaryIndexJson["summary"]?["providers"]?["total"]);
+        Assert.Equal(19, (int?)summaryIndexJson["summary"]?["capabilities"]?["total"]);
+        Assert.Equal(5, (int?)summaryIndexJson["summary"]?["doctor"]?["areas"]);
+        Assert.Equal(2, (int?)summaryIndexJson["indexSummaries"]?["cataloguePolicySummary"]?["openQuestions"]);
+        Assert.Contains("# WastelandForge Doctor Summary", summaryIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Derived Index Summaries", summaryIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("  README.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  actions/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  actions/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  bundle/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  bundle/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  capabilities/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  capabilities/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  catalogue-policy/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  catalogue-policy/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  diagnostics/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  diagnostics/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  doctor-areas/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  doctor-areas/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  evidence/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  evidence/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  handoff-summary.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  open-questions/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  open-questions/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  providers/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  providers/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  redaction/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  redaction/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirements/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirements/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  scan-inputs/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  scan-inputs/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  summary/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  summary/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  triage/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  triage/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  doctor-export.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  doctor-export.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  doctor-bundle-manifest.json", checksums, StringComparison.Ordinal);
@@ -2805,10 +3332,33 @@ public sealed class CliGoldenTests
         var entries = archive.Entries.Select(entry => entry.FullName).Order(StringComparer.Ordinal).ToArray();
         Assert.Contains("actions/index.json", entries);
         Assert.Contains("actions/index.md", entries);
+        Assert.Contains("bundle/index.json", entries);
+        Assert.Contains("bundle/index.md", entries);
+        Assert.Contains("capabilities/index.json", entries);
+        Assert.Contains("capabilities/index.md", entries);
+        Assert.Contains("catalogue-policy/index.json", entries);
+        Assert.Contains("catalogue-policy/index.md", entries);
         Assert.Contains("diagnostics/index.json", entries);
         Assert.Contains("diagnostics/index.md", entries);
+        Assert.Contains("doctor-areas/index.json", entries);
+        Assert.Contains("doctor-areas/index.md", entries);
+        Assert.Contains("evidence/index.json", entries);
+        Assert.Contains("evidence/index.md", entries);
+        Assert.Contains("handoff-summary.md", entries);
+        Assert.Contains("open-questions/index.json", entries);
+        Assert.Contains("open-questions/index.md", entries);
+        Assert.Contains("providers/index.json", entries);
+        Assert.Contains("providers/index.md", entries);
+        Assert.Contains("redaction/index.json", entries);
+        Assert.Contains("redaction/index.md", entries);
         Assert.Contains("requirements/index.json", entries);
         Assert.Contains("requirements/index.md", entries);
+        Assert.Contains("scan-inputs/index.json", entries);
+        Assert.Contains("scan-inputs/index.md", entries);
+        Assert.Contains("summary/index.json", entries);
+        Assert.Contains("summary/index.md", entries);
+        Assert.Contains("triage/index.json", entries);
+        Assert.Contains("triage/index.md", entries);
         Assert.Contains("requirement-explanations/index.json", entries);
         Assert.Contains("requirement-explanations/index.md", entries);
         Assert.Contains("requirement-explanations/runtime.scripting.xnvse.json", entries);
@@ -2820,10 +3370,33 @@ public sealed class CliGoldenTests
         var readme = ReadZipEntry(archive, "README.md");
         var actionIndexJsonText = ReadZipEntry(archive, "actions/index.json");
         var actionIndexMarkdown = ReadZipEntry(archive, "actions/index.md");
+        var bundleIndexJsonText = ReadZipEntry(archive, "bundle/index.json");
+        var bundleIndexMarkdown = ReadZipEntry(archive, "bundle/index.md");
+        var capabilityIndexJsonText = ReadZipEntry(archive, "capabilities/index.json");
+        var capabilityIndexMarkdown = ReadZipEntry(archive, "capabilities/index.md");
+        var cataloguePolicyIndexJsonText = ReadZipEntry(archive, "catalogue-policy/index.json");
+        var cataloguePolicyIndexMarkdown = ReadZipEntry(archive, "catalogue-policy/index.md");
         var diagnosticIndexJsonText = ReadZipEntry(archive, "diagnostics/index.json");
         var diagnosticIndexMarkdown = ReadZipEntry(archive, "diagnostics/index.md");
+        var doctorAreaIndexJsonText = ReadZipEntry(archive, "doctor-areas/index.json");
+        var doctorAreaIndexMarkdown = ReadZipEntry(archive, "doctor-areas/index.md");
+        var evidenceIndexJsonText = ReadZipEntry(archive, "evidence/index.json");
+        var evidenceIndexMarkdown = ReadZipEntry(archive, "evidence/index.md");
+        var handoffSummary = ReadZipEntry(archive, "handoff-summary.md");
+        var openQuestionIndexJsonText = ReadZipEntry(archive, "open-questions/index.json");
+        var openQuestionIndexMarkdown = ReadZipEntry(archive, "open-questions/index.md");
+        var providerIndexJsonText = ReadZipEntry(archive, "providers/index.json");
+        var providerIndexMarkdown = ReadZipEntry(archive, "providers/index.md");
+        var redactionIndexJsonText = ReadZipEntry(archive, "redaction/index.json");
+        var redactionIndexMarkdown = ReadZipEntry(archive, "redaction/index.md");
         var requirementIndexJsonText = ReadZipEntry(archive, "requirements/index.json");
         var requirementIndexMarkdown = ReadZipEntry(archive, "requirements/index.md");
+        var scanInputIndexJsonText = ReadZipEntry(archive, "scan-inputs/index.json");
+        var scanInputIndexMarkdown = ReadZipEntry(archive, "scan-inputs/index.md");
+        var summaryIndexJsonText = ReadZipEntry(archive, "summary/index.json");
+        var summaryIndexMarkdown = ReadZipEntry(archive, "summary/index.md");
+        var triageIndexJsonText = ReadZipEntry(archive, "triage/index.json");
+        var triageIndexMarkdown = ReadZipEntry(archive, "triage/index.md");
         var indexJsonText = ReadZipEntry(archive, "requirement-explanations/index.json");
         var indexMarkdown = ReadZipEntry(archive, "requirement-explanations/index.md");
         var xnvseExplanationJsonText = ReadZipEntry(archive, "requirement-explanations/runtime.scripting.xnvse.json");
@@ -2833,36 +3406,217 @@ public sealed class CliGoldenTests
         var manifestText = ReadZipEntry(archive, "doctor-bundle-manifest.json");
         var checksums = ReadZipEntry(archive, "checksums.sha256");
         var actionIndexJson = JsonNode.Parse(actionIndexJsonText) ?? throw new InvalidOperationException("Doctor action index JSON did not parse.");
+        var bundleIndexJson = JsonNode.Parse(bundleIndexJsonText) ?? throw new InvalidOperationException("Doctor bundle index JSON did not parse.");
+        var capabilityIndexJson = JsonNode.Parse(capabilityIndexJsonText) ?? throw new InvalidOperationException("Doctor capability index JSON did not parse.");
+        var cataloguePolicyIndexJson = JsonNode.Parse(cataloguePolicyIndexJsonText) ?? throw new InvalidOperationException("Doctor catalogue-policy index JSON did not parse.");
         var diagnosticIndexJson = JsonNode.Parse(diagnosticIndexJsonText) ?? throw new InvalidOperationException("Doctor diagnostic index JSON did not parse.");
+        var doctorAreaIndexJson = JsonNode.Parse(doctorAreaIndexJsonText) ?? throw new InvalidOperationException("Doctor area index JSON did not parse.");
+        var evidenceIndexJson = JsonNode.Parse(evidenceIndexJsonText) ?? throw new InvalidOperationException("Doctor evidence index JSON did not parse.");
+        var openQuestionIndexJson = JsonNode.Parse(openQuestionIndexJsonText) ?? throw new InvalidOperationException("Doctor open-question index JSON did not parse.");
+        var providerIndexJson = JsonNode.Parse(providerIndexJsonText) ?? throw new InvalidOperationException("Doctor provider index JSON did not parse.");
+        var redactionIndexJson = JsonNode.Parse(redactionIndexJsonText) ?? throw new InvalidOperationException("Doctor redaction index JSON did not parse.");
         var requirementIndexJson = JsonNode.Parse(requirementIndexJsonText) ?? throw new InvalidOperationException("Doctor requirement index JSON did not parse.");
+        var scanInputIndexJson = JsonNode.Parse(scanInputIndexJsonText) ?? throw new InvalidOperationException("Doctor scan-input index JSON did not parse.");
+        var summaryIndexJson = JsonNode.Parse(summaryIndexJsonText) ?? throw new InvalidOperationException("Doctor summary index JSON did not parse.");
+        var triageIndexJson = JsonNode.Parse(triageIndexJsonText) ?? throw new InvalidOperationException("Doctor triage index JSON did not parse.");
         var indexJson = JsonNode.Parse(indexJsonText) ?? throw new InvalidOperationException("Requirement explanation index JSON did not parse.");
         var xnvseExplanationJson = JsonNode.Parse(xnvseExplanationJsonText) ?? throw new InvalidOperationException("Requirement explanation JSON did not parse.");
         var manifestJson = JsonNode.Parse(manifestText) ?? throw new InvalidOperationException("Doctor export archive manifest did not parse.");
-        var combined = string.Concat(readme, actionIndexJsonText, actionIndexMarkdown, diagnosticIndexJsonText, diagnosticIndexMarkdown, requirementIndexJsonText, requirementIndexMarkdown, indexJsonText, indexMarkdown, xnvseExplanationJsonText, xnvseExplanation, mcmExplanationJsonText, mcmExplanation, manifestText, checksums);
+        var combined = string.Concat(readme, actionIndexJsonText, actionIndexMarkdown, bundleIndexJsonText, bundleIndexMarkdown, capabilityIndexJsonText, capabilityIndexMarkdown, cataloguePolicyIndexJsonText, cataloguePolicyIndexMarkdown, diagnosticIndexJsonText, diagnosticIndexMarkdown, doctorAreaIndexJsonText, doctorAreaIndexMarkdown, evidenceIndexJsonText, evidenceIndexMarkdown, handoffSummary, openQuestionIndexJsonText, openQuestionIndexMarkdown, providerIndexJsonText, providerIndexMarkdown, redactionIndexJsonText, redactionIndexMarkdown, requirementIndexJsonText, requirementIndexMarkdown, scanInputIndexJsonText, scanInputIndexMarkdown, summaryIndexJsonText, summaryIndexMarkdown, triageIndexJsonText, triageIndexMarkdown, indexJsonText, indexMarkdown, xnvseExplanationJsonText, xnvseExplanation, mcmExplanationJsonText, mcmExplanation, manifestText, checksums);
 
-        Assert.Equal(15, manifestJson["entries"]?.AsArray().Count);
+        Assert.Equal(38, manifestJson["entries"]?.AsArray().Count);
         Assert.Contains("# WastelandForge Doctor Handoff Bundle", readme, StringComparison.Ordinal);
         Assert.Contains("`actions/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`bundle/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`capabilities/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`catalogue-policy/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`diagnostics/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`doctor-areas/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`evidence/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`handoff-summary.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`open-questions/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`providers/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`redaction/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`requirements/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`scan-inputs/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`summary/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`triage/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`requirement-explanations/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`requirement-explanations/runtime.scripting.xnvse.json`", readme, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-action-index/v1", (string?)actionIndexJson["kind"]);
         Assert.True((int?)actionIndexJson["summary"]?["actions"] > 0);
         Assert.Contains("# WastelandForge Doctor Actions", actionIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("Project capability requirements", actionIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-bundle-index/v1", (string?)bundleIndexJson["kind"]);
+        Assert.Equal(40, (int?)bundleIndexJson["summary"]?["entries"]);
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item => StringComparer.Ordinal.Equals("requirement-explanations/runtime.scripting.xnvse.json", (string?)item?["path"]));
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item => StringComparer.Ordinal.Equals("doctor-bundle-manifest.json", (string?)item?["path"]));
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item => StringComparer.Ordinal.Equals("triage/index.json", (string?)item?["path"]));
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("handoff-summary.md", (string?)item?["path"]) &&
+                StringComparer.Ordinal.Equals("root", (string?)item?["category"]));
+        Assert.Contains("# WastelandForge Doctor Bundle Index", bundleIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`handoff-summary.md`", bundleIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`requirement-explanations/runtime.scripting.xnvse.json`", bundleIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("# WastelandForge Doctor Handoff Summary", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("Status: `blocked`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("## Immediate Worklist", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: blocker=4, review=2", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("Command: `forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("- [ ] Review 1 additional work item(s) in `triage/index.md`.", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("## Command Hints", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`explain-requirement-runtime-scripting-xnvse`: `forge capabilities explain runtime.scripting.xnvse --project <project-root> --game-root <game-root> --tool-path <tool-path> --format plain`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("## Key Archive Paths", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`requirement-explanations/index.md`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`diagnostics/index.md`", handoffSummary, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-triage-index/v1", (string?)triageIndexJson["kind"]);
+        Assert.Equal("blocked", (string?)triageIndexJson["summary"]?["status"]);
+        Assert.Equal(2, (int?)triageIndexJson["summary"]?["blockingItems"]);
+        Assert.True((int?)triageIndexJson["summary"]?["actions"] > 0);
+        Assert.Equal(6, (int?)triageIndexJson["summary"]?["commandHints"]);
+        Assert.Equal(6, (int?)triageIndexJson["summary"]?["workItems"]);
+        Assert.Equal(2, (int?)triageIndexJson["summary"]?["worklistPriorityGroups"]);
+        Assert.Equal(6, (int?)triageIndexJson["summary"]?["worklistSourceGroups"]);
+        Assert.Equal("blocked", (string?)triageIndexJson["remediation"]?["status"]);
+        Assert.Equal("Blocked: 4 blocker item(s) and 2 review item(s) need operator action.", (string?)triageIndexJson["remediation"]?["headline"]);
+        Assert.Equal(6, (int?)triageIndexJson["remediation"]?["workItems"]);
+        Assert.Equal(4, (int?)triageIndexJson["remediation"]?["blockerItems"]);
+        Assert.Equal(2, (int?)triageIndexJson["remediation"]?["reviewItems"]);
+        Assert.Equal("refresh-capability-evidence", (string?)triageIndexJson["remediation"]?["firstWorkItem"]);
+        Assert.Equal("rescan-capabilities", (string?)triageIndexJson["remediation"]?["firstCommandHint"]);
+        Assert.Equal(
+            "forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json",
+            (string?)triageIndexJson["remediation"]?["firstCommand"]);
+        Assert.Equal("scan-inputs/index.md", (string?)triageIndexJson["remediation"]?["path"]);
+        Assert.Contains(
+            triageIndexJson["blocking"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage blocking array missing."),
+            item => StringComparer.Ordinal.Equals("required-requirements-unavailable", (string?)item?["id"]));
+        Assert.Contains(
+            triageIndexJson["commands"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage commands array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("explain-requirement-runtime-scripting-xnvse", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("requirement-explanations/runtime.scripting.xnvse.md", (string?)item?["path"]));
+        Assert.Contains(
+            triageIndexJson["worklist"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage worklist array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("resolve-requirement-runtime-scripting-xnvse", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("explain-requirement-runtime-scripting-xnvse", (string?)item?["commandHint"]) &&
+                StringComparer.Ordinal.Equals("requirement-explanations/runtime.scripting.xnvse.md", (string?)item?["path"]));
+        Assert.Contains(
+            triageIndexJson["worklistSummary"]?["priorities"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage priority summary array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("blocker", (string?)item?["priority"]) &&
+                (int?)item?["count"] == 4);
+        Assert.Contains(
+            triageIndexJson["worklistSummary"]?["sources"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage source summary array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("requirement-explanations/runtime.scripting.xnvse.md", (string?)item?["path"]) &&
+                (int?)item?["count"] == 1);
+        Assert.Contains(
+            triageIndexJson["reviewPaths"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage review paths array missing."),
+            item => StringComparer.Ordinal.Equals("requirement-explanations/index.md", (string?)item?["path"]));
+        Assert.Contains("# WastelandForge Doctor Triage", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Status: `blocked`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Command Hints", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Worklist", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Remediation", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- First work item: `refresh-capability-evidence`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Path: `scan-inputs/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Operator Handoff", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: blocker=4, review=2", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("scan-inputs/index.md=1", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- [ ] `refresh-capability-evidence` (blocker): Refresh capability evidence", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Command: `forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- [ ] Review 1 additional work item(s) in the full worklist.", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Worklist Summary", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- `blocker`: 4 item(s) - `refresh-capability-evidence`, `resolve-requirement-runtime-scripting-xnvse`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- `requirement-explanations/runtime.scripting.xnvse.md`: 1 item(s) - `resolve-requirement-runtime-scripting-xnvse`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`resolve-requirement-runtime-scripting-xnvse` (blocker): Resolve required project requirement runtime.scripting.xnvse", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains(
+            "`explain-requirement-runtime-scripting-xnvse`: `forge capabilities explain runtime.scripting.xnvse --project <project-root> --game-root <game-root> --tool-path <tool-path> --format plain`",
+            triageIndexMarkdown,
+            StringComparison.Ordinal);
+        Assert.Contains("`requirement-explanations/runtime.scripting.xnvse.md`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`requirement-explanations/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-capability-index/v1", (string?)capabilityIndexJson["kind"]);
+        Assert.Equal(19, (int?)capabilityIndexJson["summary"]?["capabilities"]);
+        Assert.Equal(19, capabilityIndexJson["capabilities"]?.AsArray().Count);
+        Assert.Contains("# WastelandForge Doctor Capabilities", capabilityIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("runtime.scripting.xnvse", capabilityIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-catalogue-policy-index/v1", (string?)cataloguePolicyIndexJson["kind"]);
+        Assert.Equal(2, (int?)cataloguePolicyIndexJson["summary"]?["openQuestions"]);
+        Assert.Equal(2, cataloguePolicyIndexJson["openQuestionDetails"]?.AsArray().Count);
+        Assert.Equal(2, (int?)cataloguePolicyIndexJson["diagnosticHandoff"]?["questions"]);
+        Assert.Contains("# WastelandForge Doctor Catalogue Policy", cataloguePolicyIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("catalogue-policy.geck-extender-marker", cataloguePolicyIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-diagnostic-index/v1", (string?)diagnosticIndexJson["kind"]);
         Assert.Equal(2, (int?)diagnosticIndexJson["summary"]?["issues"]);
         Assert.Equal("WF-CAP-002", (string?)diagnosticIndexJson["diagnostics"]?[0]?["ruleId"]);
         Assert.Equal("src/registries/dependencies/main.json", (string?)diagnosticIndexJson["diagnostics"]?[0]?["source"]?["file"]);
         Assert.Contains("# WastelandForge Doctor Diagnostics", diagnosticIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("`WF-CAP-002`", diagnosticIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-area-index/v1", (string?)doctorAreaIndexJson["kind"]);
+        Assert.Equal(5, (int?)doctorAreaIndexJson["summary"]?["areas"]);
+        Assert.True((int?)doctorAreaIndexJson["summary"]?["actions"] > 0);
+        Assert.Equal(5, doctorAreaIndexJson["areas"]?.AsArray().Count);
+        Assert.Contains("# WastelandForge Doctor Areas", doctorAreaIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("project-requirements", doctorAreaIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-evidence-index/v1", (string?)evidenceIndexJson["kind"]);
+        Assert.Equal(
+            (int?)evidenceIndexJson["summary"]?["evidenceEntries"],
+            evidenceIndexJson["evidence"]?.AsArray().Count);
+        Assert.Equal("provider.editor.geck", (string?)evidenceIndexJson["evidence"]?[0]?["provider"]?["id"]);
+        Assert.Contains("# WastelandForge Doctor Evidence", evidenceIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Detector", evidenceIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-open-question-index/v1", (string?)openQuestionIndexJson["kind"]);
+        Assert.Equal(2, (int?)openQuestionIndexJson["summary"]?["openQuestions"]);
+        Assert.Equal(2, openQuestionIndexJson["openQuestionDetails"]?.AsArray().Count);
+        Assert.Equal(2, (int?)openQuestionIndexJson["diagnosticHandoff"]?["questions"]);
+        Assert.Contains("# WastelandForge Doctor Open Questions", openQuestionIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("catalogue-policy.geck-extender-marker", openQuestionIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-provider-index/v1", (string?)providerIndexJson["kind"]);
+        Assert.Equal(15, (int?)providerIndexJson["summary"]?["providers"]);
+        Assert.Equal(15, providerIndexJson["providers"]?.AsArray().Count);
+        Assert.Contains("# WastelandForge Doctor Providers", providerIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("provider.runtime.xnvse", providerIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-redaction-index/v1", (string?)redactionIndexJson["kind"]);
+        Assert.Equal("local-paths", (string?)redactionIndexJson["redaction"]?["mode"]);
+        Assert.Equal("redacted", (string?)redactionIndexJson["redaction"]?["paths"]);
+        Assert.Contains(
+            redactionIndexJson["tokens"]?.AsArray() ?? throw new InvalidOperationException("Doctor redaction tokens array missing."),
+            item => StringComparer.Ordinal.Equals("<redacted:project-root>", (string?)item));
+        Assert.Contains("# WastelandForge Doctor Redaction", redactionIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Absolute local game, data, tool, project, and evidence paths", redactionIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-requirement-index/v1", (string?)requirementIndexJson["kind"]);
         Assert.Equal(2, (int?)requirementIndexJson["summary"]?["requirements"]);
         Assert.Equal(2, (int?)requirementIndexJson["summary"]?["unavailable"]);
         Assert.Equal("runtime.scripting.xnvse", (string?)requirementIndexJson["requirements"]?[0]?["id"]);
         Assert.Contains("# WastelandForge Doctor Requirements", requirementIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("`runtime.scripting.xnvse`", requirementIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-scan-input-index/v1", (string?)scanInputIndexJson["kind"]);
+        Assert.Equal(false, (bool?)scanInputIndexJson["summary"]?["gameRootProvided"]);
+        Assert.Equal(false, (bool?)scanInputIndexJson["summary"]?["dataRootProvided"]);
+        Assert.Equal(0, (int?)scanInputIndexJson["summary"]?["toolPaths"]);
+        Assert.Null(scanInputIndexJson["inputs"]?["gameRoot"]);
+        Assert.Null(scanInputIndexJson["inputs"]?["dataRoot"]);
+        Assert.Contains("# WastelandForge Doctor Scan Inputs", scanInputIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Game root: `(not provided)`", scanInputIndexMarkdown, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-summary-index/v1", (string?)summaryIndexJson["kind"]);
+        Assert.Equal(15, (int?)summaryIndexJson["summary"]?["providers"]?["total"]);
+        Assert.Equal(19, (int?)summaryIndexJson["summary"]?["capabilities"]?["total"]);
+        Assert.Equal(5, (int?)summaryIndexJson["summary"]?["doctor"]?["areas"]);
+        Assert.Equal(2, (int?)summaryIndexJson["indexSummaries"]?["requirementSummary"]?["unavailable"]);
+        Assert.Equal(2, (int?)summaryIndexJson["indexSummaries"]?["diagnosticSummary"]?["issues"]);
+        Assert.Contains("# WastelandForge Doctor Summary", summaryIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Catalogue-policy: 2 open question", summaryIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-requirement-explanation-index/v1", (string?)indexJson["kind"]);
         Assert.Equal("<redacted:project-root>", (string?)indexJson["project"]?["root"]);
         Assert.Equal(2, (int?)indexJson["summary"]?["requirements"]);
@@ -2880,10 +3634,33 @@ public sealed class CliGoldenTests
         Assert.Contains("  README.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  actions/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  actions/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  bundle/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  bundle/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  capabilities/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  capabilities/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  catalogue-policy/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  catalogue-policy/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  diagnostics/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  diagnostics/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  doctor-areas/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  doctor-areas/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  evidence/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  evidence/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  handoff-summary.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  open-questions/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  open-questions/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  providers/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  providers/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  redaction/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  redaction/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirements/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirements/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  scan-inputs/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  scan-inputs/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  summary/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  summary/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  triage/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  triage/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirement-explanations/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirement-explanations/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirement-explanations/runtime.scripting.xnvse.json", checksums, StringComparison.Ordinal);

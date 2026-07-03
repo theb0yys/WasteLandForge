@@ -24,6 +24,9 @@ internal static class CapabilityScanMarkdownRenderer
         builder.AppendLine();
 
         AppendSummary(builder, report, diagnostics);
+        CapabilityScanOperatorHandoffProjection.AppendMarkdown(
+            builder,
+            CapabilityScanOperatorHandoffProjection.Create(report, diagnostics));
         AppendDoctorAreas(builder, doctorAreaSummary);
         AppendActionSummary(builder, report);
         AppendRequirements(builder, report);

@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 174 Doctor bundle requirement index
+Status: Gate 193 capability scan operator handoff checklist
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -248,8 +248,20 @@ forge --version
   handoff archive beside the selected primary output. The archive contains
   `README.md`, `doctor-export.json`, `doctor-export.md`,
   `actions/index.json`, `actions/index.md`,
+  `bundle/index.json`, `bundle/index.md`,
+  `capabilities/index.json`, `capabilities/index.md`,
+  `catalogue-policy/index.json`, `catalogue-policy/index.md`,
   `diagnostics/index.json`, `diagnostics/index.md`,
+  `doctor-areas/index.json`, `doctor-areas/index.md`,
+  `evidence/index.json`, `evidence/index.md`,
+  `handoff-summary.md`,
+  `open-questions/index.json`, `open-questions/index.md`,
+  `providers/index.json`, `providers/index.md`,
+  `redaction/index.json`, `redaction/index.md`,
   `requirements/index.json`, `requirements/index.md`,
+  `scan-inputs/index.json`, `scan-inputs/index.md`,
+  `summary/index.json`, `summary/index.md`,
+  `triage/index.json`, `triage/index.md`,
   `doctor-bundle-manifest.json`, and `checksums.sha256`. When project
   requirements are included and any requirements are not satisfied, the
   archive also includes path-minimized
@@ -265,10 +277,13 @@ forge --version
   redacted `diagnostics` object added by Gate 129 and the nested provider
   evidence detail added by Gate 130, including Gate 132 wrong-scope status
   when present.
-- `forge doctor export --format json` includes top-level `summary` and
-  `index` sections derived from the redacted capability scan report. The
+- `forge doctor export --format json` includes top-level `summary`, `triage`,
+  and `index` sections derived from the redacted capability scan report. The
   summary lists catalogue, provider, capability, Doctor-area, requirement, and
-  diagnostic counts. The index lists Doctor areas, Doctor area status groups
+  diagnostic counts. The triage section classifies the handoff as `ready`,
+  `review`, or `blocked`, lists blocking and review items, exposes next
+  actions, and points to primary report sections such as `index.requirements`
+  and `index.actions`. The index lists Doctor areas, Doctor area status groups
   by readiness status, provider status groups by scan status and install
   scope, capability status groups by scan status, compact provider inventory
   summaries by provider type, install scope, and status, compact provider
@@ -630,16 +645,28 @@ diagnostic projection mode, does not enable explain SARIF/GitHub output, and
 does not expose raw local paths.
 
 `forge doctor export --summary <path>` writes a redacted Markdown handoff
-summary derived from the existing Doctor export report. It is not a
-diagnostic projection mode and does not enable Doctor export SARIF or GitHub
-annotation output.
+summary derived from the existing Doctor export report, including the primary
+`## Triage` projection. It is not a diagnostic projection mode and does not
+enable Doctor export SARIF or GitHub annotation output.
 
 `forge doctor export --bundle <path>` writes a deterministic redacted ZIP
 handoff archive derived from the existing Doctor export report and Markdown
 summary. It includes deterministic `README.md`, `actions/index.json`,
-`actions/index.md`, `diagnostics/index.json`, and `diagnostics/index.md`
-entries, plus `requirements/index.json` and `requirements/index.md`, and is
-not a release package, diagnostic projection mode, or new primary format.
+`actions/index.md`, `bundle/index.json`, `bundle/index.md`,
+`capabilities/index.json`, `capabilities/index.md`,
+`catalogue-policy/index.json`, `catalogue-policy/index.md`,
+`diagnostics/index.json`, `diagnostics/index.md`,
+`doctor-areas/index.json`, and `doctor-areas/index.md` entries, plus
+`evidence/index.json`, `evidence/index.md`,
+`handoff-summary.md`,
+`open-questions/index.json`, `open-questions/index.md`,
+`providers/index.json`, `providers/index.md`,
+`redaction/index.json`, `redaction/index.md`,
+`requirements/index.json`, `requirements/index.md`,
+`scan-inputs/index.json`, `scan-inputs/index.md`,
+`summary/index.json`, `summary/index.md`, `triage/index.json`, and
+`triage/index.md`, and is not a release package,
+diagnostic projection mode, or new primary format.
 When project requirements are included and any are not satisfied, the archive
 also includes a path-minimized requirement explanation index plus
 per-requirement capability explanation JSON and Markdown entries listed in the
@@ -1488,6 +1515,224 @@ manifest and checksums. It still does not add runtime probes, MO2 VFS checks,
 provider version checks, catalogue-policy decisions, new rule IDs, Doctor
 export SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub
 step-summary output, Doctor planning changes, release publishing, or AI
+behavior.
+
+Gate 175 keeps the same canonical command surface while adding
+`providers/index.json` and `providers/index.md` to
+`forge doctor export --bundle <path>` archives. The provider index derives
+from existing redacted Doctor provider summary, provider-status groups,
+provider inventory summary, evidence summary, and compact provider scan
+entries, is linked from `README.md`, and is listed in the manifest and
+checksums. It still does not add runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, new rule IDs, Doctor export
+SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub step-summary
+output, Doctor planning changes, release publishing, or AI behavior.
+
+Gate 176 keeps the same canonical command surface while adding
+`capabilities/index.json` and `capabilities/index.md` to
+`forge doctor export --bundle <path>` archives. The capability index derives
+from existing redacted Doctor capability summary, capability-status groups,
+Doctor area capability summary, and compact capability scan entries, is
+linked from `README.md`, and is listed in the manifest and checksums. It still
+does not add runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, new rule IDs, Doctor export SARIF/GitHub output,
+`--format zip`, `--format markdown`, GitHub step-summary output, Doctor
+planning changes, release publishing, or AI behavior.
+
+Gate 177 keeps the same canonical command surface while adding
+`doctor-areas/index.json` and `doctor-areas/index.md` to
+`forge doctor export --bundle <path>` archives. The Doctor area index derives
+from existing redacted Doctor readiness summary, area-status groups, Doctor
+area capability summary, and compact Doctor area entries, is linked from
+`README.md`, and is listed in the manifest and checksums. It still does not
+add runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
+decisions, new rule IDs, Doctor export SARIF/GitHub output, `--format zip`,
+`--format markdown`, GitHub step-summary output, Doctor planning changes,
+release publishing, or AI behavior.
+
+Gate 178 keeps the same canonical command surface while adding
+`catalogue-policy/index.json` and `catalogue-policy/index.md` to
+`forge doctor export --bundle <path>` archives. The catalogue-policy index
+derives from existing redacted source-type groups, open-question details,
+diagnostic handoff entries, and open-question text, is linked from
+`README.md`, and is listed in the manifest and checksums. It still does not
+add runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
+decisions, new rule IDs, Doctor export SARIF/GitHub output, `--format zip`,
+`--format markdown`, GitHub step-summary output, Doctor planning changes,
+release publishing, or AI behavior.
+
+Gate 179 keeps the same canonical command surface while adding
+`summary/index.json` and `summary/index.md` to
+`forge doctor export --bundle <path>` archives. The summary index derives from
+existing redacted report summary data plus already-derived action,
+requirement, diagnostic, provider inventory, evidence, Doctor area
+capability, and catalogue-policy summary metadata, is linked from
+`README.md`, and is listed in the manifest and checksums. It still does not
+add runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
+decisions, new rule IDs, Doctor export SARIF/GitHub output, `--format zip`,
+`--format markdown`, GitHub step-summary output, Doctor planning changes,
+release publishing, or AI behavior.
+
+Gate 180 keeps the same canonical command surface while adding
+`evidence/index.json` and `evidence/index.md` to
+`forge doctor export --bundle <path>` archives. The evidence index derives
+from existing redacted evidence summary metadata and compact provider detector
+evidence entries, omits raw evidence paths, is linked from `README.md`, and is
+listed in the manifest and checksums. It still does not add runtime probes,
+MO2 VFS checks, provider version checks, catalogue-policy decisions, new rule
+IDs, Doctor export SARIF/GitHub output, `--format zip`, `--format markdown`,
+GitHub step-summary output, Doctor planning changes, release publishing, or
+AI behavior.
+
+Gate 181 keeps the same canonical command surface while adding
+`redaction/index.json` and `redaction/index.md` to
+`forge doctor export --bundle <path>` archives. The redaction index derives
+from existing Doctor export redaction metadata, including placeholder tokens
+and redaction notes, is linked from `README.md`, and is listed in the manifest
+and checksums. It still does not add runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, new rule IDs, Doctor export
+SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub step-summary
+output, Doctor planning changes, release publishing, or AI behavior.
+
+Gate 182 keeps the same canonical command surface while adding
+`open-questions/index.json` and `open-questions/index.md` to
+`forge doctor export --bundle <path>` archives. The open-question index
+derives from existing Doctor export open-question metadata, including
+source-type groups, structured open-question details, diagnostic handoff
+metadata, and raw open-question text, is linked from `README.md`, and is
+listed in the manifest and checksums. It still does not add runtime probes,
+MO2 VFS checks, provider version checks, catalogue-policy decisions, new rule
+IDs, Doctor export SARIF/GitHub output, `--format zip`, `--format markdown`,
+GitHub step-summary output, Doctor planning changes, release publishing, or
+AI behavior.
+
+Gate 183 keeps the same canonical command surface while adding
+`scan-inputs/index.json` and `scan-inputs/index.md` to
+`forge doctor export --bundle <path>` archives. The scan-input index derives
+from existing redacted capability scan input metadata, including game/data
+root placeholders, tool-path placeholders, detector families, runtime-probe
+flag, and MO2 VFS flag, is linked from `README.md`, and is listed in the
+manifest and checksums. It still does not add runtime probes, MO2 VFS checks,
+provider version checks, catalogue-policy decisions, new rule IDs, Doctor
+export SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub
+step-summary output, Doctor planning changes, release publishing, or AI
+behavior.
+
+Gate 184 keeps the same canonical command surface while adding
+`bundle/index.json` and `bundle/index.md` to
+`forge doctor export --bundle <path>` archives. The bundle index derives from
+existing archive supplement paths and redacted bundle metadata, lists the
+Doctor reports, archive indexes, optional requirement-explanation entries,
+manifest, and checksums, is linked from `README.md`, and is listed in the
+manifest and checksums. It still does not add runtime probes, MO2 VFS checks,
+provider version checks, catalogue-policy decisions, new rule IDs, Doctor
+export SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub
+step-summary output, Doctor planning changes, release publishing, or AI
+behavior.
+
+Gate 185 keeps the same canonical command surface while adding
+`triage/index.json` and `triage/index.md` to
+`forge doctor export --bundle <path>` archives. The triage index derives from
+existing redacted summary, diagnostic, requirement, action, wrong-scope, and
+open-question metadata, classifies the handoff as `ready`, `review`, or
+`blocked`, lists blocking/review items and next actions, is linked from
+`README.md`, included in `bundle/index.*`, and is listed in the manifest and
+checksums. It still does not add runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, new rule IDs, Doctor export
+SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub step-summary
+output, Doctor planning changes, release publishing, or AI behavior.
+
+Gate 186 keeps the same canonical command surface while adding primary
+Doctor export triage projection to JSON, plain text, and Markdown summary
+outputs. JSON output now includes top-level `triage`; plain output includes
+`Triage:` before `Doctor index:`; Markdown summaries include `## Triage`.
+Primary triage uses report-section references, while ZIP archive
+`triage/index.*` entries keep archive paths. It still does not add runtime
+probes, MO2 VFS checks, provider version checks, catalogue-policy decisions,
+new rule IDs, Doctor export SARIF/GitHub output, `--format zip`,
+`--format markdown`, GitHub step-summary output, Doctor planning changes,
+release publishing, or AI behavior.
+
+Gate 187 keeps the same canonical command surface while adding deterministic
+Doctor triage command hints. JSON output now includes `triage.commands` and
+`summary.commandHints`; plain output lists command hints under `Triage:`;
+Markdown summaries and ZIP archive `triage/index.*` entries include command
+hint sections. Hints use canonical commands such as
+`forge capabilities scan`, `forge capabilities explain`, `forge doctor export`,
+and `forge capabilities list` with placeholders instead of local paths. It
+still does not add runtime probes, MO2 VFS checks, provider version checks,
+catalogue-policy decisions, new rule IDs, command aliases, Doctor export
+SARIF/GitHub output, `--format zip`, `--format markdown`, GitHub step-summary
+output, Doctor planning changes, release publishing, or AI behavior.
+
+Gate 188 keeps the same canonical command surface while adding an ordered
+Doctor triage remediation worklist. JSON output now includes
+`triage.worklist` and `summary.workItems`; plain output lists work items under
+`Triage:`; Markdown summaries and ZIP archive `triage/index.*` entries include
+worklist sections. Work items are derived from existing redacted Doctor
+metadata, link to existing command-hint IDs, and use report sections in
+primary output or archive paths in bundle output. It still does not add
+runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
+decisions, new rule IDs, command aliases, Doctor export SARIF/GitHub output,
+`--format zip`, `--format markdown`, GitHub step-summary output, Doctor
+planning changes, release publishing, or AI behavior.
+
+Gate 189 keeps the same canonical command surface while adding deterministic
+Doctor worklist summary metadata. JSON output now includes
+`worklistSummary.priorities`, `worklistSummary.sources`,
+`summary.worklistPriorityGroups`, and `summary.worklistSourceGroups`; plain
+output includes `Worklist summary:`; Markdown summaries and ZIP archive
+`triage/index.*` entries include worklist summary sections. Primary sources
+are report sections, and bundle sources are archive paths. It still does not
+add runtime probes, MO2 VFS checks, provider version checks, catalogue-policy
+decisions, new rule IDs, command aliases, Doctor export SARIF/GitHub output,
+`--format zip`, `--format markdown`, GitHub step-summary output, Doctor
+planning changes, release publishing, or AI behavior.
+
+Gate 190 keeps the same canonical command surface while adding a compact
+Doctor remediation status header. JSON output now includes
+`triage.remediation`; plain output includes `Remediation:`; Markdown summaries
+and ZIP archive `triage/index.*` entries include remediation sections. The
+header is derived from existing worklist and command-hint data and reports the
+status, headline, work item counts, first work item, first command hint, and
+first canonical command. Primary output uses a report `section`; bundle output
+uses an archive `path`. It still does not add runtime probes, MO2 VFS checks,
+provider version checks, catalogue-policy decisions, new rule IDs, command
+aliases, Doctor export SARIF/GitHub output, `--format zip`,
+`--format markdown`, GitHub step-summary output, Doctor planning changes,
+release publishing, or AI behavior.
+
+Gate 191 keeps the same canonical command surface while adding a human
+operator handoff checklist to plain text, Markdown summaries, and ZIP archive
+triage Markdown. The handoff combines existing remediation, worklist summary,
+and command-hint data into copyable checklist items. Primary output uses
+report sections, and bundle output uses archive paths. It does not change the
+JSON contract and still does not add runtime probes, MO2 VFS checks, provider
+version checks, catalogue-policy decisions, new rule IDs, command aliases,
+Doctor export SARIF/GitHub output, `--format zip`, `--format markdown`,
+GitHub step-summary output, Doctor planning changes, release publishing, or
+AI behavior.
+
+Gate 192 keeps the same canonical command surface while adding
+`handoff-summary.md` to `forge doctor export --bundle <path>` archives. The
+sidecar derives from existing redacted triage metadata and points at
+remediation status, immediate worklist items, command hints, and key archive
+paths. It is linked from `README.md`, listed in `bundle/index.*`, and covered
+by `doctor-bundle-manifest.json` and `checksums.sha256`. It does not add a new
+primary format, JSON contract, runtime probe, MO2 VFS check, GECK automation,
+provider-version check, catalogue-policy decision, rule ID, command alias,
+Doctor planning change, release publishing, or AI behavior.
+
+Gate 193 keeps the same canonical command surface while adding an operator
+handoff checklist to `forge capabilities scan` plain output and
+`--summary <path>` Markdown sidecars. The checklist derives from existing scan
+requirements, projected diagnostics, Doctor actions, wrong-scope summary
+counts, and catalogue-policy open questions. It reports ready/review/blocked
+status, priority/source summaries, immediate work items, and copyable
+canonical command hints. It does not change scan JSON output, add aliases,
+`--format markdown`, new diagnostic rules, provider detection behavior,
+resolver behavior, provider-version behavior, runtime probes, MO2 VFS checks,
+GECK automation, catalogue-policy decisions, release publishing, or AI
 behavior.
 
 ## Exit Codes

@@ -929,3 +929,106 @@ export --bundle <path>` archives now include `requirements/index.json` and
 `requirements/index.md`, derived from the already redacted Doctor requirement
 summary and compact unavailable requirement entries while preserving
 deterministic archive output and local path redaction.
+
+Gate 175 adds a Doctor export provider index renderer. `forge doctor export
+--bundle <path>` archives now include `providers/index.json` and
+`providers/index.md`, derived from the already redacted Doctor provider
+summary, provider-status groups, provider inventory summary, evidence summary,
+and compact provider scan entries while preserving deterministic archive
+output and local path redaction.
+
+Gate 176 adds a Doctor export capability index renderer. `forge doctor export
+--bundle <path>` archives now include `capabilities/index.json` and
+`capabilities/index.md`, derived from the already redacted Doctor capability
+summary, capability-status groups, Doctor area capability summary, and compact
+capability scan entries while preserving deterministic archive output and
+local path redaction.
+
+Gate 177 adds a Doctor export Doctor area index renderer. `forge doctor export
+--bundle <path>` archives now include `doctor-areas/index.json` and
+`doctor-areas/index.md`, derived from the already redacted Doctor readiness
+summary, area-status groups, Doctor area capability summary, and compact
+Doctor area entries while preserving deterministic archive output and local
+path redaction.
+
+Gate 178 adds a Doctor export catalogue-policy index renderer. `forge doctor
+export --bundle <path>` archives now include
+`catalogue-policy/index.json` and `catalogue-policy/index.md`, derived from
+the already redacted source-type groups, open-question details, diagnostic
+handoff entries, and open-question text while preserving deterministic archive
+output and local path redaction.
+
+Gate 179 adds a Doctor export summary index renderer. `forge doctor export
+--bundle <path>` archives now include `summary/index.json` and
+`summary/index.md`, derived from the already redacted report summary and
+already-derived action, requirement, diagnostic, provider inventory, evidence,
+Doctor area capability, and catalogue-policy summary metadata while preserving
+deterministic archive output and local path redaction.
+
+Gate 180 adds a Doctor export evidence index renderer. `forge doctor export
+--bundle <path>` archives now include `evidence/index.json` and
+`evidence/index.md`, derived from the already redacted evidence summary and
+compact provider detector evidence entries while preserving deterministic
+archive output and local path redaction.
+Gate 181 adds a Doctor export redaction index renderer. `forge doctor export
+--bundle <path>` archives now include `redaction/index.json` and
+`redaction/index.md`, derived from the existing Doctor export redaction mode,
+path policy, placeholder tokens, and redaction notes while preserving
+deterministic archive output and local path redaction.
+Gate 182 adds a Doctor export open-question index renderer. `forge doctor
+export --bundle <path>` archives now include `open-questions/index.json` and
+`open-questions/index.md`, derived from the existing Doctor export
+open-question metadata while preserving deterministic archive output and local
+path redaction.
+Gate 183 adds a Doctor export scan-input index renderer. `forge doctor export
+--bundle <path>` archives now include `scan-inputs/index.json` and
+`scan-inputs/index.md`, derived from the existing redacted capability scan
+input metadata while preserving deterministic archive output and local path
+redaction.
+Gate 184 adds a Doctor export bundle navigation index renderer. `forge doctor
+export --bundle <path>` archives now include `bundle/index.json` and
+`bundle/index.md`, derived from existing archive supplement paths and
+redacted bundle metadata while preserving deterministic archive output and
+local path redaction.
+Gate 185 adds a Doctor export triage index renderer. `forge doctor export
+--bundle <path>` archives now include `triage/index.json` and
+`triage/index.md`, derived from existing redacted summary, diagnostic,
+requirement, action, wrong-scope, and open-question metadata while preserving
+deterministic archive output and local path redaction.
+Gate 186 adds primary Doctor export triage projection. `forge doctor export`
+JSON now includes top-level `triage`, plain output includes `Triage:`, and
+Markdown summaries include `## Triage`, all derived from the same redacted
+metadata while keeping primary references section-based and archive references
+path-based.
+Gate 187 adds Doctor triage command hints. `forge doctor export` primary JSON,
+plain output, Markdown summaries, and bundle triage entries now list canonical
+next-command hints derived from existing redacted metadata, using placeholders
+instead of local paths and without adding aliases or provider detection logic.
+Gate 188 adds a Doctor triage remediation worklist. `forge doctor export`
+primary JSON, plain output, Markdown summaries, and bundle triage entries now
+list ordered work items derived from existing redacted metadata, linked to
+command-hint IDs and report sections or archive paths.
+Gate 189 adds Doctor worklist summary metadata. `forge doctor export` primary
+JSON, plain output, Markdown summaries, and bundle triage entries now include
+priority and source group summaries derived from the existing worklist.
+Gate 190 adds a compact Doctor remediation status header. `forge doctor
+export` primary JSON, plain output, Markdown summaries, and bundle triage
+entries now include status, headline, work item counts, first work item, first
+command hint, and first canonical command derived from existing worklist data.
+Gate 191 adds a human Doctor operator handoff checklist. `forge doctor export`
+plain output, Markdown summaries, and bundle triage Markdown now include
+copyable checklist items derived from remediation, worklist summary, and
+command-hint data without changing the JSON contract.
+
+Gate 192 adds a Doctor bundle handoff summary sidecar. `forge doctor export
+--bundle <path>` now includes `handoff-summary.md`, a redacted Markdown
+summary derived from existing triage metadata that points at remediation,
+immediate worklist items, command hints, and key archive paths. The sidecar is
+linked from `README.md`, listed in `bundle/index.*`, and included in the
+archive manifest and checksums.
+
+Gate 193 adds a scan-side operator handoff projection. `forge capabilities
+scan` plain output and `--summary <path>` Markdown sidecars now include a
+checklist derived from existing requirement resolution, projected diagnostics,
+Doctor actions, wrong-scope counts, and catalogue-policy open questions. Scan
+JSON output is unchanged.

@@ -1755,33 +1755,45 @@ internal static class ForgeCli
         DoctorExportReport report,
         CapabilityScanReport scanReport)
     {
-        var baseSupplements = CreateActionIndexSupplements(report)
+        var supplements = CreateActionIndexSupplements(report)
+            .Concat(CreateCapabilityIndexSupplements(report))
+            .Concat(CreateCataloguePolicyIndexSupplements(report))
             .Concat(CreateDiagnosticIndexSupplements(report))
+            .Concat(CreateDoctorAreaIndexSupplements(report))
+            .Concat(CreateEvidenceIndexSupplements(report))
+            .Concat(CreateOpenQuestionIndexSupplements(report))
+            .Concat(CreateProviderIndexSupplements(report))
+            .Concat(CreateRedactionIndexSupplements(report))
             .Concat(CreateRequirementIndexSupplements(report))
+            .Concat(CreateScanInputIndexSupplements(report))
+            .Concat(CreateSummaryIndexSupplements(report))
+            .Concat(CreateHandoffSummarySupplements(report))
+            .Concat(CreateTriageIndexSupplements(report))
             .ToArray();
-        if (scanReport.Requirements is null)
+
+        if (scanReport.Requirements is not null)
         {
-            return baseSupplements;
+            var requirementIds = scanReport.Requirements.Requirements
+                .Where(requirement => !StringComparer.Ordinal.Equals(
+                    requirement.Status,
+                    CapabilityRequirementResolutionStatuses.Satisfied))
+                .Select(requirement => requirement.Id)
+                .Distinct(StringComparer.Ordinal)
+                .Order(StringComparer.Ordinal)
+                .ToArray();
+            if (requirementIds.Length > 0)
+            {
+                var explainer = new BuiltInFnvCapabilityExplainer();
+                supplements = supplements
+                    .Concat(CreateRequirementExplanationIndexSupplements(scanReport.Requirements, requirementIds))
+                    .Concat(requirementIds
+                        .SelectMany(requirementId => CreateRequirementExplanationSupplement(explainer, scanReport, requirementId)))
+                    .ToArray();
+            }
         }
 
-        var requirementIds = scanReport.Requirements.Requirements
-            .Where(requirement => !StringComparer.Ordinal.Equals(
-                requirement.Status,
-                CapabilityRequirementResolutionStatuses.Satisfied))
-            .Select(requirement => requirement.Id)
-            .Distinct(StringComparer.Ordinal)
-            .Order(StringComparer.Ordinal)
-            .ToArray();
-        if (requirementIds.Length == 0)
-        {
-            return baseSupplements;
-        }
-
-        var explainer = new BuiltInFnvCapabilityExplainer();
-        return baseSupplements
-            .Concat(CreateRequirementExplanationIndexSupplements(scanReport.Requirements, requirementIds))
-            .Concat(requirementIds
-                .SelectMany(requirementId => CreateRequirementExplanationSupplement(explainer, scanReport, requirementId)))
+        return supplements
+            .Concat(CreateBundleIndexSupplements(report, supplements))
             .ToArray();
     }
 
@@ -1797,6 +1809,30 @@ internal static class ForgeCli
                 DoctorExportActionIndexRenderer.RenderMarkdown(report))
         ];
 
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateCapabilityIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "capabilities/index.json",
+                "application/json",
+                DoctorExportCapabilityIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "capabilities/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportCapabilityIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateCataloguePolicyIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "catalogue-policy/index.json",
+                "application/json",
+                DoctorExportCataloguePolicyIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "catalogue-policy/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportCataloguePolicyIndexRenderer.RenderMarkdown(report))
+        ];
+
     private static IReadOnlyList<DoctorExportArchiveSupplement> CreateDiagnosticIndexSupplements(DoctorExportReport report) =>
         [
             new DoctorExportArchiveSupplement(
@@ -1809,6 +1845,66 @@ internal static class ForgeCli
                 DoctorExportDiagnosticIndexRenderer.RenderMarkdown(report))
         ];
 
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateDoctorAreaIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "doctor-areas/index.json",
+                "application/json",
+                DoctorExportDoctorAreaIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "doctor-areas/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportDoctorAreaIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateEvidenceIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "evidence/index.json",
+                "application/json",
+                DoctorExportEvidenceIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "evidence/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportEvidenceIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateOpenQuestionIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "open-questions/index.json",
+                "application/json",
+                DoctorExportOpenQuestionIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "open-questions/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportOpenQuestionIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateProviderIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "providers/index.json",
+                "application/json",
+                DoctorExportProviderIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "providers/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportProviderIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateRedactionIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "redaction/index.json",
+                "application/json",
+                DoctorExportRedactionIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "redaction/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportRedactionIndexRenderer.RenderMarkdown(report))
+        ];
+
     private static IReadOnlyList<DoctorExportArchiveSupplement> CreateRequirementIndexSupplements(DoctorExportReport report) =>
         [
             new DoctorExportArchiveSupplement(
@@ -1819,6 +1915,64 @@ internal static class ForgeCli
                 "requirements/index.md",
                 "text/markdown; charset=utf-8",
                 DoctorExportRequirementIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateScanInputIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "scan-inputs/index.json",
+                "application/json",
+                DoctorExportScanInputIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "scan-inputs/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportScanInputIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateBundleIndexSupplements(
+        DoctorExportReport report,
+        IReadOnlyList<DoctorExportArchiveSupplement> supplements) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "bundle/index.json",
+                "application/json",
+                DoctorExportBundleIndexRenderer.RenderJson(report, supplements)),
+            new DoctorExportArchiveSupplement(
+                "bundle/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportBundleIndexRenderer.RenderMarkdown(report, supplements))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateTriageIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "triage/index.json",
+                "application/json",
+                DoctorExportTriageIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "triage/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportTriageIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateSummaryIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "summary/index.json",
+                "application/json",
+                DoctorExportSummaryIndexRenderer.RenderJson(report)),
+            new DoctorExportArchiveSupplement(
+                "summary/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportSummaryIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateHandoffSummarySupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "handoff-summary.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportHandoffSummaryRenderer.RenderMarkdown(report))
         ];
 
     private static IReadOnlyList<DoctorExportArchiveSupplement> CreateRequirementExplanationIndexSupplements(

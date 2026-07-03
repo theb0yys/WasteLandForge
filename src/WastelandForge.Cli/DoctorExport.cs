@@ -493,6 +493,7 @@ internal static class DoctorExportJsonSerializer
 
         var capabilityScan = JsonNode.Parse(CapabilityScanJsonSerializer.Serialize(report.Capabilities))
             ?? throw new InvalidOperationException("Capability scan JSON did not parse for doctor export.");
+        var triage = DoctorExportTriageProjection.Create(report);
         var payload = new JsonObject
         {
             ["formatVersion"] = CliConstants.JsonFormatVersion,
@@ -511,6 +512,7 @@ internal static class DoctorExportJsonSerializer
             },
             ["redaction"] = ToJson(report.Redaction),
             ["summary"] = ToJson(report.Summary),
+            ["triage"] = DoctorExportTriageProjection.ToJson(triage),
             ["index"] = ToJson(report.Index),
             ["capabilities"] = capabilityScan
         };
@@ -727,6 +729,8 @@ internal static class DoctorExportTextRenderer
 
         builder.AppendLine(
             $"  Diagnostics: {report.Summary.Diagnostics.Errors} error(s), {report.Summary.Diagnostics.Warnings} warning(s), {report.Summary.Diagnostics.Notes} note(s)");
+        builder.AppendLine();
+        DoctorExportTriageProjection.AppendText(builder, DoctorExportTriageProjection.Create(report));
         builder.AppendLine();
         builder.AppendLine("Doctor index:");
         foreach (var area in report.Index.DoctorAreas)

@@ -179,9 +179,28 @@ Gate status:
 - `gates/gate-172-doctor-bundle-diagnostic-index.md` - Gate 172, Doctor bundle diagnostic index.
 - `gates/gate-173-doctor-bundle-action-index.md` - Gate 173, Doctor bundle action index.
 - `gates/gate-174-doctor-bundle-requirement-index.md` - Gate 174, Doctor bundle requirement index.
+- `gates/gate-175-doctor-bundle-provider-index.md` - Gate 175, Doctor bundle provider index.
+- `gates/gate-176-doctor-bundle-capability-index.md` - Gate 176, Doctor bundle capability index.
+- `gates/gate-177-doctor-bundle-area-index.md` - Gate 177, Doctor bundle area index.
+- `gates/gate-178-doctor-bundle-catalogue-policy-index.md` - Gate 178, Doctor bundle catalogue-policy index.
+- `gates/gate-179-doctor-bundle-summary-index.md` - Gate 179, Doctor bundle summary index.
+- `gates/gate-180-doctor-bundle-evidence-index.md` - Gate 180, Doctor bundle evidence index.
+- `gates/gate-181-doctor-bundle-redaction-index.md` - Gate 181, Doctor bundle redaction index.
+- `gates/gate-182-doctor-bundle-open-question-index.md` - Gate 182, Doctor bundle open-question index.
+- `gates/gate-183-doctor-bundle-scan-input-index.md` - Gate 183, Doctor bundle scan-input index.
+- `gates/gate-184-doctor-bundle-navigation-index.md` - Gate 184, Doctor bundle navigation index.
+- `gates/gate-185-doctor-bundle-triage-index.md` - Gate 185, Doctor bundle triage index.
+- `gates/gate-186-doctor-export-primary-triage-projection.md` - Gate 186, Doctor export primary triage projection.
+- `gates/gate-187-doctor-triage-command-hints.md` - Gate 187, Doctor triage command hints.
+- `gates/gate-188-doctor-triage-remediation-worklist.md` - Gate 188, Doctor triage remediation worklist.
+- `gates/gate-189-doctor-worklist-summary-metadata.md` - Gate 189, Doctor worklist summary metadata.
+- `gates/gate-190-doctor-remediation-status-header.md` - Gate 190, Doctor remediation status header.
+- `gates/gate-191-doctor-operator-handoff-checklist.md` - Gate 191, Doctor operator handoff checklist.
+- `gates/gate-192-doctor-bundle-handoff-summary.md` - Gate 192, Doctor bundle handoff summary sidecar.
+- `gates/gate-193-capability-scan-operator-handoff.md` - Gate 193, capability scan operator handoff checklist.
 
 Next gate:
 
-- Gate 175 - Continue documented capability/Doctor value without resolving open provider policy questions. Provider-version evidence should only start when documented file/runtime/parser/catalogue-policy evidence is ready.
+- Gate 194 - Continue documented capability/Doctor value from existing local metadata. A practical next slice is an explain-side operator checklist projection for `forge capabilities explain` text and Markdown summary output, derived from existing target actions, provider evidence groups, matching project requirements, diagnostic handoff, and catalogue-policy handoff without adding provider-version, runtime, parser, MO2, GECK, or catalogue-policy resolution behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

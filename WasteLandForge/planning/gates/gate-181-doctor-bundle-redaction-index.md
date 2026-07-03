@@ -1,0 +1,88 @@
+# Gate 181 - Doctor Bundle Redaction Index
+
+Status: Complete
+
+## Purpose
+
+Extend `forge doctor export --bundle <path>` so Doctor handoff archives include
+deterministic redaction index entries. The index gives humans and scripts a
+direct way to inspect the bundle redaction mode, path policy, placeholder
+tokens, and redaction notes without opening the full Doctor export JSON.
+
+## Research grounding
+
+- Documented: R006/ADR-010 defines `forge doctor export` as a canonical
+  offline-first CLI command and says CLI output should support humans and
+  automation.
+- Documented: R006 says JSON should be the primary local automation format and
+  kept stable separately from human console output.
+- Documented: R008/ADR-011 says JSON is canonical, Markdown is a projection,
+  fixture-backed tests should cover stable generated evidence, and local
+  workflows must stay offline-first and AI-optional.
+- Documented: Gate 128 implements Doctor export as a redacted local handoff
+  bundle.
+- Documented: Gates 166 through 180 add deterministic Doctor bundle archive
+  entries listed in the manifest and checksums.
+- Inferred: Adding bundle-level redaction index files is safe because they
+  derive only from existing `DoctorExportReport.Redaction` metadata.
+- Open: Provider version parsing, runtime confirmation, MO2 effective
+  visibility, JIP PP LN catalogue policy, and GECK Extender mixed-scope policy
+  remain unresolved.
+
+## Implemented
+
+- `forge doctor export --bundle <path>` still writes deterministic ZIP
+  archives.
+- Every Doctor bundle now includes:
+  - `redaction/index.json`
+  - `redaction/index.md`
+- The redaction index includes the existing redaction mode, path policy,
+  placeholder token list, and redaction notes.
+- The redaction index is included in the bundle manifest and checksums file.
+- `README.md` links to the redaction index entries.
+- Archive entry ordering and timestamps remain deterministic.
+- Redaction index entries use existing redaction metadata and do not expose
+  raw local paths.
+
+## Not implemented
+
+- No new command alias.
+- No `--format zip` or `--format markdown`.
+- No Doctor export SARIF or GitHub mode.
+- No GitHub step-summary behavior for Doctor export.
+- No provider detector, runtime probe, resolver behavior, Doctor planning
+  behavior, diagnostic rule ID, provider-version parser, MO2 VFS inspection,
+  GECK automation, network check, release publishing, catalogue-policy
+  decision, or AI behavior.
+
+## Exit evidence
+
+| Evidence | Status |
+|---|---|
+| Doctor bundles include deterministic redaction index JSON and Markdown | Complete |
+| Redaction index derives from existing Doctor export redaction metadata | Complete |
+| README points to redaction index entries | Complete |
+| Redaction index entries are checksummed and listed in the manifest | Complete |
+| Raw local paths are omitted from redaction index payloads | Complete |
+| Archive ordering and timestamps stay deterministic | Complete |
+| Provider policy gaps remain open | Complete |
+
+## Validation
+
+- `dotnet build --no-restore` passed with 0 warnings and 0 errors.
+- `dotnet test tests\WastelandForge.GoldenTests\WastelandForge.GoldenTests.csproj --no-build --no-restore --filter "FullyQualifiedName~DoctorExport"` passed.
+- `dotnet test WastelandForge.sln --no-build --no-restore -m:1` passed.
+- CLI smoke export inspected `redaction/index.json`, `redaction/index.md`,
+  `README.md`, `checksums.sha256`, manifest entry count, redaction index kind,
+  token count, note count, README link, checksum entries, Markdown heading,
+  placeholder tokens, and absence of the fixture project root path in inspected
+  redaction bundle payloads.
+- `git diff --check` exited 0 with only Git LF-to-CRLF working-copy warnings.
+- Touched-path protected scan returned no protected-file matches.
+
+## Next gate
+
+Gate 182 should continue documented capability/Doctor value from existing
+redacted metadata without resolving open provider policy questions.
+Provider-version evidence should only start when documented file, runtime,
+parser, and catalogue-policy evidence is ready.

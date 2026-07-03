@@ -175,12 +175,12 @@ multi-slider, color picker, FOMOD package creation, capability-derived runtime
 requirements, MO2 installation, or in-game verification exist until later
 gates implement them.
 
-Gate 174 continues Doctor-style environment reporting under the canonical
+Gate 186 continues Doctor-style environment reporting under the canonical
 `/forge capabilities scan`, `/forge capabilities explain`, and
 `/forge doctor export` command surface. Route scan, explain, and Doctor export
 requests to the real CLI when available. Describe Doctor export as a redacted
 local handoff bundle over capability scan evidence, including top-level
-summary/index sections, compact `index.doctorAreaStatuses` groups by Doctor
+summary/triage/index sections, compact `index.doctorAreaStatuses` groups by Doctor
 area readiness status, compact `index.providerStatuses` groups by provider
 status and install scope, compact `index.capabilityStatuses` groups by
 capability status, compact `index.providerInventorySummary` metadata for
@@ -200,16 +200,29 @@ already-projected diagnostics, compact `index.diagnostics` entries for
 already-projected `WF-CAP-*` issues, compact `index.cataloguePolicy` groups by open-question
 source type, structured `index.openQuestionDetails` for current catalogue
 policy gaps, compact `index.cataloguePolicyDiagnosticHandoff` entries for
-open catalogue-policy evidence handoff, and redacted nested project
+open catalogue-policy evidence handoff, top-level `triage` with report-section
+references for blocking/review items and next actions, and redacted nested project
 requirement provider evidence, not as runtime/session proof. With
 `--summary <path>`, describe Doctor export as writing a redacted Markdown
 handoff summary derived from that same Doctor export report, including summary
-counts, Doctor areas, next actions, unavailable requirements, diagnostics, and
-open questions. With `--bundle <path>`, describe Doctor export as writing a
+counts, triage, Doctor areas, next actions, unavailable requirements,
+diagnostics, and open questions. With `--bundle <path>`, describe Doctor export as writing a
 deterministic redacted ZIP handoff archive containing `README.md`,
 `doctor-export.json`, `doctor-export.md`, `actions/index.json`,
-`actions/index.md`, `diagnostics/index.json`, `diagnostics/index.md`,
+`actions/index.md`, `bundle/index.json`, `bundle/index.md`,
+`capabilities/index.json`, `capabilities/index.md`,
+`catalogue-policy/index.json`, `catalogue-policy/index.md`,
+`diagnostics/index.json`, `diagnostics/index.md`,
+`doctor-areas/index.json`, `doctor-areas/index.md`,
+`evidence/index.json`, `evidence/index.md`,
+`handoff-summary.md`,
+`open-questions/index.json`, `open-questions/index.md`,
+`providers/index.json`, `providers/index.md`,
+`redaction/index.json`, `redaction/index.md`,
 `requirements/index.json`, `requirements/index.md`,
+`scan-inputs/index.json`, `scan-inputs/index.md`,
+`summary/index.json`, `summary/index.md`,
+`triage/index.json`, `triage/index.md`,
 `doctor-bundle-manifest.json`, and `checksums.sha256`.
 When unavailable project capability requirements are present, describe the
 archive as also containing path-minimized
@@ -229,7 +242,11 @@ requests, describe compact top-level
 `index.cataloguePolicyDiagnosticHandoff` groups plus compact
 `doctor.index.areaStatuses` readiness groups before the full provider,
 capability, Doctor, project requirement, diagnostics, catalogue-policy
-handoff, and open-question arrays. With `--summary <path>`, describe scan as
+handoff, and open-question arrays. Describe scan-side `Operator handoff:` and
+Markdown `Operator Handoff` sections as ready/review/blocked checklist text
+with priority/source summaries, immediate work items, and copyable command
+hints derived from existing scan metadata. With `--summary <path>`, describe
+scan as
 writing a path-minimized Markdown summary derived from the same scan report
 and projected diagnostics, including summary counts, Doctor areas, action
 summary counts, unavailable requirements, diagnostics, and open questions;
@@ -356,6 +373,156 @@ entries, not a new command alias, detector, diagnostic rule, Doctor planning
 behavior, provider-version policy, runtime probe, Doctor export SARIF/GitHub
 output, GitHub step-summary behavior, release publishing, `--format zip`, or
 `--format markdown`.
+Gate 175 adds provider index JSON and Markdown entries to the Doctor export
+ZIP sidecar archive. Treat them as derived reporting over the existing
+redacted Doctor provider summary, provider-status groups, provider inventory
+summary, evidence summary, and compact provider scan entries, not a new
+command alias, detector, diagnostic rule, Doctor planning behavior,
+provider-version policy, runtime probe, Doctor export SARIF/GitHub output,
+GitHub step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+Gate 176 adds capability index JSON and Markdown entries to the Doctor export
+ZIP sidecar archive. Treat them as derived reporting over the existing
+redacted Doctor capability summary, capability-status groups, Doctor area
+capability summary, and compact capability scan entries, not a new command
+alias, detector, diagnostic rule, resolver behavior, Doctor planning
+behavior, provider-version policy, runtime probe, Doctor export SARIF/GitHub
+output, GitHub step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+Gate 177 adds Doctor area index JSON and Markdown entries to the Doctor export
+ZIP sidecar archive. Treat them as derived reporting over the existing
+redacted Doctor readiness summary, area-status groups, Doctor area capability
+summary, and compact Doctor area entries, not a new command alias, detector,
+diagnostic rule, resolver behavior, Doctor planning behavior,
+provider-version policy, runtime probe, Doctor export SARIF/GitHub output,
+GitHub step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+Gate 178 adds catalogue-policy index JSON and Markdown entries to the Doctor
+export ZIP sidecar archive. Treat them as derived reporting over the existing
+redacted catalogue-policy source-type groups, open-question details,
+diagnostic handoff entries, and open-question text, not a new command alias,
+detector, diagnostic rule, resolver behavior, Doctor planning behavior,
+provider-version policy, runtime probe, Doctor export SARIF/GitHub output,
+GitHub step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+Gate 179 adds summary index JSON and Markdown entries to the Doctor export ZIP
+sidecar archive. Treat them as derived reporting over the existing redacted
+report summary data and already-derived action, requirement, diagnostic,
+provider inventory, evidence, Doctor area capability, and catalogue-policy
+summary metadata, not a new command alias, detector, diagnostic rule, resolver
+behavior, Doctor planning behavior, provider-version policy, runtime probe,
+Doctor export SARIF/GitHub output, GitHub step-summary behavior, release
+publishing, `--format zip`, or `--format markdown`.
+Gate 180 adds evidence index JSON and Markdown entries to the Doctor export
+ZIP sidecar archive. Treat them as derived reporting over existing redacted
+evidence summary metadata and compact provider detector evidence entries with
+raw evidence paths omitted, not a new command alias, detector, diagnostic
+rule, resolver behavior, Doctor planning behavior, provider-version policy,
+runtime probe, Doctor export SARIF/GitHub output, GitHub step-summary
+behavior, release publishing, `--format zip`, or `--format markdown`.
+Gate 181 adds redaction index JSON and Markdown entries to the Doctor export
+ZIP sidecar archive. Treat them as derived reporting over existing Doctor
+export redaction metadata, not a new command alias, detector, diagnostic rule,
+resolver behavior, Doctor planning behavior, provider-version policy, runtime
+probe, Doctor export SARIF/GitHub output, GitHub step-summary behavior,
+release publishing, `--format zip`, or `--format markdown`.
+Gate 182 adds open-question index JSON and Markdown entries to the Doctor
+export ZIP sidecar archive. Treat them as derived reporting over existing
+Doctor export open-question metadata, not a new command alias, detector,
+diagnostic rule, resolver behavior, Doctor planning behavior,
+provider-version policy, runtime probe, catalogue-policy decision, Doctor
+export SARIF/GitHub output, GitHub step-summary behavior, release publishing,
+`--format zip`, or `--format markdown`.
+Gate 183 adds scan-input index JSON and Markdown entries to the Doctor export
+ZIP sidecar archive. Treat them as derived reporting over existing redacted
+capability scan input metadata, not a new command alias, detector, diagnostic
+rule, resolver behavior, Doctor planning behavior, provider-version policy,
+runtime probe, catalogue-policy decision, Doctor export SARIF/GitHub output,
+GitHub step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+Gate 184 adds bundle navigation index JSON and Markdown entries to the Doctor
+export ZIP sidecar archive. Treat them as derived navigation over existing
+archive supplement paths and redacted bundle metadata, not a new command
+alias, detector, diagnostic rule, resolver behavior, Doctor planning
+behavior, provider-version policy, runtime probe, catalogue-policy decision,
+Doctor export SARIF/GitHub output, GitHub step-summary behavior, release
+publishing, `--format zip`, or `--format markdown`.
+Gate 185 adds triage index JSON and Markdown entries to the Doctor export ZIP
+sidecar archive. Treat them as derived triage over existing redacted summary,
+diagnostic, requirement, action, wrong-scope, and open-question metadata, not
+a new command alias, detector, diagnostic rule, resolver behavior, Doctor
+planning behavior, provider-version policy, runtime probe, catalogue-policy
+decision, Doctor export SARIF/GitHub output, GitHub step-summary behavior,
+release publishing, `--format zip`, or `--format markdown`.
+Gate 186 adds primary Doctor export triage projection to JSON, plain text, and
+Markdown summary output. Treat top-level `triage`, plain `Triage:`, and
+Markdown `## Triage` as derived output over existing redacted Doctor metadata,
+not a new command alias, detector, diagnostic rule, resolver behavior, Doctor
+planning behavior, provider-version policy, runtime probe, catalogue-policy
+decision, Doctor export SARIF/GitHub output, GitHub step-summary behavior,
+release publishing, `--format zip`, or `--format markdown`.
+Gate 187 adds Doctor triage command hints to primary JSON, plain text,
+Markdown summaries, and archive `triage/index.*` entries. Treat
+`triage.commands` and `summary.commandHints` as deterministic guidance for
+existing canonical commands using placeholders such as `<project-root>`,
+`<game-root>`, and `<tool-path>`, not as a slash-command alias, detector,
+diagnostic rule, resolver behavior, Doctor planning behavior,
+provider-version policy, runtime probe, catalogue-policy decision, Doctor
+export SARIF/GitHub output, GitHub step-summary behavior, release publishing,
+`--format zip`, or `--format markdown`.
+Gate 188 adds ordered Doctor triage worklist entries to primary JSON, plain
+text, Markdown summaries, and archive `triage/index.*` entries. Treat
+`triage.worklist` and `summary.workItems` as deterministic operator guidance
+derived from existing redacted Doctor metadata and command-hint IDs, not as
+command execution, a slash-command alias, detector, diagnostic rule, resolver
+behavior, Doctor planning behavior, provider-version policy, runtime probe,
+catalogue-policy decision, Doctor export SARIF/GitHub output, GitHub
+step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+Gate 189 adds Doctor worklist summary metadata to primary JSON, plain text,
+Markdown summaries, and archive `triage/index.*` entries. Treat
+`worklistSummary.priorities`, `worklistSummary.sources`,
+`summary.worklistPriorityGroups`, and `summary.worklistSourceGroups` as
+deterministic grouping metadata over existing worklist items, not as command
+execution, a slash-command alias, detector, diagnostic rule, resolver
+behavior, Doctor planning behavior, provider-version policy, runtime probe,
+catalogue-policy decision, Doctor export SARIF/GitHub output, GitHub
+step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+Gate 190 adds a compact Doctor remediation status header to primary JSON,
+plain text, Markdown summaries, and archive `triage/index.*` entries. Treat
+`triage.remediation` and `Remediation:` as deterministic status metadata
+derived from existing worklist and command-hint data, not as command
+execution, a slash-command alias, detector, diagnostic rule, resolver
+behavior, Doctor planning behavior, provider-version policy, runtime probe,
+catalogue-policy decision, Doctor export SARIF/GitHub output, GitHub
+step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+Gate 191 adds human operator handoff sections to plain text, Markdown
+summaries, and archive triage Markdown. Treat `Operator handoff:` and
+Markdown `Operator Handoff` sections as copyable checklists derived from
+existing remediation, worklist-summary, and command-hint data, not as command
+execution, a slash-command alias, detector, diagnostic rule, resolver
+behavior, Doctor planning behavior, provider-version policy, runtime probe,
+catalogue-policy decision, Doctor export SARIF/GitHub output, GitHub
+step-summary behavior, release publishing, `--format zip`, or
+`--format markdown`.
+Gate 192 adds `handoff-summary.md` to Doctor bundle archives. Treat it as a
+concise Markdown sidecar derived from existing redacted triage metadata that
+points at remediation, immediate worklist items, command hints, and key
+archive paths, not as command execution, a slash-command alias, detector,
+diagnostic rule, JSON contract, resolver behavior, Doctor planning behavior,
+provider-version policy, runtime probe, catalogue-policy decision, Doctor
+export SARIF/GitHub output, GitHub step-summary behavior, release publishing,
+`--format zip`, or `--format markdown`.
+Gate 193 adds scan-side operator handoff sections to `forge capabilities scan`
+plain output and Markdown summary sidecars. Treat them as derived checklist
+text over existing requirements, diagnostics, Doctor actions, wrong-scope
+counts, and catalogue-policy open questions, not as command execution, a
+slash-command alias, detector, diagnostic rule, JSON contract, resolver
+behavior, Doctor planning behavior, provider-version policy, runtime probe,
+catalogue-policy decision, SARIF/GitHub output change, GitHub step-summary
+behavior, release publishing, or `--format markdown`.
 
 ## Required output
 
