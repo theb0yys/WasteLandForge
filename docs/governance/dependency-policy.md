@@ -725,3 +725,43 @@ runtime probe, MO2/GECK integration, detector dependency, capability resolver
 dependency, Doctor planner dependency, catalogue-policy decision dependency,
 SARIF/GitHub dependency, GitHub step-summary dependency,
 release-publishing dependency, external tool execution, or AI requirement.
+
+Gate 207 adds duplicate output filename semantic validation and synthetic
+JSON fixtures using existing .NET and repository dependencies. It adds no
+third-party dependency, download, rehosted runtime binary, network call,
+runtime probe, MO2/GECK integration, detector dependency, capability resolver
+dependency, Doctor planner dependency, catalogue-policy decision dependency,
+SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, external tool execution, or AI requirement.
+
+Gate 208 adds a non-emitting JIP generation planner and unit tests using
+existing .NET and repository dependencies. It adds no third-party dependency,
+download, rehosted runtime binary, network call, runtime probe, MO2/GECK
+integration, detector dependency, capability resolver dependency, Doctor
+planner dependency, catalogue-policy decision dependency, SARIF/GitHub
+dependency, GitHub step-summary dependency, release-publishing dependency,
+external tool execution, or AI requirement.
+
+Gate 209 adds an in-memory JIP text renderer and unit tests using existing
+.NET and repository dependencies. It adds no third-party dependency,
+download, rehosted runtime binary, network call, runtime probe, MO2/GECK
+integration, detector dependency, capability resolver dependency, Doctor
+planner dependency, catalogue-policy decision dependency, SARIF/GitHub
+dependency, GitHub step-summary dependency, release-publishing dependency,
+external tool execution, or AI requirement.
+
+Gate 210 adds generated JIP file emission and unit tests using existing .NET
+and repository dependencies. It adds no third-party dependency, download,
+rehosted runtime binary, network call, runtime probe, MO2/GECK integration,
+detector dependency, capability resolver dependency, Doctor planner
+dependency, catalogue-policy decision dependency, SARIF/GitHub dependency,
+GitHub step-summary dependency, release-publishing dependency, external tool
+execution, or AI requirement.
+
+Gate 211 adds generated JIP manifest, checksum, and digest emission using
+existing .NET and repository dependencies. It adds no third-party dependency,
+download, rehosted runtime binary, network call, runtime probe, MO2/GECK
+integration, detector dependency, capability resolver dependency, Doctor
+planner dependency, catalogue-policy decision dependency, SARIF/GitHub
+dependency, GitHub step-summary dependency, release-publishing dependency,
+external tool execution, or AI requirement.

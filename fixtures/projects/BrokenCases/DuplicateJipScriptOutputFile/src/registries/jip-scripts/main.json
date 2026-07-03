@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "jip-script",
+  "id": "io.github.theboyyss.duplicatejipscriptoutputfile.jip_scripts",
+  "scripts": [
+    {
+      "id": "io.github.theboyyss.duplicatejipscriptoutputfile.jip_scripts.bootstrap",
+      "summary": "Synthetic first JIP LN text-script duplicate output fixture.",
+      "lifecyclePrefix": "gr_",
+      "outputFile": "gr_duplicate_output.txt",
+      "requires": {
+        "capabilities": [
+          {
+            "id": "runtime.scripting.jip_script_runner"
+          }
+        ]
+      },
+      "sizePolicy": {
+        "maxBytes": 16384
+      },
+      "formIdResolution": {
+        "strategy": "explicitReferences"
+      },
+      "body": {
+        "lineMode": "opaqueText",
+        "lines": [
+          {
+            "text": "synthetic first source line"
+          }
+        ]
+      }
+    },
+    {
+      "id": "io.github.theboyyss.duplicatejipscriptoutputfile.jip_scripts.second",
+      "summary": "Synthetic second JIP LN text-script duplicate output fixture.",
+      "lifecyclePrefix": "gr_",
+      "outputFile": "gr_duplicate_output.txt",
+      "requires": {
+        "capabilities": [
+          {
+            "id": "runtime.scripting.jip_script_runner"
+          }
+        ]
+      },
+      "sizePolicy": {
+        "maxBytes": 16384
+      },
+      "formIdResolution": {
+        "strategy": "explicitReferences"
+      },
+      "body": {
+        "lineMode": "opaqueText",
+        "lines": [
+          {
+            "text": "synthetic second source line"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -871,5 +871,33 @@ source-line text with one LF byte between lines. It does not change the
 canonical diagnostic report shape, add generator diagnostics, expose JIP
 script evidence in CLI output, or run runtime capability checks.
 
+Gate 207 adds `WF-SEM-043` for duplicate JIP script `outputFile` values. The
+comparison is case-insensitive to match the Windows-first validation baseline.
+It does not change the canonical diagnostic report shape, add generator
+diagnostics, expose JIP script evidence in CLI output, or run runtime
+capability checks.
+
+Gate 208 adds no new diagnostic rule ID. The non-emitting JIP planner reuses
+existing validation diagnostics and returns no plan entries when validation
+has errors. It does not change the canonical diagnostic report shape, expose
+JIP script evidence in CLI output, or run runtime capability checks.
+
+Gate 209 adds no new diagnostic rule ID. The in-memory JIP renderer reuses
+existing validation diagnostics and returns no rendered documents when
+validation has errors. It does not change the canonical diagnostic report
+shape, expose JIP script evidence in CLI output, or run runtime capability
+checks.
+
+Gate 210 adds no new diagnostic rule ID. The generated-file emitter reuses
+existing validation and render diagnostics and writes no files when validation
+has errors. It does not change the canonical diagnostic report shape, expose
+JIP script evidence in CLI output, or run runtime capability checks.
+
+Gate 211 adds no new diagnostic rule ID. The generated-file emitter still
+reuses existing validation and render diagnostics and writes no script,
+manifest, checksum, or digest output when validation has errors. It does not
+change the canonical diagnostic report shape, expose JIP script evidence in
+CLI output, or run runtime capability checks.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

@@ -1,23 +1,28 @@
 # JIP LN Text Script Generator Evidence Checkpoint
 
-Status: Gate 206 source-line byte-budget validation added
+Status: Gate 211 emission manifest and digest skeleton added
 Research classification: Documented / Inferred / Open
 Source: R005, R006 / ADR-008, ADR-009, ADR-010, ADR-011
 
 ## Purpose
 
-Record the evidence and implementation limits for the next real
-mod-building function slice before adding any JIP LN text-script source
-contract, schema, generator code, CLI output, fixture, or package output.
+Record the evidence and implementation limits for the JIP LN text-script
+mod-building function slice while source contracts, validation, and
+non-emitting planning are introduced ahead of script text emission, CLI
+output, and package output.
 
 Gate 203 adds the first source contract skeleton and synthetic validation
 coverage. Gate 204 adds semantic checks for lifecycle/output prefix
 consistency and required JIP Script Runner capability declaration. Gate 205
 adds opaque body/source-line records for future validation and generation
 gates. Gate 206 adds source-level byte-budget validation over those opaque
-lines. Generator code, CLI targets, package staging, runtime probes, GECK
-automation, MO2 VFS inspection, live Data mutation, and external tool
-execution remain out of scope.
+lines. Gate 207 adds duplicate output filename validation. Gate 208 adds a
+non-emitting generation planning model. Gate 209 adds an in-memory renderer
+for opaque source lines. Gate 210 writes rendered files under
+`generated/jip-scripts` only. Gate 211 adds local emission manifest,
+checksum, and digest evidence under that same generated root. CLI targets,
+package staging, runtime probes, GECK automation, MO2 VFS inspection, live
+Data mutation, and external tool execution remain out of scope.
 
 ## Documented
 
@@ -67,12 +72,32 @@ execution remain out of scope.
 - Gate 206 uses `WF-SEM-042` when the source body exceeds `sizePolicy.maxBytes`.
   The source budget uses UTF-8 bytes for stored line text with one LF byte
   between lines. This is not final emitted-file byte accounting.
+- Gate 207 uses `WF-SEM-043` for duplicate JIP `outputFile` values across
+  manifest-declared JIP script registries. The comparison is
+  case-insensitive to match the Windows-first validation baseline.
+- Gate 208 uses `JipScriptGenerationPlanner` to derive future generated path,
+  game-relative Data path, install path, source-size, capability, and source
+  location metadata from validated JIP source contracts without writing files.
+- Gate 209 uses `JipScriptTextRenderer` to join validated opaque source lines
+  with LF separators in memory, record UTF-8 byte counts, and preserve Gate
+  208 path metadata without writing files.
+- Gate 210 uses `JipScriptFileEmitter` to write rendered documents under
+  `generated/jip-scripts/nvse/plugins/scripts/...` only. Game-relative
+  `Data/nvse/plugins/scripts/...` remains install metadata and is not written.
+- Gate 211 writes `jip-script-emission-manifest.json` and `checksums.sha256`
+  under `generated/jip-scripts`. The manifest records package non-mutation
+  flags, script output metadata, generated payload digests, and known
+  limitations. The result output digest list covers generated script files and
+  the manifest, but not the checksum file itself.
 
 ## Open
 
 - Exact safe script syntax subset for the first emitted text files.
 - Exact line ending, encoding, header, comment, and deterministic formatting
   policy for generated scripts.
+- Exact generated output report/schema shape for JIP generation planning and
+  emitted script evidence.
+- Exact generated JIP emission manifest schema and validation rules.
 - Exact future FormID-resolution fields beyond the initial explicit-reference
   strategy.
 - Exact JohnnyGuitar-backed Editor ID call-through extension point.
@@ -82,8 +107,8 @@ execution remain out of scope.
 
 ## Non-goals
 
-- No JIP LN generator implementation.
-- No generated script files.
+- No generated JIP emission manifest schema.
+- No generated JIP emission manifest validation.
 - No build graph target.
 - No CLI behavior or output contract change.
 - No runtime probe.
@@ -96,6 +121,7 @@ execution remain out of scope.
 
 ## Next implementation slice
 
-Gate 207 should add duplicate output filename semantic validation. It should
-stop before text emission, package staging, CLI target wiring, runtime probes,
-GECK automation, MO2 VFS inspection, or external tool execution.
+Gate 212 should add a generated JIP emission manifest schema and validation
+skeleton. It should stop before package staging, CLI target wiring, runtime
+probes, GECK automation, MO2 VFS inspection, live Data mutation, or external
+tool execution.

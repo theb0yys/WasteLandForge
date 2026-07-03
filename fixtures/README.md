@@ -530,6 +530,30 @@ It still adds no generated JIP script files, Bethesda assets, third-party mod
 files, local install snapshots, MO2 profiles, GECK outputs, or external tool
 fixtures.
 
+Gate 208 adds no fixture files. It reuses the existing synthetic valid JIP
+source fixture and duplicate-output broken fixture for non-emitting planner
+unit tests. It still adds no generated JIP script files, Bethesda assets,
+third-party mod files, local install snapshots, MO2 profiles, GECK outputs,
+or external tool fixtures.
+
+Gate 209 adds no fixture files. It reuses the same synthetic valid JIP source
+fixture and duplicate-output broken fixture for in-memory renderer unit tests.
+It still adds no generated JIP script files, Bethesda assets, third-party mod
+files, local install snapshots, MO2 profiles, GECK outputs, or external tool
+fixtures.
+
+Gate 210 adds no fixture files. It reuses temp copies of the existing
+synthetic valid JIP source fixture and duplicate-output broken fixture for
+generated-file emission unit tests. It still adds no Bethesda assets,
+third-party mod files, local install snapshots, MO2 profiles, GECK outputs, or
+external tool fixtures.
+
+Gate 211 adds no fixture files. It reuses temp copies of the existing
+synthetic valid JIP source fixture and duplicate-output broken fixture for
+manifest, checksum, and digest emission unit tests. It still adds no Bethesda
+assets, third-party mod files, local install snapshots, MO2 profiles, GECK
+outputs, or external tool fixtures.
+
 Gate 204 adds:
 
 - `projects/BrokenCases/JipScriptLifecyclePrefixMismatch` - deterministic
@@ -558,6 +582,15 @@ Gate 206 adds:
 - `projects/BrokenCases/JipScriptSourceLineBudgetExceeded` - deterministic
   `WF-SEM-042` failure case for source body text exceeding declared
   `sizePolicy.maxBytes`.
+
+It still adds no generated JIP script files, Bethesda assets, third-party mod
+files, local install snapshots, MO2 profiles, GECK outputs, or external tool
+fixtures.
+
+Gate 207 adds:
+
+- `projects/BrokenCases/DuplicateJipScriptOutputFile` - deterministic
+  `WF-SEM-043` failure case for duplicate JIP script `outputFile` values.
 
 It still adds no generated JIP script files, Bethesda assets, third-party mod
 files, local install snapshots, MO2 profiles, GECK outputs, or external tool

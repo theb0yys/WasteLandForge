@@ -1119,6 +1119,7 @@ public sealed class ProjectValidationPipeline
         List<DiagnosticIssue> issues,
         LogicalId? projectId)
     {
+        var outputFiles = new Dictionary<string, JipScriptOutputFileOccurrence>(StringComparer.OrdinalIgnoreCase);
         foreach (var document in jipScriptDocuments)
         {
             if (document.Root["scripts"] is not JsonArray scripts)
@@ -1170,8 +1171,49 @@ public sealed class ProjectValidationPipeline
                 }
 
                 ValidateJipScriptSourceLineBudget(document, script, index, id, issues, projectId);
+                ValidateJipScriptOutputFileUnique(document, index, id, outputFile, outputFiles, issues, projectId);
             }
         }
+    }
+
+    private static void ValidateJipScriptOutputFileUnique(
+        RegistryDocument document,
+        int scriptIndex,
+        string id,
+        string? outputFile,
+        Dictionary<string, JipScriptOutputFileOccurrence> outputFiles,
+        List<DiagnosticIssue> issues,
+        LogicalId? projectId)
+    {
+        if (outputFile is null)
+        {
+            return;
+        }
+
+        var currentLocation = CreateSourceLocation(
+            document.DisplayPath,
+            $"/scripts/{scriptIndex}/outputFile",
+            document.SourceLocations);
+        if (!outputFiles.TryGetValue(outputFile, out var firstOccurrence))
+        {
+            outputFiles[outputFile] = new JipScriptOutputFileOccurrence(
+                id,
+                currentLocation);
+            return;
+        }
+
+        issues.Add(CreateIssue(
+            "WF-SEM-043",
+            DiagnosticSeverity.Error,
+            "semantic",
+            "Duplicate JIP script output filename",
+            $"JIP LN text script '{id}' uses output file '{outputFile}', which is already used by script '{firstOccurrence.ScriptId}'.",
+            currentLocation,
+            projectId,
+            [firstOccurrence.Source],
+            "Give each JIP LN text script a unique outputFile.",
+            "WF-SEM-043",
+            $"wf:sem:043:{outputFile}:{id}"));
     }
 
     private static void ValidateJipScriptSourceLineBudget(
@@ -1234,6 +1276,10 @@ public sealed class ProjectValidationPipeline
 
         return total;
     }
+
+    private sealed record JipScriptOutputFileOccurrence(
+        string ScriptId,
+        SourceLocation Source);
 
     private static void RunAssetSemanticValidation(
         string projectRoot,

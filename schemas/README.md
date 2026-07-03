@@ -269,3 +269,21 @@ generated output schema.
 
 Gate 206 adds no schema. It validates schema-valid JIP source lines against
 the source-level byte budget declared in `sizePolicy.maxBytes`.
+
+Gate 207 adds no schema. It validates schema-valid JIP `outputFile` values
+for duplicate generated filename intent.
+
+Gate 208 adds no schema. It derives non-emitting JIP generation plan metadata
+from validated `jip-scripts/0.1.0` source contracts; generated output schemas
+remain future work.
+
+Gate 209 adds no schema. It renders validated `jip-scripts/0.1.0` source
+lines in memory only; generated output schemas remain future work.
+
+Gate 210 adds no schema. It writes rendered JIP text files under
+`generated/jip-scripts` only; generated manifest or evidence schemas remain
+future work.
+
+Gate 211 adds no schema. It writes a generated JIP emission manifest and
+checksum sidecar under `generated/jip-scripts`; the manifest schema and
+revalidation rules remain future work.

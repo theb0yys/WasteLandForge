@@ -949,6 +949,39 @@ byte-budget validation. The fixture is synthetic JSON only and adds no
 generated script files, local install snapshots, GECK outputs, MO2 profiles,
 Bethesda assets, third-party mod files, or external tool fixtures.
 
+Gate 207 adds semantic fixture coverage for `WF-SEM-043` duplicate JIP script
+`outputFile` values. The fixture is synthetic JSON only and adds no generated
+script files, local install snapshots, GECK outputs, MO2 profiles, Bethesda
+assets, third-party mod files, or external tool fixtures.
+
+Gate 208 adds focused `WastelandForge.UnitTests` coverage for
+`JipScriptGenerationPlanner`. The tests assert non-emitting plan metadata for
+the synthetic valid JIP fixture and validation-error short-circuit behavior
+for the duplicate-output fixture. It adds no generated script files, local
+install snapshots, GECK outputs, MO2 profiles, Bethesda assets, third-party
+mod files, or external tool fixtures.
+
+Gate 209 extends that focused `WastelandForge.UnitTests` coverage for
+`JipScriptTextRenderer`. The tests assert in-memory rendered text, LF
+separator metadata, UTF-8 byte counts, path metadata preservation, and
+validation-error short-circuit behavior. It adds no generated script files,
+local install snapshots, GECK outputs, MO2 profiles, Bethesda assets,
+third-party mod files, or external tool fixtures.
+
+Gate 210 extends that focused `WastelandForge.UnitTests` coverage for
+`JipScriptFileEmitter`. The tests use temp-copied synthetic fixtures to assert
+generated-root-only writes under `generated/jip-scripts`, exact rendered
+content, no writes to `Data`, and validation-error no-write behavior. It adds
+no local install snapshots, GECK outputs, MO2 profiles, Bethesda assets,
+third-party mod files, or external tool fixtures.
+
+Gate 211 extends the same focused `JipScriptFileEmitter` unit coverage to
+assert `jip-script-emission-manifest.json`, `checksums.sha256`, script payload
+digest entries, manifest digest entries, checksum-file exclusion from output
+digests, package non-mutation flags, and validation-error no-manifest behavior.
+It adds no local install snapshots, GECK outputs, MO2 profiles, Bethesda
+assets, third-party mod files, or external tool fixtures.
+
 Run the full local suite serially:
 
 ```text

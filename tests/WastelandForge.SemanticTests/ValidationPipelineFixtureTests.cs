@@ -189,6 +189,26 @@ public sealed class ValidationPipelineFixtureTests
     }
 
     [Fact]
+    public void DuplicateJipScriptOutputFileEmitsSemanticDiagnostic()
+    {
+        var report = ValidateFixture(Path.Combine("BrokenCases", "DuplicateJipScriptOutputFile"));
+        var issue = Assert.Single(report.Issues);
+
+        Assert.True(report.HasErrors);
+        Assert.Equal("WF-SEM-043", issue.RuleId.ToString());
+        Assert.Equal(DiagnosticSeverity.Error, issue.Severity);
+        Assert.Equal("semantic", issue.Category);
+        Assert.Equal("src/registries/jip-scripts/main.json", issue.PrimaryLocation.File);
+        Assert.Equal("/scripts/1/outputFile", issue.PrimaryLocation.Pointer?.ToString());
+        Assert.Equal("wf:sem:043:gr_duplicate_output.txt:io.github.theboyyss.duplicatejipscriptoutputfile.jip_scripts.second", issue.Fingerprint);
+        Assert.Contains("gr_duplicate_output.txt", issue.Message, StringComparison.Ordinal);
+        Assert.Contains("jip_scripts.bootstrap", issue.Message, StringComparison.Ordinal);
+        var related = Assert.Single(issue.RelatedLocations);
+        Assert.Equal("src/registries/jip-scripts/main.json", related.File);
+        Assert.Equal("/scripts/0/outputFile", related.Pointer?.ToString());
+    }
+
+    [Fact]
     public void InvalidDialogueRegistryUsesRuntimeSchemaDiagnostics()
     {
         var report = ValidateFixture(Path.Combine("BrokenCases", "InvalidDialogueRegistry"));

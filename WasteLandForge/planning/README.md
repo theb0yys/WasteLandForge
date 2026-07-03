@@ -211,9 +211,14 @@ Gate status:
 - `gates/gate-204-jip-ln-text-script-source-semantic-validation.md` - Gate 204, JIP LN text-script source semantic validation.
 - `gates/gate-205-jip-ln-text-script-body-source-line-contract.md` - Gate 205, JIP LN text-script body/source-line contract skeleton.
 - `gates/gate-206-jip-ln-text-script-source-line-byte-budget-validation.md` - Gate 206, JIP LN text-script source-line byte-budget validation.
+- `gates/gate-207-jip-ln-text-script-duplicate-output-validation.md` - Gate 207, JIP LN text-script duplicate output filename validation.
+- `gates/gate-208-jip-ln-text-script-generation-planning-skeleton.md` - Gate 208, JIP LN text-script generation planning skeleton.
+- `gates/gate-209-jip-ln-text-script-in-memory-renderer-skeleton.md` - Gate 209, JIP LN text-script in-memory renderer skeleton.
+- `gates/gate-210-jip-ln-text-script-generated-file-emission.md` - Gate 210, JIP LN text-script generated-file emission.
+- `gates/gate-211-jip-ln-text-script-emission-manifest-digests.md` - Gate 211, JIP LN text-script emission manifest and digest skeleton.
 
 Next gate:
 
-- Gate 207 - JIP LN text-script duplicate output filename semantic validation, without text emission, package staging, CLI target wiring, runtime probes, GECK automation, MO2 VFS inspection, or external tool execution.
+- Gate 212 - JIP LN text-script emission manifest schema and validation skeleton, without package staging, CLI target wiring, runtime probes, GECK automation, MO2 VFS inspection, live Data mutation, or external tool execution.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

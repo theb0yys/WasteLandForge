@@ -636,6 +636,52 @@ MO2 VFS inspection, live Data mutation, external tool execution, command
 alias, or new output format. Route the next implementation slice to Gate 207:
 duplicate JIP output filename semantic validation.
 
+Gate 207 adds duplicate JIP LN text-script `outputFile` semantic validation
+using a Windows-first case-insensitive comparison. Treat it as source
+validation only, not as generated script output, `forge generate` target
+wiring, `forge build` target wiring, package staging, runtime probe, GECK
+automation, MO2 VFS inspection, live Data mutation, external tool execution,
+command alias, or new output format. Route the next implementation slice to
+Gate 208: non-emitting JIP text-script generation planning skeleton.
+
+Gate 208 adds a non-emitting JIP LN text-script generation planner that
+records future generated path intent, Data path intent, install path intent,
+source byte counts, required capabilities, FormID-resolution strategy, and
+source locations. Treat it as internal planning metadata only, not as emitted
+script text, `forge generate` target wiring, `forge build` target wiring,
+package staging, runtime probe, GECK automation, MO2 VFS inspection, live
+Data mutation, external tool execution, command alias, or new output format.
+Route the next implementation slice to Gate 209: in-memory JIP text-script
+renderer skeleton.
+
+Gate 209 adds an in-memory JIP LN text-script renderer that joins validated
+opaque source lines with LF separators, records UTF-8 byte counts, and
+preserves generated/Data/install path metadata. Treat it as internal render
+metadata only, not as generated-file emission, `forge generate` target wiring,
+`forge build` target wiring, package staging, runtime probe, GECK automation,
+MO2 VFS inspection, live Data mutation, external tool execution, command
+alias, or new output format. Route the next implementation slice to Gate 210:
+generated-file emission under `generated/jip-scripts` only.
+
+Gate 210 adds generated JIP LN text-script file emission under
+`generated/jip-scripts` only. Treat game-relative `Data/nvse/plugins/scripts`
+paths as install metadata only, not as live Data writes. Do not route this as
+`forge generate` target wiring, `forge build` target wiring, package staging,
+runtime probe, GECK automation, MO2 VFS inspection, live Data mutation,
+external tool execution, command alias, or new output format. Route the next
+implementation slice to Gate 211: generated JIP emission manifest and digest
+skeleton.
+
+Gate 211 adds generated JIP LN text-script emission manifest, checksum, and
+digest evidence under `generated/jip-scripts` only. Treat
+`jip-script-emission-manifest.json` and `checksums.sha256` as internal
+generated evidence, not as package staging or live install output. Do not
+route this as `forge generate` target wiring, `forge build` target wiring,
+package staging, runtime probe, GECK automation, MO2 VFS inspection, live Data
+mutation, external tool execution, command alias, or new output format. Route
+the next implementation slice to Gate 212: generated JIP emission manifest
+schema and validation skeleton.
+
 ## Required output
 
 Return:

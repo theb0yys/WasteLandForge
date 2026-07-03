@@ -639,3 +639,33 @@ byte-budget validation. It commits no generated JIP script files, provider
 DLLs, Bethesda assets, third-party mod files, local install snapshots, MO2
 profiles, GECK outputs, external tool fixtures, generated script outputs, or
 generated evidence fixtures.
+
+Gate 207 commits only synthetic JSON registry fixtures for duplicate JIP
+output filename validation. It commits no generated JIP script files, provider
+DLLs, Bethesda assets, third-party mod files, local install snapshots, MO2
+profiles, GECK outputs, external tool fixtures, generated script outputs, or
+generated evidence fixtures.
+
+Gate 208 commits no new fixture files. It reuses existing synthetic JSON
+fixtures for non-emitting planner unit tests and commits no generated JIP
+script files, provider DLLs, Bethesda assets, third-party mod files, local
+install snapshots, MO2 profiles, GECK outputs, external tool fixtures,
+generated script outputs, or generated evidence fixtures.
+
+Gate 209 commits no new fixture files. It reuses existing synthetic JSON
+fixtures for in-memory renderer unit tests and commits no generated JIP script
+files, provider DLLs, Bethesda assets, third-party mod files, local install
+snapshots, MO2 profiles, GECK outputs, external tool fixtures, generated
+script outputs, or generated evidence fixtures.
+
+Gate 210 commits no new fixture files. It uses temp-copied synthetic JSON
+fixtures for generated-file emission unit tests and commits no generated JIP
+script outputs, provider DLLs, Bethesda assets, third-party mod files, local
+install snapshots, MO2 profiles, GECK outputs, external tool fixtures, or
+generated evidence fixtures.
+
+Gate 211 commits no new fixture files. It uses temp-copied synthetic JSON
+fixtures for manifest, checksum, and digest emission unit tests and commits no
+generated JIP script outputs, provider DLLs, Bethesda assets, third-party mod
+files, local install snapshots, MO2 profiles, GECK outputs, external tool
+fixtures, or generated evidence fixtures.

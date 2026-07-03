@@ -395,3 +395,21 @@ through existing schema diagnostics.
 Gate 206 adds `WF-SEM-042` for JIP source bodies whose opaque source-line
 text exceeds `sizePolicy.maxBytes` under the source-level byte-budget
 calculation.
+
+Gate 207 adds `WF-SEM-043` for duplicate JIP script `outputFile` values
+across manifest-declared JIP script registries.
+
+Gate 208 adds no new rule ID. The non-emitting JIP planner reuses existing
+source, schema, and semantic diagnostics before returning plan entries.
+
+Gate 209 adds no new rule ID. The in-memory JIP renderer reuses existing
+source, schema, and semantic diagnostics before returning rendered documents.
+
+Gate 210 adds no new rule ID. The generated-file emitter reuses existing
+source, schema, semantic, and render diagnostics before writing generated
+files.
+
+Gate 211 adds no new rule ID. The generated-file emitter reuses existing
+source, schema, semantic, and render diagnostics before writing generated
+script, manifest, checksum, or digest evidence. Future manifest schema
+validation can introduce explicit generated-evidence diagnostics.

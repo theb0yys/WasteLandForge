@@ -2,10 +2,11 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 206 adds JIP LN
-text-script source-line byte-budget semantic validation while keeping text
-emission, package staging, CLI target wiring, runtime probes, GECK automation,
-MO2 VFS inspection, and external tool execution out of scope.
+The project is currently in gated v0.1 implementation. Gate 211 adds generated
+JIP LN text-script emission manifests, output digests, and checksum sidecars
+under `generated/jip-scripts` only while keeping package staging, CLI target
+wiring, runtime probes, GECK automation, MO2 VFS inspection, live Data
+mutation, and external tool execution out of scope.
 
 ## Architecture Spine
 
@@ -405,6 +406,43 @@ package staging, CLI generation/build target, runtime probe, GECK automation,
 MO2 VFS inspection, live Data mutation, or external tool execution. Gate 207
 should add duplicate JIP output filename semantic validation before generator
 work.
+
+Gate 207 adds `WF-SEM-043` when two manifest-declared JIP scripts resolve to
+the same `outputFile`, using a Windows-first case-insensitive comparison. It
+adds a synthetic duplicate-output fixture and still writes no generated script
+files. Gate 208 should add a non-emitting JIP text-script generation planning
+skeleton before any file output.
+
+Gate 208 adds `JipScriptGenerationPlanner` and plan records for validated JIP
+source contracts. The plan records future generated path intent under
+`generated/jip-scripts/nvse/plugins/scripts/...`, game-relative Data path
+intent under `nvse/plugins/scripts/...`, install path intent under
+`Data/nvse/plugins/scripts/...`, source byte counts, size limits, required
+capabilities, FormID-resolution strategy, and source locations. It still
+writes no generated script files. Gate 209 should add an in-memory renderer
+skeleton before file output.
+
+Gate 209 adds `JipScriptTextRenderer` and in-memory rendered document records.
+The renderer joins validated opaque source lines with LF separators, records
+UTF-8 content byte counts, and preserves the Gate 208 generated/Data/install
+path metadata. It still writes no generated script files. Gate 210 should add
+generated-file emission under `generated/jip-scripts` only.
+
+Gate 210 adds `JipScriptFileEmitter` and generated-file emission records. The
+emitter writes rendered JIP text documents under
+`generated/jip-scripts/nvse/plugins/scripts/...` only, checks output-root
+containment, uses UTF-8 without a byte-order mark, and leaves
+`Data/nvse/plugins/scripts/...` as install metadata. Gate 211 should add a
+generated JIP emission manifest and digest skeleton.
+
+Gate 211 adds `jip-script-emission-manifest.json`, `checksums.sha256`, and
+non-self-referential output digest records for generated JIP text-script
+emission under `generated/jip-scripts`. The manifest records project, package
+non-mutation flags, script output metadata, script payload digests, and known
+limitations. Gate 212 should add a schema and validation skeleton for that
+manifest without adding CLI target wiring, package staging, runtime probes,
+GECK automation, MO2 VFS inspection, live Data mutation, or external tool
+execution.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

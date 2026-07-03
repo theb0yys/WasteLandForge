@@ -1118,3 +1118,39 @@ Gate 206 adds `WF-SEM-042` in `ProjectValidationPipeline` for JIP source
 bodies whose opaque line text exceeds `sizePolicy.maxBytes`. The budget uses
 UTF-8 bytes for stored source-line text with one LF byte between lines, and is
 not final emitted-file byte accounting.
+
+Gate 207 adds `WF-SEM-043` in `ProjectValidationPipeline` for duplicate JIP
+script `outputFile` values. The comparison is case-insensitive to match the
+Windows-first validation baseline and prevent generated filename collisions.
+
+Gate 208 adds `JipScriptGenerationPlanner`,
+`JipScriptGenerationPlanResult`, and `JipScriptGenerationPlanEntry` in
+`WastelandForge.Generation`. The planner consumes existing JIP validation and
+read models, then returns deterministic non-emitting path, size, capability,
+FormID-resolution, and source-location metadata for future script generation.
+It does not write files, wire CLI targets, stage packages, probe runtimes,
+inspect MO2, automate GECK, mutate live Data, or execute external tools.
+
+Gate 209 adds `JipScriptTextRenderer`, `JipScriptTextRenderResult`, and
+`JipScriptRenderedDocument` in `WastelandForge.Generation`. The renderer
+converts validated opaque JIP source lines into in-memory text documents with
+LF separators and UTF-8 byte counts while preserving Gate 208 plan metadata.
+It does not write files, wire CLI targets, stage packages, probe runtimes,
+inspect MO2, automate GECK, mutate live Data, or execute external tools.
+
+Gate 210 adds `JipScriptFileEmitter`, `JipScriptFileEmissionResult`, and
+`JipScriptGeneratedFile` in `WastelandForge.Generation`. The emitter writes
+rendered JIP text documents under `generated/jip-scripts` only, checks output
+containment, uses UTF-8 without a byte-order mark, and preserves Data/install
+paths as metadata. It does not wire CLI targets, stage packages, probe
+runtimes, inspect MO2, automate GECK, mutate live Data, or execute external
+tools.
+
+Gate 211 extends `JipScriptFileEmitter` and `JipScriptFileEmissionResult` with
+generated emission manifest, checksum, and output digest evidence. Emission now
+writes `jip-script-emission-manifest.json` and `checksums.sha256` under
+`generated/jip-scripts`, records script payload digests, and returns digest
+records for generated script files plus the manifest while leaving the
+checksum file out of the digest list. It still does not wire CLI targets, stage
+packages, probe runtimes, inspect MO2, automate GECK, mutate live Data, or
+execute external tools.
