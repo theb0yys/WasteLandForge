@@ -108,6 +108,9 @@ internal static class CliHelpWriter
             case "docs":
                 WriteDocsHelp(writer);
                 return true;
+            case "graph":
+                WriteGraphHelp(writer);
+                return true;
             case "doctor":
                 WriteDoctorHelp(writer);
                 return true;
@@ -115,7 +118,6 @@ internal static class CliHelpWriter
                 WriteDoctorExportHelp(writer);
                 return true;
             case "init":
-            case "graph":
             case "explain":
             case "clean":
                 WriteReservedCommandHelp(writer, commandPath, "This command is part of the ADR-010 command surface and is reserved for a later gate.");
@@ -260,7 +262,7 @@ internal static class CliHelpWriter
         writer.WriteLine("Usage:");
         writer.WriteLine("  forge docs [project-root] [--project <path>] [--output generated/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Writes deterministic local docs reference evidence under project generated/. The current gate indexes embedded schemas, project registry files, reserved rule families, the built-in FNV capability/provider catalogue, canonical command references, per-schema reference page skeletons, project registry reference page skeletons, validation rule reference page skeletons, and built-in capability reference page skeletons.");
+        writer.WriteLine("Writes deterministic local docs reference evidence under project generated/. The current gate indexes embedded schemas, project registry files, reserved rule families, the built-in FNV capability/provider catalogue, canonical command references, per-schema reference page skeletons, project registry reference page skeletons, validation rule reference page skeletons, built-in capability reference page skeletons, built-in provider reference page skeletons, and canonical command reference page skeletons.");
         writer.WriteLine("This does not build a static site, watch files, publish to the network, execute graph/explain/clean behavior, package or release outputs, execute xEdit, generate patches, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.");
         writer.WriteLine();
         writer.WriteLine("Outputs:");
@@ -274,6 +276,10 @@ internal static class CliHelpWriter
         writer.WriteLine("  generated/docs/rules/<rule-family>/rule-reference.md");
         writer.WriteLine("  generated/docs/capabilities/<capability-id>/capability-reference.json");
         writer.WriteLine("  generated/docs/capabilities/<capability-id>/capability-reference.md");
+        writer.WriteLine("  generated/docs/providers/<provider-id>/provider-reference.json");
+        writer.WriteLine("  generated/docs/providers/<provider-id>/provider-reference.md");
+        writer.WriteLine("  generated/docs/commands/<command-path>/command-reference.json");
+        writer.WriteLine("  generated/docs/commands/<command-path>/command-reference.md");
         writer.WriteLine("  generated/docs/docs-manifest.json");
         writer.WriteLine("  generated/docs/checksums.sha256");
         writer.WriteLine();
@@ -284,6 +290,33 @@ internal static class CliHelpWriter
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
         writer.WriteLine("  0 docs evidence written or planned");
+        writer.WriteLine("  1 blocking diagnostics found");
+        writer.WriteLine("  2 usage or unsupported format");
+    }
+
+    private static void WriteGraphHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge graph");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge graph [project-root] [--project <path>] [--output generated/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Writes deterministic project source graph evidence under project generated/. The current gate links the project, known source contract documents, declared capability requirements, built-in catalogue capabilities/providers, and generated/dist output boundaries.");
+        writer.WriteLine("This does not render graph visualization formats, accept --subject, run capability scans, resolve provider status, plan or execute builds, build a static site, watch files, publish to the network, package or release outputs, execute xEdit, generate patches, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.");
+        writer.WriteLine();
+        writer.WriteLine("Outputs:");
+        writer.WriteLine("  generated/graph/project-source-graph.json");
+        writer.WriteLine("  generated/graph/project-source-graph.md");
+        writer.WriteLine("  generated/graph/graph-manifest.json");
+        writer.WriteLine("  generated/graph/checksums.sha256");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge graph fixtures/projects/ExampleMod --format json");
+        writer.WriteLine("  forge graph --project fixtures/projects/ExampleMod --output generated/graph");
+        writer.WriteLine("  forge graph fixtures/projects/ExampleMod --dry-run --format plain");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 graph evidence written or planned");
         writer.WriteLine("  1 blocking diagnostics found");
         writer.WriteLine("  2 usage or unsupported format");
     }

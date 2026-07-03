@@ -954,5 +954,24 @@ Gate 232 adds no new diagnostic rule ID. Validation rule reference page
 generation uses the existing `forge docs` validation and generated-output
 containment behavior from Gate 229.
 
+Gate 233 adds no new diagnostic rule ID. Built-in capability reference page
+generation uses the existing `forge docs` validation and generated-output
+containment behavior from Gate 229.
+
+Gate 234 adds no new diagnostic rule ID. Built-in provider reference page
+generation uses the existing `forge docs` validation and generated-output
+containment behavior from Gate 229.
+
+Gate 235 adds no new diagnostic rule ID. Canonical command reference page
+generation uses the existing `forge docs` validation and generated-output
+containment behavior from Gate 229.
+
+Gate 236 adds no new diagnostic rule ID. `forge graph` project source graph
+generation reuses `WF-GEN-001` for generated-output containment.
+
+Gate 237 adds no new diagnostic rule ID. `forge graph` capability requirement
+graph generation remains declaration-only and reuses existing validation and
+`WF-GEN-001` generated-output containment behavior.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

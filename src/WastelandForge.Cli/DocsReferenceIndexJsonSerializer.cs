@@ -37,6 +37,8 @@ internal static class DocsReferenceIndexJsonSerializer
             ["registryReferences"] = new JsonArray(result.RegistryReferences.Select(ToJson).ToArray()),
             ["ruleReferences"] = new JsonArray(result.RuleReferences.Select(ToJson).ToArray()),
             ["capabilityReferences"] = new JsonArray(result.CapabilityReferences.Select(ToJson).ToArray()),
+            ["providerReferences"] = new JsonArray(result.ProviderReferences.Select(ToJson).ToArray()),
+            ["commandReferences"] = new JsonArray(result.CommandReferences.Select(ToJson).ToArray()),
             ["sourceDigests"] = new JsonArray(result.SourceDigests.Select(ToJson).ToArray()),
             ["outputDigests"] = new JsonArray(result.OutputDigests.Select(ToJson).ToArray())
         };
@@ -73,7 +75,9 @@ internal static class DocsReferenceIndexJsonSerializer
             ["capabilities"] = summary.Capabilities,
             ["capabilityReferences"] = summary.CapabilityReferences,
             ["providers"] = summary.Providers,
+            ["providerReferences"] = summary.ProviderReferences,
             ["commands"] = summary.Commands,
+            ["commandReferences"] = summary.CommandReferences,
             ["sources"] = result.SourceDigests.Count,
             ["outputs"] = result.OutputDigests.Count
         };
@@ -92,6 +96,10 @@ internal static class DocsReferenceIndexJsonSerializer
             ["ruleReferenceMarkdown"] = ToJsonArray(outputs.RuleReferenceMarkdown),
             ["capabilityReferenceJson"] = ToJsonArray(outputs.CapabilityReferenceJson),
             ["capabilityReferenceMarkdown"] = ToJsonArray(outputs.CapabilityReferenceMarkdown),
+            ["providerReferenceJson"] = ToJsonArray(outputs.ProviderReferenceJson),
+            ["providerReferenceMarkdown"] = ToJsonArray(outputs.ProviderReferenceMarkdown),
+            ["commandReferenceJson"] = ToJsonArray(outputs.CommandReferenceJson),
+            ["commandReferenceMarkdown"] = ToJsonArray(outputs.CommandReferenceMarkdown),
             ["manifest"] = outputs.Manifest,
             ["checksums"] = outputs.Checksums
         };
@@ -211,6 +219,43 @@ internal static class DocsReferenceIndexJsonSerializer
             ["markdown"] = page.MarkdownPath,
             ["satisfiedBy"] = ToJsonArray(page.SatisfiedBy),
             ["satisfiedByCount"] = page.SatisfiedBy.Count
+        };
+
+    private static JsonObject ToJson(DocsProviderReferencePage page) =>
+        new()
+        {
+            ["providerId"] = page.ProviderId,
+            ["title"] = page.Title,
+            ["providerType"] = page.ProviderType,
+            ["installScope"] = page.InstallScope,
+            ["catalogId"] = page.CatalogId,
+            ["catalogVersion"] = page.CatalogVersion,
+            ["source"] = page.Source,
+            ["json"] = page.JsonPath,
+            ["markdown"] = page.MarkdownPath,
+            ["capabilities"] = ToJsonArray(page.Capabilities),
+            ["capabilityCount"] = page.Capabilities.Count,
+            ["detectorKinds"] = ToJsonArray(page.DetectorKinds),
+            ["detectorKindCount"] = page.DetectorKinds.Count,
+            ["notes"] = ToJsonArray(page.Notes),
+            ["noteCount"] = page.Notes.Count,
+            ["version"] = ProviderVersionDeclarationProjection.ToJson(page.Version)
+        };
+
+    private static JsonObject ToJson(DocsCommandReferencePage page) =>
+        new()
+        {
+            ["commandId"] = page.CommandId,
+            ["command"] = page.CommandText,
+            ["title"] = page.Title,
+            ["commandGroup"] = page.CommandGroup,
+            ["surfaceStatus"] = page.SurfaceStatus,
+            ["source"] = page.Source,
+            ["researchSource"] = page.ResearchSource,
+            ["json"] = page.JsonPath,
+            ["markdown"] = page.MarkdownPath,
+            ["notes"] = ToJsonArray(page.Notes),
+            ["noteCount"] = page.Notes.Count
         };
 
     private static JsonArray ToJsonArray(IEnumerable<string> values)

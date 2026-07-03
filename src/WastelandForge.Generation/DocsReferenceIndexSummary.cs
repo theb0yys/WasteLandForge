@@ -10,4 +10,6 @@ public sealed record DocsReferenceIndexSummary(
     int Capabilities,
     int CapabilityReferences,
     int Providers,
-    int Commands);
+    int ProviderReferences,
+    int Commands,
+    int CommandReferences);

@@ -693,22 +693,45 @@ follow-up slice was Gate 229: `forge docs` reference index skeleton.
 
 Gate 229 wires the canonical top-level `forge docs` command. Gate 230 adds
 schema reference page skeletons. Gate 231 adds project registry reference page
-skeletons. Gate 232 adds validation rule reference page skeletons. Route
-`/forge docs` to the real CLI when available. Treat generated
-`reference-index.json`, `reference-index.md`,
-`schemas/<kind>/<version>/schema-reference.json`,
+skeletons. Gate 232 adds validation rule reference page skeletons. Gate 233
+adds built-in capability reference page skeletons. Gate 234 adds built-in
+provider reference page skeletons. Gate 235 adds canonical command reference
+page skeletons. Route `/forge docs` to the real CLI when available. Treat
+generated `reference-index.json`,
+`reference-index.md`, `schemas/<kind>/<version>/schema-reference.json`,
 `schemas/<kind>/<version>/schema-reference.md`,
 `registries/<registry-path>/registry-reference.json`,
 `registries/<registry-path>/registry-reference.md`,
 `rules/<rule-family>/rule-reference.json`,
-`rules/<rule-family>/rule-reference.md`, `docs-manifest.json`, and
-`checksums.sha256` under `generated/docs` as local docs reference evidence
-only. Do not route this as static site generation, watch mode, network
-publishing, graph/explain/clean behavior, package/release behavior, xEdit
-execution, plugin patching, plugin mutation, MO2/GECK automation, runtime
-probes, real third-party plugin fixtures, command aliases, or AI behavior.
-Route the next implementation slice to Gate 233: `forge docs` built-in
-capability reference page skeleton.
+`rules/<rule-family>/rule-reference.md`,
+`capabilities/<capability-id>/capability-reference.json`,
+`capabilities/<capability-id>/capability-reference.md`,
+`providers/<provider-id>/provider-reference.json`,
+`providers/<provider-id>/provider-reference.md`,
+`commands/<command-path>/command-reference.json`,
+`commands/<command-path>/command-reference.md`,
+`docs-manifest.json`, and `checksums.sha256` under `generated/docs` as local
+docs reference evidence only. Do not route this as static site generation,
+watch mode, network publishing, capability scan/explain behavior, provider
+detection changes, provider-version parsing changes,
+graph/explain/clean behavior, package/release behavior, xEdit execution,
+plugin patching, plugin mutation, MO2/GECK automation, runtime probes, real
+third-party plugin fixtures, command aliases, or AI behavior. Route the next
+graph implementation slice to Gate 238: `forge graph` generator target graph
+skeleton.
+
+- `/forge graph` maps to the real `forge graph` behavior when available. Gate
+  236 implements minimal project source graph evidence under `generated/graph`,
+  and Gate 237 adds declaration-only capability requirement graph links to the
+  built-in capability/provider catalogue. Treat generated
+  `project-source-graph.json`, `project-source-graph.md`,
+  `graph-manifest.json`, and `checksums.sha256` as local generated graph
+  evidence only. Do not route this as graph visualization formats, `--subject`,
+  capability scan behavior changes, provider status resolution, build planning
+  changes, package/release behavior, xEdit execution, plugin patching, plugin
+  mutation, MO2/GECK automation, runtime probes, real third-party plugin
+  fixtures, command aliases, or AI behavior. Route the next graph slice to
+  Gate 238: `forge graph` generator target graph skeleton.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a

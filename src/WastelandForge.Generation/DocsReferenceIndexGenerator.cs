@@ -24,29 +24,33 @@ public sealed class DocsReferenceIndexGenerator
     public const string RuleReferenceMarkdownFileName = "rule-reference.md";
     public const string CapabilityReferenceJsonFileName = "capability-reference.json";
     public const string CapabilityReferenceMarkdownFileName = "capability-reference.md";
+    public const string ProviderReferenceJsonFileName = "provider-reference.json";
+    public const string ProviderReferenceMarkdownFileName = "provider-reference.md";
+    public const string CommandReferenceJsonFileName = "command-reference.json";
+    public const string CommandReferenceMarkdownFileName = "command-reference.md";
     public const string ManifestFileName = "docs-manifest.json";
     public const string ChecksumsFileName = "checksums.sha256";
 
-    private static readonly string[] CanonicalCommands =
+    private static readonly (string Command, string Id, string Group)[] CanonicalCommands =
     [
-        "init",
-        "validate",
-        "capabilities list",
-        "capabilities scan",
-        "capabilities explain",
-        "generate",
-        "build",
-        "package",
-        "release verify",
-        "release prepare",
-        "release publish",
-        "docs",
-        "graph",
-        "explain",
-        "clean",
-        "doctor export",
-        "help",
-        "--version"
+        ("init", "forge.init", "root"),
+        ("validate", "forge.validate", "root"),
+        ("capabilities list", "forge.capabilities.list", "capabilities"),
+        ("capabilities scan", "forge.capabilities.scan", "capabilities"),
+        ("capabilities explain", "forge.capabilities.explain", "capabilities"),
+        ("generate", "forge.generate", "root"),
+        ("build", "forge.build", "root"),
+        ("package", "forge.package", "root"),
+        ("release verify", "forge.release.verify", "release"),
+        ("release prepare", "forge.release.prepare", "release"),
+        ("release publish", "forge.release.publish", "release"),
+        ("docs", "forge.docs", "root"),
+        ("graph", "forge.graph", "root"),
+        ("explain", "forge.explain", "root"),
+        ("clean", "forge.clean", "root"),
+        ("doctor export", "forge.doctor.export", "doctor"),
+        ("help", "forge.help", "root"),
+        ("--version", "forge.version", "root")
     ];
 
     private static readonly (string Id, string Title, string Scope)[] RuleFamilies =
@@ -79,17 +83,17 @@ public sealed class DocsReferenceIndexGenerator
         var validationReport = new ProjectValidationPipeline().Validate(projectRoot);
         var issues = new List<DiagnosticIssue>(validationReport.Issues);
         var projectId = validationReport.ProjectId;
-        var emptySummary = new DocsReferenceIndexSummary(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        var emptySummary = new DocsReferenceIndexSummary(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
         if (validationReport.HasErrors)
         {
-            return CreateResult(options, projectRoot, "failed", projectId, issues, null, emptySummary, [], [], [], [], [], [], []);
+            return CreateResult(options, projectRoot, "failed", projectId, issues, null, emptySummary, [], [], [], [], [], [], [], [], []);
         }
 
         var outputRoot = ResolveOutputRoot(projectRoot, options, projectId, issues);
         if (outputRoot is null || issues.Any(issue => issue.Severity == DiagnosticSeverity.Error))
         {
-            return CreateResult(options, projectRoot, "failed", projectId, issues, null, emptySummary, [], [], [], [], [], [], []);
+            return CreateResult(options, projectRoot, "failed", projectId, issues, null, emptySummary, [], [], [], [], [], [], [], [], []);
         }
 
         var sections = CreateSections(projectRoot);
@@ -97,8 +101,10 @@ public sealed class DocsReferenceIndexGenerator
         var registryReferences = CreateRegistryReferencePages(projectRoot, outputRoot);
         var ruleReferences = CreateRuleReferencePages(projectRoot, outputRoot, issues);
         var capabilityReferences = CreateCapabilityReferencePages(projectRoot, outputRoot);
-        var summary = CreateSummary(sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences);
-        var outputs = CreateOutputs(projectRoot, outputRoot, schemaReferences, registryReferences, ruleReferences, capabilityReferences);
+        var providerReferences = CreateProviderReferencePages(projectRoot, outputRoot);
+        var commandReferences = CreateCommandReferencePages(projectRoot, outputRoot);
+        var summary = CreateSummary(sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences, providerReferences, commandReferences);
+        var outputs = CreateOutputs(projectRoot, outputRoot, schemaReferences, registryReferences, ruleReferences, capabilityReferences, providerReferences, commandReferences);
         var sourceDigests = CollectSourceFiles(projectRoot)
             .Select(path => ComputeDigest(projectRoot, path))
             .OrderBy(digest => digest.Path, StringComparer.Ordinal)
@@ -106,7 +112,7 @@ public sealed class DocsReferenceIndexGenerator
 
         if (options.DryRun)
         {
-            return CreateResult(options, projectRoot, "planned", projectId, issues, outputs, summary, sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences, sourceDigests, []);
+            return CreateResult(options, projectRoot, "planned", projectId, issues, outputs, summary, sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences, providerReferences, commandReferences, sourceDigests, []);
         }
 
         Directory.CreateDirectory(outputRoot);
@@ -115,15 +121,17 @@ public sealed class DocsReferenceIndexGenerator
         var referenceMarkdownPath = Path.Combine(outputRoot, ReferenceIndexMarkdownFileName);
         WriteUtf8NoBom(
             referenceJsonPath,
-            CreateReferenceIndexJson(options, projectRoot, outputRoot, projectId, summary, sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences).ToJsonString(JsonOptions) + "\n");
+            CreateReferenceIndexJson(options, projectRoot, outputRoot, projectId, summary, sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences, providerReferences, commandReferences).ToJsonString(JsonOptions) + "\n");
         WriteUtf8NoBom(
             referenceMarkdownPath,
-            RenderReferenceIndexMarkdown(projectId, summary, sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences));
+            RenderReferenceIndexMarkdown(projectId, summary, sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences, providerReferences, commandReferences));
 
         WriteSchemaReferencePages(options, projectRoot, schemaReferences);
         WriteRegistryReferencePages(options, projectRoot, registryReferences);
         WriteRuleReferencePages(options, projectRoot, ruleReferences);
         WriteCapabilityReferencePages(options, projectRoot, capabilityReferences);
+        WriteProviderReferencePages(options, projectRoot, providerReferences);
+        WriteCommandReferencePages(options, projectRoot, commandReferences);
 
         var schemaReferencePayloadPaths = schemaReferences
             .SelectMany(page => new[]
@@ -153,11 +161,27 @@ public sealed class DocsReferenceIndexGenerator
                 ToProjectPath(projectRoot, page.MarkdownPath)
             })
             .ToArray();
+        var providerReferencePayloadPaths = providerReferences
+            .SelectMany(page => new[]
+            {
+                ToProjectPath(projectRoot, page.JsonPath),
+                ToProjectPath(projectRoot, page.MarkdownPath)
+            })
+            .ToArray();
+        var commandReferencePayloadPaths = commandReferences
+            .SelectMany(page => new[]
+            {
+                ToProjectPath(projectRoot, page.JsonPath),
+                ToProjectPath(projectRoot, page.MarkdownPath)
+            })
+            .ToArray();
         var payloadPaths = new[] { referenceJsonPath, referenceMarkdownPath }
             .Concat(schemaReferencePayloadPaths)
             .Concat(registryReferencePayloadPaths)
             .Concat(ruleReferencePayloadPaths)
             .Concat(capabilityReferencePayloadPaths)
+            .Concat(providerReferencePayloadPaths)
+            .Concat(commandReferencePayloadPaths)
             .ToArray();
         var payloadDigests = payloadPaths
             .Select(path => ComputeDigest(projectRoot, path))
@@ -167,7 +191,7 @@ public sealed class DocsReferenceIndexGenerator
         var manifestPath = Path.Combine(outputRoot, ManifestFileName);
         WriteUtf8NoBom(
             manifestPath,
-            CreateManifestJson(options, projectRoot, outputRoot, projectId, summary, schemaReferences, registryReferences, ruleReferences, capabilityReferences, sourceDigests, payloadDigests).ToJsonString(JsonOptions) + "\n");
+            CreateManifestJson(options, projectRoot, outputRoot, projectId, summary, schemaReferences, registryReferences, ruleReferences, capabilityReferences, providerReferences, commandReferences, sourceDigests, payloadDigests).ToJsonString(JsonOptions) + "\n");
 
         var checksumInputs = payloadPaths.Append(manifestPath).ToArray();
         var checksumsPath = Path.Combine(outputRoot, ChecksumsFileName);
@@ -179,7 +203,7 @@ public sealed class DocsReferenceIndexGenerator
             .OrderBy(digest => digest.Path, StringComparer.Ordinal)
             .ToArray();
 
-        return CreateResult(options, projectRoot, "passed", projectId, issues, outputs, summary, sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences, sourceDigests, outputDigests);
+        return CreateResult(options, projectRoot, "passed", projectId, issues, outputs, summary, sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences, providerReferences, commandReferences, sourceDigests, outputDigests);
     }
 
     private static DocsReferenceIndexResult CreateResult(
@@ -195,6 +219,8 @@ public sealed class DocsReferenceIndexGenerator
         IReadOnlyList<DocsRegistryReferencePage> registryReferences,
         IReadOnlyList<DocsRuleReferencePage> ruleReferences,
         IReadOnlyList<DocsCapabilityReferencePage> capabilityReferences,
+        IReadOnlyList<DocsProviderReferencePage> providerReferences,
+        IReadOnlyList<DocsCommandReferencePage> commandReferences,
         IReadOnlyList<FileDigest> sourceDigests,
         IReadOnlyList<FileDigest> outputDigests) =>
         new(
@@ -212,6 +238,8 @@ public sealed class DocsReferenceIndexGenerator
             registryReferences,
             ruleReferences,
             capabilityReferences,
+            providerReferences,
+            commandReferences,
             sourceDigests,
             outputDigests);
 
@@ -250,7 +278,9 @@ public sealed class DocsReferenceIndexGenerator
         IReadOnlyList<DocsSchemaReferencePage> schemaReferences,
         IReadOnlyList<DocsRegistryReferencePage> registryReferences,
         IReadOnlyList<DocsRuleReferencePage> ruleReferences,
-        IReadOnlyList<DocsCapabilityReferencePage> capabilityReferences) =>
+        IReadOnlyList<DocsCapabilityReferencePage> capabilityReferences,
+        IReadOnlyList<DocsProviderReferencePage> providerReferences,
+        IReadOnlyList<DocsCommandReferencePage> commandReferences) =>
         new(
             ToDisplayPath(projectRoot, outputRoot),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, ReferenceIndexJsonFileName)),
@@ -263,6 +293,10 @@ public sealed class DocsReferenceIndexGenerator
             ruleReferences.Select(page => page.MarkdownPath).ToArray(),
             capabilityReferences.Select(page => page.JsonPath).ToArray(),
             capabilityReferences.Select(page => page.MarkdownPath).ToArray(),
+            providerReferences.Select(page => page.JsonPath).ToArray(),
+            providerReferences.Select(page => page.MarkdownPath).ToArray(),
+            commandReferences.Select(page => page.JsonPath).ToArray(),
+            commandReferences.Select(page => page.MarkdownPath).ToArray(),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, ManifestFileName)),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, ChecksumsFileName)));
 
@@ -341,8 +375,8 @@ public sealed class DocsReferenceIndexGenerator
                 "Commands",
                 CanonicalCommands
                     .Select(command => new DocsReferenceIndexEntry(
-                        $"forge {command}",
-                        $"forge {command}",
+                        command.Id,
+                        ToCommandText(command.Command),
                         "command",
                         "docs/cli/README.md",
                         null,
@@ -381,12 +415,28 @@ public sealed class DocsReferenceIndexGenerator
             .ToArray();
     }
 
+    private static IReadOnlyList<DocsProviderReferencePage> CreateProviderReferencePages(string projectRoot, string outputRoot)
+    {
+        var catalog = BuiltInFnvCapabilityCatalog.Create();
+        return catalog.Providers
+            .OrderBy(provider => provider.Id, StringComparer.Ordinal)
+            .Select(provider => CreateProviderReferencePage(projectRoot, outputRoot, catalog, provider))
+            .ToArray();
+    }
+
+    private static IReadOnlyList<DocsCommandReferencePage> CreateCommandReferencePages(string projectRoot, string outputRoot) =>
+        CanonicalCommands
+            .Select(command => CreateCommandReferencePage(projectRoot, outputRoot, command.Command, command.Id, command.Group))
+            .ToArray();
+
     private static DocsReferenceIndexSummary CreateSummary(
         IReadOnlyList<DocsReferenceIndexSection> sections,
         IReadOnlyList<DocsSchemaReferencePage> schemaReferences,
         IReadOnlyList<DocsRegistryReferencePage> registryReferences,
         IReadOnlyList<DocsRuleReferencePage> ruleReferences,
-        IReadOnlyList<DocsCapabilityReferencePage> capabilityReferences) =>
+        IReadOnlyList<DocsCapabilityReferencePage> capabilityReferences,
+        IReadOnlyList<DocsProviderReferencePage> providerReferences,
+        IReadOnlyList<DocsCommandReferencePage> commandReferences) =>
         new(
             FindSectionCount(sections, "schemas"),
             schemaReferences.Count,
@@ -397,7 +447,9 @@ public sealed class DocsReferenceIndexGenerator
             FindSectionCount(sections, "capabilities"),
             capabilityReferences.Count,
             FindSectionCount(sections, "providers"),
-            FindSectionCount(sections, "commands"));
+            providerReferences.Count,
+            FindSectionCount(sections, "commands"),
+            commandReferences.Count);
 
     private static int FindSectionCount(IReadOnlyList<DocsReferenceIndexSection> sections, string id) =>
         sections.Single(section => StringComparer.Ordinal.Equals(section.Id, id)).Entries.Count;
@@ -412,7 +464,9 @@ public sealed class DocsReferenceIndexGenerator
         IReadOnlyList<DocsSchemaReferencePage> schemaReferences,
         IReadOnlyList<DocsRegistryReferencePage> registryReferences,
         IReadOnlyList<DocsRuleReferencePage> ruleReferences,
-        IReadOnlyList<DocsCapabilityReferencePage> capabilityReferences) =>
+        IReadOnlyList<DocsCapabilityReferencePage> capabilityReferences,
+        IReadOnlyList<DocsProviderReferencePage> providerReferences,
+        IReadOnlyList<DocsCommandReferencePage> commandReferences) =>
         new()
         {
             ["formatVersion"] = "1.0",
@@ -429,6 +483,8 @@ public sealed class DocsReferenceIndexGenerator
             ["registryReferences"] = new JsonArray(registryReferences.Select(ToJson).ToArray()),
             ["ruleReferences"] = new JsonArray(ruleReferences.Select(ToJson).ToArray()),
             ["capabilityReferences"] = new JsonArray(capabilityReferences.Select(ToJson).ToArray()),
+            ["providerReferences"] = new JsonArray(providerReferences.Select(ToJson).ToArray()),
+            ["commandReferences"] = new JsonArray(commandReferences.Select(ToJson).ToArray()),
             ["execution"] = CreateExecutionJson()
         };
 
@@ -442,6 +498,8 @@ public sealed class DocsReferenceIndexGenerator
         IReadOnlyList<DocsRegistryReferencePage> registryReferences,
         IReadOnlyList<DocsRuleReferencePage> ruleReferences,
         IReadOnlyList<DocsCapabilityReferencePage> capabilityReferences,
+        IReadOnlyList<DocsProviderReferencePage> providerReferences,
+        IReadOnlyList<DocsCommandReferencePage> commandReferences,
         IReadOnlyList<FileDigest> sourceDigests,
         IReadOnlyList<FileDigest> outputDigests)
     {
@@ -473,6 +531,8 @@ public sealed class DocsReferenceIndexGenerator
             ["registryReferences"] = new JsonArray(registryReferences.Select(ToJson).ToArray()),
             ["ruleReferences"] = new JsonArray(ruleReferences.Select(ToJson).ToArray()),
             ["capabilityReferences"] = new JsonArray(capabilityReferences.Select(ToJson).ToArray()),
+            ["providerReferences"] = new JsonArray(providerReferences.Select(ToJson).ToArray()),
+            ["commandReferences"] = new JsonArray(commandReferences.Select(ToJson).ToArray()),
             ["execution"] = CreateExecutionJson(),
             ["sources"] = ToDigestArray(sourceDigests),
             ["outputs"] = ToDigestArray(outputDigests)
@@ -486,7 +546,9 @@ public sealed class DocsReferenceIndexGenerator
         IReadOnlyList<DocsSchemaReferencePage> schemaReferences,
         IReadOnlyList<DocsRegistryReferencePage> registryReferences,
         IReadOnlyList<DocsRuleReferencePage> ruleReferences,
-        IReadOnlyList<DocsCapabilityReferencePage> capabilityReferences)
+        IReadOnlyList<DocsCapabilityReferencePage> capabilityReferences,
+        IReadOnlyList<DocsProviderReferencePage> providerReferences,
+        IReadOnlyList<DocsCommandReferencePage> commandReferences)
     {
         var builder = new StringBuilder();
         builder.Append("# WastelandForge Reference Index\n\n");
@@ -513,8 +575,12 @@ public sealed class DocsReferenceIndexGenerator
         builder.Append(summary.CapabilityReferences);
         builder.Append("\n- Providers: ");
         builder.Append(summary.Providers);
+        builder.Append("\n- Provider references: ");
+        builder.Append(summary.ProviderReferences);
         builder.Append("\n- Commands: ");
         builder.Append(summary.Commands);
+        builder.Append("\n- Command references: ");
+        builder.Append(summary.CommandReferences);
         builder.Append("\n\n");
 
         foreach (var section in sections)
@@ -618,6 +684,44 @@ public sealed class DocsReferenceIndexGenerator
             builder.Append("\n");
         }
 
+        builder.Append("## Provider Reference Pages\n\n");
+        if (providerReferences.Count == 0)
+        {
+            builder.Append("- None planned.\n\n");
+        }
+        else
+        {
+            foreach (var page in providerReferences)
+            {
+                builder.Append("- `");
+                builder.Append(page.ProviderId);
+                builder.Append("` - ");
+                builder.Append(page.MarkdownPath);
+                builder.Append("\n");
+            }
+
+            builder.Append("\n");
+        }
+
+        builder.Append("## Command Reference Pages\n\n");
+        if (commandReferences.Count == 0)
+        {
+            builder.Append("- None planned.\n\n");
+        }
+        else
+        {
+            foreach (var page in commandReferences)
+            {
+                builder.Append("- `");
+                builder.Append(page.CommandText);
+                builder.Append("` - ");
+                builder.Append(page.MarkdownPath);
+                builder.Append("\n");
+            }
+
+            builder.Append("\n");
+        }
+
         builder.Append("## Gate Boundaries\n\n");
         builder.Append("- Static site generation: not implemented.\n");
         builder.Append("- Watch mode: not implemented.\n");
@@ -640,7 +744,9 @@ public sealed class DocsReferenceIndexGenerator
             ["capabilities"] = summary.Capabilities,
             ["capabilityReferences"] = summary.CapabilityReferences,
             ["providers"] = summary.Providers,
-            ["commands"] = summary.Commands
+            ["providerReferences"] = summary.ProviderReferences,
+            ["commands"] = summary.Commands,
+            ["commandReferences"] = summary.CommandReferences
         };
 
     private static JsonObject ToJson(DocsReferenceIndexSection section) =>
@@ -1218,7 +1324,7 @@ public sealed class DocsReferenceIndexGenerator
         AppendStringList(builder, page.SatisfiedBy);
         builder.Append("\n## Gate Boundaries\n\n");
         builder.Append("- This is a built-in capability reference skeleton, not full prose documentation.\n");
-        builder.Append("- Provider reference pages: not implemented.\n");
+        builder.Append("- Provider reference pages: generated separately under `generated/docs/providers/`.\n");
         builder.Append("- Static site generation: not implemented.\n");
         builder.Append("- Watch mode: not implemented.\n");
         builder.Append("- Network publishing: not implemented.\n");
@@ -1241,6 +1347,330 @@ public sealed class DocsReferenceIndexGenerator
             ["satisfiedBy"] = ToJsonArray(page.SatisfiedBy),
             ["satisfiedByCount"] = page.SatisfiedBy.Count
         };
+
+    private static DocsProviderReferencePage CreateProviderReferencePage(
+        string projectRoot,
+        string outputRoot,
+        CapabilityCatalog catalog,
+        ProviderDefinition provider)
+    {
+        var outputDirectory = Path.Combine(outputRoot, "providers", ToPathSegment(provider.Id));
+
+        return new DocsProviderReferencePage(
+            provider.Id,
+            provider.Title,
+            provider.ProviderType,
+            provider.InstallScope,
+            catalog.CatalogId,
+            catalog.Version,
+            catalog.CatalogId,
+            ToDisplayPath(projectRoot, Path.Combine(outputDirectory, ProviderReferenceJsonFileName)),
+            ToDisplayPath(projectRoot, Path.Combine(outputDirectory, ProviderReferenceMarkdownFileName)),
+            provider.Capabilities.Order(StringComparer.Ordinal).ToArray(),
+            provider.DetectorKinds.Order(StringComparer.Ordinal).ToArray(),
+            provider.Notes.ToArray(),
+            provider.Version);
+    }
+
+    private static void WriteProviderReferencePages(
+        DocsReferenceIndexOptions options,
+        string projectRoot,
+        IReadOnlyList<DocsProviderReferencePage> providerReferences)
+    {
+        foreach (var page in providerReferences)
+        {
+            WriteUtf8NoBom(
+                ToProjectPath(projectRoot, page.JsonPath),
+                CreateProviderReferenceJson(options, page).ToJsonString(JsonOptions) + "\n");
+            WriteUtf8NoBom(
+                ToProjectPath(projectRoot, page.MarkdownPath),
+                RenderProviderReferenceMarkdown(page));
+        }
+    }
+
+    private static JsonObject CreateProviderReferenceJson(DocsReferenceIndexOptions options, DocsProviderReferencePage page) =>
+        new()
+        {
+            ["formatVersion"] = "1.0",
+            ["kind"] = "wastelandforge.docs.provider-reference",
+            ["tool"] = CreateToolJson(options.ToolVersion),
+            ["command"] = Command,
+            ["target"] = Target,
+            ["catalog"] = new JsonObject
+            {
+                ["id"] = page.CatalogId,
+                ["version"] = page.CatalogVersion,
+                ["source"] = page.Source
+            },
+            ["provider"] = new JsonObject
+            {
+                ["id"] = page.ProviderId,
+                ["title"] = page.Title,
+                ["providerType"] = page.ProviderType,
+                ["installScope"] = page.InstallScope,
+                ["capabilities"] = ToJsonArray(page.Capabilities),
+                ["detectorKinds"] = ToJsonArray(page.DetectorKinds),
+                ["notes"] = ToJsonArray(page.Notes),
+                ["version"] = ToJson(page.Version)
+            },
+            ["outputs"] = new JsonObject
+            {
+                ["json"] = page.JsonPath,
+                ["markdown"] = page.MarkdownPath
+            },
+            ["summary"] = new JsonObject
+            {
+                ["capabilities"] = ToJsonArray(page.Capabilities),
+                ["capabilityCount"] = page.Capabilities.Count,
+                ["detectorKinds"] = ToJsonArray(page.DetectorKinds),
+                ["detectorKindCount"] = page.DetectorKinds.Count,
+                ["noteCount"] = page.Notes.Count,
+                ["versionStatus"] = page.Version.Status,
+                ["localVersionStatus"] = page.Version.LocalVersionStatus,
+                ["resolutionStatus"] = page.Version.ResolutionStatus
+            },
+            ["execution"] = CreateExecutionJson()
+        };
+
+    private static string RenderProviderReferenceMarkdown(DocsProviderReferencePage page)
+    {
+        var builder = new StringBuilder();
+        builder.Append("# ");
+        builder.Append(page.Title);
+        builder.Append(" Provider Reference\n\n");
+        builder.Append("Provider ID: `");
+        builder.Append(page.ProviderId);
+        builder.Append("`\n\n");
+        builder.Append("Catalog: `");
+        builder.Append(page.CatalogId);
+        builder.Append("`\n\n");
+        builder.Append("Catalog version: `");
+        builder.Append(page.CatalogVersion);
+        builder.Append("`\n\n");
+        builder.Append("Provider type: `");
+        builder.Append(page.ProviderType);
+        builder.Append("`\n\n");
+        builder.Append("Install scope: `");
+        builder.Append(page.InstallScope);
+        builder.Append("`\n\n");
+        builder.Append("Generated JSON: `");
+        builder.Append(page.JsonPath);
+        builder.Append("`\n\n");
+        builder.Append("## Capabilities\n\n");
+        AppendStringList(builder, page.Capabilities);
+        builder.Append("\n## Detector Kinds\n\n");
+        AppendStringList(builder, page.DetectorKinds);
+        builder.Append("\n## Version Declaration\n\n");
+        builder.Append("- Scheme: `");
+        builder.Append(page.Version.Scheme);
+        builder.Append("`\n");
+        builder.Append("- Source: `");
+        builder.Append(page.Version.Source);
+        builder.Append("`\n");
+        builder.Append("- Status: `");
+        builder.Append(page.Version.Status);
+        builder.Append("`\n");
+        builder.Append("- Local version status: `");
+        builder.Append(page.Version.LocalVersionStatus);
+        builder.Append("`\n");
+        builder.Append("- Resolution status: `");
+        builder.Append(page.Version.ResolutionStatus);
+        builder.Append("`\n");
+        builder.Append("\n## Notes\n\n");
+        AppendStringList(builder, page.Notes);
+        builder.Append("\n## Gate Boundaries\n\n");
+        builder.Append("- This is a built-in provider reference skeleton, not full prose documentation.\n");
+        builder.Append("- Provider detection changes: not implemented.\n");
+        builder.Append("- Provider-version parsing changes: not implemented.\n");
+        builder.Append("- Capability scan/explain behavior: not implemented by this docs gate.\n");
+        builder.Append("- Static site generation: not implemented.\n");
+        builder.Append("- Watch mode: not implemented.\n");
+        builder.Append("- Network publishing: not implemented.\n");
+        builder.Append("- Graph, explain, clean, package, release, xEdit, MO2, GECK, runtime probe, plugin mutation, and AI behavior: not used.\n");
+
+        return builder.ToString();
+    }
+
+    private static JsonObject ToJson(DocsProviderReferencePage page) =>
+        new()
+        {
+            ["providerId"] = page.ProviderId,
+            ["title"] = page.Title,
+            ["providerType"] = page.ProviderType,
+            ["installScope"] = page.InstallScope,
+            ["catalogId"] = page.CatalogId,
+            ["catalogVersion"] = page.CatalogVersion,
+            ["source"] = page.Source,
+            ["json"] = page.JsonPath,
+            ["markdown"] = page.MarkdownPath,
+            ["capabilities"] = ToJsonArray(page.Capabilities),
+            ["capabilityCount"] = page.Capabilities.Count,
+            ["detectorKinds"] = ToJsonArray(page.DetectorKinds),
+            ["detectorKindCount"] = page.DetectorKinds.Count,
+            ["notes"] = ToJsonArray(page.Notes),
+            ["noteCount"] = page.Notes.Count,
+            ["version"] = ToJson(page.Version)
+        };
+
+    private static JsonObject ToJson(ProviderVersionDeclaration version) =>
+        new()
+        {
+            ["scheme"] = version.Scheme,
+            ["source"] = version.Source,
+            ["status"] = version.Status,
+            ["localVersionStatus"] = version.LocalVersionStatus,
+            ["resolutionStatus"] = version.ResolutionStatus,
+            ["notes"] = ToJsonArray(version.Notes)
+        };
+
+    private static DocsCommandReferencePage CreateCommandReferencePage(
+        string projectRoot,
+        string outputRoot,
+        string command,
+        string commandId,
+        string commandGroup)
+    {
+        var commandText = ToCommandText(command);
+        var outputDirectory = CreateCommandOutputDirectory(outputRoot, command);
+
+        return new DocsCommandReferencePage(
+            commandId,
+            commandText,
+            commandText,
+            commandGroup,
+            "canonical",
+            "docs/cli/README.md",
+            "ADR-010/R006",
+            ToDisplayPath(projectRoot, Path.Combine(outputDirectory, CommandReferenceJsonFileName)),
+            ToDisplayPath(projectRoot, Path.Combine(outputDirectory, CommandReferenceMarkdownFileName)),
+            [
+                "Canonical ADR-010/R006 command surface entry.",
+                "This page documents command identity only; behavior remains governed by the CLI implementation and command-specific docs."
+            ]);
+    }
+
+    private static void WriteCommandReferencePages(
+        DocsReferenceIndexOptions options,
+        string projectRoot,
+        IReadOnlyList<DocsCommandReferencePage> commandReferences)
+    {
+        foreach (var page in commandReferences)
+        {
+            WriteUtf8NoBom(
+                ToProjectPath(projectRoot, page.JsonPath),
+                CreateCommandReferenceJson(options, page).ToJsonString(JsonOptions) + "\n");
+            WriteUtf8NoBom(
+                ToProjectPath(projectRoot, page.MarkdownPath),
+                RenderCommandReferenceMarkdown(page));
+        }
+    }
+
+    private static JsonObject CreateCommandReferenceJson(DocsReferenceIndexOptions options, DocsCommandReferencePage page) =>
+        new()
+        {
+            ["formatVersion"] = "1.0",
+            ["kind"] = "wastelandforge.docs.command-reference",
+            ["tool"] = CreateToolJson(options.ToolVersion),
+            ["command"] = Command,
+            ["target"] = Target,
+            ["commandReference"] = new JsonObject
+            {
+                ["id"] = page.CommandId,
+                ["command"] = page.CommandText,
+                ["title"] = page.Title,
+                ["group"] = page.CommandGroup,
+                ["surfaceStatus"] = page.SurfaceStatus,
+                ["source"] = page.Source,
+                ["researchSource"] = page.ResearchSource,
+                ["notes"] = ToJsonArray(page.Notes)
+            },
+            ["outputs"] = new JsonObject
+            {
+                ["json"] = page.JsonPath,
+                ["markdown"] = page.MarkdownPath
+            },
+            ["summary"] = new JsonObject
+            {
+                ["surfaceStatus"] = page.SurfaceStatus,
+                ["group"] = page.CommandGroup,
+                ["noteCount"] = page.Notes.Count,
+                ["behaviorStatus"] = "not-evaluated-by-docs-gate"
+            },
+            ["execution"] = CreateExecutionJson()
+        };
+
+    private static string RenderCommandReferenceMarkdown(DocsCommandReferencePage page)
+    {
+        var builder = new StringBuilder();
+        builder.Append("# ");
+        builder.Append(page.Title);
+        builder.Append(" Command Reference\n\n");
+        builder.Append("Command ID: `");
+        builder.Append(page.CommandId);
+        builder.Append("`\n\n");
+        builder.Append("Command: `");
+        builder.Append(page.CommandText);
+        builder.Append("`\n\n");
+        builder.Append("Group: `");
+        builder.Append(page.CommandGroup);
+        builder.Append("`\n\n");
+        builder.Append("Surface status: `");
+        builder.Append(page.SurfaceStatus);
+        builder.Append("`\n\n");
+        builder.Append("Source: `");
+        builder.Append(page.Source);
+        builder.Append("`\n\n");
+        builder.Append("Research source: `");
+        builder.Append(page.ResearchSource);
+        builder.Append("`\n\n");
+        builder.Append("Generated JSON: `");
+        builder.Append(page.JsonPath);
+        builder.Append("`\n\n");
+        builder.Append("## Notes\n\n");
+        AppendStringList(builder, page.Notes);
+        builder.Append("\n## Gate Boundaries\n\n");
+        builder.Append("- This is a canonical command reference skeleton, not full prose CLI documentation.\n");
+        builder.Append("- Command behavior changes: not implemented.\n");
+        builder.Append("- Static site generation: not implemented.\n");
+        builder.Append("- Watch mode: not implemented.\n");
+        builder.Append("- Network publishing: not implemented.\n");
+        builder.Append("- Graph, explain, clean, package, release, xEdit, MO2, GECK, runtime probe, plugin mutation, and AI behavior: not used.\n");
+
+        return builder.ToString();
+    }
+
+    private static JsonObject ToJson(DocsCommandReferencePage page) =>
+        new()
+        {
+            ["commandId"] = page.CommandId,
+            ["command"] = page.CommandText,
+            ["title"] = page.Title,
+            ["commandGroup"] = page.CommandGroup,
+            ["surfaceStatus"] = page.SurfaceStatus,
+            ["source"] = page.Source,
+            ["researchSource"] = page.ResearchSource,
+            ["json"] = page.JsonPath,
+            ["markdown"] = page.MarkdownPath,
+            ["notes"] = ToJsonArray(page.Notes),
+            ["noteCount"] = page.Notes.Count
+        };
+
+    private static string ToCommandText(string command) => $"forge {command}";
+
+    private static string CreateCommandOutputDirectory(string outputRoot, string command)
+    {
+        var directory = Path.Combine(outputRoot, "commands");
+        string[] segments = StringComparer.Ordinal.Equals(command, "--version")
+            ? ["version"]
+            : command.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (var segment in segments)
+        {
+            directory = Path.Combine(directory, ToPathSegment(segment));
+        }
+
+        return directory;
+    }
 
     private static RegistryContentSummary InspectRegistryContent(string path)
     {

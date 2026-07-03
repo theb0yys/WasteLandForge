@@ -2,12 +2,13 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 232 expands the
-canonical `forge docs` output with deterministic validation rule reference
-page skeletons under `generated/docs/rules/` alongside schema and registry
-reference pages and the local reference index for embedded schemas, project
-registries, rule families, built-in FNV capabilities/providers, and canonical
-commands.
+The project is currently in gated v0.1 implementation. Gate 237 extends
+`forge graph` with deterministic declaration-only capability requirement graph
+evidence under `generated/graph/`. The graph links the project, source
+manifest/registry documents, dependency requirements, built-in catalogue
+capabilities/providers, and generated/dist output boundaries while the docs
+lane continues to expose schema, registry, rule, capability, provider, and
+command reference pages.
 Existing xEdit audit scaffold and handoff commands remain available, but Forge
 still does not execute xEdit, generate real xEdit reports, generate patches,
 mutate plugins, automate MO2 or GECK, run runtime probes, add xEdit
@@ -584,8 +585,42 @@ Gate 232 expands `forge docs` with one `rule-reference.json` and one
 `rule-reference.md` under `generated/docs/rules/<rule-family>/` for each
 reserved validation rule family. The reference index, docs manifest,
 checksums, CLI JSON output, and dry-run planning all include those rule
-reference page skeletons. The next docs slice is Gate 233: built-in capability
-reference page skeletons under `generated/docs/capabilities/`.
+reference page skeletons.
+
+Gate 233 expands `forge docs` with one `capability-reference.json` and one
+`capability-reference.md` under `generated/docs/capabilities/<capability-id>/`
+for each built-in FNV capability. The reference index, docs manifest,
+checksums, CLI JSON output, and dry-run planning all include those capability
+reference page skeletons.
+
+Gate 234 expands `forge docs` with one `provider-reference.json` and one
+`provider-reference.md` under `generated/docs/providers/<provider-id>/` for
+each built-in FNV provider. The reference index, docs manifest, checksums, CLI
+JSON output, and dry-run planning all include those provider reference page
+skeletons.
+
+Gate 235 expands `forge docs` with one `command-reference.json` and one
+`command-reference.md` under `generated/docs/commands/<command-path>/` for
+each canonical ADR-010 command entry. The reference index, docs manifest,
+checksums, CLI JSON output, and dry-run planning all include those command
+reference page skeletons.
+
+Gate 236 introduces `forge graph` with one
+`project-source-graph.json`, one `project-source-graph.md`, a
+`graph-manifest.json`, and `checksums.sha256` under `generated/graph/`. The
+command validates first, supports dry-run planning, rejects output outside
+`generated/`, and stops before graph visualization formats, build planning
+changes, package/release behavior, xEdit execution, plugin mutation, MO2/GECK
+automation, runtime probes, real third-party plugin fixtures, or AI.
+
+Gate 237 extends `forge graph` with declaration-only capability requirement
+graph links. Dependency registry capability requirements now connect to
+built-in catalogue capability and provider nodes in the generated graph and
+manifest evidence, while still avoiding capability scans, provider status
+resolution, graph visualization formats, `--subject`, build planning changes,
+package/release behavior, xEdit execution, plugin mutation, MO2/GECK
+automation, runtime probes, real third-party plugin fixtures, or AI. The next
+graph slice is Gate 238: generator target graph skeleton.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

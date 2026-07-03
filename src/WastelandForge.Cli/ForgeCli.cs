@@ -11,7 +11,6 @@ internal static class ForgeCli
     private static readonly string[] TopLevelReservedCommands =
     [
         "init",
-        "graph",
         "explain",
         "clean"
     ];
@@ -91,6 +90,11 @@ internal static class ForgeCli
         if (StringComparer.Ordinal.Equals(resolution.CommandPath, "docs"))
         {
             return RunDocsCommand(resolution.RemainingArgs);
+        }
+
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "graph"))
+        {
+            return RunGraphCommand(resolution.RemainingArgs);
         }
 
         if (StringComparer.Ordinal.Equals(resolution.CommandPath, "capabilities list"))
@@ -367,6 +371,30 @@ internal static class ForgeCli
         var payload = CliConstants.IsMachineFormat(parse.Format)
             ? DocsReferenceIndexJsonSerializer.Serialize(result)
             : DocsReferenceIndexTextRenderer.Render(result);
+        Console.Write(payload);
+
+        return result.HasErrors
+            ? (int)CliExitCode.BlockingDiagnostics
+            : (int)CliExitCode.Success;
+    }
+
+    private static int RunGraphCommand(string[] args)
+    {
+        var parse = ParseGraphOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "graph", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var result = new ProjectSourceGraphGenerator().Run(new ProjectSourceGraphOptions(
+            parse.ProjectPath,
+            parse.OutputDirectory,
+            CliConstants.Version,
+            parse.DryRun));
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? ProjectSourceGraphJsonSerializer.Serialize(result)
+            : ProjectSourceGraphTextRenderer.Render(result);
         Console.Write(payload);
 
         return result.HasErrors
@@ -736,7 +764,8 @@ internal static class ForgeCli
         if (StringComparer.Ordinal.Equals(command, "generate") ||
             StringComparer.Ordinal.Equals(command, "build") ||
             StringComparer.Ordinal.Equals(command, "package") ||
-            StringComparer.Ordinal.Equals(command, "docs"))
+            StringComparer.Ordinal.Equals(command, "docs") ||
+            StringComparer.Ordinal.Equals(command, "graph"))
         {
             return CommandResolution.Command(command, args[1..]);
         }
@@ -1152,6 +1181,95 @@ internal static class ForgeCli
         }
 
         return DocsParseResult.Ok(projectPath, outputDirectory, dryRun, format);
+    }
+
+    private static GraphParseResult ParseGraphOptions(string[] args)
+    {
+        var format = "human";
+        var projectPath = ".";
+        string? outputDirectory = null;
+        var dryRun = false;
+        var projectWasSet = false;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return GraphParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return GraphParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return GraphParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return GraphParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectWasSet)
+                {
+                    return GraphParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                projectWasSet = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputDirectory))
+                {
+                    return GraphParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputDirectory = explicitOutputDirectory;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--dry-run"))
+            {
+                dryRun = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return GraphParseResult.Fail(format, $"Unsupported graph option '{arg}'.");
+            }
+
+            if (projectWasSet)
+            {
+                return GraphParseResult.Fail(format, "Project root was specified more than once.");
+            }
+
+            projectPath = arg;
+            projectWasSet = true;
+        }
+
+        return GraphParseResult.Ok(projectPath, outputDirectory, dryRun, format);
     }
 
     private static bool IsMetadataReportTargetImplemented(string commandPath, string target) =>
@@ -2484,6 +2602,21 @@ internal static class ForgeCli
             new(true, projectPath, outputDirectory, dryRun, format, string.Empty);
 
         public static DocsParseResult Fail(string format, string message) =>
+            new(false, string.Empty, null, false, format, message);
+    }
+
+    private sealed record GraphParseResult(
+        bool Success,
+        string ProjectPath,
+        string? OutputDirectory,
+        bool DryRun,
+        string Format,
+        string Message)
+    {
+        public static GraphParseResult Ok(string projectPath, string? outputDirectory, bool dryRun, string format) =>
+            new(true, projectPath, outputDirectory, dryRun, format, string.Empty);
+
+        public static GraphParseResult Fail(string format, string message) =>
             new(false, string.Empty, null, false, format, message);
     }
 

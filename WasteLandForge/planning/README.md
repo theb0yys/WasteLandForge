@@ -237,9 +237,14 @@ Gate status:
 - `gates/gate-230-forge-docs-schema-reference-page-skeleton.md` - Gate 230, `forge docs` schema reference page skeleton.
 - `gates/gate-231-forge-docs-registry-reference-page-skeleton.md` - Gate 231, `forge docs` project registry reference page skeleton.
 - `gates/gate-232-forge-docs-validation-rule-reference-page-skeleton.md` - Gate 232, `forge docs` validation rule reference page skeleton.
+- `gates/gate-233-forge-docs-built-in-capability-reference-page-skeleton.md` - Gate 233, `forge docs` built-in capability reference page skeleton.
+- `gates/gate-234-forge-docs-built-in-provider-reference-page-skeleton.md` - Gate 234, `forge docs` built-in provider reference page skeleton.
+- `gates/gate-235-forge-docs-canonical-command-reference-page-skeleton.md` - Gate 235, `forge docs` canonical command reference page skeleton.
+- `gates/gate-236-forge-graph-project-source-graph-skeleton.md` - Gate 236, minimal `forge graph` project source graph skeleton.
+- `gates/gate-237-forge-graph-capability-requirement-graph-skeleton.md` - Gate 237, declaration-only `forge graph` capability requirement graph skeleton.
 
 Next gate:
 
-- Gate 233 - `forge docs` built-in capability reference page skeleton, stopping before a static site generator, watch mode, network publishing, full prose documentation rendering, graph/explain/clean behavior, package/release behavior, xEdit process execution, plugin patch generation, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, provider reference pages, or AI behavior.
+- Gate 238 - `forge graph` generator target graph skeleton, stopping before build planning changes, generator execution changes, runtime provider resolution, capability scan behavior changes, graph visualization formats, package/release behavior, xEdit process execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

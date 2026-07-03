@@ -467,3 +467,24 @@ output containment boundary.
 Gate 232 adds no new rule family or diagnostic ID. `forge docs` validation
 rule reference page generation documents reserved rule families and remains
 under the existing `WF-GEN-*` output containment boundary.
+
+Gate 233 adds no new rule family or diagnostic ID. `forge docs` built-in
+capability reference page generation documents existing catalogue capabilities
+and remains under the existing `WF-GEN-*` output containment boundary.
+
+Gate 234 adds no new rule family or diagnostic ID. `forge docs` built-in
+provider reference page generation documents existing catalogue providers and
+remains under the existing `WF-GEN-*` output containment boundary.
+
+Gate 235 adds no new rule family or diagnostic ID. `forge docs` canonical
+command reference page generation documents existing ADR-010 command entries
+and remains under the existing `WF-GEN-*` output containment boundary.
+
+Gate 236 adds no new rule family or diagnostic ID. `forge graph` project
+source graph generation remains under the existing `WF-GEN-*` generated-output
+containment boundary.
+
+Gate 237 adds no new rule family or diagnostic ID. `forge graph` capability
+requirement graph generation remains under the existing `WF-GEN-*`
+generated-output containment boundary and does not project new `WF-CAP-*`
+diagnostics.

@@ -841,3 +841,43 @@ documentation publishing dependency, network call, download, rehosted runtime
 binary, runtime probe, MO2/GECK integration, detector dependency, capability
 resolver dependency, release-publishing dependency, external tool execution,
 archive/FOMOD dependency, or AI requirement.
+
+Gate 233 adds `forge docs` built-in capability reference page skeleton
+generation using existing .NET and repository catalogue code only. It adds no
+static-site generator, documentation publishing dependency, network call,
+download, rehosted runtime binary, runtime probe, MO2/GECK integration,
+detector dependency, provider-version parser dependency, capability resolver
+dependency, release-publishing dependency, external tool execution,
+archive/FOMOD dependency, or AI requirement.
+
+Gate 234 adds `forge docs` built-in provider reference page skeleton
+generation using existing .NET and repository catalogue code only. It adds no
+static-site generator, documentation publishing dependency, network call,
+download, rehosted runtime binary, runtime probe, MO2/GECK integration,
+detector dependency, provider-version parser dependency, capability resolver
+dependency, release-publishing dependency, external tool execution,
+archive/FOMOD dependency, or AI requirement.
+
+Gate 235 adds `forge docs` canonical command reference page skeleton
+generation using existing .NET and repository command-surface data only. It
+adds no static-site generator, documentation publishing dependency, network
+call, download, rehosted runtime binary, runtime probe, MO2/GECK integration,
+detector dependency, provider-version parser dependency, capability resolver
+dependency, release-publishing dependency, external tool execution,
+archive/FOMOD dependency, or AI requirement.
+
+Gate 236 adds `forge graph` project source graph skeleton generation using
+existing .NET and project source file enumeration only. It adds no graph
+visualization dependency, static-site generator, network call, download,
+rehosted runtime binary, runtime probe, MO2/GECK integration, detector
+dependency, provider-version parser dependency, capability resolver
+dependency, release-publishing dependency, external tool execution,
+archive/FOMOD dependency, or AI requirement.
+
+Gate 237 extends `forge graph` with declaration-only capability requirement
+links using the existing built-in catalogue and validation requirement reader.
+It adds no graph visualization dependency, static-site generator, network
+call, download, rehosted runtime binary, runtime probe, MO2/GECK integration,
+detector dependency, provider-version parser dependency, new capability
+resolver dependency, release-publishing dependency, external tool execution,
+archive/FOMOD dependency, or AI requirement.

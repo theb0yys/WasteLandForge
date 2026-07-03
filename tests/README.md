@@ -199,6 +199,40 @@ reference index links, docs manifest entries, checksum coverage, dry-run
 no-write behavior, reserved family metadata for `WF-GEN-*`, and continued
 avoidance of `Data` writes.
 
+Gate 233 extends the same golden CLI coverage for `forge docs` with generated
+built-in capability reference page skeletons. Tests assert planned capability
+page outputs, written `capability-reference.json` and
+`capability-reference.md` files, reference index links, docs manifest entries,
+checksum coverage, dry-run no-write behavior, catalogue metadata for
+`runtime.ui.mcm_json`, and continued avoidance of `Data` writes.
+
+Gate 234 extends the same golden CLI coverage for `forge docs` with generated
+built-in provider reference page skeletons. Tests assert planned provider page
+outputs, written `provider-reference.json` and `provider-reference.md` files,
+reference index links, docs manifest entries, checksum coverage, dry-run
+no-write behavior, catalogue metadata for `provider.runtime.mcm_extender`, and
+continued avoidance of `Data` writes.
+
+Gate 235 extends the same golden CLI coverage for `forge docs` with generated
+canonical command reference page skeletons. Tests assert planned command page
+outputs, written `command-reference.json` and `command-reference.md` files,
+reference index links, docs manifest entries, checksum coverage, dry-run
+no-write behavior, command metadata for `forge docs`, and continued avoidance
+of `Data` writes.
+
+Gate 236 adds golden CLI coverage for `forge graph`. Tests assert planned and
+written project source graph JSON/Markdown outputs, graph manifest entries,
+checksum coverage, dry-run no-write behavior, source/output boundary graph
+metadata, output containment with `WF-GEN-001`, and continued avoidance of
+`Data` writes.
+
+Gate 237 extends that golden CLI coverage for `forge graph` with
+declaration-only capability requirement graph metadata. Tests assert
+requirement, catalogue capability, and catalogue provider nodes and edges,
+summary counts, manifest evidence, explicit no-scan/no-provider-resolution
+execution flags, dry-run no-write behavior, and continued avoidance of `Data`
+writes.
+
 Gate 31 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
 dialogue link graph endpoints: `linkTo` targets and `linkFrom` sources that are
 declared topics but have no authored dialogue line.

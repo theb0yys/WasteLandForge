@@ -208,6 +208,56 @@ documentation rendering, graph/explain/clean behavior, package/release
 behavior, xEdit execution, plugin mutation, MO2/GECK automation, runtime
 probes, and AI.
 
+Gate 233 extends `DocsReferenceIndexGenerator` with built-in capability
+reference page skeleton generation. `forge docs` now plans and writes one JSON
+and one Markdown page under
+`generated/docs/capabilities/<capability-id>/` for each built-in FNV
+capability, includes those pages in the reference index, docs manifest,
+checksums, CLI JSON/text output, source/output digest reporting, and still
+avoids static site generation, watch mode, network publishing, full prose
+documentation rendering, capability scan/explain behavior, provider detection
+changes, provider-version parsing changes, graph/explain/clean behavior,
+package/release behavior, xEdit execution, plugin mutation, MO2/GECK
+automation, runtime probes, and AI.
+
+Gate 234 extends `DocsReferenceIndexGenerator` with built-in provider reference
+page skeleton generation. `forge docs` now plans and writes one JSON and one
+Markdown page under `generated/docs/providers/<provider-id>/` for each
+built-in FNV provider, includes those pages in the reference index, docs
+manifest, checksums, CLI JSON/text output, source/output digest reporting, and
+still avoids static site generation, watch mode, network publishing, full
+prose documentation rendering, capability scan/explain behavior, provider
+detection changes, provider-version parsing changes, graph/explain/clean
+behavior, package/release behavior, xEdit execution, plugin mutation,
+MO2/GECK automation, runtime probes, and AI.
+
+Gate 235 extends `DocsReferenceIndexGenerator` with canonical command
+reference page skeleton generation. `forge docs` now plans and writes one JSON
+and one Markdown page under `generated/docs/commands/<command-path>/` for each
+ADR-010 command entry, includes those pages in the reference index, docs
+manifest, checksums, CLI JSON/text output, source/output digest reporting, and
+still avoids command behavior changes, aliases, static site generation, watch
+mode, network publishing, full prose documentation rendering,
+graph/explain/clean behavior, package/release behavior, xEdit execution,
+plugin mutation, MO2/GECK automation, runtime probes, and AI.
+
+Gate 236 adds `ProjectSourceGraphGenerator` for the first `forge graph` slice.
+`forge graph` now validates the project, plans and writes
+`project-source-graph.json`, `project-source-graph.md`,
+`graph-manifest.json`, and `checksums.sha256` under `generated/graph`,
+records source and output digests, and still avoids graph visualization
+formats, `--subject`, build planning changes, package/release behavior, xEdit
+execution, plugin mutation, MO2/GECK automation, runtime probes, and AI.
+
+Gate 237 extends `ProjectSourceGraphGenerator` with declaration-only
+capability requirement graph nodes. `forge graph` now reads validated
+dependency registry requirements, links them to built-in catalogue capability
+and provider nodes, records requirement/catalogue counts in graph summaries,
+and still avoids capability scans, provider status resolution, graph
+visualization formats, `--subject`, build planning changes, package/release
+behavior, xEdit execution, plugin mutation, MO2/GECK automation, runtime
+probes, and AI.
+
 Gate 29 adds semantic checks for mutation variable references while preserving
 earlier dialogue registry schema versions in `WastelandForge.Schema`.
 

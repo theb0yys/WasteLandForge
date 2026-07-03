@@ -18,6 +18,8 @@ public sealed record DocsReferenceIndexResult(
     IReadOnlyList<DocsRegistryReferencePage> RegistryReferences,
     IReadOnlyList<DocsRuleReferencePage> RuleReferences,
     IReadOnlyList<DocsCapabilityReferencePage> CapabilityReferences,
+    IReadOnlyList<DocsProviderReferencePage> ProviderReferences,
+    IReadOnlyList<DocsCommandReferencePage> CommandReferences,
     IReadOnlyList<FileDigest> SourceDigests,
     IReadOnlyList<FileDigest> OutputDigests)
 {

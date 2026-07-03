@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 232 forge docs validation rule reference page skeleton
+Status: Gate 237 forge graph capability requirement graph skeleton
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -373,6 +373,10 @@ forge --version
   per-schema `schema-reference.json` and `schema-reference.md` pages,
   per-registry `registry-reference.json` and `registry-reference.md` pages,
   per-rule-family `rule-reference.json` and `rule-reference.md` pages,
+  per-capability `capability-reference.json` and `capability-reference.md`
+  pages, per-provider `provider-reference.json` and `provider-reference.md`
+  pages, per-command `command-reference.json` and `command-reference.md`
+  pages,
   `docs-manifest.json`, and `checksums.sha256`.
 - `forge docs` indexes embedded schemas, project registry files, reserved rule
   families, built-in FNV capabilities, built-in FNV providers, and canonical
@@ -385,6 +389,14 @@ forge --version
 - `forge docs` writes rule reference page skeletons under
   `generated/docs/rules/<rule-family>/` from reserved validation rule
   families.
+- `forge docs` writes capability reference page skeletons under
+  `generated/docs/capabilities/<capability-id>/` from the built-in FNV
+  capability catalogue.
+- `forge docs` writes provider reference page skeletons under
+  `generated/docs/providers/<provider-id>/` from the built-in FNV provider
+  catalogue.
+- `forge docs` writes command reference page skeletons under
+  `generated/docs/commands/<command-path>/` from the ADR-010 command surface.
 - `forge docs --output generated/<name>` changes the generated docs output
   directory. Output outside `generated/` is rejected with `WF-GEN-001`.
 - `forge docs --dry-run` reports planned outputs and writes no files.
@@ -392,6 +404,22 @@ forge --version
   network, execute graph/explain/clean behavior, package or release outputs,
   execute xEdit, mutate plugins, automate MO2 or GECK, run runtime probes, or
   use AI.
+- `forge graph` validates the project and writes deterministic project source
+  graph evidence under project `generated/graph`.
+- `forge graph` writes `project-source-graph.json`,
+  `project-source-graph.md`, `graph-manifest.json`, and `checksums.sha256`.
+- `forge graph` links project, source-root, source manifest/registry
+  documents, declared capability requirements, built-in catalogue capability
+  and provider nodes, generated-output-boundary, and
+  distribution-output-boundary nodes.
+- `forge graph --output generated/<name>` changes the generated graph output
+  directory. Output outside `generated/` is rejected with `WF-GEN-001`.
+- `forge graph --dry-run` reports planned outputs and writes no files.
+- `forge graph` does not render graph visualization formats, accept
+  `--subject`, run capability scans, resolve provider status, change build
+  planning or execution, build a static site, watch files, publish to the
+  network, package or release outputs, execute xEdit, mutate plugins, automate
+  MO2 or GECK, run runtime probes, or use AI.
 - `forge generate --target mcm-json` writes deterministic MCM Extender JSON
   files, translation INI files when declared, a schema-validated package
   manifest, a schema-validated install-preview report, a human summary,
@@ -778,17 +806,47 @@ generated/docs/registries/<registry-path>/registry-reference.json
 generated/docs/registries/<registry-path>/registry-reference.md
 generated/docs/rules/<rule-family>/rule-reference.json
 generated/docs/rules/<rule-family>/rule-reference.md
+generated/docs/capabilities/<capability-id>/capability-reference.json
+generated/docs/capabilities/<capability-id>/capability-reference.md
+generated/docs/providers/<provider-id>/provider-reference.json
+generated/docs/providers/<provider-id>/provider-reference.md
+generated/docs/commands/<command-path>/command-reference.json
+generated/docs/commands/<command-path>/command-reference.md
 generated/docs/docs-manifest.json
 generated/docs/checksums.sha256
 ```
 
 `--output` is accepted only when the resolved path stays under project
 `generated/`. The current docs target writes reference index evidence and
-schema, registry, and rule reference page skeletons only. It does not build a
-static site, watch files, publish to the network, render full prose schema,
-registry, or rule documentation, execute graph/explain/clean behavior, package
-or release outputs, execute xEdit, mutate plugins, automate MO2 or GECK, run
-runtime probes, use real third-party plugin fixtures, or use AI.
+schema, registry, rule, capability, provider, and command reference page
+skeletons only. It does not build a static site, watch files, publish to the
+network, render full prose schema, registry, rule, capability, provider, or
+command documentation, execute capability scan/explain behavior, change
+provider detection or provider-version parsing, execute graph/explain/clean
+behavior, package or release outputs, execute xEdit, mutate plugins, automate
+MO2 or GECK, run runtime probes, use real third-party plugin fixtures, or use
+AI.
+
+## Graph Evidence
+
+`forge graph` writes:
+
+```text
+generated/graph/project-source-graph.json
+generated/graph/project-source-graph.md
+generated/graph/graph-manifest.json
+generated/graph/checksums.sha256
+```
+
+`--output` is accepted only when the resolved path stays under project
+`generated/`. The current graph target writes project source graph evidence
+with a declaration-only capability requirement layer. It links dependency
+registry requirements to built-in catalogue capability/provider nodes, but it
+does not run `forge capabilities scan`, resolve provider status, render graph
+visualization formats, accept `--subject`, change build planning or execution,
+build a static site, watch files, publish to the network, package or release
+outputs, execute xEdit, mutate plugins, automate MO2 or GECK, run runtime
+probes, use real third-party plugin fixtures, or use AI.
 
 ## Generate, Build, And Package Evidence
 

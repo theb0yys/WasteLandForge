@@ -12,5 +12,9 @@ public sealed record DocsReferenceIndexOutputs(
     IReadOnlyList<string> RuleReferenceMarkdown,
     IReadOnlyList<string> CapabilityReferenceJson,
     IReadOnlyList<string> CapabilityReferenceMarkdown,
+    IReadOnlyList<string> ProviderReferenceJson,
+    IReadOnlyList<string> ProviderReferenceMarkdown,
+    IReadOnlyList<string> CommandReferenceJson,
+    IReadOnlyList<string> CommandReferenceMarkdown,
     string Manifest,
     string Checksums);

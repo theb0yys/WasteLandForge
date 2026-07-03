@@ -1,6 +1,6 @@
 # Docs Reference Output
 
-Status: Gate 232 validation rule reference page skeleton
+Status: Gate 235 canonical command reference page skeleton
 Research classification: Documented
 Source: R006, ADR-009, ADR-010, ADR-011
 
@@ -8,9 +8,10 @@ Source: R006, ADR-009, ADR-010, ADR-011
 
 `forge docs` produces deterministic local documentation reference evidence
 from canonical source truth. The current slice writes an aggregate reference
-index, per-schema reference page skeletons, and project registry reference
-page skeletons, and validation rule reference page skeletons, not a static
-site.
+index, per-schema reference page skeletons, project registry reference page
+skeletons, validation rule reference page skeletons, built-in capability
+reference page skeletons, built-in provider reference page skeletons, and
+canonical command reference page skeletons, not a static site.
 
 ## Implemented
 
@@ -26,6 +27,12 @@ site.
 - `generated/docs/registries/<registry-path>/registry-reference.md`
 - `generated/docs/rules/<rule-family>/rule-reference.json`
 - `generated/docs/rules/<rule-family>/rule-reference.md`
+- `generated/docs/capabilities/<capability-id>/capability-reference.json`
+- `generated/docs/capabilities/<capability-id>/capability-reference.md`
+- `generated/docs/providers/<provider-id>/provider-reference.json`
+- `generated/docs/providers/<provider-id>/provider-reference.md`
+- `generated/docs/commands/<command-path>/command-reference.json`
+- `generated/docs/commands/<command-path>/command-reference.md`
 - `generated/docs/docs-manifest.json`
 - `generated/docs/checksums.sha256`
 
@@ -52,19 +59,41 @@ prefix, title, scope, source governance document, observed local diagnostics
 when present, execution boundaries, and output paths. The docs manifest and
 checksum sidecar include those pages as generated evidence.
 
+Gate 233 adds one generated JSON and one generated Markdown skeleton for each
+built-in FNV capability. Each capability reference records catalogue identity,
+catalogue version, capability ID, title, description, provider IDs that satisfy
+the capability, execution boundaries, and output paths. The docs manifest and
+checksum sidecar include those pages as generated evidence.
+
+Gate 234 adds one generated JSON and one generated Markdown skeleton for each
+built-in FNV provider. Each provider reference records catalogue identity,
+catalogue version, provider ID, title, provider type, install scope,
+capabilities, detector kinds, notes, declaration-only version metadata,
+execution boundaries, and output paths. The docs manifest and checksum sidecar
+include those pages as generated evidence.
+
+Gate 235 adds one generated JSON and one generated Markdown skeleton for each
+canonical ADR-010 command entry. Each command reference records command ID,
+command text, command group, surface status, source document, research source,
+execution boundaries, and output paths. The docs manifest and checksum sidecar
+include those pages as generated evidence.
+
 ## Boundaries
 
 This gate does not build a static site, watch files, publish to the network,
-render full prose schema, registry, or rule documentation, execute
-graph/explain/clean behavior, package or release outputs, execute xEdit,
-mutate plugins, automate MO2 or GECK, run runtime probes, use real third-party
-plugin fixtures, or use AI.
+render full prose schema, registry, rule, capability, provider, or command
+documentation, execute capability scan/explain behavior, change provider
+detection or provider-version
+parsing, execute graph/explain/clean behavior, package or release outputs,
+execute xEdit, mutate plugins, automate MO2 or GECK, run runtime probes, use
+real third-party plugin fixtures, or use AI.
 
 Generated docs output must stay under `generated/`. Output outside that tree
 is rejected with `WF-GEN-001`.
 
 ## Next
 
-Gate 233 should add built-in capability reference page skeletons under
-`generated/docs/capabilities/` while preserving the same offline-first and
-generated-output-only boundary.
+The docs reference lane is parked after Gate 235. Gate 236 moved to the
+separate `forge graph` command with a project source graph skeleton, and Gate
+237 extends that graph with declaration-only capability requirement links.
+Gate 238 should continue the graph lane with generator target graph evidence.

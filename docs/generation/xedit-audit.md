@@ -55,13 +55,18 @@ evidence plan entries for future xEdit script/report support.
 ## Next implementation slice
 
 The xEdit audit command lane is parked unless explicitly reopened. Gates 229
-through 232 started the broader low-risk Forge docs lane with `forge docs`
+through 235 continue the broader low-risk Forge docs lane with `forge docs`
 reference index output, schema reference page skeletons under
 `generated/docs/schemas/`, registry reference page skeletons under
-`generated/docs/registries/`, and rule reference page skeletons under
-`generated/docs/rules/`. The next docs slice is Gate 233: built-in capability
-reference page skeletons under `generated/docs/capabilities/`, still before
-xEdit process execution, report generation, plugin patch generation, plugin
-mutation, MO2 automation, GECK automation, runtime probes, real third-party
-plugin fixtures, `forge build --target xedit-audit`, package/release behavior,
-or applying parsed report findings to plugins.
+`generated/docs/registries/`, rule reference page skeletons under
+`generated/docs/rules/`, and built-in capability reference page skeletons under
+`generated/docs/capabilities/`, and built-in provider reference page skeletons
+under `generated/docs/providers/`, and canonical command reference page
+skeletons under `generated/docs/commands/`. Gate 236 starts the `forge graph`
+command lane with deterministic project source graph evidence under
+`generated/graph/`, and Gate 237 adds declaration-only capability requirement
+links to that graph, still before xEdit process execution, report generation,
+plugin patch generation, plugin mutation, MO2 automation, GECK automation,
+runtime probes, real third-party plugin fixtures,
+`forge build --target xedit-audit`, package/release behavior, or applying
+parsed report findings to plugins.

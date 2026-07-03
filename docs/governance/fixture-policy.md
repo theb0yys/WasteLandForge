@@ -742,6 +742,47 @@ outputs, plugin files, provider DLLs, Bethesda assets, third-party mod files,
 local install snapshots, MO2 profiles, GECK outputs, external tool fixtures,
 or generated evidence fixtures.
 
+Gate 233 commits no generated docs output. It uses temp-copied synthetic
+project fixtures for `forge docs` golden tests and commits no generated
+capability reference pages, generated rule reference pages, generated registry
+reference pages, generated schema reference pages, generated reference
+indexes, static site output, xEdit outputs, plugin files, provider DLLs,
+Bethesda assets, third-party mod files, local install snapshots, MO2 profiles,
+GECK outputs, external tool fixtures, or generated evidence fixtures.
+
+Gate 234 commits no generated docs output. It uses temp-copied synthetic
+project fixtures for `forge docs` golden tests and commits no generated
+provider reference pages, generated capability reference pages, generated rule
+reference pages, generated registry reference pages, generated schema
+reference pages, generated reference indexes, static site output, xEdit
+outputs, plugin files, provider DLLs, Bethesda assets, third-party mod files,
+local install snapshots, MO2 profiles, GECK outputs, external tool fixtures,
+or generated evidence fixtures.
+
+Gate 235 commits no generated docs output. It uses temp-copied synthetic
+project fixtures for `forge docs` golden tests and commits no generated
+command reference pages, generated provider reference pages, generated
+capability reference pages, generated rule reference pages, generated registry
+reference pages, generated schema reference pages, generated reference
+indexes, static site output, xEdit outputs, plugin files, provider DLLs,
+Bethesda assets, third-party mod files, local install snapshots, MO2 profiles,
+GECK outputs, external tool fixtures, or generated evidence fixtures.
+
+Gate 236 commits no generated graph output. It uses temp-copied synthetic
+project fixtures for `forge graph` golden tests and commits no generated graph
+JSON, generated graph Markdown, graph manifests, checksum sidecars, static
+site output, xEdit outputs, plugin files, provider DLLs, Bethesda assets,
+third-party mod files, local install snapshots, MO2 profiles, GECK outputs,
+external tool fixtures, or generated evidence fixtures.
+
+Gate 237 commits no generated graph output. It uses temp-copied synthetic
+project fixtures for `forge graph` golden tests and commits no generated graph
+JSON, generated graph Markdown, graph manifests, checksum sidecars, provider
+status fixtures, scanner output fixtures, static site output, xEdit outputs,
+plugin files, provider DLLs, Bethesda assets, third-party mod files, local
+install snapshots, MO2 profiles, GECK outputs, external tool fixtures, or
+generated evidence fixtures.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

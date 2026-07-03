@@ -66,6 +66,18 @@ internal static class DocsReferenceIndexTextRenderer
             builder.AppendLine(result.Summary.CapabilityReferences == 1
                 ? " capability reference page"
                 : " capability reference pages");
+            builder.Append("  ");
+            builder.Append(result.DryRun ? "PLAN " : "OK   ");
+            builder.Append(result.Summary.ProviderReferences);
+            builder.AppendLine(result.Summary.ProviderReferences == 1
+                ? " provider reference page"
+                : " provider reference pages");
+            builder.Append("  ");
+            builder.Append(result.DryRun ? "PLAN " : "OK   ");
+            builder.Append(result.Summary.CommandReferences);
+            builder.AppendLine(result.Summary.CommandReferences == 1
+                ? " command reference page"
+                : " command reference pages");
             builder.AppendLine(result.DryRun ? "  PLAN docs-manifest.json" : "  OK   docs-manifest.json written");
             builder.AppendLine(result.DryRun ? "  PLAN checksums.sha256" : "  OK   checksums.sha256 written");
 
@@ -89,8 +101,12 @@ internal static class DocsReferenceIndexTextRenderer
             builder.AppendLine(result.Summary.CapabilityReferences.ToString());
             builder.Append("  Providers: ");
             builder.AppendLine(result.Summary.Providers.ToString());
+            builder.Append("  Provider references: ");
+            builder.AppendLine(result.Summary.ProviderReferences.ToString());
             builder.Append("  Commands: ");
             builder.AppendLine(result.Summary.Commands.ToString());
+            builder.Append("  Command references: ");
+            builder.AppendLine(result.Summary.CommandReferences.ToString());
         }
 
         foreach (var issue in result.Diagnostics.Issues)
