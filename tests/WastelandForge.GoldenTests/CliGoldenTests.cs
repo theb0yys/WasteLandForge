@@ -3898,6 +3898,274 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void DocsJsonWritesReferenceIndexSkeleton()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli("docs", projectRoot, "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Docs JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("docs", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("docs", (string?)json["target"]);
+        Assert.Equal("generated/docs", (string?)json["outputs"]?["root"]);
+        Assert.Equal("generated/docs/reference-index.json", (string?)json["outputs"]?["referenceIndexJson"]);
+        Assert.Equal("generated/docs/reference-index.md", (string?)json["outputs"]?["referenceIndexMarkdown"]);
+        Assert.Equal("generated/docs/docs-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal("generated/docs/checksums.sha256", (string?)json["outputs"]?["checksums"]);
+        Assert.True((int?)json["summary"]?["schemas"] > 0);
+        Assert.Equal((int?)json["summary"]?["schemas"], (int?)json["summary"]?["schemaReferences"]);
+        Assert.True((int?)json["summary"]?["registries"] >= 7);
+        Assert.Equal((int?)json["summary"]?["registries"], (int?)json["summary"]?["registryReferences"]);
+        Assert.Equal(10, (int?)json["summary"]?["ruleFamilies"]);
+        Assert.Equal((int?)json["summary"]?["ruleFamilies"], (int?)json["summary"]?["ruleReferences"]);
+        Assert.Equal(19, (int?)json["summary"]?["capabilities"]);
+        Assert.Equal(15, (int?)json["summary"]?["providers"]);
+        Assert.Equal(18, (int?)json["summary"]?["commands"]);
+        var schemaReferenceJsonOutputs = json["outputs"]?["schemaReferenceJson"]?.AsArray()
+            ?? throw new InvalidOperationException("Docs JSON did not include schema reference JSON outputs.");
+        var schemaReferenceMarkdownOutputs = json["outputs"]?["schemaReferenceMarkdown"]?.AsArray()
+            ?? throw new InvalidOperationException("Docs JSON did not include schema reference Markdown outputs.");
+        Assert.Equal((int?)json["summary"]?["schemas"], schemaReferenceJsonOutputs.Count);
+        Assert.Equal((int?)json["summary"]?["schemas"], schemaReferenceMarkdownOutputs.Count);
+        Assert.Contains(
+            schemaReferenceJsonOutputs,
+            output => StringComparer.Ordinal.Equals("generated/docs/schemas/manifest/0.2.0/schema-reference.json", (string?)output));
+        Assert.Contains(
+            schemaReferenceMarkdownOutputs,
+            output => StringComparer.Ordinal.Equals("generated/docs/schemas/manifest/0.2.0/schema-reference.md", (string?)output));
+        var registryReferenceJsonOutputs = json["outputs"]?["registryReferenceJson"]?.AsArray()
+            ?? throw new InvalidOperationException("Docs JSON did not include registry reference JSON outputs.");
+        var registryReferenceMarkdownOutputs = json["outputs"]?["registryReferenceMarkdown"]?.AsArray()
+            ?? throw new InvalidOperationException("Docs JSON did not include registry reference Markdown outputs.");
+        Assert.Equal((int?)json["summary"]?["registries"], registryReferenceJsonOutputs.Count);
+        Assert.Equal((int?)json["summary"]?["registries"], registryReferenceMarkdownOutputs.Count);
+        Assert.Contains(
+            registryReferenceJsonOutputs,
+            output => StringComparer.Ordinal.Equals("generated/docs/registries/dependencies/main/registry-reference.json", (string?)output));
+        Assert.Contains(
+            registryReferenceMarkdownOutputs,
+            output => StringComparer.Ordinal.Equals("generated/docs/registries/dependencies/main/registry-reference.md", (string?)output));
+        var ruleReferenceJsonOutputs = json["outputs"]?["ruleReferenceJson"]?.AsArray()
+            ?? throw new InvalidOperationException("Docs JSON did not include rule reference JSON outputs.");
+        var ruleReferenceMarkdownOutputs = json["outputs"]?["ruleReferenceMarkdown"]?.AsArray()
+            ?? throw new InvalidOperationException("Docs JSON did not include rule reference Markdown outputs.");
+        Assert.Equal((int?)json["summary"]?["ruleFamilies"], ruleReferenceJsonOutputs.Count);
+        Assert.Equal((int?)json["summary"]?["ruleFamilies"], ruleReferenceMarkdownOutputs.Count);
+        Assert.Contains(
+            ruleReferenceJsonOutputs,
+            output => StringComparer.Ordinal.Equals("generated/docs/rules/WF-GEN/rule-reference.json", (string?)output));
+        Assert.Contains(
+            ruleReferenceMarkdownOutputs,
+            output => StringComparer.Ordinal.Equals("generated/docs/rules/WF-GEN/rule-reference.md", (string?)output));
+        Assert.Equal(string.Empty, result.Stderr);
+
+        var indexPath = Path.Combine(projectRoot, "generated", "docs", "reference-index.json");
+        var markdownPath = Path.Combine(projectRoot, "generated", "docs", "reference-index.md");
+        var schemaJsonPath = Path.Combine(projectRoot, "generated", "docs", "schemas", "manifest", "0.2.0", "schema-reference.json");
+        var schemaMarkdownPath = Path.Combine(projectRoot, "generated", "docs", "schemas", "manifest", "0.2.0", "schema-reference.md");
+        var registryJsonPath = Path.Combine(projectRoot, "generated", "docs", "registries", "dependencies", "main", "registry-reference.json");
+        var registryMarkdownPath = Path.Combine(projectRoot, "generated", "docs", "registries", "dependencies", "main", "registry-reference.md");
+        var ruleJsonPath = Path.Combine(projectRoot, "generated", "docs", "rules", "WF-GEN", "rule-reference.json");
+        var ruleMarkdownPath = Path.Combine(projectRoot, "generated", "docs", "rules", "WF-GEN", "rule-reference.md");
+        var manifestPath = Path.Combine(projectRoot, "generated", "docs", "docs-manifest.json");
+        var checksumsPath = Path.Combine(projectRoot, "generated", "docs", "checksums.sha256");
+        Assert.True(File.Exists(indexPath));
+        Assert.True(File.Exists(markdownPath));
+        Assert.True(File.Exists(schemaJsonPath));
+        Assert.True(File.Exists(schemaMarkdownPath));
+        Assert.True(File.Exists(registryJsonPath));
+        Assert.True(File.Exists(registryMarkdownPath));
+        Assert.True(File.Exists(ruleJsonPath));
+        Assert.True(File.Exists(ruleMarkdownPath));
+        Assert.True(File.Exists(manifestPath));
+        Assert.True(File.Exists(checksumsPath));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+
+        var index = JsonNode.Parse(File.ReadAllText(indexPath))
+            ?? throw new InvalidOperationException("Generated docs reference index did not parse.");
+        Assert.Equal("wastelandforge.docs.reference-index", (string?)index["kind"]);
+        Assert.Equal("generated/docs", (string?)index["outputRoot"]);
+        Assert.Equal((int?)index["summary"]?["schemas"], (int?)index["summary"]?["schemaReferences"]);
+        Assert.Equal((int?)index["summary"]?["registries"], (int?)index["summary"]?["registryReferences"]);
+        Assert.Equal((int?)index["summary"]?["ruleFamilies"], (int?)index["summary"]?["ruleReferences"]);
+        Assert.Equal(false, (bool?)index["execution"]?["staticSiteGenerator"]);
+        Assert.Equal(false, (bool?)index["execution"]?["networkPublishing"]);
+        Assert.Equal(false, (bool?)index["execution"]?["executesXEdit"]);
+        Assert.Equal(false, (bool?)index["execution"]?["ai"]);
+        Assert.True(index["sections"]?.AsArray().Any(section =>
+            StringComparer.Ordinal.Equals("schemas", (string?)section?["id"])) ?? false);
+        Assert.True(index["sections"]?.AsArray().Any(section =>
+            StringComparer.Ordinal.Equals("commands", (string?)section?["id"])) ?? false);
+        Assert.True(index["schemaReferences"]?.AsArray().Any(reference =>
+            StringComparer.Ordinal.Equals("generated/docs/schemas/manifest/0.2.0/schema-reference.json", (string?)reference?["json"]) &&
+            StringComparer.Ordinal.Equals("generated/docs/schemas/manifest/0.2.0/schema-reference.md", (string?)reference?["markdown"])) ?? false);
+        Assert.True(index["registryReferences"]?.AsArray().Any(reference =>
+            StringComparer.Ordinal.Equals("generated/docs/registries/dependencies/main/registry-reference.json", (string?)reference?["json"]) &&
+            StringComparer.Ordinal.Equals("generated/docs/registries/dependencies/main/registry-reference.md", (string?)reference?["markdown"])) ?? false);
+        Assert.True(index["ruleReferences"]?.AsArray().Any(reference =>
+            StringComparer.Ordinal.Equals("generated/docs/rules/WF-GEN/rule-reference.json", (string?)reference?["json"]) &&
+            StringComparer.Ordinal.Equals("generated/docs/rules/WF-GEN/rule-reference.md", (string?)reference?["markdown"])) ?? false);
+
+        var markdown = File.ReadAllText(markdownPath);
+        Assert.Contains("# WastelandForge Reference Index", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Schemas", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Schema Reference Pages", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Project Registries", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Registry Reference Pages", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Rule Reference Pages", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Gate Boundaries", markdown, StringComparison.Ordinal);
+
+        var schemaReferenceJson = JsonNode.Parse(File.ReadAllText(schemaJsonPath))
+            ?? throw new InvalidOperationException("Generated schema reference JSON did not parse.");
+        Assert.Equal("wastelandforge.docs.schema-reference", (string?)schemaReferenceJson["kind"]);
+        Assert.Equal("docs", (string?)schemaReferenceJson["command"]);
+        Assert.Equal("https://schemas.wastelandforge.dev/fnv/manifest/0.2.0/schema.json", (string?)schemaReferenceJson["schema"]?["id"]);
+        Assert.Equal("manifest", (string?)schemaReferenceJson["schema"]?["kind"]);
+        Assert.Equal("0.2.0", (string?)schemaReferenceJson["schema"]?["version"]);
+        Assert.Equal("schemas/manifest/0.2.0/schema.json", (string?)schemaReferenceJson["schema"]?["source"]);
+        Assert.Equal(true, (bool?)schemaReferenceJson["source"]?["embedded"]);
+        Assert.True((int?)schemaReferenceJson["summary"]?["topLevelPropertyCount"] > 0);
+        Assert.Equal(false, (bool?)schemaReferenceJson["execution"]?["staticSiteGenerator"]);
+        Assert.Equal(false, (bool?)schemaReferenceJson["execution"]?["ai"]);
+
+        var schemaReferenceMarkdown = File.ReadAllText(schemaMarkdownPath);
+        Assert.Contains("# manifest 0.2.0 Schema Reference", schemaReferenceMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Required Properties", schemaReferenceMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Top-Level Properties", schemaReferenceMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Gate Boundaries", schemaReferenceMarkdown, StringComparison.Ordinal);
+
+        var registryReferenceJson = JsonNode.Parse(File.ReadAllText(registryJsonPath))
+            ?? throw new InvalidOperationException("Generated registry reference JSON did not parse.");
+        Assert.Equal("wastelandforge.docs.registry-reference", (string?)registryReferenceJson["kind"]);
+        Assert.Equal("docs", (string?)registryReferenceJson["command"]);
+        Assert.Equal("src.registries.dependencies.main", (string?)registryReferenceJson["registry"]?["id"]);
+        Assert.Equal("dependencies registry", (string?)registryReferenceJson["registry"]?["title"]);
+        Assert.Equal("dependencies", (string?)registryReferenceJson["registry"]?["group"]);
+        Assert.Equal("src/registries/dependencies/main.json", (string?)registryReferenceJson["registry"]?["source"]);
+        Assert.Equal("json", (string?)registryReferenceJson["registry"]?["format"]);
+        Assert.Equal(true, (bool?)registryReferenceJson["source"]?["projectLocal"]);
+        Assert.Equal("json-object", (string?)registryReferenceJson["summary"]?["parseStatus"]);
+        Assert.True((int?)registryReferenceJson["summary"]?["topLevelPropertyCount"] > 0);
+        Assert.Contains(
+            registryReferenceJson["summary"]?["topLevelProperties"]?.AsArray() ?? [],
+            property => StringComparer.Ordinal.Equals("requires", (string?)property));
+        Assert.Equal(false, (bool?)registryReferenceJson["execution"]?["staticSiteGenerator"]);
+        Assert.Equal(false, (bool?)registryReferenceJson["execution"]?["ai"]);
+
+        var registryReferenceMarkdown = File.ReadAllText(registryMarkdownPath);
+        Assert.Contains("# dependencies registry Reference", registryReferenceMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Registry ID: `src.registries.dependencies.main`", registryReferenceMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Top-Level Properties", registryReferenceMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Gate Boundaries", registryReferenceMarkdown, StringComparison.Ordinal);
+
+        var ruleReferenceJson = JsonNode.Parse(File.ReadAllText(ruleJsonPath))
+            ?? throw new InvalidOperationException("Generated rule reference JSON did not parse.");
+        Assert.Equal("wastelandforge.docs.rule-reference", (string?)ruleReferenceJson["kind"]);
+        Assert.Equal("docs", (string?)ruleReferenceJson["command"]);
+        Assert.Equal("WF-GEN-*", (string?)ruleReferenceJson["ruleFamily"]?["id"]);
+        Assert.Equal("WF-GEN", (string?)ruleReferenceJson["ruleFamily"]?["prefix"]);
+        Assert.Equal("Generator rules", (string?)ruleReferenceJson["ruleFamily"]?["title"]);
+        Assert.Equal("Generator rules", (string?)ruleReferenceJson["ruleFamily"]?["scope"]);
+        Assert.Equal("docs/governance/rule-families.md", (string?)ruleReferenceJson["ruleFamily"]?["source"]);
+        Assert.Equal(0, (int?)ruleReferenceJson["summary"]?["knownDiagnosticCount"]);
+        Assert.Equal(false, (bool?)ruleReferenceJson["execution"]?["staticSiteGenerator"]);
+        Assert.Equal(false, (bool?)ruleReferenceJson["execution"]?["ai"]);
+
+        var ruleReferenceMarkdown = File.ReadAllText(ruleMarkdownPath);
+        Assert.Contains("# Generator rules Reference", ruleReferenceMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Rule family: `WF-GEN-*`", ruleReferenceMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Known Local Diagnostics", ruleReferenceMarkdown, StringComparison.Ordinal);
+        Assert.Contains("## Gate Boundaries", ruleReferenceMarkdown, StringComparison.Ordinal);
+
+        var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))
+            ?? throw new InvalidOperationException("Generated docs manifest did not parse.");
+        Assert.Equal("wastelandforge.docs-manifest", (string?)manifest["kind"]);
+        Assert.Equal("wastelandforge/docs-reference-index/v1", (string?)manifest["buildType"]);
+        Assert.Equal("generated/docs/reference-index.json", (string?)manifest["referenceIndex"]?["json"]);
+        Assert.True(manifest["schemaReferences"]?.AsArray().Any(reference =>
+            StringComparer.Ordinal.Equals("generated/docs/schemas/manifest/0.2.0/schema-reference.json", (string?)reference?["json"]) &&
+            StringComparer.Ordinal.Equals("generated/docs/schemas/manifest/0.2.0/schema-reference.md", (string?)reference?["markdown"])) ?? false);
+        Assert.True(manifest["registryReferences"]?.AsArray().Any(reference =>
+            StringComparer.Ordinal.Equals("generated/docs/registries/dependencies/main/registry-reference.json", (string?)reference?["json"]) &&
+            StringComparer.Ordinal.Equals("generated/docs/registries/dependencies/main/registry-reference.md", (string?)reference?["markdown"])) ?? false);
+        Assert.True(manifest["ruleReferences"]?.AsArray().Any(reference =>
+            StringComparer.Ordinal.Equals("generated/docs/rules/WF-GEN/rule-reference.json", (string?)reference?["json"]) &&
+            StringComparer.Ordinal.Equals("generated/docs/rules/WF-GEN/rule-reference.md", (string?)reference?["markdown"])) ?? false);
+        Assert.Equal(false, (bool?)manifest["execution"]?["watchMode"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["mutatesPlugins"]);
+        Assert.True(manifest["outputs"]?.AsArray().Any(output =>
+            StringComparer.Ordinal.Equals("generated/docs/reference-index.json", (string?)output?["path"])) ?? false);
+        Assert.True(manifest["outputs"]?.AsArray().Any(output =>
+            StringComparer.Ordinal.Equals("generated/docs/schemas/manifest/0.2.0/schema-reference.json", (string?)output?["path"])) ?? false);
+        Assert.True(manifest["outputs"]?.AsArray().Any(output =>
+            StringComparer.Ordinal.Equals("generated/docs/registries/dependencies/main/registry-reference.json", (string?)output?["path"])) ?? false);
+        Assert.True(manifest["outputs"]?.AsArray().Any(output =>
+            StringComparer.Ordinal.Equals("generated/docs/rules/WF-GEN/rule-reference.json", (string?)output?["path"])) ?? false);
+
+        var checksums = File.ReadAllText(checksumsPath);
+        Assert.Contains("docs-manifest.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("reference-index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("reference-index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("schemas/manifest/0.2.0/schema-reference.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("schemas/manifest/0.2.0/schema-reference.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("registries/dependencies/main/registry-reference.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("registries/dependencies/main/registry-reference.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("rules/WF-GEN/rule-reference.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("rules/WF-GEN/rule-reference.md", checksums, StringComparison.Ordinal);
+        Assert.DoesNotContain("Data/", checksums, StringComparison.OrdinalIgnoreCase);
+        Assert.True(json["outputDigests"]?.AsArray().Any(digest =>
+            StringComparer.Ordinal.Equals("generated/docs/checksums.sha256", (string?)digest?["path"])) ?? false);
+    }
+
+    [Fact]
+    public void DocsDryRunDoesNotWriteReferenceIndex()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli("docs", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Docs dry-run JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("docs", (string?)json["command"]);
+        Assert.Equal("planned", (string?)json["status"]);
+        Assert.Equal(true, (bool?)json["dryRun"]);
+        Assert.Equal("generated/docs", (string?)json["outputs"]?["root"]);
+        Assert.Equal((int?)json["summary"]?["schemas"], (int?)json["summary"]?["schemaReferences"]);
+        Assert.Equal((int?)json["summary"]?["registries"], (int?)json["summary"]?["registryReferences"]);
+        Assert.Equal((int?)json["summary"]?["ruleFamilies"], (int?)json["summary"]?["ruleReferences"]);
+        Assert.True(json["outputs"]?["schemaReferenceJson"]?.AsArray().Count > 0);
+        Assert.True(json["outputs"]?["schemaReferenceMarkdown"]?.AsArray().Count > 0);
+        Assert.True(json["outputs"]?["registryReferenceJson"]?.AsArray().Count > 0);
+        Assert.True(json["outputs"]?["registryReferenceMarkdown"]?.AsArray().Count > 0);
+        Assert.True(json["outputs"]?["ruleReferenceJson"]?.AsArray().Count > 0);
+        Assert.True(json["outputs"]?["ruleReferenceMarkdown"]?.AsArray().Count > 0);
+        Assert.Equal(0, json["outputDigests"]?.AsArray().Count);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+    }
+
+    [Fact]
+    public void DocsRejectsOutputOutsideGenerated()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli("docs", projectRoot, "--output", "dist/docs", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Docs diagnostics JSON did not parse.");
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Equal("docs", (string?)json["command"]);
+        Assert.Equal("failed", (string?)json["status"]);
+        Assert.Equal("WF-GEN-001", (string?)json["issues"]?[0]?["ruleId"]);
+        Assert.Equal("Generated docs output must stay under generated", (string?)json["issues"]?[0]?["title"]);
+        Assert.Equal("dist/docs", (string?)json["issues"]?[0]?["primaryLocation"]?["file"]);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
+    }
+
+    [Fact]
     public void GenerateMcmJsonWritesRuntimeOutput()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");
@@ -4089,9 +4357,111 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void GenerateXEditAuditReportHandoffWritesHandoffEvidence()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+        CopySyntheticReportFixture(projectRoot);
+
+        var result = RunCli("generate", projectRoot, "--target", "xedit-audit-report-handoff", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Generate xEdit audit report handoff JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("generate", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("xedit-audit-report-handoff", (string?)json["target"]);
+        Assert.Equal("xedit-audit", (string?)json["auditTarget"]);
+        Assert.Equal("generated/xedit-audit", (string?)json["outputs"]?["root"]);
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff.json", (string?)json["outputs"]?["handoffJson"]);
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff.txt", (string?)json["outputs"]?["handoffText"]);
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff-checksums.sha256", (string?)json["outputs"]?["checksums"]);
+        Assert.Equal(1, (int?)json["handoff"]?["parsedReports"]);
+        Assert.Equal(2, (int?)json["handoff"]?["records"]);
+        Assert.Equal(2, (int?)json["handoff"]?["findings"]);
+        Assert.Equal("generated/xedit-audit/reports/synthetic-record-inspection.json", (string?)json["handoff"]?["reports"]?[0]?["reportPath"]);
+        Assert.Equal(string.Empty, result.Stderr);
+
+        var handoffJsonPath = Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff.json");
+        var handoffTextPath = Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff.txt");
+        var manifestPath = Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff-manifest.json");
+        var checksumsPath = Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff-checksums.sha256");
+        Assert.True(File.Exists(handoffJsonPath));
+        Assert.True(File.Exists(handoffTextPath));
+        Assert.True(File.Exists(manifestPath));
+        Assert.True(File.Exists(checksumsPath));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "scripts", "synthetic-record-inspection.pas")));
+
+        var handoffJson = JsonNode.Parse(File.ReadAllText(handoffJsonPath))
+            ?? throw new InvalidOperationException("Generated xEdit audit report handoff JSON did not parse.");
+        Assert.Equal(true, (bool?)handoffJson["execution"]?["cliWired"]);
+        Assert.Equal(true, (bool?)handoffJson["handoff"]?["parserCliWired"]);
+        Assert.Equal(false, (bool?)handoffJson["execution"]?["executesXEdit"]);
+        Assert.Equal(false, (bool?)handoffJson["execution"]?["writesGameData"]);
+
+        var handoffText = File.ReadAllText(handoffTextPath);
+        Assert.Contains("CLI wiring: forge generate --target xedit-audit-report-handoff", handoffText, StringComparison.Ordinal);
+        Assert.Contains("xEdit execution: not run", handoffText, StringComparison.Ordinal);
+        Assert.Contains("Plugin mutation: not performed", handoffText, StringComparison.Ordinal);
+
+        var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))
+            ?? throw new InvalidOperationException("Generated xEdit audit report handoff manifest did not parse.");
+        Assert.Equal(true, (bool?)manifest["execution"]?["cliWired"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["executesXEdit"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["generatesReports"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["mutatesPlugins"]);
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff.json", (string?)manifest["outputs"]?[0]?["path"]);
+
+        var checksums = File.ReadAllText(checksumsPath);
+        Assert.Contains("xedit-audit-report-handoff.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("xedit-audit-report-handoff.txt", checksums, StringComparison.Ordinal);
+        Assert.Contains("xedit-audit-report-handoff-manifest.json", checksums, StringComparison.Ordinal);
+        Assert.DoesNotContain("scripts/", checksums, StringComparison.Ordinal);
+        Assert.DoesNotContain("reports/", checksums, StringComparison.Ordinal);
+        Assert.True(json["outputDigests"]?.AsArray().Any(digest =>
+            StringComparer.Ordinal.Equals("generated/xedit-audit/xedit-audit-report-handoff-manifest.json", (string?)digest?["path"])) ?? false);
+        Assert.False(json["outputDigests"]?.AsArray().Any(digest =>
+            StringComparer.Ordinal.Equals("generated/xedit-audit/xedit-audit-report-handoff-checksums.sha256", (string?)digest?["path"])) ?? false);
+    }
+
+    [Fact]
+    public void GenerateXEditAuditReportHandoffReportsMissingSyntheticReport()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+
+        var result = RunCli("generate", projectRoot, "--target", "xedit-audit-report-handoff", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Generate xEdit audit report handoff JSON did not parse.");
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Equal("failed", (string?)json["status"]);
+        Assert.Equal("xedit-audit-report-handoff", (string?)json["target"]);
+        Assert.Equal("WF-GEN-009", (string?)json["issues"]?[0]?["ruleId"]);
+        Assert.Equal("xEdit audit report is missing", (string?)json["issues"]?[0]?["title"]);
+        Assert.Equal("generated/xedit-audit/reports/synthetic-record-inspection.json", (string?)json["issues"]?[0]?["primaryLocation"]?["file"]);
+        Assert.Equal(0, (int?)json["summary"]?["generatedFiles"]);
+        Assert.Equal(0, (int?)json["summary"]?["outputs"]);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff.json")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff.txt")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff-manifest.json")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff-checksums.sha256")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+    }
+
+    [Fact]
     public void BuildXEditAuditRemainsUnsupported()
     {
         var result = RunCli("build", "--target", "xedit-audit", "--no-input");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Contains("Only targets 'reports', 'mcm-json', and 'jip-scripts' are implemented for forge build in the current gate.", result.Stderr, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BuildXEditAuditReportHandoffRemainsUnsupported()
+    {
+        var result = RunCli("build", "--target", "xedit-audit-report-handoff", "--no-input");
 
         Assert.Equal(2, result.ExitCode);
         Assert.Equal(string.Empty, result.Stdout);
@@ -5868,6 +6238,14 @@ public sealed class CliGoldenTests
         var target = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), name);
         CopyDirectory(source, target);
         return target;
+    }
+
+    private static void CopySyntheticReportFixture(string projectRoot)
+    {
+        var source = Path.Combine(RepositoryRoot(), "fixtures", "xedit-audit-reports", "synthetic-record-inspection.json");
+        var target = Path.Combine(projectRoot, "generated", "xedit-audit", "reports", "synthetic-record-inspection.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(target) ?? projectRoot);
+        File.Copy(source, target, overwrite: true);
     }
 
     private static SyntheticCapabilityLayout CreateSyntheticCapabilityLayout()

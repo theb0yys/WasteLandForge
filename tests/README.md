@@ -143,6 +143,62 @@ coverage for synthetic JSON report fixtures, typed parsed evidence,
 `WF-GEN-009` missing-report diagnostics, `WF-GEN-009` malformed JSON
 diagnostics, no scaffold/sidecar emission, and no `Data` writes.
 
+Gate 223 extends `WastelandForge.UnitTests` with xEdit audit report handoff
+projection coverage for machine JSON, LF human text, parsed report summaries,
+finding metadata, `WF-GEN-009` diagnostic handoff, no handoff file emission,
+no scaffold/manifest/checksum writes, and no `Data` writes.
+
+Gate 224 extends `WastelandForge.UnitTests` with xEdit audit report handoff
+file emission coverage for generated JSON/text handoff files, UTF-8 without
+BOM, LF line endings, output digest records, parser diagnostic no-write
+behavior, no manifest/checksum sidecars, and no `Data` writes.
+
+Gate 225 extends `WastelandForge.UnitTests` with xEdit audit report handoff
+manifest/checksum coverage for manifest metadata, safety flags, generated
+handoff file metadata, payload output digests, dedicated checksum rows,
+checksum-file exclusion from output digests, parser diagnostic no-write
+behavior, no scaffold checksum overwrite, and no `Data` writes.
+
+Gate 226 extends `WastelandForge.UnitTests` with xEdit audit report handoff
+sidecar revalidation coverage for clean generated sidecars, `WF-GEN-010`
+edited digest diagnostics, missing checksum-entry diagnostics, unexpected
+checksum-entry diagnostics, and no `Data` writes.
+
+Gate 227 extends `WastelandForge.GoldenTests` with CLI coverage for
+`forge generate --target xedit-audit-report-handoff`, including JSON output,
+generated handoff JSON/text files, manifest/checksum evidence,
+`WF-GEN-009` missing-report diagnostics, no scaffold output, no `Data` writes,
+and unsupported `forge build --target xedit-audit-report-handoff`.
+
+Gate 228 adds no new test project or assertion. It is a planning/routing
+closeout gate covered by the normal build/test smoke validation and
+documentation consistency scans.
+
+Gate 229 extends `WastelandForge.GoldenTests` with CLI coverage for
+`forge docs`, including JSON output, generated reference index files,
+manifest/checksum evidence, dry-run no-write behavior, `WF-GEN-001` output
+containment diagnostics, and no `Data` writes.
+
+Gate 230 extends the same golden CLI coverage for `forge docs` with generated
+schema reference page skeletons. Tests assert planned schema page outputs,
+written `schema-reference.json` and `schema-reference.md` files, reference
+index links, docs manifest entries, checksum coverage, dry-run no-write
+behavior, and continued avoidance of `Data` writes.
+
+Gate 231 extends the same golden CLI coverage for `forge docs` with generated
+project registry reference page skeletons. Tests assert planned registry page
+outputs, written `registry-reference.json` and `registry-reference.md` files,
+reference index links, docs manifest entries, checksum coverage, dry-run
+no-write behavior, JSON top-level property summaries for a synthetic registry,
+and continued avoidance of `Data` writes.
+
+Gate 232 extends the same golden CLI coverage for `forge docs` with generated
+validation rule reference page skeletons. Tests assert planned rule page
+outputs, written `rule-reference.json` and `rule-reference.md` files,
+reference index links, docs manifest entries, checksum coverage, dry-run
+no-write behavior, reserved family metadata for `WF-GEN-*`, and continued
+avoidance of `Data` writes.
+
 Gate 31 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
 dialogue link graph endpoints: `linkTo` targets and `linkFrom` sources that are
 declared topics but have no authored dialogue line.

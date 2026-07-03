@@ -621,9 +621,94 @@ this as xEdit process execution, report generation, real xEdit report parsing,
 plugin patch generation, plugin mutation, MO2 automation, GECK automation,
 runtime probes, real third-party plugin fixtures, command alias, parser CLI
 wiring, `forge build --target xedit-audit`, package/release behavior, applying
-parsed findings to plugins, or AI behavior. Route the next implementation
-slice to Gate 223: xEdit audit report parser evidence projection for
-machine/human handoff without CLI command wiring.
+parsed findings to plugins, or AI behavior. The follow-up slice was Gate 223:
+xEdit audit report parser evidence projection for machine/human handoff
+without CLI command wiring.
+
+Gate 223 adds `XEditAuditReportEvidenceProjector`, in-memory machine JSON
+handoff content, LF human text handoff content, and diagnostic projection from
+the Gate 222 parser result. Treat this as internal handoff projection only. Do
+not route this as xEdit process execution, report generation, real xEdit
+report parsing, plugin patch generation, plugin mutation, MO2 automation, GECK
+automation, runtime probes, real third-party plugin fixtures, command alias,
+parser CLI wiring, handoff file emission, `forge build --target xedit-audit`,
+package/release behavior, applying parsed findings to plugins, or AI
+behavior. The follow-up slice was Gate 224: xEdit audit report handoff file
+emission under `generated/xedit-audit` without CLI command wiring.
+
+Gate 224 adds `XEditAuditReportHandoffEmitter`, generated
+`xedit-audit-report-handoff.json`, generated
+`xedit-audit-report-handoff.txt`, and output digest records under
+`generated/xedit-audit`. Treat this as internal generated handoff file
+evidence only. Do not route this as xEdit process execution, report
+generation, real xEdit report parsing, plugin patch generation, plugin
+mutation, MO2 automation, GECK automation, runtime probes, real third-party
+plugin fixtures, command alias, parser CLI wiring, handoff manifest/checksum
+sidecars, `forge build --target xedit-audit`, package/release behavior,
+applying parsed findings to plugins, or AI behavior. The follow-up slice was
+Gate 225: xEdit audit report handoff manifest and checksum sidecars under
+`generated/xedit-audit` without CLI command wiring.
+
+Gate 225 adds `xedit-audit-report-handoff-manifest.json`,
+`xedit-audit-report-handoff-checksums.sha256`, manifest/checksum result
+paths, and output digest records for the handoff JSON, handoff text, and
+handoff manifest. Treat this as internal generated handoff sidecar evidence
+only. Do not route this as xEdit process execution, report generation, real
+xEdit report parsing, plugin patch generation, plugin mutation, MO2
+automation, GECK automation, runtime probes, real third-party plugin fixtures,
+command alias, parser CLI wiring, sidecar revalidation, `forge build --target
+xedit-audit`, package/release behavior, applying parsed findings to plugins,
+or AI behavior. The follow-up slice was Gate 226: xEdit audit report handoff
+sidecar revalidation without CLI command wiring.
+
+Gate 226 adds `XEditAuditReportHandoffSidecarVerifier` and `WF-GEN-010`
+diagnostics for generated handoff sidecar drift. Treat this as internal
+sidecar revalidation only. Do not route this as xEdit process execution,
+report generation, real xEdit report parsing, plugin patch generation, plugin
+mutation, MO2 automation, GECK automation, runtime probes, real third-party
+plugin fixtures, command alias, parser CLI wiring, `forge build --target
+xedit-audit`, package/release behavior, applying parsed findings to plugins,
+or AI behavior. The follow-up slice was Gate 227: xEdit audit report handoff
+CLI wiring through the canonical `forge generate` command surface.
+
+Gate 227 wires `forge generate --target xedit-audit-report-handoff` to the
+existing synthetic report parser and handoff emitter. Treat this as CLI
+exposure for generated handoff JSON/text, manifest, checksum, diagnostics, and
+digest evidence only. Do not route this as xEdit process execution, report
+generation, real xEdit report parsing, plugin patch generation, plugin
+mutation, MO2 automation, GECK automation, runtime probes, real third-party
+plugin fixtures, command alias, `forge build --target xedit-audit`,
+package/release behavior, applying parsed findings to plugins, or AI
+behavior. The follow-up slice was Gate 228: xEdit audit command-slice
+closeout and next-value transition.
+
+Gate 228 closes the xEdit audit command lane. Keep
+`forge generate --target xedit-audit` and
+`forge generate --target xedit-audit-report-handoff` mapped to the real CLI,
+but do not route further work into xEdit execution, xEdit build/package
+targets, plugin patch generation, plugin mutation, MO2/GECK automation,
+runtime probes, real third-party plugin fixtures, command aliases, package or
+release behavior, applying parsed findings to plugins, or AI behavior. The
+follow-up slice was Gate 229: `forge docs` reference index skeleton.
+
+Gate 229 wires the canonical top-level `forge docs` command. Gate 230 adds
+schema reference page skeletons. Gate 231 adds project registry reference page
+skeletons. Gate 232 adds validation rule reference page skeletons. Route
+`/forge docs` to the real CLI when available. Treat generated
+`reference-index.json`, `reference-index.md`,
+`schemas/<kind>/<version>/schema-reference.json`,
+`schemas/<kind>/<version>/schema-reference.md`,
+`registries/<registry-path>/registry-reference.json`,
+`registries/<registry-path>/registry-reference.md`,
+`rules/<rule-family>/rule-reference.json`,
+`rules/<rule-family>/rule-reference.md`, `docs-manifest.json`, and
+`checksums.sha256` under `generated/docs` as local docs reference evidence
+only. Do not route this as static site generation, watch mode, network
+publishing, graph/explain/clean behavior, package/release behavior, xEdit
+execution, plugin patching, plugin mutation, MO2/GECK automation, runtime
+probes, real third-party plugin fixtures, command aliases, or AI behavior.
+Route the next implementation slice to Gate 233: `forge docs` built-in
+capability reference page skeleton.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a

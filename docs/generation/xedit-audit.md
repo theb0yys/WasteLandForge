@@ -1,6 +1,6 @@
 # xEdit Audit Adapter Evidence Checkpoint
 
-Status: Gate 222 report parser contract
+Status: Gate 228 command slice closed
 Research classification: Documented / Inferred / Open
 Source: R005, R006 / ADR-008, ADR-009, ADR-010, ADR-011
 
@@ -32,6 +32,12 @@ evidence plan entries for future xEdit script/report support.
 - `checksums.sha256` scaffold checksum evidence
 - `forge generate --target xedit-audit`
 - `XEditAuditReportParser` synthetic JSON report parser contract
+- `XEditAuditReportEvidenceProjector` machine/human handoff projection
+- `XEditAuditReportHandoffEmitter` generated handoff JSON/text files
+- `xedit-audit-report-handoff-manifest.json`
+- `xedit-audit-report-handoff-checksums.sha256`
+- `XEditAuditReportHandoffSidecarVerifier`
+- `forge generate --target xedit-audit-report-handoff`
 - `fixtures/xedit-audit-reports/synthetic-record-inspection.json`
 - `fixtures/projects/XEditAuditExample`
 
@@ -39,7 +45,6 @@ evidence plan entries for future xEdit script/report support.
 
 - No xEdit process execution
 - No xEdit report generation
-- No parser CLI wiring
 - No real xEdit report parsing
 - No plugin patch generation
 - No plugin mutation
@@ -49,9 +54,14 @@ evidence plan entries for future xEdit script/report support.
 
 ## Next implementation slice
 
-Gate 223 should add xEdit audit report parser evidence projection for
-machine/human handoff without CLI command wiring. It should stop before xEdit
-process execution, report generation, plugin patch generation, plugin
+The xEdit audit command lane is parked unless explicitly reopened. Gates 229
+through 232 started the broader low-risk Forge docs lane with `forge docs`
+reference index output, schema reference page skeletons under
+`generated/docs/schemas/`, registry reference page skeletons under
+`generated/docs/registries/`, and rule reference page skeletons under
+`generated/docs/rules/`. The next docs slice is Gate 233: built-in capability
+reference page skeletons under `generated/docs/capabilities/`, still before
+xEdit process execution, report generation, plugin patch generation, plugin
 mutation, MO2 automation, GECK automation, runtime probes, real third-party
-plugin fixtures, `forge build --target xedit-audit`, package/release
-behavior, or applying parsed report findings to plugins.
+plugin fixtures, `forge build --target xedit-audit`, package/release behavior,
+or applying parsed report findings to plugins.

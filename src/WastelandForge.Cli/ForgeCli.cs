@@ -11,7 +11,6 @@ internal static class ForgeCli
     private static readonly string[] TopLevelReservedCommands =
     [
         "init",
-        "docs",
         "graph",
         "explain",
         "clean"
@@ -87,6 +86,11 @@ internal static class ForgeCli
         if (StringComparer.Ordinal.Equals(resolution.CommandPath, "package"))
         {
             return RunPackageCommand(resolution.RemainingArgs);
+        }
+
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "docs"))
+        {
+            return RunDocsCommand(resolution.RemainingArgs);
         }
 
         if (StringComparer.Ordinal.Equals(resolution.CommandPath, "capabilities list"))
@@ -303,6 +307,31 @@ internal static class ForgeCli
                 : (int)CliExitCode.Success;
         }
 
+        if (StringComparer.Ordinal.Equals(parse.Target, XEditAuditReportHandoffEmitter.CommandTarget))
+        {
+            if (parse.OutputDirectory is not null)
+            {
+                WriteUsage(parse.Format, commandPath, $"Target '{XEditAuditReportHandoffEmitter.CommandTarget}' writes to generated/{XEditAuditReportHandoffEmitter.Target} in the current gate; --output is not supported.");
+                return (int)CliExitCode.Usage;
+            }
+
+            if (parse.DryRun)
+            {
+                WriteUsage(parse.Format, commandPath, $"Target '{XEditAuditReportHandoffEmitter.CommandTarget}' does not support --dry-run in the current gate.");
+                return (int)CliExitCode.Usage;
+            }
+
+            var xeditReportResult = new XEditAuditReportHandoffEmitter().Emit(parse.ProjectPath);
+            var xeditReportPayload = CliConstants.IsMachineFormat(parse.Format)
+                ? XEditAuditReportHandoffGenerateJsonSerializer.Serialize(commandPath, xeditReportResult)
+                : XEditAuditReportHandoffGenerateTextRenderer.Render(commandPath, xeditReportResult);
+            Console.Write(xeditReportPayload);
+
+            return xeditReportResult.HasErrors
+                ? (int)CliExitCode.BlockingDiagnostics
+                : (int)CliExitCode.Success;
+        }
+
         var result = new MetadataReportGenerator().Run(new MetadataReportOptions(
             commandPath,
             parse.ProjectPath,
@@ -314,6 +343,30 @@ internal static class ForgeCli
         var payload = CliConstants.IsMachineFormat(parse.Format)
             ? MetadataReportJsonSerializer.Serialize(result)
             : MetadataReportTextRenderer.Render(result);
+        Console.Write(payload);
+
+        return result.HasErrors
+            ? (int)CliExitCode.BlockingDiagnostics
+            : (int)CliExitCode.Success;
+    }
+
+    private static int RunDocsCommand(string[] args)
+    {
+        var parse = ParseDocsOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "docs", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var result = new DocsReferenceIndexGenerator().Run(new DocsReferenceIndexOptions(
+            parse.ProjectPath,
+            parse.OutputDirectory,
+            CliConstants.Version,
+            parse.DryRun));
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? DocsReferenceIndexJsonSerializer.Serialize(result)
+            : DocsReferenceIndexTextRenderer.Render(result);
         Console.Write(payload);
 
         return result.HasErrors
@@ -682,7 +735,8 @@ internal static class ForgeCli
 
         if (StringComparer.Ordinal.Equals(command, "generate") ||
             StringComparer.Ordinal.Equals(command, "build") ||
-            StringComparer.Ordinal.Equals(command, "package"))
+            StringComparer.Ordinal.Equals(command, "package") ||
+            StringComparer.Ordinal.Equals(command, "docs"))
         {
             return CommandResolution.Command(command, args[1..]);
         }
@@ -1011,16 +1065,106 @@ internal static class ForgeCli
         return MetadataReportParseResult.Ok(projectPath, outputDirectory, target, dryRun, format);
     }
 
+    private static DocsParseResult ParseDocsOptions(string[] args)
+    {
+        var format = "human";
+        var projectPath = ".";
+        string? outputDirectory = null;
+        var dryRun = false;
+        var projectWasSet = false;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return DocsParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return DocsParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return DocsParseResult.Fail(format, $"--format {format} is only available for diagnostic commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return DocsParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectWasSet)
+                {
+                    return DocsParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                projectWasSet = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputDirectory))
+                {
+                    return DocsParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputDirectory = explicitOutputDirectory;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--dry-run"))
+            {
+                dryRun = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return DocsParseResult.Fail(format, $"Unsupported docs option '{arg}'.");
+            }
+
+            if (projectWasSet)
+            {
+                return DocsParseResult.Fail(format, "Project root was specified more than once.");
+            }
+
+            projectPath = arg;
+            projectWasSet = true;
+        }
+
+        return DocsParseResult.Ok(projectPath, outputDirectory, dryRun, format);
+    }
+
     private static bool IsMetadataReportTargetImplemented(string commandPath, string target) =>
         StringComparer.Ordinal.Equals(target, "reports") ||
         StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target) ||
         StringComparer.Ordinal.Equals(target, JipScriptFileEmitter.Target) ||
         (StringComparer.Ordinal.Equals(commandPath, "generate") &&
-            StringComparer.Ordinal.Equals(target, XEditAuditScriptScaffoldEmitter.Target));
+            (StringComparer.Ordinal.Equals(target, XEditAuditScriptScaffoldEmitter.Target) ||
+                StringComparer.Ordinal.Equals(target, XEditAuditReportHandoffEmitter.CommandTarget)));
 
     private static string ImplementedMetadataReportTargets(string commandPath) =>
         StringComparer.Ordinal.Equals(commandPath, "generate")
-            ? $"'reports', '{McmJsonGenerator.Target}', '{JipScriptFileEmitter.Target}', and '{XEditAuditScriptScaffoldEmitter.Target}'"
+            ? $"'reports', '{McmJsonGenerator.Target}', '{JipScriptFileEmitter.Target}', '{XEditAuditScriptScaffoldEmitter.Target}', and '{XEditAuditReportHandoffEmitter.CommandTarget}'"
             : $"'reports', '{McmJsonGenerator.Target}', and '{JipScriptFileEmitter.Target}'";
 
     private static PackageParseResult ParsePackageOptions(string[] args)
@@ -2326,6 +2470,21 @@ internal static class ForgeCli
 
         public static MetadataReportParseResult Fail(string format, string message) =>
             new(false, string.Empty, null, "reports", false, format, message);
+    }
+
+    private sealed record DocsParseResult(
+        bool Success,
+        string ProjectPath,
+        string? OutputDirectory,
+        bool DryRun,
+        string Format,
+        string Message)
+    {
+        public static DocsParseResult Ok(string projectPath, string? outputDirectory, bool dryRun, string format) =>
+            new(true, projectPath, outputDirectory, dryRun, format, string.Empty);
+
+        public static DocsParseResult Fail(string format, string message) =>
+            new(false, string.Empty, null, false, format, message);
     }
 
     private sealed record PackageParseResult(

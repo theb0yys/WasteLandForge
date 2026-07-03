@@ -694,6 +694,54 @@ outputs, provider DLLs, Bethesda assets, third-party mod files, local install
 snapshots, MO2 profiles, GECK outputs, external tool fixtures, or generated
 evidence fixtures.
 
+Gate 226 commits no new fixture files. It uses temp-copied synthetic xEdit
+audit fixtures and temp-generated handoff sidecar evidence for revalidation
+tests, and commits no xEdit outputs, plugin files, provider DLLs, Bethesda
+assets, third-party mod files, local install snapshots, MO2 profiles, GECK
+outputs, external tool fixtures, or generated evidence fixtures.
+
+Gate 227 commits no new fixture files. It uses temp-copied synthetic xEdit
+audit fixtures and temp-generated handoff CLI evidence for golden tests, and
+commits no xEdit outputs, plugin files, provider DLLs, Bethesda assets,
+third-party mod files, local install snapshots, MO2 profiles, GECK outputs,
+external tool fixtures, or generated evidence fixtures.
+
+Gate 228 commits no new fixture files. It is a planning/routing closeout gate
+and commits no generated docs output, xEdit outputs, plugin files, provider
+DLLs, Bethesda assets, third-party mod files, local install snapshots, MO2
+profiles, GECK outputs, external tool fixtures, or generated evidence
+fixtures.
+
+Gate 229 commits no generated docs output. It uses temp-copied synthetic
+project fixtures for `forge docs` golden tests and commits no generated
+reference indexes, static site output, xEdit outputs, plugin files, provider
+DLLs, Bethesda assets, third-party mod files, local install snapshots, MO2
+profiles, GECK outputs, external tool fixtures, or generated evidence
+fixtures.
+
+Gate 230 commits no generated docs output. It uses temp-copied synthetic
+project fixtures for `forge docs` golden tests and commits no generated schema
+reference pages, generated reference indexes, static site output, xEdit
+outputs, plugin files, provider DLLs, Bethesda assets, third-party mod files,
+local install snapshots, MO2 profiles, GECK outputs, external tool fixtures,
+or generated evidence fixtures.
+
+Gate 231 commits no generated docs output. It uses temp-copied synthetic
+project fixtures for `forge docs` golden tests and commits no generated
+registry reference pages, generated schema reference pages, generated
+reference indexes, static site output, xEdit outputs, plugin files, provider
+DLLs, Bethesda assets, third-party mod files, local install snapshots, MO2
+profiles, GECK outputs, external tool fixtures, or generated evidence
+fixtures.
+
+Gate 232 commits no generated docs output. It uses temp-copied synthetic
+project fixtures for `forge docs` golden tests and commits no generated rule
+reference pages, generated registry reference pages, generated schema
+reference pages, generated reference indexes, static site output, xEdit
+outputs, plugin files, provider DLLs, Bethesda assets, third-party mod files,
+local install snapshots, MO2 profiles, GECK outputs, external tool fixtures,
+or generated evidence fixtures.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

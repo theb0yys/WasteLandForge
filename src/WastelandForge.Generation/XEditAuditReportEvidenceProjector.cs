@@ -82,7 +82,7 @@ public sealed class XEditAuditReportEvidenceProjector
                 ["writesPatches"] = false,
                 ["writesGameData"] = false,
                 ["appliesFindingsToPlugins"] = false,
-                ["cliWired"] = false
+                ["cliWired"] = true
             },
             ["summary"] = ToSummaryJson(summary),
             ["reports"] = new JsonArray(parsed.Reports.Select(ToReportJson).ToArray()),
@@ -91,7 +91,7 @@ public sealed class XEditAuditReportEvidenceProjector
             {
                 ["machineReadable"] = true,
                 ["humanReadable"] = true,
-                ["parserCliWired"] = false,
+                ["parserCliWired"] = true,
                 ["requiresHumanReview"] = true
             }
         };
@@ -223,7 +223,7 @@ public sealed class XEditAuditReportEvidenceProjector
         AppendLine(builder, "Report generation: not performed");
         AppendLine(builder, "Plugin mutation: not performed");
         AppendLine(builder, "Patch writing: not performed");
-        AppendLine(builder, "CLI wiring: not exposed");
+        AppendLine(builder, "CLI wiring: forge generate --target xedit-audit-report-handoff");
         AppendLine(builder);
         AppendLine(builder, "Summary:");
         AppendLine(builder, $"- Planned audits: {summary.PlannedAudits}");

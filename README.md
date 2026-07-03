@@ -2,11 +2,16 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 222 adds the
-non-executing xEdit audit report parser contract for synthetic JSON report
-fixtures. It still does not execute xEdit, generate real xEdit reports,
-generate patches, mutate plugins, automate MO2 or GECK, run runtime probes, or
-use real third-party plugin fixtures.
+The project is currently in gated v0.1 implementation. Gate 232 expands the
+canonical `forge docs` output with deterministic validation rule reference
+page skeletons under `generated/docs/rules/` alongside schema and registry
+reference pages and the local reference index for embedded schemas, project
+registries, rule families, built-in FNV capabilities/providers, and canonical
+commands.
+Existing xEdit audit scaffold and handoff commands remain available, but Forge
+still does not execute xEdit, generate real xEdit reports, generate patches,
+mutate plugins, automate MO2 or GECK, run runtime probes, add xEdit
+build/package targets, publish docs, or use real third-party plugin fixtures.
 
 ## Architecture Spine
 
@@ -511,6 +516,76 @@ future xEdit report handling. The parser reads JSON reports from
 synthetic report evidence, and does not emit scaffolds, write manifest or
 checksum sidecars, execute xEdit, generate reports, mutate plugins, or write
 `Data`.
+
+Gate 223 adds `XEditAuditReportEvidenceProjector`. It derives machine-readable
+JSON and LF human text handoff content from the Gate 222 parser result,
+including report summaries, finding counts, parser diagnostics, and explicit
+safety flags. It does not wire CLI parser commands, emit handoff files, execute
+xEdit, generate reports, mutate plugins, or write `Data`.
+
+Gate 224 adds `XEditAuditReportHandoffEmitter`. It writes
+`generated/xedit-audit/xedit-audit-report-handoff.json` and
+`generated/xedit-audit/xedit-audit-report-handoff.txt` from the Gate 223
+projection, returns output digests, uses UTF-8 without BOM and LF line endings,
+and does not emit manifest/checksum sidecars, wire CLI parser commands, execute
+xEdit, generate reports, mutate plugins, or write `Data`.
+
+Gate 225 extends the handoff emitter with
+`xedit-audit-report-handoff-manifest.json` and
+`xedit-audit-report-handoff-checksums.sha256` under `generated/xedit-audit`.
+The manifest records project, target, safety flags, handoff summary, generated
+handoff files, output digests, and limitations; the checksum file covers the
+handoff JSON, handoff text, and handoff manifest. It uses a dedicated checksum
+filename so scaffold `checksums.sha256` evidence is not overwritten.
+
+Gate 226 adds `XEditAuditReportHandoffSidecarVerifier`. It revalidates the
+generated handoff manifest and checksum sidecar, returning `WF-GEN-010` for
+sidecar drift such as edited checksum digests, missing checksum entries, or
+unexpected checksum entries. It does not wire CLI parser commands, execute
+xEdit, generate reports, mutate plugins, or write `Data`.
+
+Gate 227 adds `forge generate --target xedit-audit-report-handoff`. The
+command writes generated handoff JSON/text, manifest, checksum, summary,
+diagnostic, and digest evidence under `generated/xedit-audit`, rejects
+custom output roots and dry-run mode for this target, reports missing
+synthetic reports through existing `WF-GEN-009` diagnostics, and keeps xEdit
+execution, report generation, build/package behavior, plugin mutation, and
+`Data` writes outside the gate.
+
+Gate 228 closes the xEdit audit command lane. The existing
+`forge generate --target xedit-audit` and
+`forge generate --target xedit-audit-report-handoff` behavior remains parked
+unless explicitly reopened. The next implementation lane moves back to
+broader low-risk Forge metadata value: a `forge docs` reference index
+skeleton for generated schema, registry, rule, capability, and command
+documentation.
+
+Gate 229 adds canonical `forge docs`. It validates the project, writes
+`reference-index.json`, `reference-index.md`, `docs-manifest.json`, and
+`checksums.sha256` under `generated/docs`, supports `--dry-run`, rejects docs
+output outside `generated/` with `WF-GEN-001`, and keeps static site
+generation, watch mode, network publishing, graph/explain/clean behavior,
+package/release behavior, xEdit execution, plugin mutation, MO2/GECK
+automation, runtime probes, and AI outside the gate.
+
+Gate 230 expands `forge docs` with one `schema-reference.json` and one
+`schema-reference.md` under `generated/docs/schemas/<kind>/<version>/` for
+each embedded schema catalog entry. The reference index, docs manifest,
+checksums, CLI JSON output, and dry-run planning all include those schema
+reference page skeletons.
+
+Gate 231 expands `forge docs` with one `registry-reference.json` and one
+`registry-reference.md` under `generated/docs/registries/<registry-path>/` for
+each local source registry document. The reference index, docs manifest,
+checksums, CLI JSON output, and dry-run planning all include those registry
+reference page skeletons.
+
+Gate 232 expands `forge docs` with one `rule-reference.json` and one
+`rule-reference.md` under `generated/docs/rules/<rule-family>/` for each
+reserved validation rule family. The reference index, docs manifest,
+checksums, CLI JSON output, and dry-run planning all include those rule
+reference page skeletons. The next docs slice is Gate 233: built-in capability
+reference page skeletons under `generated/docs/capabilities/`.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

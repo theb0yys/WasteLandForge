@@ -218,6 +218,331 @@ public sealed class XEditAuditAdapterPlannerTests
         Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
     }
 
+    [Fact]
+    public void ProjectCreatesMachineAndHumanHandoffFromParsedSyntheticReport()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+        CopySyntheticReportFixture(projectRoot);
+
+        var result = new XEditAuditReportEvidenceProjector().Project(projectRoot);
+
+        Assert.False(result.HasErrors);
+        Assert.Equal("passed", result.Status);
+        Assert.Equal(1, result.Summary.PlannedAudits);
+        Assert.Equal(1, result.Summary.ParsedReports);
+        Assert.Equal(2, result.Summary.Records);
+        Assert.Equal(2, result.Summary.Findings);
+        Assert.Equal(0, result.Summary.ErrorFindings);
+        Assert.Equal(1, result.Summary.WarningFindings);
+        Assert.Equal(1, result.Summary.NoteFindings);
+        var report = Assert.Single(result.Reports);
+        Assert.Equal("generated/xedit-audit/reports/synthetic-record-inspection.json", report.ReportPath);
+
+        var json = JsonNode.Parse(result.MachineJson)?.AsObject()
+            ?? throw new InvalidOperationException("xEdit audit handoff JSON did not parse.");
+        Assert.Equal(XEditAuditReportEvidenceProjector.Kind, (string?)json["kind"]);
+        Assert.Equal(XEditAuditReportEvidenceProjector.FormatVersion, (string?)json["formatVersion"]);
+        Assert.Equal("xedit-audit", (string?)json["target"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("io.github.theboyyss.xeditauditexample", (string?)json["project"]?["id"]);
+        Assert.Equal(true, (bool?)json["execution"]?["parsesSyntheticReports"]);
+        Assert.Equal(false, (bool?)json["execution"]?["executesXEdit"]);
+        Assert.Equal(false, (bool?)json["execution"]?["generatesReports"]);
+        Assert.Equal(false, (bool?)json["execution"]?["mutatesPlugins"]);
+        Assert.Equal(false, (bool?)json["execution"]?["writesPatches"]);
+        Assert.Equal(false, (bool?)json["execution"]?["writesGameData"]);
+        Assert.Equal(false, (bool?)json["execution"]?["appliesFindingsToPlugins"]);
+        Assert.Equal(true, (bool?)json["execution"]?["cliWired"]);
+        Assert.Equal(1, (int?)json["summary"]?["plannedAudits"]);
+        Assert.Equal(1, (int?)json["summary"]?["parsedReports"]);
+        Assert.Equal(2, (int?)json["summary"]?["records"]);
+        Assert.Equal(2, (int?)json["summary"]?["findings"]);
+        Assert.Equal(1, (int?)json["summary"]?["warningFindings"]);
+        Assert.Equal(0, (int?)json["summary"]?["diagnosticErrors"]);
+        Assert.Equal("generated/xedit-audit/reports/synthetic-record-inspection.json", (string?)json["reports"]?[0]?["reportPath"]);
+        Assert.Equal("SyntheticAuditSubject.esp", (string?)json["reports"]?[0]?["records"]?[0]?["plugin"]);
+        Assert.Equal("synthetic.dialogue.inspectable", (string?)json["reports"]?[0]?["findings"]?[1]?["id"]);
+        Assert.Equal("warning", (string?)json["reports"]?[0]?["findings"]?[1]?["severity"]);
+        Assert.Empty(json["issues"]?.AsArray() ?? throw new InvalidOperationException("Missing issues array."));
+        Assert.Equal(true, (bool?)json["handoff"]?["machineReadable"]);
+        Assert.Equal(true, (bool?)json["handoff"]?["humanReadable"]);
+        Assert.Equal(true, (bool?)json["handoff"]?["parserCliWired"]);
+
+        Assert.Contains("WastelandForge xEdit audit report handoff", result.HumanText, StringComparison.Ordinal);
+        Assert.Contains("Status: passed", result.HumanText, StringComparison.Ordinal);
+        Assert.Contains("xEdit execution: not run", result.HumanText, StringComparison.Ordinal);
+        Assert.Contains("Report generation: not performed", result.HumanText, StringComparison.Ordinal);
+        Assert.Contains("Plugin mutation: not performed", result.HumanText, StringComparison.Ordinal);
+        Assert.Contains("CLI wiring: forge generate --target xedit-audit-report-handoff", result.HumanText, StringComparison.Ordinal);
+        Assert.Contains("Findings: 2 (errors 0, warnings 1, notes 1)", result.HumanText, StringComparison.Ordinal);
+        Assert.Contains("synthetic.dialogue.inspectable", result.HumanText, StringComparison.Ordinal);
+        Assert.DoesNotContain("\r", result.HumanText, StringComparison.Ordinal);
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "scripts", "synthetic-record-inspection.pas")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-script-manifest.json")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "checksums.sha256")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+    }
+
+    [Fact]
+    public void ProjectCarriesMissingReportDiagnosticInMachineAndHumanHandoff()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+
+        var result = new XEditAuditReportEvidenceProjector().Project(projectRoot);
+
+        Assert.True(result.HasErrors);
+        Assert.Equal("failed", result.Status);
+        Assert.Equal(1, result.Summary.PlannedAudits);
+        Assert.Equal(0, result.Summary.ParsedReports);
+        Assert.Equal(0, result.Summary.Records);
+        Assert.Equal(0, result.Summary.Findings);
+        Assert.Equal(1, result.Summary.DiagnosticErrors);
+        Assert.Empty(result.Reports);
+        var issue = Assert.Single(result.Diagnostics.Issues, issue => issue.RuleId.ToString() == XEditAuditReportParser.ReportParserRuleId);
+        Assert.Equal("xEdit audit report is missing", issue.Title);
+
+        var json = JsonNode.Parse(result.MachineJson)?.AsObject()
+            ?? throw new InvalidOperationException("xEdit audit handoff JSON did not parse.");
+        Assert.Equal("failed", (string?)json["status"]);
+        Assert.Equal(0, (int?)json["summary"]?["parsedReports"]);
+        Assert.Equal(1, (int?)json["summary"]?["diagnosticErrors"]);
+        Assert.Empty(json["reports"]?.AsArray() ?? throw new InvalidOperationException("Missing reports array."));
+        Assert.Equal(XEditAuditReportParser.ReportParserRuleId, (string?)json["issues"]?[0]?["ruleId"]);
+        Assert.Equal("xEdit audit report is missing", (string?)json["issues"]?[0]?["title"]);
+        Assert.Equal("generated/xedit-audit/reports/synthetic-record-inspection.json", (string?)json["issues"]?[0]?["primaryLocation"]?["file"]);
+        Assert.Equal(false, (bool?)json["execution"]?["executesXEdit"]);
+        Assert.Equal(false, (bool?)json["execution"]?["mutatesPlugins"]);
+        Assert.Equal(true, (bool?)json["execution"]?["cliWired"]);
+
+        Assert.Contains("Status: failed", result.HumanText, StringComparison.Ordinal);
+        Assert.Contains("Reports:\n- None", result.HumanText, StringComparison.Ordinal);
+        Assert.Contains("WF-GEN-009 Error: xEdit audit report is missing", result.HumanText, StringComparison.Ordinal);
+        Assert.Contains("Create or copy the synthetic JSON report fixture", result.HumanText, StringComparison.Ordinal);
+        Assert.DoesNotContain("\r", result.HumanText, StringComparison.Ordinal);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+    }
+
+    [Fact]
+    public void EmitWritesReportHandoffFilesUnderGeneratedRootOnly()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+        CopySyntheticReportFixture(projectRoot);
+
+        var result = new XEditAuditReportHandoffEmitter().Emit(projectRoot);
+
+        Assert.False(result.HasErrors);
+        Assert.Equal(XEditAuditReportHandoffEmitter.Target, result.Target);
+        Assert.Equal("io.github.theboyyss.xeditauditexample", result.ProjectId?.ToString());
+        Assert.Equal("passed", result.Projection.Status);
+        Assert.Equal(2, result.GeneratedFiles.Count);
+        Assert.Contains(result.GeneratedFiles, file =>
+            file.OutputPath == "generated/xedit-audit/xedit-audit-report-handoff.json" &&
+            file.ContentKind == "json" &&
+            file.LineEnding == "lf" &&
+            file.Encoding == "utf-8");
+        Assert.Contains(result.GeneratedFiles, file =>
+            file.OutputPath == "generated/xedit-audit/xedit-audit-report-handoff.txt" &&
+            file.ContentKind == "text" &&
+            file.LineEnding == "lf" &&
+            file.Encoding == "utf-8");
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff-manifest.json", result.ManifestPath);
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff-checksums.sha256", result.ChecksumsPath);
+        Assert.Equal(3, result.OutputDigests.Count);
+        Assert.Contains(result.OutputDigests, digest => digest.Path == "generated/xedit-audit/xedit-audit-report-handoff.json");
+        Assert.Contains(result.OutputDigests, digest => digest.Path == "generated/xedit-audit/xedit-audit-report-handoff.txt");
+        Assert.Contains(result.OutputDigests, digest => digest.Path == "generated/xedit-audit/xedit-audit-report-handoff-manifest.json");
+        Assert.DoesNotContain(result.OutputDigests, digest => digest.Path == "generated/xedit-audit/xedit-audit-report-handoff-checksums.sha256");
+
+        var jsonPath = Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff.json");
+        var textPath = Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff.txt");
+        var manifestPath = Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff-manifest.json");
+        var checksumsPath = Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff-checksums.sha256");
+        Assert.True(File.Exists(jsonPath));
+        Assert.True(File.Exists(textPath));
+        Assert.True(File.Exists(manifestPath));
+        Assert.True(File.Exists(checksumsPath));
+        var jsonBytes = File.ReadAllBytes(jsonPath);
+        var textBytes = File.ReadAllBytes(textPath);
+        var manifestBytes = File.ReadAllBytes(manifestPath);
+        var checksumsBytes = File.ReadAllBytes(checksumsPath);
+        Assert.False(StartsWithUtf8Bom(jsonBytes));
+        Assert.False(StartsWithUtf8Bom(textBytes));
+        Assert.False(StartsWithUtf8Bom(manifestBytes));
+        Assert.False(StartsWithUtf8Bom(checksumsBytes));
+        var jsonText = File.ReadAllText(jsonPath);
+        var humanText = File.ReadAllText(textPath);
+        var manifestText = File.ReadAllText(manifestPath);
+        var checksums = File.ReadAllText(checksumsPath);
+        Assert.DoesNotContain("\r", jsonText, StringComparison.Ordinal);
+        Assert.DoesNotContain("\r", humanText, StringComparison.Ordinal);
+        Assert.DoesNotContain("\r", manifestText, StringComparison.Ordinal);
+        Assert.DoesNotContain("\r", checksums, StringComparison.Ordinal);
+        Assert.EndsWith("\n", jsonText, StringComparison.Ordinal);
+        Assert.EndsWith("\n", humanText, StringComparison.Ordinal);
+        Assert.EndsWith("\n", manifestText, StringComparison.Ordinal);
+        Assert.EndsWith("\n", checksums, StringComparison.Ordinal);
+        var json = JsonNode.Parse(jsonText)?.AsObject()
+            ?? throw new InvalidOperationException("xEdit audit report handoff JSON did not parse.");
+        Assert.Equal(XEditAuditReportEvidenceProjector.Kind, (string?)json["kind"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("generated/xedit-audit/reports/synthetic-record-inspection.json", (string?)json["reports"]?[0]?["reportPath"]);
+        Assert.Equal(false, (bool?)json["execution"]?["executesXEdit"]);
+        Assert.Equal(false, (bool?)json["execution"]?["mutatesPlugins"]);
+        Assert.Equal(false, (bool?)json["execution"]?["writesGameData"]);
+        Assert.Contains("WastelandForge xEdit audit report handoff", humanText, StringComparison.Ordinal);
+        Assert.Contains("Status: passed", humanText, StringComparison.Ordinal);
+        Assert.Contains("xEdit execution: not run", humanText, StringComparison.Ordinal);
+        Assert.Contains("Plugin mutation: not performed", humanText, StringComparison.Ordinal);
+        Assert.Equal(new FileInfo(jsonPath).Length, Assert.Single(result.GeneratedFiles, file => file.ContentKind == "json").ContentBytes);
+        Assert.Equal(new FileInfo(textPath).Length, Assert.Single(result.GeneratedFiles, file => file.ContentKind == "text").ContentBytes);
+        var manifest = JsonNode.Parse(manifestText)?.AsObject()
+            ?? throw new InvalidOperationException("xEdit audit report handoff manifest did not parse.");
+        Assert.Equal("wastelandforge.xedit-audit-report-handoff-manifest", (string?)manifest["kind"]);
+        Assert.Equal("wastelandforge/xedit-audit-report-handoff/v0-skeleton", (string?)manifest["manifestType"]);
+        Assert.Equal("xedit-audit", (string?)manifest["target"]);
+        Assert.Equal("generated/xedit-audit", (string?)manifest["root"]);
+        Assert.Equal("io.github.theboyyss.xeditauditexample", (string?)manifest["project"]?["id"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["executesXEdit"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["generatesReports"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["generatesPatches"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["mutatesPlugins"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["writesGameData"]);
+        Assert.Equal(true, (bool?)manifest["execution"]?["cliWired"]);
+        Assert.Equal("passed", (string?)manifest["handoff"]?["status"]);
+        Assert.Equal(1, (int?)manifest["handoff"]?["plannedAudits"]);
+        Assert.Equal(1, (int?)manifest["handoff"]?["parsedReports"]);
+        Assert.Equal(2, (int?)manifest["handoff"]?["records"]);
+        Assert.Equal(2, (int?)manifest["handoff"]?["findings"]);
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff.json", (string?)manifest["files"]?[0]?["path"]);
+        Assert.Equal("json", (string?)manifest["files"]?[0]?["contentKind"]);
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff.txt", (string?)manifest["files"]?[1]?["path"]);
+        Assert.Equal("text", (string?)manifest["files"]?[1]?["contentKind"]);
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff.json", (string?)manifest["outputs"]?[0]?["path"]);
+        Assert.Equal("generated/xedit-audit/xedit-audit-report-handoff.txt", (string?)manifest["outputs"]?[1]?["path"]);
+        Assert.Contains("  xedit-audit-report-handoff.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  xedit-audit-report-handoff.txt", checksums, StringComparison.Ordinal);
+        Assert.Contains("  xedit-audit-report-handoff-manifest.json", checksums, StringComparison.Ordinal);
+        Assert.DoesNotContain("scripts/", checksums, StringComparison.Ordinal);
+        Assert.DoesNotContain("reports/", checksums, StringComparison.Ordinal);
+        Assert.DoesNotContain("Data/", checksums, StringComparison.Ordinal);
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "scripts", "synthetic-record-inspection.pas")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-script-manifest.json")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "checksums.sha256")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+    }
+
+    [Fact]
+    public void EmitStopsBeforeWritingWhenReportProjectionHasErrors()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+
+        var result = new XEditAuditReportHandoffEmitter().Emit(projectRoot);
+
+        Assert.True(result.HasErrors);
+        Assert.Equal("failed", result.Projection.Status);
+        Assert.Empty(result.GeneratedFiles);
+        Assert.Null(result.ManifestPath);
+        Assert.Null(result.ChecksumsPath);
+        Assert.Empty(result.OutputDigests);
+        Assert.Contains(result.Diagnostics.Issues, issue => issue.RuleId.ToString() == XEditAuditReportParser.ReportParserRuleId);
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff.json")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff.txt")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff-manifest.json")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff-checksums.sha256")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+    }
+
+    [Fact]
+    public void VerifyReportHandoffSidecarsAcceptsGeneratedEvidence()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+        CopySyntheticReportFixture(projectRoot);
+        var emission = new XEditAuditReportHandoffEmitter().Emit(projectRoot);
+
+        var issues = XEditAuditReportHandoffSidecarVerifier.Verify(
+            projectRoot,
+            emission.ManifestPath!,
+            emission.ChecksumsPath!,
+            emission.ProjectId);
+
+        Assert.False(emission.HasErrors);
+        Assert.Empty(issues);
+        Assert.False(File.Exists(Path.Combine(projectRoot, "generated", "xedit-audit", "scripts", "synthetic-record-inspection.pas")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+    }
+
+    [Fact]
+    public void VerifyReportHandoffSidecarsReportsEditedChecksumDigest()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+        CopySyntheticReportFixture(projectRoot);
+        var emission = new XEditAuditReportHandoffEmitter().Emit(projectRoot);
+        var checksumsPath = HandoffChecksumsPath(projectRoot);
+        var checksums = File.ReadAllText(checksumsPath);
+        File.WriteAllText(checksumsPath, new string('f', 64) + checksums[64..]);
+
+        var issues = XEditAuditReportHandoffSidecarVerifier.Verify(
+            projectRoot,
+            emission.ManifestPath!,
+            emission.ChecksumsPath!,
+            emission.ProjectId);
+
+        var issue = Assert.Single(issues);
+        Assert.Equal(XEditAuditReportHandoffSidecarVerifier.RuleId, issue.RuleId.ToString());
+        Assert.Equal("xEdit audit report handoff checksum digest does not match file", issue.Title);
+        Assert.Contains("xedit-audit-report-handoff", issue.Message, StringComparison.Ordinal);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+    }
+
+    [Fact]
+    public void VerifyReportHandoffSidecarsReportsMissingChecksumEntry()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+        CopySyntheticReportFixture(projectRoot);
+        var emission = new XEditAuditReportHandoffEmitter().Emit(projectRoot);
+        var checksumsPath = HandoffChecksumsPath(projectRoot);
+        var lines = File.ReadAllLines(checksumsPath)
+            .Where(line => !line.Contains("xedit-audit-report-handoff.txt", StringComparison.Ordinal))
+            .ToArray();
+        File.WriteAllText(checksumsPath, string.Join("\n", lines) + "\n");
+
+        var issues = XEditAuditReportHandoffSidecarVerifier.Verify(
+            projectRoot,
+            emission.ManifestPath!,
+            emission.ChecksumsPath!,
+            emission.ProjectId);
+
+        var issue = Assert.Single(issues);
+        Assert.Equal(XEditAuditReportHandoffSidecarVerifier.RuleId, issue.RuleId.ToString());
+        Assert.Equal("xEdit audit report handoff checksum entry is missing", issue.Title);
+        Assert.Contains("xedit-audit-report-handoff.txt", issue.Message, StringComparison.Ordinal);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+    }
+
+    [Fact]
+    public void VerifyReportHandoffSidecarsReportsUnexpectedChecksumEntry()
+    {
+        var projectRoot = CopyFixtureProject("XEditAuditExample");
+        CopySyntheticReportFixture(projectRoot);
+        var emission = new XEditAuditReportHandoffEmitter().Emit(projectRoot);
+        var checksumsPath = HandoffChecksumsPath(projectRoot);
+        File.AppendAllText(checksumsPath, $"{new string('0', 64)}  unexpected.txt\n");
+
+        var issues = XEditAuditReportHandoffSidecarVerifier.Verify(
+            projectRoot,
+            emission.ManifestPath!,
+            emission.ChecksumsPath!,
+            emission.ProjectId);
+
+        var issue = Assert.Single(issues);
+        Assert.Equal(XEditAuditReportHandoffSidecarVerifier.RuleId, issue.RuleId.ToString());
+        Assert.Equal("xEdit audit report handoff checksum entry is not expected", issue.Title);
+        Assert.Contains("unexpected.txt", issue.Message, StringComparison.Ordinal);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "Data")));
+    }
+
     private static void CopySyntheticReportFixture(string projectRoot)
     {
         var source = Path.Combine(RepositoryRoot(), "fixtures", "xedit-audit-reports", "synthetic-record-inspection.json");
@@ -235,6 +560,12 @@ public sealed class XEditAuditAdapterPlannerTests
 
     private static string SyntheticReportPath(string projectRoot) =>
         Path.Combine(projectRoot, "generated", "xedit-audit", "reports", "synthetic-record-inspection.json");
+
+    private static string HandoffChecksumsPath(string projectRoot) =>
+        Path.Combine(projectRoot, "generated", "xedit-audit", "xedit-audit-report-handoff-checksums.sha256");
+
+    private static bool StartsWithUtf8Bom(byte[] bytes) =>
+        bytes is [0xEF, 0xBB, 0xBF, ..];
 
     private static string CopyFixtureProject(string name)
     {

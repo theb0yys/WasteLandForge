@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 222 xEdit audit report parser contract, no CLI behavior change
+Status: Gate 232 forge docs validation rule reference page skeleton
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -364,6 +364,34 @@ forge --version
 - `forge generate --target xedit-audit` writes non-executing xEdit audit
   script scaffolds, a scaffold manifest, and checksum evidence under project
   `generated/xedit-audit`.
+- `forge generate --target xedit-audit-report-handoff` parses existing
+  synthetic xEdit audit report fixtures and writes handoff JSON, handoff text,
+  manifest, and checksum evidence under project `generated/xedit-audit`.
+- `forge docs` validates the project and writes deterministic generated docs
+  reference evidence under project `generated/docs`.
+- `forge docs` writes `reference-index.json`, `reference-index.md`,
+  per-schema `schema-reference.json` and `schema-reference.md` pages,
+  per-registry `registry-reference.json` and `registry-reference.md` pages,
+  per-rule-family `rule-reference.json` and `rule-reference.md` pages,
+  `docs-manifest.json`, and `checksums.sha256`.
+- `forge docs` indexes embedded schemas, project registry files, reserved rule
+  families, built-in FNV capabilities, built-in FNV providers, and canonical
+  command references.
+- `forge docs` writes schema reference page skeletons under
+  `generated/docs/schemas/<kind>/<version>/` from the embedded schema catalog.
+- `forge docs` writes registry reference page skeletons under
+  `generated/docs/registries/<registry-path>/` from local registry source
+  documents.
+- `forge docs` writes rule reference page skeletons under
+  `generated/docs/rules/<rule-family>/` from reserved validation rule
+  families.
+- `forge docs --output generated/<name>` changes the generated docs output
+  directory. Output outside `generated/` is rejected with `WF-GEN-001`.
+- `forge docs --dry-run` reports planned outputs and writes no files.
+- `forge docs` does not build a static site, watch files, publish to the
+  network, execute graph/explain/clean behavior, package or release outputs,
+  execute xEdit, mutate plugins, automate MO2 or GECK, run runtime probes, or
+  use AI.
 - `forge generate --target mcm-json` writes deterministic MCM Extender JSON
   files, translation INI files when declared, a schema-validated package
   manifest, a schema-validated install-preview report, a human summary,
@@ -566,13 +594,24 @@ forge --version
 - `--bundle <path>`
 - `--no-input`
 
+`forge docs` supports:
+
+- positional `[project-root]`
+- `--project <path>`
+- `--format human`
+- `--format plain`
+- `--format json`
+- `--output generated/<name>`
+- `--dry-run`
+- `--no-input`
+
 `forge generate` supports:
 
 - `--format human`
 - `--format plain`
 - `--format json`
 - `--project <path>`
-- `--target reports|mcm-json|jip-scripts|xedit-audit`
+- `--target reports|mcm-json|jip-scripts|xedit-audit|xedit-audit-report-handoff`
 - `--output <path>`
 - `--dry-run`
 
@@ -585,6 +624,11 @@ For `--target xedit-audit`, `forge generate` writes to
 `generated/xedit-audit` and reports generated scaffold, manifest, checksum,
 diagnostic, and digest evidence. `--output` and `--dry-run` are not supported
 for that target in the current gate.
+
+For `--target xedit-audit-report-handoff`, `forge generate` writes to
+`generated/xedit-audit` and reports generated handoff JSON/text, manifest,
+checksum, diagnostic, handoff summary, and digest evidence. `--output` and
+`--dry-run` are not supported for that target in the current gate.
 
 `forge build` supports:
 
@@ -721,6 +765,31 @@ dist/release-dry-run/checksums.sha256
 `--output` is accepted only when the resolved path stays under project `dist/`.
 `release prepare` and `release publish` remain reserved.
 
+## Docs Evidence
+
+`forge docs` writes:
+
+```text
+generated/docs/reference-index.json
+generated/docs/reference-index.md
+generated/docs/schemas/<kind>/<version>/schema-reference.json
+generated/docs/schemas/<kind>/<version>/schema-reference.md
+generated/docs/registries/<registry-path>/registry-reference.json
+generated/docs/registries/<registry-path>/registry-reference.md
+generated/docs/rules/<rule-family>/rule-reference.json
+generated/docs/rules/<rule-family>/rule-reference.md
+generated/docs/docs-manifest.json
+generated/docs/checksums.sha256
+```
+
+`--output` is accepted only when the resolved path stays under project
+`generated/`. The current docs target writes reference index evidence and
+schema, registry, and rule reference page skeletons only. It does not build a
+static site, watch files, publish to the network, render full prose schema,
+registry, or rule documentation, execute graph/explain/clean behavior, package
+or release outputs, execute xEdit, mutate plugins, automate MO2 or GECK, run
+runtime probes, use real third-party plugin fixtures, or use AI.
+
 ## Generate, Build, And Package Evidence
 
 `forge generate --target reports` writes:
@@ -764,6 +833,22 @@ The current `xedit-audit` target writes scaffold evidence only. It does not
 execute xEdit, parse reports, generate patches, mutate plugins, automate MO2
 or GECK, run runtime probes, use real third-party plugin fixtures, implement
 `forge build --target xedit-audit`, or implement package/release behavior.
+
+`forge generate --target xedit-audit-report-handoff` writes:
+
+```text
+generated/xedit-audit/xedit-audit-report-handoff.json
+generated/xedit-audit/xedit-audit-report-handoff.txt
+generated/xedit-audit/xedit-audit-report-handoff-manifest.json
+generated/xedit-audit/xedit-audit-report-handoff-checksums.sha256
+```
+
+The current `xedit-audit-report-handoff` target parses existing synthetic
+reports under `generated/xedit-audit/reports` and writes handoff evidence
+only. It does not execute xEdit, generate reports, generate patches, mutate
+plugins, automate MO2 or GECK, run runtime probes, use real third-party
+plugin fixtures, implement `forge build --target xedit-audit`, or implement
+package/release behavior.
 
 `forge generate --target mcm-json` writes:
 

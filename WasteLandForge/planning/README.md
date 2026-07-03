@@ -227,9 +227,19 @@ Gate status:
 - `gates/gate-220-xedit-audit-scaffold-manifest-checksums.md` - Gate 220, xEdit audit scaffold manifest and checksum evidence.
 - `gates/gate-221-xedit-audit-generate-command.md` - Gate 221, canonical `forge generate --target xedit-audit` CLI wiring.
 - `gates/gate-222-xedit-audit-report-parser-contract.md` - Gate 222, non-executing xEdit audit report parser contract.
+- `gates/gate-223-xedit-audit-report-evidence-projection.md` - Gate 223, xEdit audit report evidence projection for machine/human handoff.
+- `gates/gate-224-xedit-audit-report-handoff-file-emission.md` - Gate 224, xEdit audit report handoff file emission.
+- `gates/gate-225-xedit-audit-report-handoff-manifest-checksums.md` - Gate 225, xEdit audit report handoff manifest and checksum sidecars.
+- `gates/gate-226-xedit-audit-report-handoff-sidecar-revalidation.md` - Gate 226, xEdit audit report handoff sidecar revalidation.
+- `gates/gate-227-xedit-audit-report-handoff-generate-command.md` - Gate 227, canonical `forge generate --target xedit-audit-report-handoff` CLI wiring.
+- `gates/gate-228-xedit-audit-command-slice-closeout.md` - Gate 228, xEdit audit command-slice closeout and next-value transition.
+- `gates/gate-229-forge-docs-reference-index-skeleton.md` - Gate 229, canonical `forge docs` reference index skeleton.
+- `gates/gate-230-forge-docs-schema-reference-page-skeleton.md` - Gate 230, `forge docs` schema reference page skeleton.
+- `gates/gate-231-forge-docs-registry-reference-page-skeleton.md` - Gate 231, `forge docs` project registry reference page skeleton.
+- `gates/gate-232-forge-docs-validation-rule-reference-page-skeleton.md` - Gate 232, `forge docs` validation rule reference page skeleton.
 
 Next gate:
 
-- Gate 223 - xEdit audit report parser evidence projection for machine/human handoff without CLI command wiring, stopping before xEdit process execution, report generation, plugin patch generation, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, `forge build --target xedit-audit`, package/release behavior, or applying parsed report findings to plugins.
+- Gate 233 - `forge docs` built-in capability reference page skeleton, stopping before a static site generator, watch mode, network publishing, full prose documentation rendering, graph/explain/clean behavior, package/release behavior, xEdit process execution, plugin patch generation, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, provider reference pages, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

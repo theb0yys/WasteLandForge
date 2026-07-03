@@ -920,5 +920,39 @@ package output containment and exposes existing validation, semantic, and
 build diagnostics through `forge package --target jip-scripts` JSON/text
 output.
 
+Gate 222 adds `WF-GEN-009` for missing or invalid synthetic xEdit audit report
+evidence. It keeps the same canonical diagnostic report shape, does not expose
+parser diagnostics through a CLI command in that gate, and does not run xEdit
+or runtime capability checks.
+
+Gate 226 adds `WF-GEN-010` for generated xEdit audit report handoff sidecar
+revalidation failures. It keeps the same canonical diagnostic report shape,
+does not expose sidecar diagnostics through a CLI command in that gate, and
+does not run xEdit or runtime capability checks.
+
+Gate 227 adds no new diagnostic rule ID. It exposes existing parser
+diagnostics, including `WF-GEN-009`, through
+`forge generate --target xedit-audit-report-handoff` JSON/text output and
+does not run xEdit or runtime capability checks.
+
+Gate 228 adds no diagnostic behavior. It only records xEdit audit command
+slice closeout and the next `forge docs` reference-index lane.
+
+Gate 229 adds no new diagnostic rule ID. It reuses `WF-GEN-001` to reject
+`forge docs` output paths outside `generated/` and reports that diagnostic
+through the docs JSON/text CLI output.
+
+Gate 230 adds no new diagnostic rule ID. Schema reference page generation uses
+the existing `forge docs` validation and generated-output containment behavior
+from Gate 229.
+
+Gate 231 adds no new diagnostic rule ID. Project registry reference page
+generation uses the existing `forge docs` validation and generated-output
+containment behavior from Gate 229.
+
+Gate 232 adds no new diagnostic rule ID. Validation rule reference page
+generation uses the existing `forge docs` validation and generated-output
+containment behavior from Gate 229.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

@@ -127,7 +127,88 @@ Gate 222 adds `XEditAuditReportParser` and typed synthetic report records in
 from `generated/xedit-audit/reports`, reports `WF-GEN-009` for missing or
 invalid report evidence, and does not write scaffolds, manifest/checksum
 sidecars, `Data`, plugins, or external tool output.
-It adds semantic checks for mutation variable references while preserving
+
+Gate 223 adds `XEditAuditReportEvidenceProjector` and handoff projection
+records in `WastelandForge.Generation`. The projector turns parsed synthetic
+xEdit audit report evidence into in-memory machine JSON and LF human text,
+including summary counts, findings, diagnostics, and safety flags, while still
+avoiding CLI wiring, handoff file emission, xEdit execution, report
+generation, plugin mutation, and `Data` writes.
+
+Gate 224 adds `XEditAuditReportHandoffEmitter`, handoff emission result
+records, and generated handoff file records in `WastelandForge.Generation`.
+The emitter writes JSON/text handoff files under `generated/xedit-audit`,
+returns output digests, and still avoids CLI wiring, manifest/checksum
+sidecars, xEdit execution, report generation, plugin mutation, and `Data`
+writes.
+
+Gate 225 extends `XEditAuditReportHandoffEmitter` with dedicated handoff
+manifest and checksum sidecars under `generated/xedit-audit`. The result now
+exposes manifest/checksum paths, returns output digests for the JSON handoff,
+text handoff, and manifest, and still avoids CLI wiring, sidecar
+revalidation, xEdit execution, report generation, plugin mutation, and `Data`
+writes.
+
+Gate 226 adds `XEditAuditReportHandoffSidecarVerifier` in
+`WastelandForge.Generation`. The verifier revalidates generated handoff
+manifest/checksum evidence and reports `WF-GEN-010` for checksum digest drift,
+missing expected checksum entries, unexpected checksum entries, and malformed
+or unreadable sidecar evidence, while still avoiding CLI wiring, xEdit
+execution, report generation, plugin mutation, and `Data` writes.
+
+Gate 227 adds CLI serialization and text rendering for
+`forge generate --target xedit-audit-report-handoff` in
+`WastelandForge.Cli`. The command delegates to
+`XEditAuditReportHandoffEmitter`, reports handoff JSON/text, manifest,
+checksum, summary, issue, and digest evidence, and keeps custom output roots,
+dry-run mode, build/package behavior, xEdit execution, report generation, and
+plugin mutation outside the gate.
+
+Gate 228 adds no source behavior. It closes the current xEdit audit command
+lane in planning and routing docs, parks existing xEdit generate targets, and
+points the next implementation lane at a `forge docs` reference index
+skeleton.
+
+Gate 229 adds `DocsReferenceIndexGenerator` in `WastelandForge.Generation`
+plus CLI JSON/text serialization and top-level `forge docs` wiring in
+`WastelandForge.Cli`. The command writes reference index, manifest, and
+checksum evidence under `generated/docs`, supports dry-run, validates output
+containment under `generated/`, and still avoids static site generation,
+watch mode, network publishing, graph/explain/clean behavior, package/release
+behavior, xEdit execution, plugin mutation, MO2/GECK automation, runtime
+probes, and AI.
+
+Gate 230 extends `DocsReferenceIndexGenerator` with schema reference page
+skeleton generation. `forge docs` now plans and writes one JSON and one
+Markdown page under `generated/docs/schemas/<kind>/<version>/` for each
+embedded schema catalog entry, includes those pages in the reference index,
+docs manifest, checksums, CLI JSON/text output, source/output digest reporting,
+and still avoids static site generation, watch mode, network publishing,
+full prose documentation rendering, graph/explain/clean behavior,
+package/release behavior, xEdit execution, plugin mutation, MO2/GECK
+automation, runtime probes, and AI.
+
+Gate 231 extends `DocsReferenceIndexGenerator` with project registry reference
+page skeleton generation. `forge docs` now plans and writes one JSON and one
+Markdown page under `generated/docs/registries/<registry-path>/` for each
+local source registry document, includes those pages in the reference index,
+docs manifest, checksums, CLI JSON/text output, source/output digest reporting,
+and still avoids static site generation, watch mode, network publishing,
+full prose documentation rendering, graph/explain/clean behavior,
+package/release behavior, xEdit execution, plugin mutation, MO2/GECK
+automation, runtime probes, and AI.
+
+Gate 232 extends `DocsReferenceIndexGenerator` with validation rule reference
+page skeleton generation. `forge docs` now plans and writes one JSON and one
+Markdown page under `generated/docs/rules/<rule-family>/` for each reserved
+rule family, includes those pages in the reference index, docs manifest,
+checksums, CLI JSON/text output, source/output digest reporting, and still
+avoids static site generation, watch mode, network publishing, full prose
+documentation rendering, graph/explain/clean behavior, package/release
+behavior, xEdit execution, plugin mutation, MO2/GECK automation, runtime
+probes, and AI.
+
+Gate 29 adds semantic checks for mutation variable references while preserving
 earlier dialogue registry schema versions in `WastelandForge.Schema`.
 
 Gate 30 adds dialogue registry schema `0.7.0` runtime validation for dialogue

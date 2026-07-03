@@ -803,3 +803,41 @@ resolver dependency, Doctor planner dependency, catalogue-policy decision
 dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
 release-publishing dependency, external tool execution, archive/FOMOD
 dependency, or AI requirement.
+
+Gate 228 adds no new dependency, download, rehosted runtime binary, network
+call, runtime probe, MO2/GECK integration, detector dependency, capability
+resolver dependency, Doctor planner dependency, catalogue-policy decision
+dependency, SARIF/GitHub dependency, GitHub step-summary dependency,
+release-publishing dependency, external tool execution, archive/FOMOD
+dependency, static-site generator, documentation publishing dependency, or AI
+requirement.
+
+Gate 229 adds `forge docs` reference index generation using existing .NET and
+repository dependencies only. It adds no static-site generator, documentation
+publishing dependency, network call, download, rehosted runtime binary,
+runtime probe, MO2/GECK integration, detector dependency, capability resolver
+dependency, release-publishing dependency, external tool execution,
+archive/FOMOD dependency, or AI requirement.
+
+Gate 230 adds `forge docs` schema reference page skeleton generation using
+existing .NET and repository dependencies only. It adds no static-site
+generator, documentation publishing dependency, network call, download,
+rehosted runtime binary, runtime probe, MO2/GECK integration, detector
+dependency, capability resolver dependency, release-publishing dependency,
+external tool execution, archive/FOMOD dependency, or AI requirement.
+
+Gate 231 adds `forge docs` project registry reference page skeleton generation
+using existing .NET and repository dependencies only. It adds no static-site
+generator, YAML rendering dependency, documentation publishing dependency,
+network call, download, rehosted runtime binary, runtime probe, MO2/GECK
+integration, detector dependency, capability resolver dependency,
+release-publishing dependency, external tool execution, archive/FOMOD
+dependency, or AI requirement.
+
+Gate 232 adds `forge docs` validation rule reference page skeleton generation
+using existing .NET and repository dependencies only. It adds no static-site
+generator, diagnostic registry dependency, source-code extraction dependency,
+documentation publishing dependency, network call, download, rehosted runtime
+binary, runtime probe, MO2/GECK integration, detector dependency, capability
+resolver dependency, release-publishing dependency, external tool execution,
+archive/FOMOD dependency, or AI requirement.

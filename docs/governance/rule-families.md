@@ -434,3 +434,36 @@ validation and semantic diagnostics through the CLI.
 Gate 216 adds no new rule family or diagnostic ID. `forge package --target
 jip-scripts` reuses `WF-BUILD-001` for output containment and reports
 existing validation and semantic diagnostics through the CLI.
+
+Gate 222 adds `WF-GEN-009` for missing or invalid synthetic xEdit audit report
+evidence. It covers missing report files, malformed JSON, invalid report
+contracts, unsafe report safety flags, non-synthetic report evidence, real
+plugin fixture use, and report paths that escape `generated/xedit-audit`.
+
+Gate 226 adds `WF-GEN-010` for generated xEdit audit report handoff sidecar
+revalidation failures. It covers malformed, escaping, duplicate, missing,
+unexpected, unreadable, and digest-mismatched checksum entries under
+`generated/xedit-audit`, plus invalid handoff manifest evidence.
+
+Gate 227 adds no new rule family or diagnostic ID.
+`forge generate --target xedit-audit-report-handoff` reports existing
+validation, semantic, `WF-GEN-009`, and generated handoff diagnostics through
+the CLI.
+
+Gate 228 adds no new rule family or diagnostic ID. It is a planning/routing
+closeout gate for the current xEdit audit command lane.
+
+Gate 229 adds no new rule family or diagnostic ID. `forge docs` reuses
+`WF-GEN-001` for generated output containment under `generated/`.
+
+Gate 230 adds no new rule family or diagnostic ID. `forge docs` schema
+reference page generation remains under the existing `WF-GEN-*` output
+containment boundary.
+
+Gate 231 adds no new rule family or diagnostic ID. `forge docs` project
+registry reference page generation remains under the existing `WF-GEN-*`
+output containment boundary.
+
+Gate 232 adds no new rule family or diagnostic ID. `forge docs` validation
+rule reference page generation documents reserved rule families and remains
+under the existing `WF-GEN-*` output containment boundary.

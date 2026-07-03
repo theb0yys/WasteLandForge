@@ -105,6 +105,9 @@ internal static class CliHelpWriter
             case "package":
                 WritePackageHelp(writer);
                 return true;
+            case "docs":
+                WriteDocsHelp(writer);
+                return true;
             case "doctor":
                 WriteDoctorHelp(writer);
                 return true;
@@ -112,7 +115,6 @@ internal static class CliHelpWriter
                 WriteDoctorExportHelp(writer);
                 return true;
             case "init":
-            case "docs":
             case "graph":
             case "explain":
             case "clean":
@@ -153,13 +155,15 @@ internal static class CliHelpWriter
         writer.WriteLine("forge generate");
         writer.WriteLine();
         writer.WriteLine("Usage:");
-        writer.WriteLine("  forge generate [project-root] [--project <path>] [--target reports|mcm-json|jip-scripts|xedit-audit] [--output generated/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
+        writer.WriteLine("  forge generate [project-root] [--project <path>] [--target reports|mcm-json|jip-scripts|xedit-audit|xedit-audit-report-handoff] [--output generated/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Writes deterministic generated artifacts under project generated/. Target 'reports' writes metadata reports; target 'mcm-json' writes Gate 116 MCM Extender JSON, runtime requirements, translations, header and image options, keybind options, checkbox options, string-toggle options, staged referenced texture assets, a schema-validated loose-file package manifest, a schema-validated install-preview report, a human install-preview summary, a schema-validated install-plan report, a human install-plan summary, a schema-validated package-verification report, a human package-verification summary, and reusable package-verification evidence cross-checks, then validates the output schema and MCM image asset references. Target 'jip-scripts' writes generated JIP LN text scripts, emission manifest, and checksum evidence under generated/jip-scripts. Target 'xedit-audit' writes non-executing xEdit audit script scaffolds, a scaffold manifest, and checksum evidence under generated/xedit-audit.");
+        writer.WriteLine("Writes deterministic generated artifacts under project generated/. Target 'reports' writes metadata reports; target 'mcm-json' writes Gate 116 MCM Extender JSON, runtime requirements, translations, header and image options, keybind options, checkbox options, string-toggle options, staged referenced texture assets, a schema-validated loose-file package manifest, a schema-validated install-preview report, a human install-preview summary, a schema-validated install-plan report, a human install-plan summary, a schema-validated package-verification report, a human package-verification summary, and reusable package-verification evidence cross-checks, then validates the output schema and MCM image asset references. Target 'jip-scripts' writes generated JIP LN text scripts, emission manifest, and checksum evidence under generated/jip-scripts. Target 'xedit-audit' writes non-executing xEdit audit script scaffolds, a scaffold manifest, and checksum evidence under generated/xedit-audit. Target 'xedit-audit-report-handoff' parses existing synthetic xEdit audit reports and writes handoff JSON, text, manifest, and checksum evidence under generated/xedit-audit.");
         writer.WriteLine("JIP script generation does not package, install to Data, run runtime probes, launch MO2 VFS, create ZIP/FOMOD archives, or generate plugin records.");
-        writer.WriteLine("xEdit audit generation does not execute xEdit, parse reports, generate patches, mutate plugins, automate MO2 or GECK, run runtime probes, or use real third-party plugin fixtures.");
+        writer.WriteLine("xEdit audit scaffold generation does not execute xEdit, parse reports, generate patches, mutate plugins, automate MO2 or GECK, run runtime probes, or use real third-party plugin fixtures.");
+        writer.WriteLine("xEdit audit report handoff does not execute xEdit, generate reports, generate patches, mutate plugins, automate MO2 or GECK, run runtime probes, or use real third-party plugin fixtures.");
         writer.WriteLine("Target 'jip-scripts' uses generated/jip-scripts in the current gate; --output and --dry-run are not supported for that target yet.");
         writer.WriteLine("Target 'xedit-audit' uses generated/xedit-audit in the current gate; --output and --dry-run are not supported for that target yet.");
+        writer.WriteLine("Target 'xedit-audit-report-handoff' uses generated/xedit-audit in the current gate; --output and --dry-run are not supported for that target yet.");
         writer.WriteLine();
         writer.WriteLine("Outputs:");
         writer.WriteLine("  generated/reports/validation.json");
@@ -184,6 +188,10 @@ internal static class CliHelpWriter
         writer.WriteLine("  generated/xedit-audit/scripts/<audit>.pas");
         writer.WriteLine("  generated/xedit-audit/xedit-audit-script-manifest.json");
         writer.WriteLine("  generated/xedit-audit/checksums.sha256");
+        writer.WriteLine("  generated/xedit-audit/xedit-audit-report-handoff.json");
+        writer.WriteLine("  generated/xedit-audit/xedit-audit-report-handoff.txt");
+        writer.WriteLine("  generated/xedit-audit/xedit-audit-report-handoff-manifest.json");
+        writer.WriteLine("  generated/xedit-audit/xedit-audit-report-handoff-checksums.sha256");
         writer.WriteLine();
         writer.WriteLine("Examples:");
         writer.WriteLine("  forge generate fixtures/projects/ExampleMod --format json");
@@ -191,6 +199,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge generate fixtures/projects/ExampleMod --target mcm-json --format json");
         writer.WriteLine("  forge generate fixtures/projects/JipScriptExample --target jip-scripts --format json");
         writer.WriteLine("  forge generate fixtures/projects/XEditAuditExample --target xedit-audit --format json");
+        writer.WriteLine("  forge generate fixtures/projects/XEditAuditExample --target xedit-audit-report-handoff --format json");
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
         writer.WriteLine("  0 reports written or planned");
@@ -240,6 +249,41 @@ internal static class CliHelpWriter
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
         writer.WriteLine("  0 build reports written or planned");
+        writer.WriteLine("  1 blocking diagnostics found");
+        writer.WriteLine("  2 usage or unsupported format");
+    }
+
+    private static void WriteDocsHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge docs");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge docs [project-root] [--project <path>] [--output generated/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Writes deterministic local docs reference evidence under project generated/. The current gate indexes embedded schemas, project registry files, reserved rule families, the built-in FNV capability/provider catalogue, canonical command references, per-schema reference page skeletons, project registry reference page skeletons, validation rule reference page skeletons, and built-in capability reference page skeletons.");
+        writer.WriteLine("This does not build a static site, watch files, publish to the network, execute graph/explain/clean behavior, package or release outputs, execute xEdit, generate patches, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.");
+        writer.WriteLine();
+        writer.WriteLine("Outputs:");
+        writer.WriteLine("  generated/docs/reference-index.json");
+        writer.WriteLine("  generated/docs/reference-index.md");
+        writer.WriteLine("  generated/docs/schemas/<kind>/<version>/schema-reference.json");
+        writer.WriteLine("  generated/docs/schemas/<kind>/<version>/schema-reference.md");
+        writer.WriteLine("  generated/docs/registries/<registry-path>/registry-reference.json");
+        writer.WriteLine("  generated/docs/registries/<registry-path>/registry-reference.md");
+        writer.WriteLine("  generated/docs/rules/<rule-family>/rule-reference.json");
+        writer.WriteLine("  generated/docs/rules/<rule-family>/rule-reference.md");
+        writer.WriteLine("  generated/docs/capabilities/<capability-id>/capability-reference.json");
+        writer.WriteLine("  generated/docs/capabilities/<capability-id>/capability-reference.md");
+        writer.WriteLine("  generated/docs/docs-manifest.json");
+        writer.WriteLine("  generated/docs/checksums.sha256");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge docs fixtures/projects/ExampleMod --format json");
+        writer.WriteLine("  forge docs --project fixtures/projects/ExampleMod --output generated/docs");
+        writer.WriteLine("  forge docs fixtures/projects/ExampleMod --dry-run --format plain");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 docs evidence written or planned");
         writer.WriteLine("  1 blocking diagnostics found");
         writer.WriteLine("  2 usage or unsupported format");
     }
