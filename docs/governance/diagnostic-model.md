@@ -1046,5 +1046,37 @@ confirmation/refusal exit behavior without inspecting diagnostics, generated
 manifests, build manifests, checksums, provenance sidecars, artifacts, provider
 evidence, external tools, runtime probes, or AI.
 
+Gate 253 adds no new diagnostic rule ID. It implements explicit
+`forge clean --generated` execution with removed/missing path reporting
+without inspecting diagnostics, generated manifests, build manifests,
+checksums, provenance sidecars, artifacts beyond the selected target root,
+provider evidence, external tools, runtime probes, or AI.
+
+Gate 254 adds no new diagnostic rule ID. It implements explicit
+`forge clean --dist` execution with removed/missing path reporting without
+inspecting diagnostics, generated manifests, build manifests, checksums,
+provenance sidecars, artifacts beyond the selected target root, provider
+evidence, external tools, runtime probes, or AI.
+
+Gate 255 adds no new diagnostic rule ID. It implements explicit
+`forge clean --cache` execution with removed/missing path reporting without
+inspecting diagnostics, generated manifests, build manifests, checksums,
+provenance sidecars, artifacts beyond the selected target root, provider
+evidence, external tools, runtime probes, or AI.
+
+Gate 256 adds no new diagnostic rule ID. It implements confirmed
+`forge clean --all` execution with per-root removed/missing path reporting
+without inspecting diagnostics, generated manifests, build manifests,
+checksums, provenance sidecars, artifacts beyond the target roots, provider
+evidence, external tools, runtime probes, or AI.
+
+Gate 257 adds no new diagnostic rule ID. It implements all-scope project-ID
+confirmation validation with unsafe-operation refusal statuses in the clean
+report, without running the diagnostic pipeline, performing full manifest
+schema validation, loading registries, reading generated manifests, reading
+build manifests, reading checksums, reading provenance sidecars, checking
+artifacts beyond the target roots, inspecting provider evidence, executing
+external tools, running runtime probes, or using AI.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

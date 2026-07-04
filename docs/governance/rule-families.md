@@ -563,3 +563,40 @@ without deleting files, inspecting diagnostics, reading project manifests,
 validating project IDs, reading generated manifests, reading build manifests,
 reading checksums, reading provenance sidecars, checking artifact existence,
 executing external tools, running runtime probes, or using AI.
+
+Gate 253 adds no new rule family or diagnostic ID. Explicit
+`forge clean --generated` execution reports removed or missing target-root
+paths without inspecting diagnostics, reading project manifests, validating
+project IDs, reading generated manifests, reading build manifests, reading
+checksums, reading provenance sidecars, checking artifacts beyond the selected
+target root, executing external tools, running runtime probes, or using AI.
+
+Gate 254 adds no new rule family or diagnostic ID. Explicit
+`forge clean --dist` execution reports removed or missing target-root paths
+without inspecting diagnostics, reading project manifests, validating project
+IDs, reading generated manifests, reading build manifests, reading checksums,
+reading provenance sidecars, checking artifacts beyond the selected target
+root, executing external tools, running runtime probes, or using AI.
+
+Gate 255 adds no new rule family or diagnostic ID. Explicit
+`forge clean --cache` execution reports removed or missing target-root paths
+without inspecting diagnostics, reading project manifests, validating project
+IDs, reading generated manifests, reading build manifests, reading checksums,
+reading provenance sidecars, checking artifacts beyond the selected target
+root, executing external tools, running runtime probes, or using AI.
+
+Gate 256 adds no new rule family or diagnostic ID. Confirmed
+`forge clean --all` execution reports removed or missing paths for the
+documented generated, dist, and cache roots without inspecting diagnostics,
+reading project manifests, validating project IDs, reading generated
+manifests, reading build manifests, reading checksums, reading provenance
+sidecars, checking artifacts beyond the target roots, executing external
+tools, running runtime probes, or using AI.
+
+Gate 257 adds no new rule family or diagnostic ID. All-scope project-ID
+confirmation validation reports unsafe-operation refusal statuses and
+`projectIdentity` clean metadata without running the diagnostic pipeline,
+performing full manifest schema validation, loading registries, reading
+generated manifests, reading build manifests, reading checksums, reading
+provenance sidecars, checking artifacts beyond the target roots, executing
+external tools, running runtime probes, or using AI.

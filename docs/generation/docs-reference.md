@@ -128,3 +128,28 @@ Gate 252 implements `forge clean --all` confirmation/refusal planning. Docs
 generation still does not execute clean behavior, delete files, mutate the
 filesystem, read manifests, inspect artifacts, call external tools, run runtime
 probes, or use AI.
+
+Gate 253 implements explicit `forge clean --generated` execution in the clean
+command. Docs generation still does not execute clean behavior, delete files,
+mutate the filesystem, read manifests, inspect artifacts, call external tools,
+run runtime probes, or use AI.
+
+Gate 254 implements explicit `forge clean --dist` execution in the clean
+command. Docs generation still does not execute clean behavior, delete files,
+mutate the filesystem, read manifests, inspect artifacts, call external tools,
+run runtime probes, or use AI.
+
+Gate 255 implements explicit `forge clean --cache` execution in the clean
+command. Docs generation still does not execute clean behavior, delete files,
+mutate the filesystem, read manifests, inspect artifacts, call external tools,
+run runtime probes, or use AI.
+
+Gate 256 implements confirmed `forge clean --all` execution in the clean
+command. Docs generation still does not execute clean behavior, delete files,
+mutate the filesystem, read manifests, inspect artifacts, call external tools,
+run runtime probes, or use AI.
+
+Gate 257 implements all-scope project-ID confirmation validation in the clean
+command. Docs generation still does not execute clean behavior, delete files,
+mutate the filesystem, read manifests, inspect artifacts, call external tools,
+run runtime probes, or use AI.

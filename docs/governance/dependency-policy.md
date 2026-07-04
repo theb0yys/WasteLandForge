@@ -985,3 +985,43 @@ It does not add filesystem deletion libraries, manifest readers, project-ID
 validation dependencies, provenance sidecar readers, checksum readers,
 artifact scanners, provider resolvers, capability scanner dependencies,
 runtime probes, external tool integrations, network calls, or AI requirements.
+
+Gate 253 adds no dependency. Explicit `forge clean --generated` execution uses
+the .NET filesystem APIs already available to the CLI and does not add
+filesystem deletion libraries, manifest readers, project-ID validation
+dependencies, provenance sidecar readers, checksum readers, artifact scanners
+beyond the selected target root, provider resolvers, capability scanner
+dependencies, runtime probes, external tool integrations, network calls, or AI
+requirements.
+
+Gate 254 adds no dependency. Explicit `forge clean --dist` execution reuses
+the same .NET filesystem APIs and selected-root clean path as generated clean.
+It does not add filesystem deletion libraries, manifest readers, project-ID
+validation dependencies, active-build or cache-lock detectors, provenance
+sidecar readers, checksum readers, artifact scanners beyond the selected
+target root, provider resolvers, capability scanner dependencies, runtime
+probes, external tool integrations, network calls, or AI requirements.
+
+Gate 255 adds no dependency. Explicit `forge clean --cache` execution reuses
+the same .NET filesystem APIs and selected-root clean path as generated and
+dist clean. It does not add filesystem deletion libraries, manifest readers,
+project-ID validation dependencies, active-build or cache-lock detectors,
+provenance sidecar readers, checksum readers, artifact scanners beyond the
+selected target root, provider resolvers, capability scanner dependencies,
+runtime probes, external tool integrations, network calls, or AI requirements.
+
+Gate 256 adds no dependency. Confirmed `forge clean --all` execution reuses
+the same .NET filesystem APIs and contained-root clean path as generated,
+dist, and cache clean. It does not add filesystem deletion libraries, manifest
+readers, project-ID validation dependencies, active-build or cache-lock
+detectors, provenance sidecar readers, checksum readers, artifact scanners
+beyond the target roots, provider resolvers, capability scanner dependencies,
+runtime probes, external tool integrations, network calls, or AI requirements.
+
+Gate 257 adds no new dependency. All-scope project-ID confirmation validation
+reuses .NET JSON parsing and the already-available YAML parser used by
+WastelandForge validation. It does not add full manifest schema validation
+dependencies, registry loaders, active-build or cache-lock detectors,
+provenance sidecar readers, checksum readers, artifact scanners beyond the
+target roots, provider resolvers, capability scanner dependencies, runtime
+probes, external tool integrations, network calls, or AI requirements.

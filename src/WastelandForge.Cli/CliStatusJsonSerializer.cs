@@ -45,7 +45,7 @@ internal static class CliStatusJsonSerializer
             status["reportContract"] = new JsonObject
             {
                 ["status"] = "planned",
-                ["summary"] = "Future clean execution reports removed outputs and refused unsafe operations.",
+                ["summary"] = "Clean execution reports removed outputs, missing roots, and refused unsafe operations.",
                 ["canonicalFormat"] = "json",
                 ["mutatesFilesystemInCurrentGate"] = false
             };

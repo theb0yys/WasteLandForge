@@ -865,6 +865,36 @@ or real provider sample. It uses temporary synthetic generated, dist, and cache
 files in golden CLI tests only to prove unconfirmed and confirmed all-scope
 clean planning does not delete files.
 
+Gate 253 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses temporary synthetic generated-root directories
+and files in golden CLI tests only to prove explicit generated clean removes
+the synthetic target root, reports missing roots, and preserves dry-run and
+default-scope non-mutation behavior.
+
+Gate 254 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses temporary synthetic dist-root directories and
+files in golden CLI tests only to prove explicit dist clean removes the
+synthetic target root, reports missing roots, and preserves dry-run and
+all-scope non-mutation behavior.
+
+Gate 255 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses temporary synthetic cache-root directories and
+files in golden CLI tests only to prove explicit cache clean removes the
+synthetic target root, reports missing roots, and preserves dry-run and
+all-scope non-mutation behavior.
+
+Gate 256 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses temporary synthetic generated, dist, and
+cache directories and files in golden CLI tests only to prove confirmed
+all-scope clean removes documented synthetic target roots, reports missing
+roots, and preserves dry-run and refusal behavior.
+
+Gate 257 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses temporary synthetic JSON/YAML root manifests
+and temporary generated, dist, and cache directories in golden CLI tests only
+to prove project-ID confirmation matching, mismatch refusal, missing-manifest
+refusal, and preservation of dry-run behavior.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

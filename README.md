@@ -2,15 +2,19 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 252 adds
-`forge clean --all` confirmation/refusal planning. `forge clean` calculates
-dry-run clean roots for the default `generated` scope or explicit
-`--generated`, `--dist`, `--cache`, and `--all` scopes; unconfirmed `--all`
-returns exit code 6 with `status: refused` unless both `--yes` and
-`--confirm <project-id>` are supplied. It still does not delete files, mutate
-the filesystem, read generated manifests, read build manifests, read
-provenance sidecars, read checksums, inspect artifact existence, call external
-tools, run runtime probes, or use AI. The implemented explain subjects remain
+The project is currently in gated v0.1 implementation. Gate 257 adds
+project-ID confirmation validation for `forge clean --all` beside the existing
+generated/dist/cache clean.
+Explicit `forge clean --generated`, `forge clean --dist`,
+`forge clean --cache`, and manifest-confirmed
+`forge clean --all --yes --confirm <project-id>` delete only contained
+documented output roots and report removed or missing paths. Omitted-scope
+`forge clean`, explicit clean dry-runs, and unconfirmed or manifest-mismatched
+`--all` remain path plans or refusals; unsafe all-scope refusals return exit
+code 6. It still does not detect active builds or cache locks, read generated
+manifests, read build manifests, read provenance sidecars, read checksums,
+inspect artifacts beyond the selected target roots, call external tools, run
+runtime probes, or use AI. The implemented explain subjects remain
 `diagnostic <rule-id>`, `target <target-id>`,
 `output <generated-or-dist-path>`, `capability <capability-id>`, and
 `provenance <manifest-or-output-path>`.
@@ -19,7 +23,7 @@ still does not execute xEdit, generate real xEdit reports, generate patches,
 mutate plugins, automate MO2 or GECK, run runtime probes, execute generator
 targets through `forge graph`, check generated artifact existence through
 `forge graph`, read generated manifests through `forge graph`, add xEdit
-build/package targets, publish docs, delete generated files, read provenance
+build/package targets, publish docs, detect active clean/build locks, read provenance
 sidecars through `forge explain`, inspect project
 diagnostic reports through `forge explain`, plan builds through
 `forge explain target`, execute generators through `forge explain target`, or
@@ -745,6 +749,58 @@ Confirmed `--all` still only emits a dry-run path plan. No delete behavior,
 filesystem mutation, project manifest reads, project-id validation, manifest
 reads, checksum reads, artifact existence checks, external tools, runtime
 probes, or AI are used.
+
+Gate 253 implements explicit `forge clean --generated` execution. It deletes
+only the contained project `generated/` output root, reports removed or missing
+paths, and keeps `--generated --dry-run`, omitted-scope generated cleans,
+`--dist`, `--cache`, and confirmed `--all` as non-mutating path plans. It does
+not delete `dist` or cache outputs, perform all-scope deletion, read project
+manifests, validate project IDs, read generated manifests, read build
+manifests, read provenance sidecars, read checksums, inspect artifacts beyond
+the selected target root, execute generators, call external tools, run runtime
+probes, or use AI.
+
+Gate 254 implements explicit `forge clean --dist` execution. It deletes only
+the contained project `dist/` output root, reports removed or missing paths,
+and keeps `--dist --dry-run`, omitted-scope generated cleans, `--cache`, and
+confirmed `--all` as non-mutating path plans. It does not delete cache
+outputs, perform all-scope deletion, detect active builds or cache locks, read
+project manifests, validate project IDs, read generated manifests, read build
+manifests, read provenance sidecars, read checksums, inspect artifacts beyond
+the selected target root, execute generators, call external tools, run runtime
+probes, or use AI.
+
+Gate 255 implements explicit `forge clean --cache` execution. It deletes only
+the contained project `.wastelandforge/cache/` output root, reports removed or
+missing paths, and keeps `--cache --dry-run`, omitted-scope generated cleans,
+and confirmed `--all` as non-mutating path plans. It does not perform
+all-scope deletion, detect active builds or cache locks, read project
+manifests, validate project IDs, read generated manifests, read build
+manifests, read provenance sidecars, read checksums, inspect artifacts beyond
+the selected target root, execute generators, call external tools, run runtime
+probes, or use AI.
+
+Gate 256 implements confirmed `forge clean --all` execution. It deletes only
+the contained project `generated/`, `dist/`, and `.wastelandforge/cache/`
+output roots when both `--yes` and `--confirm <project-id>` are supplied,
+reports removed and missing paths per root, and keeps unconfirmed `--all`,
+explicit clean dry-runs, and omitted-scope generated cleans non-mutating. It
+does not validate project IDs, detect active builds or cache locks, read
+project manifests, read generated manifests, read build manifests, read
+provenance sidecars, read checksums, inspect artifacts beyond the target
+roots, execute generators, call external tools, run runtime probes, or use AI.
+
+Gate 257 implements all-scope project-ID confirmation validation. Before
+confirmed `forge clean --all` can delete files, Forge reads only the root
+project manifest identity from `wastelandforge.json`, `wastelandforge.yaml`,
+or `wastelandforge.yml` and requires it to match `--confirm <project-id>`.
+Missing, multiple, unreadable, invalid, or mismatched manifest identity refuses
+the operation without deletion and reports machine-readable `projectIdentity`
+metadata. It does not perform full manifest schema validation, load
+registries, detect active builds or cache locks, read generated manifests,
+read build manifests, read provenance sidecars, read checksums, inspect
+artifacts beyond the target roots, execute generators, call external tools,
+run runtime probes, or use AI.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

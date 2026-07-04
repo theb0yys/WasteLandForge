@@ -425,7 +425,7 @@ internal static class CliHelpWriter
         writer.WriteLine("Usage:");
         writer.WriteLine("  forge clean [project-root] [--project <path>] [--generated|--dist|--cache|--all] [--yes] [--confirm <project-id>] [--format human|plain|json] [--dry-run] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Gate 253 deletes only the contained generated/ root for explicit --generated cleans. Omitted scope, --generated --dry-run, --dist, --cache, and --all remain path plans or refusals. It does not read manifests, inspect artifacts beyond the selected target root, execute generators, call external tools, run runtime probes, or use AI.");
+        writer.WriteLine("Gate 257 deletes only contained generated/, dist/, and .wastelandforge/cache/ roots for explicit clean scopes. Confirmed --all first requires --confirm <project-id> to match the root project manifest id, then deletes those three roots only. Omitted scope, explicit dry-runs, and unconfirmed --all remain path plans or refusals. It does not detect active builds, read generated/build manifests, inspect artifacts beyond target roots, execute generators, call external tools, run runtime probes, or use AI.");
         writer.WriteLine();
         writer.WriteLine("Planned scopes:");
         foreach (var scope in CleanScopeContracts.All)
@@ -435,9 +435,9 @@ internal static class CliHelpWriter
 
         writer.WriteLine();
         writer.WriteLine("Reporting contract:");
-        writer.WriteLine("  Explicit --generated removes the contained project generated/ root and reports removed or missing paths.");
-        writer.WriteLine("  --generated --dry-run and omitted-scope generated plans report paths without deletion.");
-        writer.WriteLine("  Unconfirmed --all returns exit code 6 with the same dry-run path plan and no filesystem mutation.");
+        writer.WriteLine("  Explicit --generated, --dist, --cache, and manifest-confirmed --all remove contained planned roots and report removed or missing paths.");
+        writer.WriteLine("  Explicit dry-runs and omitted-scope generated plans report paths without deletion.");
+        writer.WriteLine("  Unconfirmed --all returns exit code 6 with the same path plan and no filesystem mutation.");
         writer.WriteLine("  JSON is the canonical machine contract; human/plain output is for operators.");
         writer.WriteLine("  Unknown or duplicate scopes are usage errors and must not delete anything.");
         writer.WriteLine();
@@ -447,7 +447,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge clean . --all --yes --confirm example.author.modname");
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
-        writer.WriteLine("  0 generated root cleaned, missing root reported, or dry-run path plan written");
+        writer.WriteLine("  0 generated/dist/cache/all clean executed, missing root reported, or dry-run path plan written");
         writer.WriteLine("  2 usage error");
         writer.WriteLine("  6 unsafe all-scope operation refused or confirmation required");
     }

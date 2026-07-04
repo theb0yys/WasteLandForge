@@ -1,6 +1,6 @@
 # Project Source Graph Output
 
-Status: Gate 252 clean all-scope confirmation refusal
+Status: Gate 257 clean project-ID confirmation validation
 Research classification: Documented
 Source: R004, R006, ADR-007, ADR-009, ADR-010, ADR-011
 
@@ -78,3 +78,28 @@ Gate 252 implements `forge clean --all` confirmation/refusal planning.
 `forge graph` still does not execute clean behavior, delete files, mutate the
 filesystem, read manifests, inspect artifact existence, call external tools,
 run runtime probes, or use AI.
+
+Gate 253 implements explicit `forge clean --generated` execution in the clean
+command. `forge graph` still does not execute clean behavior, delete files,
+mutate the filesystem, read manifests, inspect artifact existence, call
+external tools, run runtime probes, or use AI.
+
+Gate 254 implements explicit `forge clean --dist` execution in the clean
+command. `forge graph` still does not execute clean behavior, delete files,
+mutate the filesystem, read manifests, inspect artifact existence, call
+external tools, run runtime probes, or use AI.
+
+Gate 255 implements explicit `forge clean --cache` execution in the clean
+command. `forge graph` still does not execute clean behavior, delete files,
+mutate the filesystem, read manifests, inspect artifact existence, call
+external tools, run runtime probes, or use AI.
+
+Gate 256 implements confirmed `forge clean --all` execution in the clean
+command. `forge graph` still does not execute clean behavior, delete files,
+mutate the filesystem, read manifests, inspect artifact existence, call
+external tools, run runtime probes, or use AI.
+
+Gate 257 implements all-scope project-ID confirmation validation in the clean
+command. `forge graph` still does not execute clean behavior, delete files,
+mutate the filesystem, read manifests, inspect artifact existence, call
+external tools, run runtime probes, or use AI.

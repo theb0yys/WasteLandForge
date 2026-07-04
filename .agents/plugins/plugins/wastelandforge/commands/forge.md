@@ -691,9 +691,14 @@ deterministic built-in capability catalogue metadata, and Gate 248 implements
 provenance boundary planning, and Gate 249 closes the top-level
 `forge explain` command slice, and Gate 250 implements the reserved
 `forge clean` planning skeleton with documented scopes and false execution
-flags, and Gate 251 implements `forge clean` dry-run path planning. Route the
-next implementation slice to Gate 253: `forge clean --generated` execution
-skeleton.
+flags, Gate 251 implements `forge clean` dry-run path planning, Gate 252
+implements `forge clean --all` confirmation/refusal planning, and Gate 253
+implements explicit `forge clean --generated` execution, and Gate 254
+implements explicit `forge clean --dist` execution, and Gate 255 implements
+explicit `forge clean --cache` execution, and Gate 256 implements confirmed
+`forge clean --all` execution, and Gate 257 implements all-scope project-ID
+confirmation validation. Route the next implementation slice to Gate 258:
+active-build/cache-lock clean safety skeleton.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -724,9 +729,14 @@ skeleton.
   provenance boundary planning, and Gate 249 closes the top-level
   `forge explain` command slice, and Gate 250 implements the reserved
   `forge clean` planning skeleton with documented scopes and false execution
-  flags, and Gate 251 implements `forge clean` dry-run path planning. Route
-  the next implementation slice to Gate 253: `forge clean --generated`
-  execution skeleton.
+flags, Gate 251 implements `forge clean` dry-run path planning, Gate 252
+implements `forge clean --all` confirmation/refusal planning, Gate 253
+implements explicit `forge clean --generated` execution, and Gate 254
+implements explicit `forge clean --dist` execution, and Gate 255 implements
+  explicit `forge clean --cache` execution, and Gate 256 implements confirmed
+  `forge clean --all` execution, and Gate 257 implements all-scope project-ID
+  confirmation validation. Route the next implementation slice to Gate 258:
+  active-build/cache-lock clean safety skeleton.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider

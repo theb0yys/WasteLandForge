@@ -369,6 +369,51 @@ still emit dry-run plans only and do not delete files, mutate the filesystem,
 read manifests, validate project IDs, inspect artifacts, execute generators,
 call external tools, run runtime probes, or use AI.
 
+Gate 253 extends `CleanPlanPlanner` from path planning into the first narrow
+execution slice. Explicit `forge clean --generated` deletes only the contained
+project `generated/` root and reports removed or missing paths. Omitted-scope
+generated cleans, `--generated --dry-run`, `--dist`, `--cache`, and confirmed
+`--all` remain non-mutating path plans. The implementation still does not
+delete `dist` or cache outputs, perform all-scope deletion, read manifests,
+validate project IDs, inspect artifacts beyond the selected target root,
+execute generators, call external tools, run runtime probes, or use AI.
+
+Gate 254 extends the same selected-root clean execution path to explicit
+`forge clean --dist`. Explicit dist cleans delete only the contained project
+`dist/` root and report removed or missing paths. `--dist --dry-run`,
+omitted-scope generated cleans, `--cache`, and confirmed `--all` remain
+non-mutating path plans. The implementation still does not delete cache
+outputs, perform all-scope deletion, detect active builds or cache locks, read
+manifests, validate project IDs, inspect artifacts beyond the selected target
+root, execute generators, call external tools, run runtime probes, or use AI.
+
+Gate 255 extends the same selected-root clean execution path to explicit
+`forge clean --cache`. Explicit cache cleans delete only the contained project
+`.wastelandforge/cache/` root and report removed or missing paths. Explicit
+clean dry-runs, omitted-scope generated cleans, and confirmed `--all` remain
+non-mutating path plans. The implementation still does not perform all-scope
+deletion, detect active builds or cache locks, read manifests, validate
+project IDs, inspect artifacts beyond the selected target root, execute
+generators, call external tools, run runtime probes, or use AI.
+
+Gate 256 extends clean execution to confirmed `forge clean --all`. Confirmed
+all-scope cleans delete only the contained project `generated/`, `dist/`, and
+`.wastelandforge/cache/` roots and report removed or missing paths per root.
+Unconfirmed `--all`, explicit clean dry-runs, and omitted-scope generated
+cleans remain non-mutating. The implementation still does not validate project
+IDs, detect active builds or cache locks, read manifests, inspect artifacts
+beyond the target roots, execute generators, call external tools, run runtime
+probes, or use AI.
+
+Gate 257 adds project-ID confirmation validation before confirmed all-scope
+clean mutation. The clean planner reads only root manifest identity from
+`wastelandforge.json`, `wastelandforge.yaml`, or `wastelandforge.yml` and
+requires the manifest `id` to match `--confirm <project-id>`. Refusals preserve
+the filesystem and report `projectIdentity` metadata. The implementation still
+does not perform full manifest schema validation, load registries, detect
+active builds or cache locks, inspect artifacts beyond the target roots,
+execute generators, call external tools, run runtime probes, or use AI.
+
 Gate 29 adds semantic checks for mutation variable references while preserving
 earlier dialogue registry schema versions in `WastelandForge.Schema`.
 

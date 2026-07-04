@@ -257,9 +257,14 @@ Gate status:
 - `gates/gate-250-forge-clean-planning-skeleton.md` - Gate 250, `forge clean` planning skeleton with documented scopes, reserved JSON contract, and usage-safe unknown-scope behavior.
 - `gates/gate-251-forge-clean-dry-run-path-plan-skeleton.md` - Gate 251, `forge clean` dry-run/path-plan skeleton for documented scopes without filesystem mutation or artifact checks.
 - `gates/gate-252-forge-clean-all-confirmation-refusal-planning.md` - Gate 252, `forge clean --all` confirmation/refusal planning with exit code 6 for unconfirmed all-scope plans.
+- `gates/gate-253-forge-clean-generated-execution-skeleton.md` - Gate 253, explicit `forge clean --generated` execution for the contained project `generated/` root with removed/missing path reporting.
+- `gates/gate-254-forge-clean-dist-execution-skeleton.md` - Gate 254, explicit `forge clean --dist` execution for the contained project `dist/` root with removed/missing path reporting.
+- `gates/gate-255-forge-clean-cache-execution-skeleton.md` - Gate 255, explicit `forge clean --cache` execution for the contained project `.wastelandforge/cache/` root with removed/missing path reporting.
+- `gates/gate-256-forge-clean-all-execution-skeleton.md` - Gate 256, confirmed `forge clean --all` execution for contained project `generated/`, `dist/`, and `.wastelandforge/cache/` roots with removed/missing path reporting.
+- `gates/gate-257-forge-clean-project-id-confirmation-validation.md` - Gate 257, all-scope project-ID confirmation validation against the root project manifest before clean mutation.
 
 Next gate:
 
-- Gate 253 - `forge clean --generated` execution skeleton, deleting only the contained project `generated/` output root after path containment validation while stopping before `dist`, `cache`, `all`, project manifest reads, project-id validation, generated manifest reads, build manifest reads, provenance sidecar reads, checksum reads, artifact existence checks beyond the target root, build planning changes, generator execution, package execution, release execution, provider resolution, capability scan behavior changes, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 258 - active-build/cache-lock clean safety, refusing cache-affecting clean execution when a documented local build/cache lock marker is present, covering `--cache` and manifest-confirmed `--all`, while stopping before generated manifest reads, build manifest reads, provenance sidecar reads, checksum reads, artifact existence checks beyond the target roots, build planning changes, generator execution, package execution, release execution, provider resolution, capability scan behavior changes, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

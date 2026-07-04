@@ -1,5 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using WastelandForge.Core;
+using YamlDotNet.Core;
+using YamlDotNet.RepresentationModel;
 
 namespace WastelandForge.Cli;
 
@@ -22,6 +25,25 @@ internal sealed record CleanPlanRoot(
     bool Removed,
     bool Missing);
 
+internal sealed record CleanProjectIdentity(
+    bool ManifestRead,
+    string? ManifestPath,
+    string? ProjectId,
+    bool ConfirmationValidated,
+    bool? ConfirmationMatches,
+    string? RefusalStatus,
+    string? RefusalReason)
+{
+    public static CleanProjectIdentity NotRead { get; } = new(
+        ManifestRead: false,
+        ManifestPath: null,
+        ProjectId: null,
+        ConfirmationValidated: false,
+        ConfirmationMatches: null,
+        RefusalStatus: null,
+        RefusalReason: null);
+}
+
 internal sealed record CleanPlanResult(
     string ProjectInput,
     string ProjectRoot,
@@ -34,6 +56,7 @@ internal sealed record CleanPlanResult(
     bool ConfirmationRequired,
     bool ConfirmationProvided,
     string? ConfirmationValue,
+    CleanProjectIdentity ProjectIdentity,
     string SafetyStatus,
     string? RefusalReason,
     string OperationStatus,
@@ -74,6 +97,7 @@ internal static class CleanPlanPlanner
             confirmationRequired,
             confirmationProvided,
             options.Confirm,
+            CleanProjectIdentity.NotRead,
             confirmationRefused ? "refused" : "planned",
             confirmationRefused
                 ? "Scope 'all' requires --yes and --confirm <project-id> before clean execution can proceed."
@@ -85,55 +109,272 @@ internal static class CleanPlanPlanner
             MissingPaths: [],
             CreateBoundaries(scope));
 
-        return ShouldExecuteGeneratedClean(options, scope)
-            ? ExecuteGeneratedClean(result)
-            : result;
+        if (ShouldExecuteOutputRootClean(options, scope))
+        {
+            return ExecuteCleanRoots(result);
+        }
+
+        if (!ShouldExecuteAllClean(options, scope))
+        {
+            return result;
+        }
+
+        var projectIdentity = ValidateAllCleanProjectIdentity(projectRoot, options.Confirm);
+        result = result with { ProjectIdentity = projectIdentity };
+        if (projectIdentity.RefusalStatus is not null)
+        {
+            return result with
+            {
+                SafetyStatus = "refused",
+                OperationStatus = projectIdentity.RefusalStatus,
+                RefusalReason = projectIdentity.RefusalReason,
+                EffectiveDryRun = false
+            };
+        }
+
+        return ExecuteCleanRoots(result);
     }
 
-    private static bool ShouldExecuteGeneratedClean(CleanPlanOptions options, string scope) =>
+    private static bool ShouldExecuteOutputRootClean(CleanPlanOptions options, string scope) =>
         options.ScopeWasExplicit &&
-        StringComparer.Ordinal.Equals(scope, "generated") &&
+        (StringComparer.Ordinal.Equals(scope, "generated") ||
+            StringComparer.Ordinal.Equals(scope, "dist") ||
+            StringComparer.Ordinal.Equals(scope, "cache")) &&
         !options.RequestedDryRun;
 
-    private static CleanPlanResult ExecuteGeneratedClean(CleanPlanResult result)
+    private static bool ShouldExecuteAllClean(CleanPlanOptions options, string scope) =>
+        options.ScopeWasExplicit &&
+        StringComparer.Ordinal.Equals(scope, "all") &&
+        options.Yes &&
+        !string.IsNullOrWhiteSpace(options.Confirm) &&
+        !options.RequestedDryRun;
+
+    private static CleanProjectIdentity ValidateAllCleanProjectIdentity(string projectRoot, string? confirmation)
     {
-        var root = result.PlannedRoots.Single();
-        if (!root.Contained)
+        var manifestCandidates = FindProjectManifestCandidates(projectRoot);
+        if (manifestCandidates.Count == 0)
+        {
+            return RefusedProjectIdentity(
+                manifestRead: false,
+                manifestPath: null,
+                projectId: null,
+                "refused-project-manifest-missing",
+                "Project manifest is required to validate --confirm <project-id> before clean --all execution. Expected wastelandforge.json, wastelandforge.yaml, or wastelandforge.yml.");
+        }
+
+        if (manifestCandidates.Count > 1)
+        {
+            return RefusedProjectIdentity(
+                manifestRead: false,
+                manifestPath: manifestCandidates[0],
+                projectId: null,
+                "refused-multiple-project-manifests",
+                "Multiple project manifests were found; clean --all requires exactly one manifest before project ID confirmation can be validated.");
+        }
+
+        var manifestPath = manifestCandidates[0];
+        var readResult = ReadProjectId(manifestPath);
+        if (readResult.Error is not null)
+        {
+            return RefusedProjectIdentity(
+                manifestRead: true,
+                manifestPath,
+                projectId: null,
+                readResult.RefusalStatus ?? "refused-project-manifest-unreadable",
+                readResult.Error);
+        }
+
+        var projectId = readResult.ProjectId;
+        if (!LogicalId.TryParse(projectId, out _))
+        {
+            return RefusedProjectIdentity(
+                manifestRead: true,
+                manifestPath,
+                projectId,
+                "refused-project-id-invalid",
+                $"Project manifest '{manifestPath}' does not contain a valid top-level id for --confirm validation.");
+        }
+
+        var matches = StringComparer.Ordinal.Equals(projectId, confirmation);
+        if (!matches)
+        {
+            return RefusedProjectIdentity(
+                manifestRead: true,
+                manifestPath,
+                projectId,
+                "refused-project-id-mismatch",
+                $"Confirmation project ID '{confirmation}' does not match manifest project ID '{projectId}'.");
+        }
+
+        return new CleanProjectIdentity(
+            ManifestRead: true,
+            ManifestPath: manifestPath,
+            ProjectId: projectId,
+            ConfirmationValidated: true,
+            ConfirmationMatches: true,
+            RefusalStatus: null,
+            RefusalReason: null);
+    }
+
+    private static CleanProjectIdentity RefusedProjectIdentity(
+        bool manifestRead,
+        string? manifestPath,
+        string? projectId,
+        string refusalStatus,
+        string refusalReason) =>
+        new(
+            manifestRead,
+            manifestPath,
+            projectId,
+            ConfirmationValidated: true,
+            ConfirmationMatches: false,
+            refusalStatus,
+            refusalReason);
+
+    private static IReadOnlyList<string> FindProjectManifestCandidates(string projectRoot)
+    {
+        if (!Directory.Exists(projectRoot))
+        {
+            return [];
+        }
+
+        var candidates = new[]
+        {
+            Path.Combine(projectRoot, "wastelandforge.json"),
+            Path.Combine(projectRoot, "wastelandforge.yaml"),
+            Path.Combine(projectRoot, "wastelandforge.yml")
+        };
+
+        return candidates
+            .Where(File.Exists)
+            .Select(Path.GetFullPath)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static ProjectIdReadResult ReadProjectId(string manifestPath)
+    {
+        try
+        {
+            var extension = Path.GetExtension(manifestPath);
+            var projectId = extension.Equals(".json", StringComparison.OrdinalIgnoreCase)
+                ? ReadJsonProjectId(manifestPath)
+                : ReadYamlProjectId(manifestPath);
+
+            return string.IsNullOrWhiteSpace(projectId)
+                ? new ProjectIdReadResult(null, "refused-project-id-missing", $"Project manifest '{manifestPath}' does not contain a top-level id for --confirm validation.")
+                : new ProjectIdReadResult(projectId, null, null);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or YamlException or InvalidOperationException)
+        {
+            return new ProjectIdReadResult(null, "refused-project-manifest-unreadable", $"Project manifest '{manifestPath}' could not be read for project ID confirmation: {ex.Message}");
+        }
+    }
+
+    private static string? ReadJsonProjectId(string manifestPath)
+    {
+        var root = JsonNode.Parse(File.ReadAllText(manifestPath)) as JsonObject
+            ?? throw new InvalidOperationException("Manifest root must be a JSON object.");
+        return root["id"]?.GetValue<string>();
+    }
+
+    private static string? ReadYamlProjectId(string manifestPath)
+    {
+        var stream = new YamlStream();
+        using var reader = new StringReader(File.ReadAllText(manifestPath));
+        stream.Load(reader);
+        if (stream.Documents.Count != 1)
+        {
+            throw new InvalidOperationException("Manifest YAML must contain exactly one document.");
+        }
+
+        if (stream.Documents[0].RootNode is not YamlMappingNode mapping)
+        {
+            throw new InvalidOperationException("Manifest root must be a YAML mapping.");
+        }
+
+        foreach (var pair in mapping.Children)
+        {
+            if (pair.Key is YamlScalarNode { Value: "id" } &&
+                pair.Value is YamlScalarNode value)
+            {
+                return value.Value;
+            }
+        }
+
+        return null;
+    }
+
+    private static CleanPlanResult ExecuteCleanRoots(CleanPlanResult result)
+    {
+        var outsideRoots = result.PlannedRoots
+            .Where(root => !root.Contained)
+            .ToArray();
+        if (outsideRoots.Length > 0)
         {
             return result with
             {
                 SafetyStatus = "refused",
                 OperationStatus = "refused-path-containment",
-                RefusalReason = "Generated clean target is outside the project root and was refused.",
+                RefusalReason = $"Clean target '{outsideRoots[0].Kind}' is outside the project root and was refused.",
                 EffectiveDryRun = false
             };
         }
 
-        var existsBefore = Directory.Exists(root.FullPath);
-        if (existsBefore)
+        var executedRoots = new List<CleanPlanRoot>(result.PlannedRoots.Count);
+        var removedPaths = new List<string>();
+        var missingPaths = new List<string>();
+
+        foreach (var root in result.PlannedRoots)
         {
-            Directory.Delete(root.FullPath, recursive: true);
+            var existsBefore = Directory.Exists(root.FullPath);
+            if (existsBefore)
+            {
+                Directory.Delete(root.FullPath, recursive: true);
+                removedPaths.Add(root.FullPath);
+            }
+            else
+            {
+                missingPaths.Add(root.FullPath);
+            }
+
+            executedRoots.Add(root with
+            {
+                PlannedAction = existsBefore ? "delete-root" : "delete-root-missing",
+                ExistsBefore = existsBefore,
+                Removed = existsBefore,
+                Missing = !existsBefore
+            });
         }
 
-        var executedRoot = root with
-        {
-            PlannedAction = existsBefore ? "delete-root" : "delete-root-missing",
-            ExistsBefore = existsBefore,
-            Removed = existsBefore,
-            Missing = !existsBefore
-        };
+        var removedAny = removedPaths.Count > 0;
+        var allScope = StringComparer.Ordinal.Equals(result.Scope, "all");
 
         return result with
         {
-            SafetyStatus = existsBefore ? "cleaned" : "missing",
-            PlannedRoots = [executedRoot],
+            SafetyStatus = removedAny ? "cleaned" : "missing",
+            PlannedRoots = executedRoots,
             EffectiveDryRun = false,
-            OperationStatus = existsBefore ? "deleted-generated-root" : "generated-root-missing",
+            OperationStatus = CreateOperationStatus(executedRoots, allScope, removedAny),
             DeleteBehavior = true,
-            FilesystemMutation = existsBefore,
-            RemovedPaths = existsBefore ? [root.FullPath] : [],
-            MissingPaths = existsBefore ? [] : [root.FullPath]
+            FilesystemMutation = removedAny,
+            RemovedPaths = removedPaths,
+            MissingPaths = missingPaths
         };
+    }
+
+    private static string CreateOperationStatus(
+        IReadOnlyList<CleanPlanRoot> roots,
+        bool allScope,
+        bool removedAny)
+    {
+        if (allScope)
+        {
+            return removedAny ? "deleted-all-roots" : "all-roots-missing";
+        }
+
+        var root = roots.Single();
+        return removedAny ? $"deleted-{root.Kind}-root" : $"{root.Kind}-root-missing";
     }
 
     private static IReadOnlyList<CleanPlanRoot> CreateRoots(string projectRoot, string scope)
@@ -170,12 +411,12 @@ internal static class CleanPlanPlanner
 
     private static IReadOnlyList<string> CreateBoundaries(string scope) =>
         [
-            "Gate 253 executes only explicit --generated cleans; omitted scope, --dist, --cache, and --all remain path plans or refusals.",
-            "Generated clean execution deletes only the contained project generated/ root after target-root containment validation.",
-            "Generated manifests, build manifests, provenance sidecars, checksums, artifacts, and local provider evidence are not read.",
+            "Gate 257 executes explicit --generated, --dist, --cache, and manifest-confirmed --all cleans; omitted scope and unconfirmed --all remain path plans or refusals.",
+            "Clean execution deletes only contained planned output roots after target-root containment validation.",
+            "Only root project manifest identity is read before confirmed all-scope mutation; generated manifests, build manifests, provenance sidecars, checksums, artifacts, and local provider evidence are not read.",
             "Artifact existence checks beyond the selected target root, build planning, generator execution, package execution, release execution, provider resolution, capability scans, external tools, runtime probes, and AI calls are not performed.",
             StringComparer.Ordinal.Equals(scope, "all")
-                ? "The all scope is severe; --yes and --confirm <project-id> are required before even a future mutation gate may proceed."
+                ? "The all scope is severe; --yes and --confirm <project-id> must match the root project manifest id before mutation."
                 : "The selected scope is planned under the project root only."
         ];
 
@@ -195,6 +436,8 @@ internal static class CleanPlanPlanner
         new(kind, relativePath, boundary);
 
     private sealed record CleanRootSpec(string Kind, string RelativePath, string Boundary);
+
+    private sealed record ProjectIdReadResult(string? ProjectId, string? RefusalStatus, string? Error);
 }
 
 internal static class CleanPlanTextRenderer
@@ -204,7 +447,7 @@ internal static class CleanPlanTextRenderer
         var builder = new System.Text.StringBuilder();
         builder.AppendLine("forge clean");
         builder.AppendLine($"Status: {result.SafetyStatus}");
-        builder.AppendLine($"Mode: {(result.DeleteBehavior ? "generated clean execution" : "dry-run path plan")}");
+        builder.AppendLine($"Mode: {(result.DeleteBehavior ? $"{result.Scope} clean execution" : "dry-run path plan")}");
         builder.AppendLine($"Project root: {result.ProjectRoot}");
         builder.AppendLine($"Scope: {result.Scope} ({result.ScopeContract.Risk}; {result.ScopeSource})");
         builder.AppendLine($"Effective dry-run: {result.EffectiveDryRun.ToString().ToLowerInvariant()}");
@@ -213,6 +456,22 @@ internal static class CleanPlanTextRenderer
         builder.AppendLine($"Operation: {result.OperationStatus}");
         builder.AppendLine($"Confirmation required: {result.ConfirmationRequired.ToString().ToLowerInvariant()}");
         builder.AppendLine($"Confirmation provided: {result.ConfirmationProvided.ToString().ToLowerInvariant()}");
+        builder.AppendLine($"Project manifest read: {result.ProjectIdentity.ManifestRead.ToString().ToLowerInvariant()}");
+        if (result.ProjectIdentity.ManifestPath is not null)
+        {
+            builder.AppendLine($"Project manifest: {result.ProjectIdentity.ManifestPath}");
+        }
+
+        if (result.ProjectIdentity.ProjectId is not null)
+        {
+            builder.AppendLine($"Project id: {result.ProjectIdentity.ProjectId}");
+        }
+
+        if (result.ProjectIdentity.ConfirmationMatches is not null)
+        {
+            builder.AppendLine($"Confirmation matches project: {result.ProjectIdentity.ConfirmationMatches.Value.ToString().ToLowerInvariant()}");
+        }
+
         if (!string.IsNullOrWhiteSpace(result.RefusalReason))
         {
             builder.AppendLine($"Refusal: {result.RefusalReason}");
@@ -273,7 +532,7 @@ internal static class CleanPlanJsonSerializer
             },
             ["command"] = "clean",
             ["status"] = result.SafetyStatus,
-            ["mode"] = result.DeleteBehavior ? "generated-clean-execution" : "dry-run-path-plan",
+            ["mode"] = result.DeleteBehavior ? $"{result.Scope}-clean-execution" : "dry-run-path-plan",
             ["project"] = new JsonObject
             {
                 ["input"] = result.ProjectInput,
@@ -302,6 +561,7 @@ internal static class CleanPlanJsonSerializer
                 ["confirmationValue"] = result.ConfirmationValue,
                 ["refusalReason"] = result.RefusalReason
             },
+            ["projectIdentity"] = ToProjectIdentity(result.ProjectIdentity),
             ["reportContract"] = new JsonObject
             {
                 ["status"] = result.SafetyStatus,
@@ -321,6 +581,7 @@ internal static class CleanPlanJsonSerializer
                 ["deleteBehavior"] = result.DeleteBehavior,
                 ["filesystemMutation"] = result.FilesystemMutation,
                 ["targetRootExistenceCheck"] = result.DeleteBehavior,
+                ["projectManifestRead"] = result.ProjectIdentity.ManifestRead,
                 ["generatedManifestRead"] = false,
                 ["buildManifestRead"] = false,
                 ["provenanceSidecarRead"] = false,
@@ -365,6 +626,22 @@ internal static class CleanPlanJsonSerializer
         }
 
         return array;
+    }
+
+    private static JsonObject ToProjectIdentity(CleanProjectIdentity identity)
+    {
+        var json = new JsonObject
+        {
+            ["manifestRead"] = identity.ManifestRead,
+            ["manifestPath"] = identity.ManifestPath,
+            ["projectId"] = identity.ProjectId,
+            ["confirmationValidated"] = identity.ConfirmationValidated,
+            ["confirmationMatches"] = identity.ConfirmationMatches,
+            ["refusalStatus"] = identity.RefusalStatus,
+            ["refusalReason"] = identity.RefusalReason
+        };
+
+        return json;
     }
 
     private static JsonArray ToJsonArray(IEnumerable<string> values) =>

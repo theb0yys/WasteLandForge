@@ -321,6 +321,36 @@ without `--yes` and `--confirm <project-id>`, exit code 0 when both are
 provided, false execution flags, and preservation of synthetic generated, dist,
 and cache files in both paths.
 
+Gate 253 extends `WastelandForge.GoldenTests` coverage for explicit
+`forge clean --generated` execution. Tests assert deleted generated-root
+reporting, missing generated-root reporting, generated dry-run preservation,
+default generated-scope non-mutation, unchanged all-scope refusal behavior,
+and synthetic temp-directory fixtures only.
+
+Gate 254 extends `WastelandForge.GoldenTests` coverage for explicit
+`forge clean --dist` execution. Tests assert deleted dist-root reporting,
+missing dist-root reporting, dist dry-run preservation, generated-scope
+regression behavior, unchanged all-scope refusal behavior, and synthetic
+temp-directory fixtures only.
+
+Gate 255 extends `WastelandForge.GoldenTests` coverage for explicit
+`forge clean --cache` execution. Tests assert deleted cache-root reporting,
+missing cache-root reporting, cache dry-run preservation, generated/dist-scope
+regression behavior, unchanged all-scope refusal behavior, and synthetic
+temp-directory fixtures only.
+
+Gate 256 extends `WastelandForge.GoldenTests` coverage for confirmed
+`forge clean --all` execution. Tests assert all-root deletion reporting,
+all-root missing reporting, all-scope dry-run preservation, unchanged
+all-scope refusal behavior, generated/dist/cache regression behavior, and
+synthetic temp-directory fixtures only.
+
+Gate 257 extends `WastelandForge.GoldenTests` coverage for all-scope
+project-ID confirmation validation. Tests assert matched JSON and YAML
+manifest identity paths, mismatched project-ID refusal, missing-manifest
+refusal, all-scope dry-run preservation, generated/dist/cache regression
+behavior, and synthetic temp-directory fixtures only.
+
 Gate 31 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
 dialogue link graph endpoints: `linkTo` targets and `linkFrom` sources that are
 declared topics but have no authored dialogue line.
