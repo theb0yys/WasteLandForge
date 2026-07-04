@@ -543,7 +543,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge release prepare [options]");
         writer.WriteLine("  forge release publish [options]");
         writer.WriteLine();
-        writer.WriteLine("Release verify is implemented. Release prepare writes Gate 265 local staging-payload, release-plan, release-summary, build-manifest, and checksum evidence only. Release publish remains reserved for a later governance gate.");
+        writer.WriteLine("Release verify is implemented. Release prepare writes Gate 268 local staging-payload, release-archive-plan, deterministic release archive, release-archive-evidence, release-plan, release-summary, build-manifest, and checksum evidence only. Release publish remains reserved for a later governance gate.");
     }
 
     private static void WriteReleaseVerifyHelp(TextWriter writer)
@@ -580,13 +580,16 @@ internal static class CliHelpWriter
         writer.WriteLine("Usage:");
         writer.WriteLine("  forge release prepare [project-root] [--project <path>] [--output dist/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Gate 265 writes local staging/release-payload.json, release-plan.json, release-summary.json, build-manifest.json, and checksums.sha256 files only. The output root must stay under project dist/ and defaults to dist/release-prepare.");
+        writer.WriteLine("Gate 268 writes local staging/release-payload.json, release-archive-plan.json, archives/release.zip, release-archive-evidence.json, release-plan.json, release-summary.json, build-manifest.json, and checksums.sha256 files only. The output root must stay under project dist/ and defaults to dist/release-prepare.");
         writer.WriteLine("--dry-run reports the same plan without writing files.");
-        writer.WriteLine("It does not create archives, publish releases, call remote repositories, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.");
+        writer.WriteLine("It creates a deterministic local ZIP skeleton and archive evidence sidecar but does not assemble FOMOD installers, publish releases, call remote repositories, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.");
         writer.WriteLine();
         writer.WriteLine("Planned report outputs:");
         writer.WriteLine("  dist/release-prepare/staging/");
         writer.WriteLine("  dist/release-prepare/staging/release-payload.json");
+        writer.WriteLine("  dist/release-prepare/release-archive-plan.json");
+        writer.WriteLine("  dist/release-prepare/archives/release.zip");
+        writer.WriteLine("  dist/release-prepare/release-archive-evidence.json");
         writer.WriteLine("  dist/release-prepare/release-plan.json");
         writer.WriteLine("  dist/release-prepare/release-summary.json");
         writer.WriteLine("  dist/release-prepare/build-manifest.json");
@@ -597,7 +600,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge release prepare --project fixtures/projects/ExampleMod --output dist/release-candidate --dry-run");
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
-        writer.WriteLine("  0 staging-payload/release-plan/release-summary/build-manifest/checksums written, or dry-run plan printed");
+        writer.WriteLine("  0 staging-payload/release-archive-plan/release-archive/release-archive-evidence/release-plan/release-summary/build-manifest/checksums written, or dry-run plan printed");
         writer.WriteLine("  2 usage or unsupported format");
         writer.WriteLine("  6 unsafe output path refused");
     }

@@ -1069,3 +1069,27 @@ uses built-in .NET file and SHA-256 APIs already available to the CLI. It does
 not add archive writers, publishing clients, repository API clients, signing
 or attestation dependencies, external tool integrations, network calls,
 runtime probes, or AI requirements.
+
+Gate 265 adds no new dependency. Release-prepare staging payload skeleton
+emission uses built-in .NET file, JSON, and SHA-256 APIs already available to
+the CLI. It does not add archive writers, publishing clients, repository API
+clients, signing or attestation dependencies, external tool integrations,
+network calls, runtime probes, or AI requirements.
+
+Gate 266 adds no new dependency. Release-prepare archive planning metadata
+uses built-in .NET file, JSON, and SHA-256 APIs already available to the CLI.
+It does not add archive writers, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, or AI requirements.
+
+Gate 267 adds no package dependency. Release-prepare archive creation uses
+the built-in .NET ZIP, file, JSON, and SHA-256 APIs already available to the
+CLI. It does not add publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, or AI requirements.
+
+Gate 268 adds no package dependency. Release-prepare archive evidence
+revalidation uses built-in .NET ZIP, file, JSON, and SHA-256 APIs already
+available to the CLI. It does not add publishing clients, repository API
+clients, signing or attestation dependencies, external tool integrations,
+network calls, runtime probes, or AI requirements.

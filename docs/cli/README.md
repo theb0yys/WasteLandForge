@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 264 forge release prepare checksum sidecar emission
+Status: Gate 268 forge release prepare archive evidence revalidation skeleton
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -833,7 +833,10 @@ dist/release-dry-run/checksums.sha256
 Gate 260 implemented planning-only `forge release prepare` output. Gate 261
 added local release-plan file emission, Gate 262 added local release-summary
 file emission, Gate 263 added local build-manifest file emission, and Gate 264
-adds local checksum sidecar emission:
+added local checksum sidecar emission. Gate 265 added a local staging payload
+skeleton. Gate 266 added local release archive planning metadata. Gate 267
+added deterministic local release archive creation. Gate 268 adds archive
+evidence revalidation:
 
 ```text
 forge release prepare [project-root] [--project <path>] [--output dist/<name>]
@@ -844,26 +847,38 @@ remain diagnostic-only and are rejected for release-prepare output. The output
 root defaults to `dist/release-prepare`; `--output` is refused with exit code
 6 when the resolved root is outside project `dist/`.
 
-The planned future outputs are:
+The release-prepare outputs are:
 
 ```text
 dist/release-prepare/staging/
+dist/release-prepare/staging/release-payload.json
+dist/release-prepare/release-archive-plan.json
+dist/release-prepare/archives/release.zip
+dist/release-prepare/release-archive-evidence.json
 dist/release-prepare/release-plan.json
 dist/release-prepare/release-summary.json
 dist/release-prepare/build-manifest.json
 dist/release-prepare/checksums.sha256
 ```
 
-Gate 264 writes only `release-plan.json`, `release-summary.json`,
-`build-manifest.json`, and `checksums.sha256`. `--dry-run` reports the same
-plan without writing files. JSON output includes `plannedOutputs`,
-`writtenOutputs`, `outputSafety`, `reportContract`, and `execution` flags.
-Filesystem mutation and output writes are true only when those four local
-evidence files are written; archive creation, release publishing, remote
-repository calls, attestation/signing, external tools, plugin mutation,
-MO2/GECK automation, runtime probes, and AI remain false.
+Gate 268 writes only `staging/release-payload.json`,
+`release-archive-plan.json`, `archives/release.zip`,
+`release-archive-evidence.json`, `release-plan.json`,
+`release-summary.json`, `build-manifest.json`, and `checksums.sha256`.
+`--dry-run` reports the same plan without writing files. JSON output includes
+`plannedOutputs`, `writtenOutputs`, `outputSafety`, `reportContract`, and
+`execution` flags. Filesystem mutation, output writes, and archive creation
+are true only when those eight local evidence files are written; release
+publishing, remote repository calls, attestation/signing, external tools,
+plugin mutation, MO2/GECK automation, runtime probes, and AI remain false.
 
-Gate 264 does not stage payloads and does not create release archives.
+The staging payload is skeleton metadata only: no mod payload files, live Data
+writes, MO2 profile writes, plugin mutation, installer, or mod payload archive.
+The release archive is a deterministic ZIP skeleton containing local
+release-prepare evidence only. It does not assemble FOMOD installers or stage
+real mod payload files.
+The release archive evidence sidecar revalidates the created archive digest,
+entry names, stored compression, and deterministic timestamp metadata.
 
 `release publish` remains reserved.
 

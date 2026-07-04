@@ -1568,3 +1568,41 @@ package scripts under `dist/jip-scripts/package/Data/nvse/plugins/scripts`,
 `checksums.sha256` while keeping runtime probes, GECK automation, MO2 VFS
 inspection, live Data mutation, external tool execution, FOMOD generation,
 archive generation, and JIP package verify-existing out of scope.
+
+Gate 265 extends the `forge release prepare` path in `WastelandForge.Cli` with
+local staging payload skeleton emission under
+`dist/release-prepare/staging/release-payload.json`. The planner now reports
+the staging root and staging payload in CLI JSON/text, release-plan,
+release-summary, and build-manifest evidence; includes the staging payload in
+build-manifest digests and `checksums.sha256`; and still avoids archive
+creation, package archive creation, installer creation, publishing, remote
+repository calls, signing/attestation, external tools, plugin mutation,
+MO2/GECK automation, runtime probes, and AI.
+
+Gate 266 extends the same `forge release prepare` path with local archive
+planning metadata under `dist/release-prepare/release-archive-plan.json`. The
+planner now reports the archive plan and planned future archive path in CLI
+JSON/text, release-plan, staging-payload, release-summary, and build-manifest
+evidence; includes the archive plan in build-manifest digests and
+`checksums.sha256`; and still avoids archive creation, archive directory
+creation, deterministic ZIP/FOMOD assembly, package archive creation,
+installer creation, publishing, remote repository calls, signing/attestation,
+external tools, plugin mutation, MO2/GECK automation, runtime probes, and AI.
+
+Gate 267 extends the same `forge release prepare` path with deterministic
+local release archive creation under `dist/release-prepare/archives/release.zip`.
+The planner creates a ZIP skeleton from release-prepare evidence, reports the
+archive in CLI JSON/text and release evidence, includes the archive in
+build-manifest digests and `checksums.sha256`, and still avoids FOMOD
+assembly, installer creation, publishing, remote repository calls,
+signing/attestation, external tools, plugin mutation, MO2/GECK automation,
+runtime probes, and AI.
+
+Gate 268 extends the same `forge release prepare` path with archive evidence
+revalidation under `dist/release-prepare/release-archive-evidence.json`. The
+planner reopens the created ZIP, records archive digest and length, expected
+and actual entry names, stored-compression status, deterministic timestamp
+metadata, and includes the sidecar in CLI JSON/text, build-manifest digests,
+and `checksums.sha256`. It still avoids FOMOD assembly, installer creation,
+publishing, remote repository calls, signing/attestation, external tools,
+plugin mutation, MO2/GECK automation, runtime probes, and AI.

@@ -638,3 +638,27 @@ Gate 264 adds no new rule family or diagnostic ID. Release-prepare checksum
 sidecar emission reports command status, output containment, written output
 metadata, and execution flags without emitting `WF-REL-*` diagnostics,
 executing external tools, running runtime probes, or using AI.
+
+Gate 265 adds no new rule family or diagnostic ID. Release-prepare staging
+payload skeleton emission reports command status, output containment, written
+output metadata, and execution flags without emitting `WF-REL-*` diagnostics,
+executing external tools, running runtime probes, or using AI.
+
+Gate 266 adds no new rule family or diagnostic ID. Release-prepare archive
+planning metadata reports command status, output containment, written output
+metadata, planned archive no-write metadata, and execution flags without
+emitting `WF-REL-*` diagnostics, executing external tools, running runtime
+probes, or using AI.
+
+Gate 267 adds no new rule family or diagnostic ID. Release-prepare archive
+creation reports command status, output containment, written output metadata,
+deterministic archive metadata, and execution flags without emitting
+`WF-REL-*` diagnostics, executing external tools, running runtime probes, or
+using AI.
+
+Gate 268 adds no new rule family or diagnostic ID. Release-prepare archive
+evidence revalidation reports command status, output containment, written
+output metadata, archive digest evidence, entry-name evidence, stored
+compression evidence, deterministic timestamp evidence, and execution flags
+without emitting `WF-REL-*` diagnostics, executing external tools, running
+runtime probes, or using AI.

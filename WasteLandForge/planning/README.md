@@ -269,9 +269,13 @@ Gate status:
 - `gates/gate-262-forge-release-prepare-release-summary-emission.md` - Gate 262, `forge release prepare` local release-summary file emission under `dist/release-prepare/release-summary.json`.
 - `gates/gate-263-forge-release-prepare-build-manifest-emission.md` - Gate 263, `forge release prepare` local build-manifest file emission under `dist/release-prepare/build-manifest.json`.
 - `gates/gate-264-forge-release-prepare-checksum-sidecar-emission.md` - Gate 264, `forge release prepare` local checksum sidecar emission under `dist/release-prepare/checksums.sha256`.
+- `gates/gate-265-forge-release-prepare-staging-payload-skeleton.md` - Gate 265, `forge release prepare` local staging payload skeleton under `dist/release-prepare/staging/release-payload.json`.
+- `gates/gate-266-forge-release-prepare-archive-plan-skeleton.md` - Gate 266, `forge release prepare` local release archive planning metadata under `dist/release-prepare/release-archive-plan.json`.
+- `gates/gate-267-forge-release-prepare-archive-creation-skeleton.md` - Gate 267, `forge release prepare` deterministic local release archive skeleton under `dist/release-prepare/archives/release.zip`.
+- `gates/gate-268-forge-release-prepare-archive-evidence-revalidation.md` - Gate 268, `forge release prepare` release archive evidence revalidation under `dist/release-prepare/release-archive-evidence.json`.
 
 Next gate:
 
-- Gate 265 - `forge release prepare` local staging payload skeleton under `dist/release-prepare/staging/`, stopping before release archive creation, deterministic ZIP/FOMOD assembly, release publishing, remote repository calls, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 269 - `forge release prepare` lane closeout and next release-governance boundary planning, stopping before FOMOD installer assembly, release publishing, remote repository calls, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

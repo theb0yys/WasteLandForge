@@ -932,6 +932,34 @@ directories in golden CLI tests only to prove release-prepare checksum sidecar
 emission beside the release plan, summary, and build manifest, `--dry-run`
 no-write behavior, and unsafe output-root refusal.
 
+Gate 265 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. It uses temporary synthetic project
+directories in golden CLI tests only to prove release-prepare staging payload
+skeleton emission beside the release plan, summary, build manifest, and
+checksum sidecar, `--dry-run` no-write behavior, and unsafe output-root
+refusal.
+
+Gate 266 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. It uses temporary synthetic project
+directories in golden CLI tests only to prove release-prepare archive planning
+metadata beside the staging payload, release plan, summary, build manifest,
+and checksum sidecar, planned archive no-write behavior, `--dry-run` no-write
+behavior, and unsafe output-root refusal.
+
+Gate 267 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. It uses temporary synthetic project
+directories in golden CLI tests only to prove deterministic release archive
+creation beside the archive plan, staging payload, release plan, summary,
+build manifest, and checksum sidecar, repeated-run archive digest stability,
+`--dry-run` no-write behavior, and unsafe output-root refusal.
+
+Gate 268 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. It uses temporary synthetic project
+directories in golden CLI tests only to prove release archive evidence
+revalidation beside the archive, archive plan, staging payload, release plan,
+summary, build manifest, and checksum sidecar, `--dry-run` no-write behavior,
+and unsafe output-root refusal.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

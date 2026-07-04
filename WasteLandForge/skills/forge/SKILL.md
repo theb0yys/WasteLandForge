@@ -743,9 +743,13 @@ confirmation validation, Gate 258 implements active build/cache lock clean
 safety, Gate 259 closes the `forge clean` command slice, Gate 260 implements
 the `forge release prepare` planning skeleton, Gate 261 implements local
 release-plan file emission, Gate 262 implements local release-summary file
-emission, Gate 263 implements local build-manifest file emission, and Gate
-264 implements local checksum sidecar emission. Route the next implementation
-slice to Gate 265: forge release prepare local staging payload skeleton.
+emission, Gate 263 implements local build-manifest file emission, Gate 264
+implements local checksum sidecar emission, Gate 265 implements local staging
+payload skeleton emission, Gate 266 implements local release archive planning
+metadata, Gate 267 implements deterministic local release archive creation,
+and Gate 268 implements release archive evidence revalidation. Route the next
+implementation slice to Gate 269: forge release prepare lane closeout and
+release-governance boundary planning.
 
 - `/forge graph` maps to the real `forge graph` behavior when available. Gate
   236 implements minimal project source graph evidence under `generated/graph`,
@@ -787,9 +791,13 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   implements the `forge release prepare` planning skeleton, Gate 261
   implements local release-plan file emission, Gate 262 implements local
   release-summary file emission, Gate 263 implements local build-manifest
-  file emission, and Gate 264 implements local checksum sidecar emission.
-  Route the next implementation slice to Gate 265: forge release prepare
-  local staging payload skeleton.
+  file emission, Gate 264 implements local checksum sidecar emission, Gate 265
+  implements local staging payload skeleton emission, Gate 266 implements
+  local release archive planning metadata, Gate 267 implements deterministic
+  local release archive creation, and Gate 268 implements release archive
+  evidence revalidation. Route the next implementation slice to Gate 269:
+  forge release prepare lane closeout and release-governance boundary
+  planning.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a

@@ -1,6 +1,6 @@
 # Project Source Graph Output
 
-Status: Gate 264 release prepare checksum sidecar emission
+Status: Gate 268 release prepare archive evidence revalidation skeleton
 Research classification: Documented
 Source: R004, R006, ADR-007, ADR-009, ADR-010, ADR-011
 
@@ -144,3 +144,27 @@ prepare`. `forge graph` still does not execute release prepare, stage release
 payloads, create release archives, publish releases, call remote repositories,
 sign or attest artifacts, inspect artifacts, call external tools, run runtime
 probes, or use AI.
+
+Gate 265 implements local `staging/release-payload.json` skeleton emission in
+`forge release prepare`. `forge graph` still does not execute release prepare,
+stage real payload files, create release archives, publish releases, call
+remote repositories, sign or attest artifacts, inspect artifacts, call
+external tools, run runtime probes, or use AI.
+
+Gate 266 implements local `release-archive-plan.json` metadata emission in
+`forge release prepare`. `forge graph` still does not execute release prepare,
+create archive files, create archive directories, assemble ZIP/FOMOD payloads,
+publish releases, call remote repositories, sign or attest artifacts, inspect
+artifacts, call external tools, run runtime probes, or use AI.
+
+Gate 267 implements local deterministic `archives/release.zip` skeleton
+emission in `forge release prepare`. `forge graph` still does not execute
+release prepare, assemble FOMOD payloads, publish releases, call remote
+repositories, sign or attest artifacts, inspect artifacts, call external
+tools, run runtime probes, or use AI.
+
+Gate 268 implements local `release-archive-evidence.json` revalidation
+emission in `forge release prepare`. `forge graph` still does not execute
+release prepare, assemble FOMOD payloads, publish releases, call remote
+repositories, sign or attest artifacts, inspect artifacts, call external
+tools, run runtime probes, or use AI.

@@ -1122,5 +1122,33 @@ and false execution flags without running the diagnostic pipeline, reading
 release artifacts, emitting release diagnostics, inspecting provider evidence,
 executing external tools, running runtime probes, or using AI.
 
+Gate 265 adds no new diagnostic rule ID. Release-prepare staging payload
+skeleton emission reports command status, output containment, written output
+metadata, and false execution flags without running the diagnostic pipeline,
+reading release artifacts, emitting release diagnostics, inspecting provider
+evidence, executing external tools, running runtime probes, or using AI.
+
+Gate 266 adds no new diagnostic rule ID. Release-prepare archive planning
+metadata reports command status, output containment, written output metadata,
+planned archive no-write metadata, and false archive-creation execution flags
+without running the diagnostic pipeline, reading release artifacts, emitting
+release diagnostics, inspecting provider evidence, executing external tools,
+running runtime probes, or using AI.
+
+Gate 267 adds no new diagnostic rule ID. Release-prepare archive creation
+reports command status, output containment, written output metadata,
+deterministic archive metadata, and archive-creation execution flags without
+running the diagnostic pipeline, reading existing release artifacts, emitting
+release diagnostics, inspecting provider evidence, executing external tools,
+running runtime probes, or using AI.
+
+Gate 268 adds no new diagnostic rule ID. Release-prepare archive evidence
+revalidation reports command status, output containment, written output
+metadata, archive digest evidence, entry-name evidence, stored-compression
+evidence, deterministic timestamp evidence, and archive-creation execution
+flags without running the diagnostic pipeline, reading pre-existing release
+artifacts, emitting release diagnostics, inspecting provider evidence,
+executing external tools, running runtime probes, or using AI.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

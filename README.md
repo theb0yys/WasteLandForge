@@ -2,19 +2,30 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 264 adds the
-local `forge release prepare` checksum sidecar after the Gate 259
+The project is currently in gated v0.1 implementation. Gate 268 adds the
+local `forge release prepare` archive evidence revalidation sidecar after the Gate 259
 `forge clean` closeout, Gate 260 release-prepare planning skeleton, Gate 261
 release-plan emission, Gate 262 release-summary emission, and Gate 263
-build-manifest emission. `forge release prepare` now writes
-`dist/release-prepare/release-plan.json` and
+build-manifest emission, Gate 264 checksum sidecar emission, and Gate 265
+staging payload skeleton, Gate 266 release archive planning metadata, and
+Gate 267 deterministic release archive skeleton.
+`forge release prepare` now writes
+`dist/release-prepare/staging/release-payload.json`,
+`dist/release-prepare/release-archive-plan.json`,
+`dist/release-prepare/archives/release.zip`,
+`dist/release-prepare/release-archive-evidence.json`,
+`dist/release-prepare/release-plan.json`,
 `dist/release-prepare/release-summary.json`, plus
-`dist/release-prepare/build-manifest.json` with digests for those two evidence
-files, and `dist/release-prepare/checksums.sha256` covering the plan, summary,
-and build manifest by default. It reports those writes in CLI output,
-preserves `--dry-run` as no-write planning, refuses output roots outside
-project `dist/`, and keeps archive, publish, remote, signing, external-tool,
-runtime-probe, and AI execution flags false.
+`dist/release-prepare/build-manifest.json` with digests for the archive,
+archive evidence, archive plan, plan, summary, and staging payload skeleton,
+and `dist/release-prepare/checksums.sha256` covering the archive, archive
+evidence, archive plan, staging payload, plan, summary, and build manifest by
+default. The archive evidence sidecar revalidates archive digest, entry names,
+stored compression, and deterministic timestamp metadata. It reports those
+writes in CLI output, preserves `--dry-run` as no-write planning,
+refuses output roots outside project `dist/`, and keeps FOMOD assembly,
+publish, remote, signing, external-tool, runtime-probe, and AI execution flags
+false.
 Gate 258 added active build/cache lock safety for `forge clean` beside the
 existing generated, dist, cache, and manifest-confirmed all clean behavior.
 Explicit `forge clean --generated`, `forge clean --dist`,
@@ -28,10 +39,12 @@ code 6. Cache-affecting clean execution now also refuses with exit code 6 when
 generated manifests, read build manifests, read provenance sidecars, read
 checksums, inspect artifacts beyond the selected target roots and lock marker,
 call external tools, run runtime probes, or use AI. `forge release prepare`
-now writes only the local release plan, release summary, release-prepare build
-manifest, and checksum sidecar; Forge still does not stage payloads, create
-release archives, publish releases, call remote repositories, sign/attest
-artifacts, or execute external release tools.
+now writes only the local staging payload skeleton, release archive plan,
+deterministic release archive skeleton, archive evidence sidecar, release
+plan, release summary, release-prepare build manifest, and checksum sidecar;
+Forge still does not
+assemble FOMOD installers, publish releases, call remote repositories,
+sign/attest artifacts, or execute external release tools.
 The implemented explain subjects remain
 `diagnostic <rule-id>`, `target <target-id>`,
 `output <generated-or-dist-path>`, `capability <capability-id>`, and
@@ -56,7 +69,7 @@ use real third-party plugin fixtures.
 - ADR-010: Developers use Forge through a stable offline-first CLI.
 - ADR-011: Validation, testing, CI, release, and governance are layered and validation-first.
 
-## Current Gate
+## Gate Notes
 
 Gate 202 builds on the closed first game-facing generator path. It keeps
 the built-in Fallout: New Vegas capability/provider catalogue from Gate 57,
@@ -902,6 +915,64 @@ does not stage payloads, create archives, publish releases, call remote
 repositories, sign/attest artifacts, execute external tools, mutate plugins,
 automate MO2 or GECK, run runtime probes, use real third-party plugin
 fixtures, or use AI.
+
+Gate 265 implements a local staging payload skeleton for
+`forge release prepare`. Normal execution now writes
+`dist/release-prepare/staging/release-payload.json` beside the existing
+release plan, release summary, build manifest, and checksum sidecar. The
+staging payload records skeleton metadata only: no mod payload files, no live
+game Data writes, no MO2 profile writes, no plugin mutation, no installer, and
+no archive. The build manifest records a digest for the staging payload, and
+`checksums.sha256` covers the staging payload, release plan, release summary,
+and build manifest. `--dry-run` remains planning-only and writes nothing. Gate
+265 still does not create archives, publish releases, call remote
+repositories, sign/attest artifacts, execute external tools, mutate plugins,
+automate MO2 or GECK, run runtime probes, use real third-party plugin
+fixtures, or use AI.
+
+Gate 266 implements local release archive planning metadata for
+`forge release prepare`. Normal execution now writes
+`dist/release-prepare/release-archive-plan.json` beside the staging payload,
+release plan, release summary, build manifest, and checksum sidecar. The
+archive plan records `dist/release-prepare/archives/release.zip` as a future
+archive target with status `planned-not-created`; no archive file or
+`archives/` directory is created. The build manifest records a digest for the
+archive plan, and `checksums.sha256` covers the archive plan, staging payload,
+release plan, release summary, and build manifest. `--dry-run` remains
+planning-only and writes nothing. Gate 266 still does not create archives,
+assemble deterministic ZIP/FOMOD packages, publish releases, call remote
+repositories, sign/attest artifacts, execute external tools, mutate plugins,
+automate MO2 or GECK, run runtime probes, use real third-party plugin
+fixtures, or use AI.
+
+Gate 267 implements deterministic local release archive creation for
+`forge release prepare`. Normal execution now writes
+`dist/release-prepare/archives/release.zip` beside the archive plan, staging
+payload, release plan, release summary, build manifest, and checksum sidecar.
+The ZIP contains local release-prepare evidence only:
+`release-archive-plan.json`, `release-plan.json`, `release-summary.json`, and
+`staging/release-payload.json`. Archive entries are sorted, stored without
+compression, and timestamped with a ZIP-compatible deterministic timestamp.
+The build manifest records a digest for the archive, and `checksums.sha256`
+covers the archive, archive plan, staging payload, release plan, release
+summary, and build manifest. `--dry-run` remains planning-only and writes
+nothing. Gate 267 still does not assemble FOMOD installers, publish releases,
+call remote repositories, sign/attest artifacts, execute external tools,
+mutate plugins, automate MO2 or GECK, run runtime probes, use real
+third-party plugin fixtures, or use AI.
+
+Gate 268 implements release archive evidence revalidation for
+`forge release prepare`. Normal execution now writes
+`dist/release-prepare/release-archive-evidence.json` beside the archive,
+archive plan, staging payload, release plan, release summary, build manifest,
+and checksum sidecar. The sidecar records the archive SHA-256 and length,
+expected and actual ZIP entry names, stored-compression checks, and
+deterministic timestamp checks. The build manifest records a digest for the
+archive evidence sidecar, and `checksums.sha256` covers it. `--dry-run`
+remains planning-only and writes nothing. Gate 268 still does not assemble
+FOMOD installers, publish releases, call remote repositories, sign/attest
+artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run
+runtime probes, use real third-party plugin fixtures, or use AI.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

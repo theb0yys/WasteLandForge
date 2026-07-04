@@ -1297,6 +1297,45 @@ validation-error no-write behavior, and no live Data writes. It adds no local
 install snapshots, GECK outputs, MO2 profiles, Bethesda assets, third-party
 mod files, or external tool fixtures.
 
+Gate 265 extends `CliGoldenTests` for `forge release prepare` with local
+staging payload skeleton coverage. The tests assert
+`dist/release-prepare/staging/release-payload.json`, staging root metadata,
+release-plan/summary/build-manifest staging references, checksum coverage,
+dry-run no-write behavior, output containment diagnostics, and no archive,
+installer, publish, remote, external-tool, runtime-probe, AI, plugin, MO2, or
+GECK behavior. It adds no local install snapshots, GECK outputs, MO2 profiles,
+Bethesda assets, third-party mod files, or external tool fixtures.
+
+Gate 266 extends `CliGoldenTests` for `forge release prepare` with local
+release archive planning metadata coverage. The tests assert
+`dist/release-prepare/release-archive-plan.json`, planned archive path
+metadata, release evidence archive-plan references, build-manifest and
+checksum coverage, dry-run no-write behavior, output containment diagnostics,
+and no archive file, archive directory, installer, publish, remote,
+external-tool, runtime-probe, AI, plugin, MO2, or GECK behavior. It adds no
+local install snapshots, GECK outputs, MO2 profiles, Bethesda assets,
+third-party mod files, or external tool fixtures.
+
+Gate 267 extends `CliGoldenTests` for `forge release prepare` with
+deterministic local release archive coverage. The tests assert
+`dist/release-prepare/archives/release.zip`, sorted stored ZIP entries,
+deterministic ZIP-compatible timestamps, release evidence archive references,
+build-manifest and checksum coverage, repeated-run archive digest stability,
+dry-run no-write behavior, output containment diagnostics, and no FOMOD,
+installer, publish, remote, external-tool, runtime-probe, AI, plugin, MO2, or
+GECK behavior. It adds no local install snapshots, GECK outputs, MO2 profiles,
+Bethesda assets, third-party mod files, or external tool fixtures.
+
+Gate 268 extends `CliGoldenTests` for `forge release prepare` with release
+archive evidence revalidation coverage. The tests assert
+`dist/release-prepare/release-archive-evidence.json`, archive SHA-256 and
+length evidence, expected and actual ZIP entry names, stored-compression
+status, deterministic timestamp metadata, build-manifest and checksum
+coverage, dry-run no-write behavior, output containment diagnostics, and no
+FOMOD, installer, publish, remote, external-tool, runtime-probe, AI, plugin,
+MO2, or GECK behavior. It adds no local install snapshots, GECK outputs, MO2
+profiles, Bethesda assets, third-party mod files, or external tool fixtures.
+
 Run the full local suite serially:
 
 ```text
