@@ -662,3 +662,73 @@ output metadata, archive digest evidence, entry-name evidence, stored
 compression evidence, deterministic timestamp evidence, and execution flags
 without emitting `WF-REL-*` diagnostics, executing external tools, running
 runtime probes, or using AI.
+
+Gate 269 adds no new rule family or diagnostic ID. Release-prepare lane
+closeout records the completed slice and deferred release-governance backlog
+without emitting `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, executing
+external tools, running runtime probes, or using AI.
+
+Gate 270 adds no new rule family or diagnostic ID. Release-publish governance
+preflight reports requirement/check status in command output only and does not
+emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, execute external
+tools, run runtime probes, call remote repositories, upload release assets, or
+use AI.
+
+Gate 271 adds no new rule family or diagnostic ID. Release-publish local
+evidence discovery reports artifact path status in command output only and
+does not emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, parse
+artifact contents, revalidate checksums, reopen archives, execute external
+tools, run runtime probes, call remote repositories, upload release assets, or
+use AI.
+
+Gate 272 adds no new rule family or diagnostic ID. Release-publish
+content-shape classification reports well-formed, malformed, and unclassified
+artifact status in command output only and does not emit `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` diagnostics, semantically validate release evidence,
+revalidate checksum digests, reopen archives, execute external tools, run
+runtime probes, call remote repositories, upload release assets, or use AI.
+
+Gate 273 adds no new rule family or diagnostic ID. Release-publish checksum
+sidecar entry classification reports expected-path coverage, unexpected paths,
+duplicate paths, and malformed entries in command output only and does not
+emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, semantically validate
+release evidence, revalidate checksum digests, reopen archives, execute
+external tools, run runtime probes, call remote repositories, upload release
+assets, or use AI.
+
+Gate 274 adds no new rule family or diagnostic ID. Release-publish
+build-manifest output cross-reference reports expected output coverage, local
+artifact path coverage, checksum sidecar path coverage, unexpected outputs,
+duplicate outputs, and malformed outputs in command output only and does not
+emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, semantically validate
+release evidence, revalidate checksum or build-manifest digests, reopen
+archives, execute external tools, run runtime probes, call remote
+repositories, upload release assets, or use AI.
+
+Gate 275 adds no new rule family or diagnostic ID. Release-publish
+release-archive-evidence metadata cross-reference reports expected metadata
+path coverage, local artifact path coverage, checksum sidecar path coverage,
+build-manifest output path coverage, unexpected paths, and malformed paths in
+command output only and does not emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*`
+diagnostics, semantically validate release evidence, revalidate checksum,
+build-manifest, or release-archive-evidence digests, reopen archives, execute
+external tools, run runtime probes, call remote repositories, upload release
+assets, or use AI.
+
+Gate 276 adds no new rule family or diagnostic ID. Release-publish checksum
+sidecar digest revalidation reports expected local checksum entries whose
+SHA-256 values match, mismatch, or cannot be revalidated because the local
+file is missing in command output only and does not emit `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` diagnostics, semantically validate release
+evidence, independently revalidate build-manifest or release-archive-evidence
+digests, reopen archives, execute external tools, run runtime probes, call
+remote repositories, upload release assets, or use AI.
+
+Gate 277 adds no new rule family or diagnostic ID. Release-publish
+build-manifest output digest revalidation reports expected local
+build-manifest outputs whose SHA-256 values match or mismatch in command
+output only and does not emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*`
+diagnostics, semantically validate release evidence, independently revalidate
+release-archive-evidence digests, reopen archives, execute external tools,
+run runtime probes, call remote repositories, upload release assets, or use
+AI.

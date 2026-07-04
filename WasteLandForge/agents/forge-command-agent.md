@@ -912,9 +912,15 @@ emission, Gate 263 implements local build-manifest file emission, Gate 264
 implements local checksum sidecar emission, Gate 265 implements local staging
 payload skeleton emission, Gate 266 implements local release archive planning
 metadata, Gate 267 implements deterministic local release archive creation,
-and Gate 268 implements release archive evidence revalidation. Route the next
-implementation slice to Gate 269: forge release prepare lane closeout and
-release-governance boundary planning.
+Gate 268 implements release archive evidence revalidation, Gate 269 closes
+the release-prepare lane, Gate 270 implements the no-publish release publish
+governance preflight skeleton, Gate 271 implements local release-publish
+evidence path discovery, and Gate 272 implements local evidence content-shape
+classification, Gate 273 implements checksum sidecar entry classification,
+Gate 274 implements build-manifest output cross-reference, and Gate 275
+implements release-archive-evidence metadata cross-reference. Route the next
+implementation slice to Gate 276: forge release publish checksum sidecar
+digest revalidation, still with no publish behavior.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -959,10 +965,16 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   file emission, Gate 264 implements local checksum sidecar emission, Gate 265
   implements local staging payload skeleton emission, Gate 266 implements
   local release archive planning metadata, Gate 267 implements deterministic
-  local release archive creation, and Gate 268 implements release archive
-  evidence revalidation. Route the next implementation slice to Gate 269:
-  forge release prepare lane closeout and release-governance boundary
-  planning.
+  local release archive creation, Gate 268 implements release archive evidence
+  revalidation, Gate 269 closes the release-prepare lane, Gate 270 implements
+  the no-publish release publish governance preflight skeleton, Gate 271
+  implements local release-publish evidence path discovery, and Gate 272
+  implements local evidence content-shape classification, Gate 273 implements
+  checksum sidecar entry classification, Gate 274 implements build-manifest
+  output cross-reference, and Gate 275 implements release-archive-evidence
+  metadata cross-reference. Route the next implementation slice to Gate 276:
+  forge release publish checksum sidecar digest revalidation, still with no
+  publish behavior.
 
 ## Required output
 

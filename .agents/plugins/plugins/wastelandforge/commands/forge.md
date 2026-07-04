@@ -75,7 +75,7 @@ Use this routing:
 | `/forge package` | deterministic staging, package manifest, checksums, and distribution preparation |
 | `/forge release verify` | release gates, local build manifests, checksums, schema immutability, SemVer streams, governance checks |
 | `/forge release prepare` | release dry-run, package preparation, reports, and provenance-ready outputs |
-| `/forge release publish` | protected publish flow; require explicit user approval before any publish action |
+| `/forge release publish` | protected no-publish governance preflight until explicit approval and completed release governance exist |
 | `/forge docs` | deterministic documentation generation from canonical source truth |
 | `/forge graph` | build, capability, contract, registry, or provider graph explanation |
 | `/forge explain` | diagnostic, validation, build, capability, or planning explanation |
@@ -705,9 +705,15 @@ emission, Gate 263 implements local build-manifest file emission, Gate 264
 implements local checksum sidecar emission, Gate 265 implements local staging
 payload skeleton emission, Gate 266 implements local release archive planning
 metadata, Gate 267 implements deterministic local release archive creation,
-and Gate 268 implements release archive evidence revalidation. Route the next
-implementation slice to Gate 269: forge release prepare lane closeout and
-release-governance boundary planning.
+Gate 268 implements release archive evidence revalidation, Gate 269 closes
+the release-prepare lane, Gate 270 implements the no-publish release publish
+governance preflight skeleton, Gate 271 implements local release-publish
+evidence path discovery, and Gate 272 implements local evidence content-shape
+classification, Gate 273 implements checksum sidecar entry classification,
+Gate 274 implements build-manifest output cross-reference, and Gate 275
+implements release-archive-evidence metadata cross-reference. Route the next
+implementation slice to Gate 276: forge release publish checksum sidecar
+digest revalidation, still with no publish behavior.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -752,10 +758,16 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   file emission, Gate 264 implements local checksum sidecar emission, Gate 265
   implements local staging payload skeleton emission, Gate 266 implements
   local release archive planning metadata, Gate 267 implements deterministic
-  local release archive creation, and Gate 268 implements release archive
-  evidence revalidation. Route the next implementation slice to Gate 269:
-  forge release prepare lane closeout and release-governance boundary
-  planning.
+  local release archive creation, Gate 268 implements release archive evidence
+  revalidation, Gate 269 closes the release-prepare lane, Gate 270 implements
+  the no-publish release publish governance preflight skeleton, Gate 271
+  implements local release-publish evidence path discovery, and Gate 272
+  implements local evidence content-shape classification, Gate 273 implements
+  checksum sidecar entry classification, Gate 274 implements build-manifest
+  output cross-reference, and Gate 275 implements release-archive-evidence
+  metadata cross-reference. Route the next implementation slice to Gate 276:
+  forge release publish checksum sidecar digest revalidation, still with no
+  publish behavior.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider
@@ -943,4 +955,4 @@ Report:
 - Public fixtures must be synthetic and redistributable.
 - Generated outputs are disposable and must carry provenance.
 - `clean` may target generated outputs only unless explicitly authorized.
-- `release publish` requires explicit approval and completed release governance checks.
+- `release publish` routes to a no-publish governance preflight until explicit approval and completed release governance checks exist.

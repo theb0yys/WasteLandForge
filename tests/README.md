@@ -1336,6 +1336,80 @@ FOMOD, installer, publish, remote, external-tool, runtime-probe, AI, plugin,
 MO2, or GECK behavior. It adds no local install snapshots, GECK outputs, MO2
 profiles, Bethesda assets, third-party mod files, or external tool fixtures.
 
+Gate 269 adds no new test fixture or runtime test surface. It records
+`forge release prepare` lane closeout and routes the next release work to a
+no-publish `forge release publish` governance preflight skeleton. Existing
+release-prepare coverage from Gates 260 through 268 remains the active
+behavioral test surface.
+
+Gate 270 adds golden CLI coverage for `forge release publish` governance
+preflight. Tests verify normal no-publish refusal with exit code 6, dry-run
+preflight with exit code 0, required local evidence reporting, governance
+check reporting, missing human approval reporting, false publish/remote/upload
+/signing/tool/runtime/AI execution flags, help text, unsupported-option usage
+JSON, and no `dist/` output creation.
+
+Gate 271 extends golden CLI coverage for `forge release publish` local
+evidence discovery. Tests verify empty project roots report eight missing
+release-prepare artifacts, prepared project roots report eight
+`present-not-validated` artifacts, artifact path checks are enabled, artifact
+content reads remain disabled, and publish/remote/upload/signing/tool/runtime
+/AI execution remains disabled.
+
+Gate 272 extends golden CLI coverage for `forge release publish` content-shape
+classification. Tests verify well-formed JSON evidence, well-formed
+`checksums.sha256` line shape, binary archive deferral, malformed JSON
+reporting, enabled shape classification, and disabled checksum revalidation,
+archive revalidation, publish, remote, upload, signing, external-tool,
+runtime-probe, and AI execution.
+
+Gate 273 extends golden CLI coverage for `forge release publish` checksum
+sidecar entry classification. Tests verify parsed checksum entries,
+expected-path coverage, unchanged digest text reported as
+`expected-not-revalidated`, missing expected path coverage, unexpected path
+classification, enabled checksum entry classification, and disabled checksum
+digest revalidation, archive revalidation, publish, remote, upload, signing,
+external-tool, runtime-probe, and AI execution.
+
+Gate 274 extends golden CLI coverage for `forge release publish`
+build-manifest output cross-reference. Tests verify parsed manifest outputs,
+expected output coverage, local artifact and checksum sidecar path
+cross-reference, rewritten output path mismatch reporting, enabled
+build-manifest output cross-reference, and disabled checksum digest
+revalidation, build-manifest digest revalidation, semantic evidence
+validation, archive revalidation, publish, remote, upload, signing,
+external-tool, runtime-probe, and AI execution.
+
+Gate 275 extends golden CLI coverage for `forge release publish`
+release-archive-evidence metadata cross-reference. Tests verify parsed
+archive-evidence output metadata, expected path coverage, local artifact,
+checksum sidecar, and build-manifest output cross-reference, rewritten
+archive-evidence metadata path mismatch reporting, enabled
+release-archive-evidence metadata cross-reference, and disabled checksum
+digest revalidation, build-manifest digest revalidation,
+release-archive-evidence digest revalidation, semantic evidence validation,
+archive revalidation, publish, remote, upload, signing, external-tool,
+runtime-probe, and AI execution.
+
+Gate 276 extends golden CLI coverage for `forge release publish` checksum
+sidecar digest revalidation. Tests verify expected local checksum entries are
+recomputed, matched entries report `matched-revalidated`, edited digest values
+report `mismatched-revalidated`, missing checksum coverage remains classified
+separately, enabled checksum digest revalidation, and disabled build-manifest
+digest revalidation, release-archive-evidence digest revalidation, semantic
+evidence validation, archive revalidation, publish, remote, upload, signing,
+external-tool, runtime-probe, and AI execution.
+
+Gate 277 extends golden CLI coverage for `forge release publish`
+build-manifest output digest revalidation. Tests verify expected local
+build-manifest outputs are recomputed, matched outputs report
+`matched-revalidated`, edited build-manifest output digest values report
+`mismatched-revalidated`, cross-reference mismatches remain classified
+separately, enabled build-manifest digest revalidation, and disabled
+release-archive-evidence digest revalidation, semantic evidence validation,
+archive revalidation, publish, remote, upload, signing, external-tool,
+runtime-probe, and AI execution.
+
 Run the full local suite serially:
 
 ```text

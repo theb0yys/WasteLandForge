@@ -96,7 +96,7 @@ internal static class CliHelpWriter
                 WriteReleasePrepareHelp(writer);
                 return true;
             case "release publish":
-                WriteReservedCommandHelp(writer, commandPath, "Release publishing is reserved by ADR-011 for a later governance gate.");
+                WriteReleasePublishHelp(writer);
                 return true;
             case "generate":
                 WriteGenerateHelp(writer);
@@ -543,7 +543,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge release prepare [options]");
         writer.WriteLine("  forge release publish [options]");
         writer.WriteLine();
-        writer.WriteLine("Release verify is implemented. Release prepare writes Gate 268 local staging-payload, release-archive-plan, deterministic release archive, release-archive-evidence, release-plan, release-summary, build-manifest, and checksum evidence only. Release publish remains reserved for a later governance gate.");
+        writer.WriteLine("Release verify is implemented. Release prepare writes Gate 268 local staging-payload, release-archive-plan, deterministic release archive, release-archive-evidence, release-plan, release-summary, build-manifest, and checksum evidence only. Release publish runs Gate 277 no-publish governance preflight with local evidence shape classification, checksum sidecar digest revalidation, build-manifest output digest revalidation, and release-archive-evidence metadata cross-reference, then refuses real publish by default.");
     }
 
     private static void WriteReleaseVerifyHelp(TextWriter writer)
@@ -603,6 +603,32 @@ internal static class CliHelpWriter
         writer.WriteLine("  0 staging-payload/release-archive-plan/release-archive/release-archive-evidence/release-plan/release-summary/build-manifest/checksums written, or dry-run plan printed");
         writer.WriteLine("  2 usage or unsupported format");
         writer.WriteLine("  6 unsafe output path refused");
+    }
+
+    private static void WriteReleasePublishHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge release publish");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge release publish [project-root] [--project <path>] [--format human|plain|json] [--dry-run] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Gate 277 reports a no-publish governance preflight with local release-prepare evidence shape classification, checksum sidecar entry coverage and digest revalidation, build-manifest output cross-reference and digest revalidation, and release-archive-evidence metadata cross-reference. Normal execution refuses publish until evidence validation and explicit human approval are implemented.");
+        writer.WriteLine("--dry-run reports the same preflight plan with exit code 0.");
+        writer.WriteLine("It checks expected release-prepare evidence path existence, parses JSON evidence for well-formed shape, parses checksums.sha256 entries for expected-path coverage, recomputes SHA-256 for expected local checksum entries, cross-references build-manifest outputs to local evidence and checksum sidecar paths, recomputes SHA-256 for expected local build-manifest outputs, and cross-references release-archive-evidence output metadata to local evidence, checksum sidecar paths, and build-manifest outputs only: staging/release-payload.json, release-archive-plan.json, archives/release.zip, release-archive-evidence.json, release-plan.json, release-summary.json, build-manifest.json, and checksums.sha256.");
+        writer.WriteLine("Required evidence includes schema validation, semantic validation, capability/environment validation, package validation, release verification, release-prepare build-manifest.json, release-prepare checksums.sha256, release archive evidence, governance checks, and explicit human approval.");
+        writer.WriteLine("It does not recompute or revalidate release-archive-evidence digests independently, semantically accept release evidence, reopen or validate release archives, publish releases, call remote repositories, upload assets, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.");
+        writer.WriteLine();
+        writer.WriteLine("Expected local evidence root:");
+        writer.WriteLine("  dist/release-prepare/");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge release publish fixtures/projects/ExampleMod --format json --no-input");
+        writer.WriteLine("  forge release publish --project fixtures/projects/ExampleMod --dry-run --format json");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 dry-run preflight plan printed");
+        writer.WriteLine("  2 usage or unsupported format");
+        writer.WriteLine("  6 publish refused because governance evidence and explicit approval are not implemented in the current gate");
     }
 
     private static void WriteDoctorHelp(TextWriter writer)

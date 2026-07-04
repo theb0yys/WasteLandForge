@@ -1606,3 +1606,30 @@ metadata, and includes the sidecar in CLI JSON/text, build-manifest digests,
 and `checksums.sha256`. It still avoids FOMOD assembly, installer creation,
 publishing, remote repository calls, signing/attestation, external tools,
 plugin mutation, MO2/GECK automation, runtime probes, and AI.
+
+Gate 269 closes the current `forge release prepare` implementation lane.
+Gates 260 through 268 are treated as the complete current release-prepare
+slice. Gate 270 implements `forge release publish` as a no-publish governance
+preflight, and Gate 271 adds local release-prepare evidence path discovery:
+Gate 272 adds JSON/checksum content-shape classification. Gate 273 adds
+checksum sidecar entry classification and expected-path coverage without
+digest revalidation. Gate 274 adds build-manifest output cross-reference
+against local evidence and checksum sidecar paths without digest
+revalidation. Gate 275 adds release-archive-evidence metadata
+cross-reference against local evidence, checksum sidecar paths, and
+build-manifest outputs without archive or digest revalidation. Gate 276 adds
+checksum sidecar digest revalidation for expected local release-prepare
+evidence files only. Gate 277 adds build-manifest output digest revalidation
+for expected local release-prepare evidence files only. Normal execution
+refuses publish with exit code 6, `--dry-run` reports the preflight with exit
+code 0, and JSON/text output lists required
+local evidence, per-artifact present/missing status,
+well-formed/malformed/unclassified shape status, checksum sidecar coverage and
+digest status, build-manifest cross-reference and digest status,
+release-archive-evidence cross-reference status, governance checks, missing
+human approval, and false publish/remote/upload/signing/tool/runtime/AI
+execution flags.
+Release-prepare backlog items such as real payload staging, FOMOD installer
+assembly, semantic evidence validation, checksum revalidation,
+signing/attestation material, external tools, MO2/GECK automation, runtime
+probes, and AI remain parked unless explicitly reopened.

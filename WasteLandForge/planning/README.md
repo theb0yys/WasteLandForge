@@ -273,9 +273,16 @@ Gate status:
 - `gates/gate-266-forge-release-prepare-archive-plan-skeleton.md` - Gate 266, `forge release prepare` local release archive planning metadata under `dist/release-prepare/release-archive-plan.json`.
 - `gates/gate-267-forge-release-prepare-archive-creation-skeleton.md` - Gate 267, `forge release prepare` deterministic local release archive skeleton under `dist/release-prepare/archives/release.zip`.
 - `gates/gate-268-forge-release-prepare-archive-evidence-revalidation.md` - Gate 268, `forge release prepare` release archive evidence revalidation under `dist/release-prepare/release-archive-evidence.json`.
+- `gates/gate-269-forge-release-prepare-lane-closeout.md` - Gate 269, `forge release prepare` lane closeout and transition to guarded release-publish governance preflight planning.
+- `gates/gate-270-forge-release-publish-governance-preflight-skeleton.md` - Gate 270, `forge release publish` no-publish governance preflight skeleton with required evidence, governance checks, approval requirements, and publish refusal behavior.
+- `gates/gate-271-forge-release-publish-local-evidence-discovery.md` - Gate 271, `forge release publish` local release-prepare evidence path discovery with present/missing/not-yet-validated artifact status.
+- `gates/gate-272-forge-release-publish-local-evidence-content-shape.md` - Gate 272, `forge release publish` local evidence content-shape classification for JSON/checksum evidence, still no-publish.
+- `gates/gate-273-forge-release-publish-checksum-sidecar-entry-classification.md` - Gate 273, `forge release publish` checksum sidecar entry classification and expected-path coverage, still no-publish and no digest revalidation.
+- `gates/gate-274-forge-release-publish-build-manifest-cross-reference.md` - Gate 274, `forge release publish` build-manifest output cross-reference against local evidence and checksum sidecar paths, still no-publish and no digest revalidation.
+- `gates/gate-275-forge-release-publish-archive-evidence-cross-reference.md` - Gate 275, `forge release publish` release-archive-evidence metadata cross-reference against local evidence, checksum sidecar paths, and build-manifest outputs, still no-publish and no digest or archive revalidation.
 
 Next gate:
 
-- Gate 269 - `forge release prepare` lane closeout and next release-governance boundary planning, stopping before FOMOD installer assembly, release publishing, remote repository calls, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 276 - `forge release publish` checksum sidecar digest revalidation skeleton, still no-publish by default, stopping before build-manifest digest revalidation, archive reopening/revalidation, semantic evidence validation, remote repository calls, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

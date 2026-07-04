@@ -1150,5 +1150,77 @@ flags without running the diagnostic pipeline, reading pre-existing release
 artifacts, emitting release diagnostics, inspecting provider evidence,
 executing external tools, running runtime probes, or using AI.
 
+Gate 269 adds no new diagnostic rule ID. Release-prepare lane closeout is a
+planning and routing update that records the completed release-prepare slice
+and deferred release-governance backlog without running the diagnostic
+pipeline, reading release artifacts, emitting release diagnostics, inspecting
+provider evidence, executing external tools, running runtime probes, or using
+AI.
+
+Gate 270 adds no new diagnostic rule ID. `forge release publish` governance
+preflight reports required evidence, governance checks, and human approval
+requirements as command status fields rather than `WF-REL-*`, `WF-GOV-*`, or
+`WF-SEC-*` diagnostics. It does not run the diagnostic pipeline, read release
+artifacts, emit release diagnostics, inspect provider evidence, execute
+external tools, run runtime probes, or use AI.
+
+Gate 271 adds no new diagnostic rule ID. Release-publish local evidence
+discovery reports expected release-prepare artifact path status as command
+status fields, not diagnostics. It does not parse artifact contents, revalidate
+checksums, reopen archives, run the diagnostic pipeline, emit `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` diagnostics, inspect provider evidence, execute
+external tools, run runtime probes, or use AI.
+
+Gate 272 adds no new diagnostic rule ID. Release-publish content-shape
+classification reports well-formed, malformed, and unclassified artifact
+status as command status fields, not diagnostics. It does not run the
+diagnostic pipeline, emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics,
+revalidate checksum digests, reopen archives, inspect provider evidence,
+execute external tools, run runtime probes, or use AI.
+
+Gate 273 adds no new diagnostic rule ID. Release-publish checksum sidecar
+entry classification reports parsed entries, expected-path coverage,
+unexpected paths, duplicate paths, and malformed entries as command status
+fields, not diagnostics. It does not run the diagnostic pipeline, emit
+`WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, revalidate checksum
+digests, reopen archives, inspect provider evidence, execute external tools,
+run runtime probes, or use AI.
+
+Gate 274 adds no new diagnostic rule ID. Release-publish build-manifest output
+cross-reference reports parsed outputs, expected output coverage, local
+artifact path coverage, checksum sidecar path coverage, unexpected outputs,
+duplicate outputs, and malformed outputs as command status fields, not
+diagnostics. It does not run the diagnostic pipeline, emit `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` diagnostics, revalidate checksum or build-manifest
+digests, semantically accept release evidence, reopen archives, inspect
+provider evidence, execute external tools, run runtime probes, or use AI.
+
+Gate 275 adds no new diagnostic rule ID. Release-publish
+release-archive-evidence metadata cross-reference reports parsed metadata
+paths, expected path coverage, local artifact path coverage, checksum sidecar
+path coverage, build-manifest output path coverage, unexpected paths, and
+malformed paths as command status fields, not diagnostics. It does not run the
+diagnostic pipeline, emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics,
+revalidate checksum, build-manifest, or release-archive-evidence digests,
+semantically accept release evidence, reopen archives, inspect provider
+evidence, execute external tools, run runtime probes, or use AI.
+
+Gate 276 adds no new diagnostic rule ID. Release-publish checksum sidecar
+digest revalidation reports matched, mismatched, and missing-local-file
+checksum entries as command status fields, not diagnostics. It does not run
+the diagnostic pipeline, emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*`
+diagnostics, independently revalidate build-manifest or
+release-archive-evidence digests, semantically accept release evidence,
+reopen archives, inspect provider evidence, execute external tools, run
+runtime probes, or use AI.
+
+Gate 277 adds no new diagnostic rule ID. Release-publish build-manifest output
+digest revalidation reports matched and mismatched build-manifest output
+digests as command status fields, not diagnostics. It does not run the
+diagnostic pipeline, emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics,
+independently revalidate release-archive-evidence digests, semantically
+accept release evidence, reopen archives, inspect provider evidence, execute
+external tools, run runtime probes, or use AI.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

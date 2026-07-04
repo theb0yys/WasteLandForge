@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 268 forge release prepare archive evidence revalidation skeleton
+Status: Gate 275 forge release publish release-archive-evidence metadata cross-reference
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -835,8 +835,8 @@ added local release-plan file emission, Gate 262 added local release-summary
 file emission, Gate 263 added local build-manifest file emission, and Gate 264
 added local checksum sidecar emission. Gate 265 added a local staging payload
 skeleton. Gate 266 added local release archive planning metadata. Gate 267
-added deterministic local release archive creation. Gate 268 adds archive
-evidence revalidation:
+added deterministic local release archive creation, Gate 268 added archive
+evidence revalidation, and Gate 269 closes the current release-prepare lane:
 
 ```text
 forge release prepare [project-root] [--project <path>] [--output dist/<name>]
@@ -880,7 +880,31 @@ real mod payload files.
 The release archive evidence sidecar revalidates the created archive digest,
 entry names, stored compression, and deterministic timestamp metadata.
 
-`release publish` remains reserved.
+Gate 269 parks further release-prepare micro-gates unless explicitly reopened.
+Deferred release-prepare work includes real payload staging, FOMOD installer
+assembly, pre-existing artifact reads, provenance sidecar reads, checksum
+sidecar reads, release notes or changelog synthesis, SemVer enforcement beyond
+skeleton metadata, signing or attestation material, external tools, MO2/GECK
+automation, runtime probes, real third-party plugin fixtures, and AI-assisted
+release drafting.
+
+`release publish` runs a Gate 275 no-publish governance preflight with local
+release-prepare evidence shape classification, checksum sidecar entry
+coverage, build-manifest output cross-reference, and
+release-archive-evidence metadata cross-reference. Normal execution refuses
+publish with exit code 6 until evidence validation and explicit human approval
+exist. `--dry-run` reports the same preflight with exit code 0. The preflight
+reports required local evidence, per-artifact present/missing status,
+well-formed/malformed JSON and checksum shape status, parsed checksum entries,
+expected-path coverage, build-manifest output cross-reference,
+release-archive-evidence output metadata cross-reference, governance checks,
+explicit human-approval requirements, and false execution flags for checksum
+digest revalidation, build-manifest digest revalidation,
+release-archive-evidence digest revalidation, semantic evidence validation,
+archive revalidation, release publishing, remote repository calls, release
+uploads, attestation/signing, external tools, plugin mutation, MO2/GECK
+automation, runtime probes, and AI. It does not semantically accept release
+artifact contents or write publish outputs.
 
 ## Docs Evidence
 

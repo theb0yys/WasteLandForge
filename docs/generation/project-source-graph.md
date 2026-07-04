@@ -1,6 +1,6 @@
 # Project Source Graph Output
 
-Status: Gate 268 release prepare archive evidence revalidation skeleton
+Status: Gate 275 release publish release-archive-evidence metadata cross-reference
 Research classification: Documented
 Source: R004, R006, ADR-007, ADR-009, ADR-010, ADR-011
 
@@ -168,3 +168,53 @@ emission in `forge release prepare`. `forge graph` still does not execute
 release prepare, assemble FOMOD payloads, publish releases, call remote
 repositories, sign or attest artifacts, inspect artifacts, call external
 tools, run runtime probes, or use AI.
+
+Gate 269 closes the current `forge release prepare` lane and routes the next
+release work to `forge release publish` governance preflight planning. `forge
+graph` still does not execute release prepare, execute release publish,
+assemble FOMOD payloads, publish releases, call remote repositories, sign or
+attest artifacts, inspect artifacts, call external tools, run runtime probes,
+or use AI.
+
+Gate 270 implements `forge release publish` as a no-publish governance
+preflight, but `forge graph` still does not execute release prepare, execute
+release publish, read release evidence artifacts, assemble FOMOD payloads,
+publish releases, call remote repositories, upload assets, sign or attest
+artifacts, inspect artifacts, call external tools, run runtime probes, or use
+AI.
+
+Gate 271 adds release-publish local evidence path discovery, but `forge graph`
+still does not execute release prepare, execute release publish, read release
+evidence artifact contents, validate release evidence, revalidate checksums,
+reopen archives, assemble FOMOD payloads, publish releases, call remote
+repositories, upload assets, sign or attest artifacts, call external tools,
+run runtime probes, or use AI.
+
+Gate 272 adds release-publish local evidence content-shape classification, but
+`forge graph` still does not execute release prepare, execute release publish,
+validate release evidence semantically, revalidate checksums, reopen archives,
+assemble FOMOD payloads, publish releases, call remote repositories, upload
+assets, sign or attest artifacts, call external tools, run runtime probes, or
+use AI.
+
+Gate 273 adds release-publish checksum sidecar entry classification, but
+`forge graph` still does not execute release prepare, execute release publish,
+cross-reference build manifests, revalidate checksum digests, reopen archives,
+assemble FOMOD payloads, publish releases, call remote repositories, upload
+assets, sign or attest artifacts, call external tools, run runtime probes, or
+use AI.
+
+Gate 274 adds release-publish build-manifest output cross-reference, but
+`forge graph` still does not execute release prepare, execute release publish,
+cross-reference release archive evidence, revalidate checksum digests,
+revalidate build-manifest digests, reopen archives, assemble FOMOD payloads,
+publish releases, call remote repositories, upload assets, sign or attest
+artifacts, call external tools, run runtime probes, or use AI.
+
+Gate 275 adds release-publish release-archive-evidence metadata
+cross-reference, but `forge graph` still does not execute release prepare,
+execute release publish, revalidate checksum digests, revalidate
+build-manifest digests, revalidate release-archive-evidence digests, reopen
+archives, assemble FOMOD payloads, publish releases, call remote repositories,
+upload assets, sign or attest artifacts, call external tools, run runtime
+probes, or use AI.

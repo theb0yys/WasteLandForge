@@ -1093,3 +1093,60 @@ revalidation uses built-in .NET ZIP, file, JSON, and SHA-256 APIs already
 available to the CLI. It does not add publishing clients, repository API
 clients, signing or attestation dependencies, external tool integrations,
 network calls, runtime probes, or AI requirements.
+
+Gate 269 adds no package dependency. Release-prepare lane closeout is a
+planning and routing update only. It does not add publishing clients,
+repository API clients, signing or attestation dependencies, external tool
+integrations, network calls, runtime probes, or AI requirements.
+
+Gate 270 adds no package dependency. Release-publish governance preflight uses
+CLI records, text rendering, and JSON serialization already available in the
+CLI. It does not add publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, or AI requirements.
+
+Gate 271 adds no package dependency. Release-publish local evidence discovery
+uses filesystem path-existence checks and file metadata already available in
+.NET. It does not add JSON schema parsers beyond existing project
+dependencies, publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, or AI requirements.
+
+Gate 272 adds no package dependency. Release-publish content-shape
+classification uses `System.Text.Json`, text line reads, and filesystem
+metadata already available in the CLI. It does not add checksum libraries,
+archive validation dependencies, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, or AI requirements.
+
+Gate 273 adds no package dependency. Release-publish checksum sidecar entry
+classification uses text line reads and existing CLI data structures. It does
+not add checksum libraries, archive validation dependencies, publishing
+clients, repository API clients, signing or attestation dependencies, external
+tool integrations, network calls, runtime probes, or AI requirements.
+
+Gate 274 adds no package dependency. Release-publish build-manifest output
+cross-reference uses `System.Text.Json`, text line reads, and existing CLI data
+structures. It does not add checksum libraries, archive validation
+dependencies, publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, or AI requirements.
+
+Gate 275 adds no package dependency. Release-publish
+release-archive-evidence metadata cross-reference uses `System.Text.Json` and
+existing CLI data structures. It does not add checksum libraries, archive
+validation dependencies, publishing clients, repository API clients, signing
+or attestation dependencies, external tool integrations, network calls,
+runtime probes, or AI requirements.
+
+Gate 276 adds no package dependency. Release-publish checksum sidecar digest
+revalidation uses built-in .NET file and SHA-256 APIs already available to the
+CLI. It does not add archive validation dependencies, publishing clients,
+repository API clients, signing or attestation dependencies, external tool
+integrations, network calls, runtime probes, or AI requirements.
+
+Gate 277 adds no package dependency. Release-publish build-manifest output
+digest revalidation uses built-in .NET file and SHA-256 APIs already available
+to the CLI. It does not add archive validation dependencies, publishing
+clients, repository API clients, signing or attestation dependencies, external
+tool integrations, network calls, runtime probes, or AI requirements.

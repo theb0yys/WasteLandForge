@@ -2,13 +2,14 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 268 adds the
-local `forge release prepare` archive evidence revalidation sidecar after the Gate 259
-`forge clean` closeout, Gate 260 release-prepare planning skeleton, Gate 261
-release-plan emission, Gate 262 release-summary emission, and Gate 263
-build-manifest emission, Gate 264 checksum sidecar emission, and Gate 265
-staging payload skeleton, Gate 266 release archive planning metadata, and
-Gate 267 deterministic release archive skeleton.
+The project is currently in gated v0.1 implementation. Gate 277 extends the
+guarded `forge release publish` lane after Gate 269 closes the current
+`forge release prepare` lane. The release-prepare lane includes the Gate 260
+planning skeleton, Gate 261 release-plan emission, Gate 262 release-summary
+emission, Gate 263 build-manifest emission, Gate 264 checksum sidecar
+emission, Gate 265 staging payload skeleton, Gate 266 release archive
+planning metadata, Gate 267 deterministic release archive skeleton, and Gate
+268 release archive evidence revalidation.
 `forge release prepare` now writes
 `dist/release-prepare/staging/release-payload.json`,
 `dist/release-prepare/release-archive-plan.json`,
@@ -26,6 +27,26 @@ writes in CLI output, preserves `--dry-run` as no-write planning,
 refuses output roots outside project `dist/`, and keeps FOMOD assembly,
 publish, remote, signing, external-tool, runtime-probe, and AI execution flags
 false.
+`forge release publish` now reports a no-publish governance preflight,
+discovers expected local release-prepare evidence paths, and classifies
+JSON/checksum evidence content shape. It also parses `checksums.sha256`
+entries, reports expected-path coverage, and recomputes SHA-256 digests for
+expected local evidence entries. It cross-references build-manifest outputs to
+local evidence paths and checksum sidecar paths, and recomputes SHA-256
+digests for expected local build-manifest outputs. It also cross-references
+`release-archive-evidence.json` output metadata to local evidence paths,
+checksum sidecar entries, and build-manifest outputs without reopening the
+archive or accepting evidence. Normal execution refuses publish
+with exit code 6; `--dry-run` reports the same preflight with exit code 0.
+The preflight lists required local evidence, governance checks, explicit human
+approval, per-artifact present/missing status, well-formed/malformed shape
+status, checksum sidecar entry coverage, and build-manifest output
+cross-reference and digest status, and release-archive-evidence metadata
+cross-reference status for local release-prepare evidence. It does not
+semantically validate artifact contents, revalidate release-archive-evidence
+digests independently, reopen archives, publish releases, call remote
+repositories, upload assets, sign/attest artifacts, execute external tools,
+mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.
 Gate 258 added active build/cache lock safety for `forge clean` beside the
 existing generated, dist, cache, and manifest-confirmed all clean behavior.
 Explicit `forge clean --generated`, `forge clean --dist`,
@@ -973,6 +994,37 @@ remains planning-only and writes nothing. Gate 268 still does not assemble
 FOMOD installers, publish releases, call remote repositories, sign/attest
 artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run
 runtime probes, use real third-party plugin fixtures, or use AI.
+
+Gate 269 closes the current `forge release prepare` lane. Gates 260 through
+268 are treated as the complete current release-prepare slice: planning,
+release-plan evidence, release-summary evidence, build-manifest evidence,
+checksum evidence, staging-payload skeleton evidence, archive-plan evidence,
+deterministic archive evidence, and archive-evidence revalidation. Deferred
+release-prepare work includes real payload staging, FOMOD installer assembly,
+pre-existing artifact reads, provenance sidecar reads, checksum sidecar reads,
+release notes or changelog synthesis, SemVer enforcement beyond skeleton
+metadata, signing or attestation material, external tools, MO2/GECK
+automation, runtime probes, real third-party plugin fixtures, and AI-assisted
+release drafting. Gate 270 implements `forge release publish` as a
+no-publish governance preflight, Gate 271 adds local release-prepare evidence
+path discovery, and Gate 272 adds JSON/checksum content-shape
+classification. Gate 273 adds checksum sidecar entry classification and
+expected-path coverage without digest revalidation. Gate 274 adds
+build-manifest output cross-reference against local evidence and checksum
+sidecar paths. Gate 275 adds release-archive-evidence metadata
+cross-reference against local evidence, checksum sidecar paths, and
+build-manifest outputs. Gate 276 adds checksum sidecar digest revalidation for
+expected local release-prepare evidence files only. Gate 277 adds
+build-manifest output digest revalidation for expected local release-prepare
+evidence files only. Normal execution refuses publish until local evidence
+validation and explicit human approval exist; `--dry-run` reports the same
+preflight with exit code 0. It reports required evidence, governance checks,
+approval requirements, per-artifact present/missing status, shape status,
+checksum sidecar coverage and digest status, build-manifest cross-reference
+and digest status, release-archive-evidence cross-reference status, and false
+publish/remote/upload/signing/tool/runtime/AI execution flags. It does not
+revalidate release-archive-evidence digests independently, reopen archives,
+semantically accept release evidence, or write publish outputs.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

@@ -81,6 +81,11 @@ internal static class ForgeCli
             return RunReleasePrepare(resolution.RemainingArgs);
         }
 
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "release publish"))
+        {
+            return RunReleasePublish(resolution.RemainingArgs);
+        }
+
         if (StringComparer.Ordinal.Equals(resolution.CommandPath, "generate") ||
             StringComparer.Ordinal.Equals(resolution.CommandPath, "build"))
         {
@@ -248,6 +253,28 @@ internal static class ForgeCli
         var payload = CliConstants.IsMachineFormat(parse.Format)
             ? ReleasePreparePlanJsonSerializer.Serialize(result)
             : ReleasePreparePlanTextRenderer.Render(result);
+        Console.Write(payload);
+
+        return result.IsRefused
+            ? (int)CliExitCode.UnsafeOperationRefused
+            : (int)CliExitCode.Success;
+    }
+
+    private static int RunReleasePublish(string[] args)
+    {
+        var parse = ParseReleasePublishOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "release publish", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var result = ReleasePublishPreflightPlanner.Plan(new ReleasePublishPreflightOptions(
+            parse.ProjectPath,
+            parse.DryRun));
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? ReleasePublishPreflightJsonSerializer.Serialize(result)
+            : ReleasePublishPreflightTextRenderer.Render(result);
         Console.Write(payload);
 
         return result.IsRefused
@@ -1260,6 +1287,82 @@ internal static class ForgeCli
         }
 
         return ReleasePrepareParseResult.Ok(projectPath, outputPath, dryRun, format);
+    }
+
+    private static ReleasePublishParseResult ParseReleasePublishOptions(string[] args)
+    {
+        var format = "human";
+        var projectPath = ".";
+        var dryRun = false;
+        var projectWasSet = false;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return ReleasePublishParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return ReleasePublishParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return ReleasePublishParseResult.Fail(format, $"--format {format} is only available for diagnostic report commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return ReleasePublishParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectWasSet)
+                {
+                    return ReleasePublishParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                projectWasSet = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--dry-run"))
+            {
+                dryRun = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return ReleasePublishParseResult.Fail(format, $"Unsupported release publish option '{arg}'.");
+            }
+
+            if (projectWasSet)
+            {
+                return ReleasePublishParseResult.Fail(format, "Project root was specified more than once.");
+            }
+
+            projectPath = arg;
+            projectWasSet = true;
+        }
+
+        return ReleasePublishParseResult.Ok(projectPath, dryRun, format);
     }
 
     private static MetadataReportParseResult ParseMetadataReportOptions(string commandPath, string[] args)
@@ -3246,6 +3349,20 @@ internal static class ForgeCli
 
         public static ReleasePrepareParseResult Fail(string format, string message) =>
             new(false, string.Empty, null, false, format, message);
+    }
+
+    private sealed record ReleasePublishParseResult(
+        bool Success,
+        string ProjectPath,
+        bool DryRun,
+        string Format,
+        string Message)
+    {
+        public static ReleasePublishParseResult Ok(string projectPath, bool dryRun, string format) =>
+            new(true, projectPath, dryRun, format, string.Empty);
+
+        public static ReleasePublishParseResult Fail(string format, string message) =>
+            new(false, string.Empty, false, format, message);
     }
 
     private sealed record MetadataReportParseResult(
