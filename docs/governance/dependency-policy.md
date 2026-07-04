@@ -1025,3 +1025,23 @@ dependencies, registry loaders, active-build or cache-lock detectors,
 provenance sidecar readers, checksum readers, artifact scanners beyond the
 target roots, provider resolvers, capability scanner dependencies, runtime
 probes, external tool integrations, network calls, or AI requirements.
+
+Gate 258 adds no new dependency. Active build/cache lock safety uses .NET
+filesystem checks for `.wastelandforge/cache/build.lock`. It does not add
+process inspection libraries, lock-management packages, stale-lock expiry
+dependencies, provenance sidecar readers, checksum readers, artifact scanners
+beyond the target roots and lock marker, provider resolvers, capability
+scanner dependencies, runtime probes, external tool integrations, network
+calls, or AI requirements.
+
+Gate 259 adds no new dependency. Clean command closeout is planning and
+routing documentation only. It does not add release-preparation libraries,
+archive writers, publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, or AI requirements.
+
+Gate 260 adds no new dependency. Release prepare planning uses in-process CLI
+parsing, path normalization, and JSON/text rendering only. It does not add
+archive writers, publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, or AI requirements.

@@ -34,7 +34,7 @@ internal static class CleanScopeContracts
             "--cache",
             ".wastelandforge/cache/",
             "safe-with-active-build-warning",
-            "non-interactive by default; warn if a build is active in a later execution gate",
+            "non-interactive by default; refuses if .wastelandforge/cache/build.lock is present",
             "removed cache state plus a clean report",
             "Incremental planner/cache state only."),
         new CleanScopeContract(

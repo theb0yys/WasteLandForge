@@ -2,19 +2,27 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 257 adds
-project-ID confirmation validation for `forge clean --all` beside the existing
-generated/dist/cache clean.
+The project is currently in gated v0.1 implementation. Gate 260 adds the
+`forge release prepare` planning skeleton after the Gate 259 `forge clean`
+closeout. `forge release prepare` now reports planned local release-preparation
+outputs under `dist/release-prepare`, refuses planned output roots outside
+project `dist/`, and keeps all release execution flags false.
+Gate 258 added active build/cache lock safety for `forge clean` beside the
+existing generated, dist, cache, and manifest-confirmed all clean behavior.
 Explicit `forge clean --generated`, `forge clean --dist`,
 `forge clean --cache`, and manifest-confirmed
 `forge clean --all --yes --confirm <project-id>` delete only contained
 documented output roots and report removed or missing paths. Omitted-scope
 `forge clean`, explicit clean dry-runs, and unconfirmed or manifest-mismatched
 `--all` remain path plans or refusals; unsafe all-scope refusals return exit
-code 6. It still does not detect active builds or cache locks, read generated
-manifests, read build manifests, read provenance sidecars, read checksums,
-inspect artifacts beyond the selected target roots, call external tools, run
-runtime probes, or use AI. The implemented explain subjects remain
+code 6. Cache-affecting clean execution now also refuses with exit code 6 when
+`.wastelandforge/cache/build.lock` is present. It still does not read
+generated manifests, read build manifests, read provenance sidecars, read
+checksums, inspect artifacts beyond the selected target roots and lock marker,
+call external tools, run runtime probes, or use AI. `forge release prepare`
+is planning-only; Forge still does not write release-preparation evidence,
+create release archives, publish releases, call remote repositories,
+sign/attest artifacts, or execute external release tools. The implemented explain subjects remain
 `diagnostic <rule-id>`, `target <target-id>`,
 `output <generated-or-dist-path>`, `capability <capability-id>`, and
 `provenance <manifest-or-output-path>`.
@@ -23,7 +31,7 @@ still does not execute xEdit, generate real xEdit reports, generate patches,
 mutate plugins, automate MO2 or GECK, run runtime probes, execute generator
 targets through `forge graph`, check generated artifact existence through
 `forge graph`, read generated manifests through `forge graph`, add xEdit
-build/package targets, publish docs, detect active clean/build locks, read provenance
+build/package targets, publish docs, read provenance
 sidecars through `forge explain`, inspect project
 diagnostic reports through `forge explain`, plan builds through
 `forge explain target`, execute generators through `forge explain target`, or
@@ -801,6 +809,40 @@ registries, detect active builds or cache locks, read generated manifests,
 read build manifests, read provenance sidecars, read checksums, inspect
 artifacts beyond the target roots, execute generators, call external tools,
 run runtime probes, or use AI.
+
+Gate 258 implements active build/cache lock safety for clean execution.
+`.wastelandforge/cache/build.lock` is the local active build/cache lock
+marker. Explicit `forge clean --cache` and manifest-confirmed
+`forge clean --all` refuse without deletion when that marker exists and report
+machine-readable `cacheLock` metadata. It does not inspect processes, expire
+stale locks, read generated manifests, read build manifests, read provenance
+sidecars, read checksums, inspect artifacts beyond the target roots and lock
+marker, execute generators, call external tools, run runtime probes, or use AI.
+
+Gate 259 closes the `forge clean` command slice. Gate 250 through Gate 258 are
+now treated as the complete current clean lane: documented scopes, dry-run
+path plans, unsafe-operation refusals, contained-root deletion, all-scope
+project-ID confirmation, and active build/cache lock refusal. Deferred clean
+backlog items include generated manifest reads, build manifest reads,
+provenance sidecar reads, checksum reads, process inspection, stale lock
+expiry, lock ownership metadata, artifact checks beyond target roots and the
+lock marker, and build/generate lock creation. The next lane moves to
+`forge release prepare` planning only, stopping before archive creation,
+publishing, remote repository calls, attestation/signing, external tools,
+runtime probes, MO2/GECK automation, plugin mutation, real third-party plugin
+fixtures, or AI behavior.
+
+Gate 260 implements the `forge release prepare` planning skeleton.
+`forge release prepare [project-root] --format human|plain|json` reports a
+planning-only release-preparation contract with default output root
+`dist/release-prepare`, planned future outputs, `outputSafety`, a JSON
+`reportContract`, and false execution flags. `--output` is accepted only when
+the planned output root stays under project `dist/`; unsafe output roots return
+exit code 6 without writing files. Gate 260 does not write
+`release-plan.json`, write release summaries, write build manifests, write
+checksums, create archives, publish releases, call remote repositories,
+sign/attest artifacts, execute external tools, mutate plugins, automate MO2
+or GECK, run runtime probes, use real third-party plugin fixtures, or use AI.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

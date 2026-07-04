@@ -6696,14 +6696,67 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
-    public void ReleasePrepareRemainsReserved()
+    public void ReleasePrepareJsonReportsPlanningSkeleton()
     {
-        var result = RunCli("release", "prepare", "--format", "json");
-        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Reserved status JSON did not parse.");
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-prepare-plan");
+        Directory.CreateDirectory(projectRoot);
 
-        Assert.Equal(2, result.ExitCode);
-        Assert.Equal("reserved", (string?)json["status"]);
+        var result = RunCli("release", "prepare", projectRoot, "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release prepare JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
         Assert.Equal("release prepare", (string?)json["command"]);
+        Assert.Equal("planned", (string?)json["status"]);
+        Assert.Equal(true, (bool?)json["dryRun"]);
+        Assert.Equal(true, (bool?)json["planningOnly"]);
+        Assert.Equal("dist/release-prepare", (string?)json["output"]?["root"]);
+        Assert.Equal(true, (bool?)json["output"]?["defaulted"]);
+        Assert.Equal("inside-dist", (string?)json["outputSafety"]?["status"]);
+        Assert.Equal("dist/release-prepare/release-plan.json", (string?)json["plannedOutputs"]?[1]?["path"]);
+        Assert.Equal(false, (bool?)json["plannedOutputs"]?[1]?["wouldWriteInCurrentGate"]);
+        Assert.Equal(false, (bool?)json["reportContract"]?["mutatesFilesystemInCurrentGate"]);
+        Assert.Equal(false, (bool?)json["execution"]?["archiveCreation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)json["execution"]?["attestationSigning"]);
+        Assert.Equal(false, (bool?)json["execution"]?["externalToolExecution"]);
+        Assert.Equal(false, (bool?)json["execution"]?["aiRequired"]);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
+    }
+
+    [Fact]
+    public void ReleasePrepareHelpListsPlanningBoundary()
+    {
+        var result = RunCli("help", "release", "prepare");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("forge release prepare", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Gate 260 emits a local release-preparation plan only.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("dist/release-prepare/release-plan.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("It does not create archives, write release evidence, publish releases, call remote repositories, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePrepareJsonRefusesOutputOutsideDist()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-prepare-plan");
+        Directory.CreateDirectory(projectRoot);
+
+        var result = RunCli("release", "prepare", projectRoot, "--output", "../outside", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release prepare JSON did not parse.");
+
+        Assert.Equal(6, result.ExitCode);
+        Assert.Equal("release prepare", (string?)json["command"]);
+        Assert.Equal("refused", (string?)json["status"]);
+        Assert.Equal("../outside", (string?)json["output"]?["root"]);
+        Assert.Equal("refused-output-outside-dist", (string?)json["outputSafety"]?["status"]);
+        Assert.Equal("Release prepare output must stay under the project dist/ directory.", (string?)json["refusalReason"]);
+        Assert.Equal(false, (bool?)json["execution"]?["filesystemMutation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["outputWrites"]);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
     }
 
     [Fact]
@@ -6715,9 +6768,9 @@ public sealed class CliGoldenTests
         Assert.Contains("forge clean", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("--generated - generated/ (safe); non-interactive by default", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("--dist - dist/ (safe); non-interactive by default", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("--cache - .wastelandforge/cache/ (safe-with-active-build-warning); non-interactive by default; warn if a build is active in a later execution gate", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("--cache - .wastelandforge/cache/ (safe-with-active-build-warning); non-interactive by default; refuses if .wastelandforge/cache/build.lock is present", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("--all - generated/, dist/, .wastelandforge/cache/ (severe); requires --yes and --confirm <project-id> in non-interactive mode", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Gate 257 deletes only contained generated/, dist/, and .wastelandforge/cache/ roots for explicit clean scopes.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Gate 258 deletes only contained generated/, dist/, and .wastelandforge/cache/ roots for explicit clean scopes.", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -6927,6 +6980,43 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CleanJsonRefusesCacheScopeWhenBuildLockIsPresent()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "clean-cache-locked");
+        var generatedFile = Path.Combine(projectRoot, "generated", "keep.txt");
+        var distFile = Path.Combine(projectRoot, "dist", "keep.txt");
+        var cacheFile = Path.Combine(projectRoot, ".wastelandforge", "cache", "keep.txt");
+        var lockFile = Path.Combine(projectRoot, ".wastelandforge", "cache", "build.lock");
+        Touch(generatedFile);
+        Touch(distFile);
+        Touch(cacheFile);
+        Touch(lockFile);
+
+        var result = RunCli("clean", projectRoot, "--cache", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Clean locked cache JSON did not parse.");
+
+        Assert.Equal(6, result.ExitCode);
+        Assert.Equal("refused", (string?)json["status"]);
+        Assert.Equal("dry-run-path-plan", (string?)json["mode"]);
+        Assert.Equal("cache", (string?)json["scope"]?["id"]);
+        Assert.Equal("refused-active-build-cache-lock", (string?)json["operation"]?["status"]);
+        Assert.Contains("build.lock", (string?)json["safety"]?["refusalReason"], StringComparison.Ordinal);
+        Assert.Equal(false, (bool?)json["safety"]?["deleteBehavior"]);
+        Assert.Equal(false, (bool?)json["safety"]?["filesystemMutation"]);
+        Assert.Equal(true, (bool?)json["cacheLock"]?["checked"]);
+        Assert.Equal(Path.GetFullPath(lockFile), (string?)json["cacheLock"]?["markerPath"]);
+        Assert.Equal(true, (bool?)json["cacheLock"]?["present"]);
+        Assert.Equal("refused-active-build-cache-lock", (string?)json["cacheLock"]?["refusalStatus"]);
+        Assert.Equal(true, (bool?)json["execution"]?["cacheLockCheck"]);
+        Assert.Equal(false, (bool?)json["execution"]?["filesystemMutation"]);
+        Assert.True(File.Exists(generatedFile));
+        Assert.True(File.Exists(distFile));
+        Assert.True(File.Exists(cacheFile));
+        Assert.True(File.Exists(lockFile));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void CleanJsonDryRunCacheScopeWithoutDeletion()
     {
         var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "clean-cache-dry-run");
@@ -7113,6 +7203,47 @@ public sealed class CliGoldenTests
         Assert.False(File.Exists(generatedFile));
         Assert.False(File.Exists(distFile));
         Assert.False(File.Exists(cacheFile));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CleanJsonRefusesAllScopeWhenBuildLockIsPresent()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "clean-all-locked");
+        var generatedFile = Path.Combine(projectRoot, "generated", "keep.txt");
+        var distFile = Path.Combine(projectRoot, "dist", "keep.txt");
+        var cacheFile = Path.Combine(projectRoot, ".wastelandforge", "cache", "keep.txt");
+        var lockFile = Path.Combine(projectRoot, ".wastelandforge", "cache", "build.lock");
+        WriteJsonManifest(projectRoot, "example.author.modname");
+        Touch(generatedFile);
+        Touch(distFile);
+        Touch(cacheFile);
+        Touch(lockFile);
+
+        var result = RunCli("clean", projectRoot, "--all", "--yes", "--confirm", "example.author.modname", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Clean locked all-scope JSON did not parse.");
+
+        Assert.Equal(6, result.ExitCode);
+        Assert.Equal("refused", (string?)json["status"]);
+        Assert.Equal("dry-run-path-plan", (string?)json["mode"]);
+        Assert.Equal("all", (string?)json["scope"]?["id"]);
+        Assert.Equal("refused-active-build-cache-lock", (string?)json["operation"]?["status"]);
+        Assert.Contains("build.lock", (string?)json["safety"]?["refusalReason"], StringComparison.Ordinal);
+        Assert.Equal(true, (bool?)json["projectIdentity"]?["manifestRead"]);
+        Assert.Equal(true, (bool?)json["projectIdentity"]?["confirmationMatches"]);
+        Assert.Equal(true, (bool?)json["cacheLock"]?["checked"]);
+        Assert.Equal(Path.GetFullPath(lockFile), (string?)json["cacheLock"]?["markerPath"]);
+        Assert.Equal(true, (bool?)json["cacheLock"]?["present"]);
+        Assert.Equal("refused-active-build-cache-lock", (string?)json["cacheLock"]?["refusalStatus"]);
+        Assert.Equal(false, (bool?)json["safety"]?["deleteBehavior"]);
+        Assert.Equal(false, (bool?)json["safety"]?["filesystemMutation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["projectManifestRead"]);
+        Assert.Equal(true, (bool?)json["execution"]?["cacheLockCheck"]);
+        Assert.Equal(false, (bool?)json["execution"]?["filesystemMutation"]);
+        Assert.True(File.Exists(generatedFile));
+        Assert.True(File.Exists(distFile));
+        Assert.True(File.Exists(cacheFile));
+        Assert.True(File.Exists(lockFile));
         Assert.Equal(string.Empty, result.Stderr);
     }
 

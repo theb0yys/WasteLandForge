@@ -161,3 +161,12 @@ reads, provider resolution, capability scan behavior changes, plugin patch
 generation, plugin mutation, MO2 automation, GECK automation, runtime probes,
 real third-party plugin fixtures, `forge build --target xedit-audit`,
 package/release behavior, or applying parsed report findings to plugins.
+
+Gate 258 implements active build/cache lock safety before xEdit process
+execution, report generation, xEdit-specific clean behavior, generated
+artifact existence checks beyond the clean target roots and lock marker,
+generated manifest reads, build manifest reads, provenance sidecar reads,
+checksum reads, provider resolution, capability scan behavior changes, plugin
+patch generation, plugin mutation, MO2 automation, GECK automation, runtime
+probes, real third-party plugin fixtures, `forge build --target xedit-audit`,
+package/release behavior, or applying parsed report findings to plugins.

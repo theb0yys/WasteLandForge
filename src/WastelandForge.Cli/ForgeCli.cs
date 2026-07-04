@@ -76,6 +76,11 @@ internal static class ForgeCli
             return RunReleaseVerify(resolution.RemainingArgs);
         }
 
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "release prepare"))
+        {
+            return RunReleasePrepare(resolution.RemainingArgs);
+        }
+
         if (StringComparer.Ordinal.Equals(resolution.CommandPath, "generate") ||
             StringComparer.Ordinal.Equals(resolution.CommandPath, "build"))
         {
@@ -224,6 +229,29 @@ internal static class ForgeCli
 
         return result.HasErrors
             ? (int)CliExitCode.BlockingDiagnostics
+            : (int)CliExitCode.Success;
+    }
+
+    private static int RunReleasePrepare(string[] args)
+    {
+        var parse = ParseReleasePrepareOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "release prepare", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var result = ReleasePreparePlanPlanner.Plan(new ReleasePreparePlanOptions(
+            parse.ProjectPath,
+            parse.OutputPath,
+            parse.DryRun));
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? ReleasePreparePlanJsonSerializer.Serialize(result)
+            : ReleasePreparePlanTextRenderer.Render(result);
+        Console.Write(payload);
+
+        return result.IsRefused
+            ? (int)CliExitCode.UnsafeOperationRefused
             : (int)CliExitCode.Success;
     }
 
@@ -1143,6 +1171,95 @@ internal static class ForgeCli
         }
 
         return ReleaseVerifyParseResult.Ok(projectPath, outputPath, summaryPath, format);
+    }
+
+    private static ReleasePrepareParseResult ParseReleasePrepareOptions(string[] args)
+    {
+        var format = "human";
+        var projectPath = ".";
+        string? outputPath = null;
+        var dryRun = false;
+        var projectWasSet = false;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return ReleasePrepareParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return ReleasePrepareParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return ReleasePrepareParseResult.Fail(format, $"--format {format} is only available for diagnostic report commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return ReleasePrepareParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectWasSet)
+                {
+                    return ReleasePrepareParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                projectWasSet = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--output") ||
+                StringComparer.Ordinal.Equals(arg, "-o"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitOutputPath))
+                {
+                    return ReleasePrepareParseResult.Fail(format, "Missing value for --output.");
+                }
+
+                outputPath = explicitOutputPath;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--dry-run"))
+            {
+                dryRun = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return ReleasePrepareParseResult.Fail(format, $"Unsupported release prepare option '{arg}'.");
+            }
+
+            if (projectWasSet)
+            {
+                return ReleasePrepareParseResult.Fail(format, "Project root was specified more than once.");
+            }
+
+            projectPath = arg;
+            projectWasSet = true;
+        }
+
+        return ReleasePrepareParseResult.Ok(projectPath, outputPath, dryRun, format);
     }
 
     private static MetadataReportParseResult ParseMetadataReportOptions(string commandPath, string[] args)
@@ -3114,6 +3231,21 @@ internal static class ForgeCli
 
         public static ReleaseVerifyParseResult Fail(string format, string message) =>
             new(false, string.Empty, null, null, format, message);
+    }
+
+    private sealed record ReleasePrepareParseResult(
+        bool Success,
+        string ProjectPath,
+        string? OutputPath,
+        bool DryRun,
+        string Format,
+        string Message)
+    {
+        public static ReleasePrepareParseResult Ok(string projectPath, string? outputPath, bool dryRun, string format) =>
+            new(true, projectPath, outputPath, dryRun, format, string.Empty);
+
+        public static ReleasePrepareParseResult Fail(string format, string message) =>
+            new(false, string.Empty, null, false, format, message);
     }
 
     private sealed record MetadataReportParseResult(

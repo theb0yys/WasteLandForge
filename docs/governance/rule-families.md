@@ -600,3 +600,21 @@ performing full manifest schema validation, loading registries, reading
 generated manifests, reading build manifests, reading checksums, reading
 provenance sidecars, checking artifacts beyond the target roots, executing
 external tools, running runtime probes, or using AI.
+
+Gate 258 adds no new rule family or diagnostic ID. Active build/cache lock
+safety reports unsafe-operation refusal statuses and `cacheLock` clean
+metadata without running the diagnostic pipeline, inspecting processes,
+expiring stale locks, reading generated manifests, reading build manifests,
+reading checksums, reading provenance sidecars, checking artifacts beyond the
+target roots and lock marker, executing external tools, running runtime
+probes, or using AI.
+
+Gate 259 adds no new rule family or diagnostic ID. Clean command closeout is
+planning/routing documentation only. It preserves existing clean report
+statuses and does not add release-prepare diagnostics, execute external
+tools, run runtime probes, or use AI.
+
+Gate 260 adds no new rule family or diagnostic ID. Release prepare planning
+reports command status, output containment, planned outputs, and false
+execution flags without emitting `WF-REL-*` diagnostics, executing external
+tools, running runtime probes, or using AI.

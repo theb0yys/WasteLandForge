@@ -44,6 +44,24 @@ internal sealed record CleanProjectIdentity(
         RefusalReason: null);
 }
 
+internal sealed record CleanCacheLock(
+    bool Checked,
+    string MarkerPath,
+    bool Present,
+    string? RefusalStatus,
+    string? RefusalReason)
+{
+    public static CleanCacheLock NotChecked(string projectRoot) => new(
+        Checked: false,
+        MarkerPath: CreateMarkerPath(projectRoot),
+        Present: false,
+        RefusalStatus: null,
+        RefusalReason: null);
+
+    public static string CreateMarkerPath(string projectRoot) =>
+        Path.GetFullPath(Path.Combine(projectRoot, ".wastelandforge", "cache", "build.lock"));
+}
+
 internal sealed record CleanPlanResult(
     string ProjectInput,
     string ProjectRoot,
@@ -57,6 +75,7 @@ internal sealed record CleanPlanResult(
     bool ConfirmationProvided,
     string? ConfirmationValue,
     CleanProjectIdentity ProjectIdentity,
+    CleanCacheLock CacheLock,
     string SafetyStatus,
     string? RefusalReason,
     string OperationStatus,
@@ -98,6 +117,7 @@ internal static class CleanPlanPlanner
             confirmationProvided,
             options.Confirm,
             CleanProjectIdentity.NotRead,
+            CleanCacheLock.NotChecked(projectRoot),
             confirmationRefused ? "refused" : "planned",
             confirmationRefused
                 ? "Scope 'all' requires --yes and --confirm <project-id> before clean execution can proceed."
@@ -111,6 +131,16 @@ internal static class CleanPlanPlanner
 
         if (ShouldExecuteOutputRootClean(options, scope))
         {
+            if (StringComparer.Ordinal.Equals(scope, "cache"))
+            {
+                var cacheLock = CheckCacheLock(projectRoot);
+                result = result with { CacheLock = cacheLock };
+                if (cacheLock.RefusalStatus is not null)
+                {
+                    return RefuseForCacheLock(result, cacheLock);
+                }
+            }
+
             return ExecuteCleanRoots(result);
         }
 
@@ -132,6 +162,13 @@ internal static class CleanPlanPlanner
             };
         }
 
+        var allCacheLock = CheckCacheLock(projectRoot);
+        result = result with { CacheLock = allCacheLock };
+        if (allCacheLock.RefusalStatus is not null)
+        {
+            return RefuseForCacheLock(result, allCacheLock);
+        }
+
         return ExecuteCleanRoots(result);
     }
 
@@ -148,6 +185,31 @@ internal static class CleanPlanPlanner
         options.Yes &&
         !string.IsNullOrWhiteSpace(options.Confirm) &&
         !options.RequestedDryRun;
+
+    private static CleanCacheLock CheckCacheLock(string projectRoot)
+    {
+        var markerPath = CleanCacheLock.CreateMarkerPath(projectRoot);
+        var present = File.Exists(markerPath);
+        return new CleanCacheLock(
+            Checked: true,
+            MarkerPath: markerPath,
+            Present: present,
+            RefusalStatus: present ? "refused-active-build-cache-lock" : null,
+            RefusalReason: present
+                ? $"Active build/cache lock marker '{markerPath}' is present; cache-affecting clean execution was refused."
+                : null);
+    }
+
+    private static CleanPlanResult RefuseForCacheLock(CleanPlanResult result, CleanCacheLock cacheLock) =>
+        result with
+        {
+            SafetyStatus = "refused",
+            OperationStatus = cacheLock.RefusalStatus ?? "refused-active-build-cache-lock",
+            RefusalReason = cacheLock.RefusalReason,
+            EffectiveDryRun = false,
+            DeleteBehavior = false,
+            FilesystemMutation = false
+        };
 
     private static CleanProjectIdentity ValidateAllCleanProjectIdentity(string projectRoot, string? confirmation)
     {
@@ -411,9 +473,10 @@ internal static class CleanPlanPlanner
 
     private static IReadOnlyList<string> CreateBoundaries(string scope) =>
         [
-            "Gate 257 executes explicit --generated, --dist, --cache, and manifest-confirmed --all cleans; omitted scope and unconfirmed --all remain path plans or refusals.",
+            "Gate 258 executes explicit --generated, --dist, --cache, and manifest-confirmed --all cleans; omitted scope and unconfirmed --all remain path plans or refusals.",
             "Clean execution deletes only contained planned output roots after target-root containment validation.",
-            "Only root project manifest identity is read before confirmed all-scope mutation; generated manifests, build manifests, provenance sidecars, checksums, artifacts, and local provider evidence are not read.",
+            "Cache-affecting clean execution is refused when .wastelandforge/cache/build.lock is present.",
+            "Only root project manifest identity and the cache lock marker are read before relevant clean mutation; generated manifests, build manifests, provenance sidecars, checksums, artifacts, and local provider evidence are not read.",
             "Artifact existence checks beyond the selected target root, build planning, generator execution, package execution, release execution, provider resolution, capability scans, external tools, runtime probes, and AI calls are not performed.",
             StringComparer.Ordinal.Equals(scope, "all")
                 ? "The all scope is severe; --yes and --confirm <project-id> must match the root project manifest id before mutation."
@@ -456,6 +519,9 @@ internal static class CleanPlanTextRenderer
         builder.AppendLine($"Operation: {result.OperationStatus}");
         builder.AppendLine($"Confirmation required: {result.ConfirmationRequired.ToString().ToLowerInvariant()}");
         builder.AppendLine($"Confirmation provided: {result.ConfirmationProvided.ToString().ToLowerInvariant()}");
+        builder.AppendLine($"Cache lock checked: {result.CacheLock.Checked.ToString().ToLowerInvariant()}");
+        builder.AppendLine($"Cache lock marker: {result.CacheLock.MarkerPath}");
+        builder.AppendLine($"Cache lock present: {result.CacheLock.Present.ToString().ToLowerInvariant()}");
         builder.AppendLine($"Project manifest read: {result.ProjectIdentity.ManifestRead.ToString().ToLowerInvariant()}");
         if (result.ProjectIdentity.ManifestPath is not null)
         {
@@ -562,6 +628,7 @@ internal static class CleanPlanJsonSerializer
                 ["refusalReason"] = result.RefusalReason
             },
             ["projectIdentity"] = ToProjectIdentity(result.ProjectIdentity),
+            ["cacheLock"] = ToCacheLock(result.CacheLock),
             ["reportContract"] = new JsonObject
             {
                 ["status"] = result.SafetyStatus,
@@ -582,6 +649,7 @@ internal static class CleanPlanJsonSerializer
                 ["filesystemMutation"] = result.FilesystemMutation,
                 ["targetRootExistenceCheck"] = result.DeleteBehavior,
                 ["projectManifestRead"] = result.ProjectIdentity.ManifestRead,
+                ["cacheLockCheck"] = result.CacheLock.Checked,
                 ["generatedManifestRead"] = false,
                 ["buildManifestRead"] = false,
                 ["provenanceSidecarRead"] = false,
@@ -639,6 +707,20 @@ internal static class CleanPlanJsonSerializer
             ["confirmationMatches"] = identity.ConfirmationMatches,
             ["refusalStatus"] = identity.RefusalStatus,
             ["refusalReason"] = identity.RefusalReason
+        };
+
+        return json;
+    }
+
+    private static JsonObject ToCacheLock(CleanCacheLock cacheLock)
+    {
+        var json = new JsonObject
+        {
+            ["checked"] = cacheLock.Checked,
+            ["markerPath"] = cacheLock.MarkerPath,
+            ["present"] = cacheLock.Present,
+            ["refusalStatus"] = cacheLock.RefusalStatus,
+            ["refusalReason"] = cacheLock.RefusalReason
         };
 
         return json;

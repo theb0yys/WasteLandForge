@@ -739,8 +739,11 @@ implements explicit `forge clean --generated` execution, and Gate 254
 implements explicit `forge clean --dist` execution, and Gate 255 implements
 explicit `forge clean --cache` execution, and Gate 256 implements confirmed
 `forge clean --all` execution, and Gate 257 implements all-scope project-ID
-confirmation validation. Route the next implementation slice to Gate 258:
-active-build/cache-lock clean safety skeleton.
+confirmation validation, Gate 258 implements active build/cache lock clean
+safety, Gate 259 closes the `forge clean` command slice, and Gate 260
+implements the `forge release prepare` planning skeleton. Route the next
+implementation slice to Gate 261: forge release prepare local release-plan
+file emission.
 
 - `/forge graph` maps to the real `forge graph` behavior when available. Gate
   236 implements minimal project source graph evidence under `generated/graph`,
@@ -777,8 +780,11 @@ implements explicit `forge clean --generated` execution, and Gate 254
 implements explicit `forge clean --dist` execution, and Gate 255 implements
   explicit `forge clean --cache` execution, and Gate 256 implements confirmed
   `forge clean --all` execution, and Gate 257 implements all-scope project-ID
-  confirmation validation. Route the next implementation slice to Gate 258:
-  active-build/cache-lock clean safety skeleton.
+  confirmation validation, Gate 258 implements active build/cache lock
+  clean safety, Gate 259 closes the `forge clean` command slice, and Gate 260
+  implements the `forge release prepare` planning skeleton. Route the next
+  implementation slice to Gate 261: forge release prepare local release-plan
+  file emission.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a

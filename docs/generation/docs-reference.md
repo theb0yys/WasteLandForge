@@ -153,3 +153,8 @@ Gate 257 implements all-scope project-ID confirmation validation in the clean
 command. Docs generation still does not execute clean behavior, delete files,
 mutate the filesystem, read manifests, inspect artifacts, call external tools,
 run runtime probes, or use AI.
+
+Gate 258 implements active build/cache lock safety in the clean command. Docs
+generation still does not execute clean behavior, delete files, mutate the
+filesystem, read manifests, inspect lock markers, inspect artifacts, call
+external tools, run runtime probes, or use AI.

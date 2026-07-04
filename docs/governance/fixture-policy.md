@@ -895,6 +895,20 @@ and temporary generated, dist, and cache directories in golden CLI tests only
 to prove project-ID confirmation matching, mismatch refusal, missing-manifest
 refusal, and preservation of dry-run behavior.
 
+Gate 258 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses temporary synthetic generated, dist, and
+cache directories plus `.wastelandforge/cache/build.lock` files in golden CLI
+tests only to prove cache-affecting clean refusal and filesystem preservation.
+
+Gate 259 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It is a planning/routing closeout gate and relies on
+existing clean golden coverage as regression evidence.
+
+Gate 260 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses temporary synthetic project directories in
+golden CLI tests only to prove release-prepare planning output, output-root
+refusal, and no filesystem writes.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

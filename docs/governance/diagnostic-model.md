@@ -1078,5 +1078,25 @@ build manifests, reading checksums, reading provenance sidecars, checking
 artifacts beyond the target roots, inspecting provider evidence, executing
 external tools, running runtime probes, or using AI.
 
+Gate 258 adds no new diagnostic rule ID. It implements active build/cache
+lock refusal statuses in the clean report without running the diagnostic
+pipeline, inspecting processes, expiring stale locks, reading generated
+manifests, reading build manifests, reading checksums, reading provenance
+sidecars, checking artifacts beyond the target roots and lock marker,
+inspecting provider evidence, executing external tools, running runtime
+probes, or using AI.
+
+Gate 259 adds no new diagnostic rule ID. It closes the clean command lane as
+planning/routing documentation only, preserving existing clean refusal
+statuses and reports without running the diagnostic pipeline, adding release
+prepare diagnostics, reading release artifacts, inspecting provider evidence,
+executing external tools, running runtime probes, or using AI.
+
+Gate 260 adds no new diagnostic rule ID. Planning-only `forge release prepare`
+uses command status and unsafe-operation refusal metadata rather than the
+diagnostic pipeline. It does not read release artifacts, emit release
+diagnostics, inspect provider evidence, execute external tools, run runtime
+probes, or use AI.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 257 forge clean project-ID confirmation validation
+Status: Gate 260 forge release prepare planning skeleton
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -827,7 +827,37 @@ dist/release-dry-run/checksums.sha256
 ```
 
 `--output` is accepted only when the resolved path stays under project `dist/`.
-`release prepare` and `release publish` remain reserved.
+
+## Release Prepare Planning
+
+Gate 260 implements planning-only `forge release prepare` output:
+
+```text
+forge release prepare [project-root] [--project <path>] [--output dist/<name>]
+```
+
+Supported formats are `human`, `plain`, and `json`. SARIF and GitHub formats
+remain diagnostic-only and are rejected for release-prepare planning. The
+planned output root defaults to `dist/release-prepare`; `--output` is refused
+with exit code 6 when the resolved root is outside project `dist/`.
+
+The planned future outputs are:
+
+```text
+dist/release-prepare/staging/
+dist/release-prepare/release-plan.json
+dist/release-prepare/release-summary.json
+dist/release-prepare/build-manifest.json
+dist/release-prepare/checksums.sha256
+```
+
+Gate 260 writes none of those files. JSON output includes `plannedOutputs`,
+`outputSafety`, `reportContract`, and false `execution` flags for filesystem
+mutation, output writes, archive creation, release publishing, remote
+repository calls, attestation/signing, external tools, plugin mutation,
+MO2/GECK automation, runtime probes, and AI.
+
+`release publish` remains reserved.
 
 ## Docs Evidence
 
@@ -919,7 +949,8 @@ skeleton. Gate 251 adds dry-run path planning. Gate 252 adds all-scope
 confirmation/refusal behavior. Gate 253 adds explicit generated-root
 execution. Gate 254 adds explicit dist-root execution. Gate 255 adds explicit
 cache-root execution. Gate 256 adds confirmed all-root execution. Gate 257
-adds project-ID confirmation validation before all-root mutation:
+adds project-ID confirmation validation before all-root mutation. Gate 258
+adds active build/cache lock safety. Gate 259 closes the clean command slice:
 
 ```text
 forge clean [project-root] [--project <path>] [--generated|--dist|--cache|--all]
@@ -930,7 +961,7 @@ Documented scopes:
 ```text
 --generated  generated/                 safe, non-interactive by default
 --dist       dist/                      safe, non-interactive by default
---cache      .wastelandforge/cache/     safe, warn if a build is active later
+--cache      .wastelandforge/cache/     safe, refuses when .wastelandforge/cache/build.lock is present
 --all        generated/, dist/, cache   severe, requires --yes and --confirm <project-id>
 ```
 
@@ -948,12 +979,25 @@ roots and reports removed and missing paths per root. Explicit dry-runs and
 omitted-scope `forge clean --project <path>` still return path plans without
 deletion. Unsupported or duplicate clean scopes return usage errors.
 Unconfirmed, missing-manifest, invalid-manifest-ID, or mismatched-manifest-ID
-`--all` returns exit code 6 with `status: refused`. Gate 257 does not perform
-full manifest schema validation, load registries, detect active builds or
-cache locks, read generated manifests, read build manifests, read provenance
-sidecars, read checksums, inspect artifacts beyond the selected target roots,
-execute generators, execute package/release behavior, call external tools, run
-runtime probes, or use AI.
+`--all` returns exit code 6 with `status: refused`. Explicit `--cache` and
+manifest-confirmed `--all` also return exit code 6 without deletion when
+`.wastelandforge/cache/build.lock` is present. Gate 258 does not perform full
+manifest schema validation, load registries, inspect processes, expire stale
+locks, read generated manifests, read build manifests, read provenance
+sidecars, read checksums, inspect artifacts beyond the selected target roots
+and lock marker, execute generators, execute package/release behavior, call
+external tools, run runtime probes, or use AI.
+
+Gate 259 records Gate 250 through Gate 258 as the complete current clean
+lane. Deferred clean backlog items include generated manifest reads, build
+manifest reads, provenance sidecar reads, checksum reads, process inspection,
+stale lock expiry, lock ownership metadata, artifact checks beyond target
+roots and the lock marker, generated-output provenance validation before
+deletion, and build/generate lock creation. The next implementation lane is
+`forge release prepare` planning only. It does not add release archive
+creation, publishing, remote repository calls, attestation/signing, external
+tool execution, plugin mutation, MO2/GECK automation, runtime probes, real
+third-party plugin fixtures, or AI behavior.
 
 The diagnostic subject validates rule IDs such as `WF-CAP-004`, maps them to
 the reserved rule family, and explains the family scope, category, validation

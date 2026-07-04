@@ -351,6 +351,21 @@ manifest identity paths, mismatched project-ID refusal, missing-manifest
 refusal, all-scope dry-run preservation, generated/dist/cache regression
 behavior, and synthetic temp-directory fixtures only.
 
+Gate 258 extends `WastelandForge.GoldenTests` coverage for active build/cache
+lock safety. Tests assert explicit cache clean refusal, manifest-confirmed
+all-scope refusal, `cacheLock` report metadata, filesystem preservation when
+`.wastelandforge/cache/build.lock` exists, and synthetic temp-directory
+fixtures only.
+
+Gate 259 adds no new test fixture or runtime test. It records clean command
+closeout and keeps Gate 250 through Gate 258 clean tests as regression
+coverage for the parked clean lane.
+
+Gate 260 extends `WastelandForge.GoldenTests` coverage for planning-only
+`forge release prepare`. Tests assert JSON planning metadata, help boundary
+text, unsafe output-root refusal, false execution flags, and no filesystem
+writes using temporary synthetic project directories only.
+
 Gate 31 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
 dialogue link graph endpoints: `linkTo` targets and `linkFrom` sources that are
 declared topics but have no authored dialogue line.

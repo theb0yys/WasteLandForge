@@ -1,6 +1,6 @@
 # Project Source Graph Output
 
-Status: Gate 257 clean project-ID confirmation validation
+Status: Gate 260 release prepare planning skeleton
 Research classification: Documented
 Source: R004, R006, ADR-007, ADR-009, ADR-010, ADR-011
 
@@ -103,3 +103,20 @@ Gate 257 implements all-scope project-ID confirmation validation in the clean
 command. `forge graph` still does not execute clean behavior, delete files,
 mutate the filesystem, read manifests, inspect artifact existence, call
 external tools, run runtime probes, or use AI.
+
+Gate 258 implements active build/cache lock safety in the clean command.
+`forge graph` still does not execute clean behavior, delete files, mutate the
+filesystem, read manifests, inspect lock markers, inspect artifact existence,
+call external tools, run runtime probes, or use AI.
+
+Gate 259 closes the `forge clean` command slice and routes the next lane to
+`forge release prepare` planning. `forge graph` still does not execute clean
+or release behavior, create release archives, publish releases, call remote
+repositories, inspect artifacts, call external tools, run runtime probes, or
+use AI.
+
+Gate 260 implements planning-only `forge release prepare` metadata. `forge
+graph` still does not execute release prepare, write release-plan files, create
+release archives, publish releases, call remote repositories, sign or attest
+artifacts, inspect artifacts, call external tools, run runtime probes, or use
+AI.

@@ -414,6 +414,28 @@ does not perform full manifest schema validation, load registries, detect
 active builds or cache locks, inspect artifacts beyond the target roots,
 execute generators, call external tools, run runtime probes, or use AI.
 
+Gate 258 adds active build/cache lock safety. The clean planner treats
+`.wastelandforge/cache/build.lock` as the local active build/cache lock marker
+and refuses cache-affecting clean execution for explicit `--cache` and
+manifest-confirmed `--all` when it exists. Refusals preserve the filesystem
+and report `cacheLock` metadata. The implementation still does not inspect
+processes, expire stale locks, read generated/build manifests, inspect
+artifacts beyond the target roots and lock marker, execute generators, call
+external tools, run runtime probes, or use AI.
+
+Gate 259 adds no runtime code. It closes the current `forge clean` lane,
+records deferred clean backlog items, and routes the next implementation lane
+to `forge release prepare` planning without adding release-preparation
+behavior, archive creation, publishing, remote calls, external tools, runtime
+probes, or AI.
+
+Gate 260 adds planning-only release prepare CLI code. `ReleasePreparePlan`
+models the planned output root, future report files, output containment, and
+false execution flags for `forge release prepare` without writing files,
+creating archives, publishing, calling remote repositories, executing external
+tools, mutating plugins, automating MO2 or GECK, running runtime probes, or
+using AI.
+
 Gate 29 adds semantic checks for mutation variable references while preserving
 earlier dialogue registry schema versions in `WastelandForge.Schema`.
 

@@ -93,8 +93,10 @@ internal static class CliHelpWriter
                 WriteReleaseVerifyHelp(writer);
                 return true;
             case "release prepare":
+                WriteReleasePrepareHelp(writer);
+                return true;
             case "release publish":
-                WriteReservedCommandHelp(writer, commandPath, "Release verification and publishing are reserved by ADR-011.");
+                WriteReservedCommandHelp(writer, commandPath, "Release publishing is reserved by ADR-011 for a later governance gate.");
                 return true;
             case "generate":
                 WriteGenerateHelp(writer);
@@ -425,7 +427,7 @@ internal static class CliHelpWriter
         writer.WriteLine("Usage:");
         writer.WriteLine("  forge clean [project-root] [--project <path>] [--generated|--dist|--cache|--all] [--yes] [--confirm <project-id>] [--format human|plain|json] [--dry-run] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Gate 257 deletes only contained generated/, dist/, and .wastelandforge/cache/ roots for explicit clean scopes. Confirmed --all first requires --confirm <project-id> to match the root project manifest id, then deletes those three roots only. Omitted scope, explicit dry-runs, and unconfirmed --all remain path plans or refusals. It does not detect active builds, read generated/build manifests, inspect artifacts beyond target roots, execute generators, call external tools, run runtime probes, or use AI.");
+        writer.WriteLine("Gate 258 deletes only contained generated/, dist/, and .wastelandforge/cache/ roots for explicit clean scopes. Confirmed --all first requires --confirm <project-id> to match the root project manifest id. Cache-affecting execution is refused when .wastelandforge/cache/build.lock is present. Omitted scope, explicit dry-runs, and unconfirmed --all remain path plans or refusals. It does not read generated/build manifests, inspect artifacts beyond target roots, execute generators, call external tools, run runtime probes, or use AI.");
         writer.WriteLine();
         writer.WriteLine("Planned scopes:");
         foreach (var scope in CleanScopeContracts.All)
@@ -436,6 +438,7 @@ internal static class CliHelpWriter
         writer.WriteLine();
         writer.WriteLine("Reporting contract:");
         writer.WriteLine("  Explicit --generated, --dist, --cache, and manifest-confirmed --all remove contained planned roots and report removed or missing paths.");
+        writer.WriteLine("  --cache and manifest-confirmed --all refuse with exit code 6 when .wastelandforge/cache/build.lock is present.");
         writer.WriteLine("  Explicit dry-runs and omitted-scope generated plans report paths without deletion.");
         writer.WriteLine("  Unconfirmed --all returns exit code 6 with the same path plan and no filesystem mutation.");
         writer.WriteLine("  JSON is the canonical machine contract; human/plain output is for operators.");
@@ -540,7 +543,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge release prepare [options]");
         writer.WriteLine("  forge release publish [options]");
         writer.WriteLine();
-        writer.WriteLine("Release verify is implemented. Release prepare and publish remain reserved for later governance gates.");
+        writer.WriteLine("Release verify is implemented. Release prepare currently emits Gate 260 planning metadata only. Release publish remains reserved for a later governance gate.");
     }
 
     private static void WriteReleaseVerifyHelp(TextWriter writer)
@@ -568,6 +571,33 @@ internal static class CliHelpWriter
         writer.WriteLine("  0 release dry-run evidence written");
         writer.WriteLine("  1 blocking diagnostics found");
         writer.WriteLine("  2 usage or unsupported format");
+    }
+
+    private static void WriteReleasePrepareHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge release prepare");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge release prepare [project-root] [--project <path>] [--output dist/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Gate 260 emits a local release-preparation plan only. The planned output root must stay under project dist/ and defaults to dist/release-prepare.");
+        writer.WriteLine("It does not create archives, write release evidence, publish releases, call remote repositories, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.");
+        writer.WriteLine();
+        writer.WriteLine("Planned report outputs:");
+        writer.WriteLine("  dist/release-prepare/staging/");
+        writer.WriteLine("  dist/release-prepare/release-plan.json");
+        writer.WriteLine("  dist/release-prepare/release-summary.json");
+        writer.WriteLine("  dist/release-prepare/build-manifest.json");
+        writer.WriteLine("  dist/release-prepare/checksums.sha256");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge release prepare fixtures/projects/ExampleMod --format json --no-input");
+        writer.WriteLine("  forge release prepare --project fixtures/projects/ExampleMod --output dist/release-candidate --dry-run");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 release-preparation plan written to stdout");
+        writer.WriteLine("  2 usage or unsupported format");
+        writer.WriteLine("  6 unsafe output path refused");
     }
 
     private static void WriteDoctorHelp(TextWriter writer)
