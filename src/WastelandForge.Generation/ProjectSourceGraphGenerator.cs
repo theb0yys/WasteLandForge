@@ -34,7 +34,7 @@ public sealed class ProjectSourceGraphGenerator
         var validationReport = new ProjectValidationPipeline().Validate(projectRoot);
         var issues = new List<DiagnosticIssue>(validationReport.Issues);
         var projectId = validationReport.ProjectId;
-        var emptySummary = new ProjectSourceGraphSummary(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        var emptySummary = new ProjectSourceGraphSummary(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
         if (validationReport.HasErrors)
         {
@@ -233,6 +233,26 @@ public sealed class ProjectSourceGraphGenerator
                 target.Id,
                 null,
                 null));
+
+            foreach (var artifact in target.ArtifactExpectations)
+            {
+                nodes.Add(new ProjectSourceGraphNode(
+                    ArtifactExpectationNodeId(target.Id, artifact.Id),
+                    "generated-artifact-expectation",
+                    artifact.Label,
+                    artifact.Path,
+                    artifact.Boundary));
+            }
+
+            foreach (var manifest in target.ManifestProvenanceReferences)
+            {
+                nodes.Add(new ProjectSourceGraphNode(
+                    ManifestProvenanceReferenceNodeId(target.Id, manifest.Id),
+                    "manifest-provenance-reference",
+                    manifest.Label,
+                    manifest.Path,
+                    manifest.Boundary));
+            }
         }
 
         return nodes
@@ -333,6 +353,42 @@ public sealed class ProjectSourceGraphGenerator
                         ? "writes-distribution-output-boundary"
                         : "writes-generated-output-boundary"));
             }
+
+            foreach (var artifact in target.ArtifactExpectations)
+            {
+                edges.Add(new ProjectSourceGraphEdge(
+                    GeneratorTargetNodeId(target.Id),
+                    ArtifactExpectationNodeId(target.Id, artifact.Id),
+                    "declares-generated-artifact-expectation"));
+                edges.Add(new ProjectSourceGraphEdge(
+                    ArtifactExpectationNodeId(target.Id, artifact.Id),
+                    "boundary:" + artifact.Boundary,
+                    artifact.Boundary.Equals("dist", StringComparison.Ordinal)
+                        ? "expects-distribution-output-boundary"
+                        : "expects-generated-output-boundary"));
+            }
+
+            foreach (var manifest in target.ManifestProvenanceReferences)
+            {
+                edges.Add(new ProjectSourceGraphEdge(
+                    GeneratorTargetNodeId(target.Id),
+                    ManifestProvenanceReferenceNodeId(target.Id, manifest.Id),
+                    "declares-manifest-provenance-reference"));
+                edges.Add(new ProjectSourceGraphEdge(
+                    ManifestProvenanceReferenceNodeId(target.Id, manifest.Id),
+                    "boundary:" + manifest.Boundary,
+                    manifest.Boundary.Equals("dist", StringComparison.Ordinal)
+                        ? "references-distribution-provenance-boundary"
+                        : "references-generated-provenance-boundary"));
+
+                foreach (var artifactId in manifest.CoversArtifactExpectationIds)
+                {
+                    edges.Add(new ProjectSourceGraphEdge(
+                        ManifestProvenanceReferenceNodeId(target.Id, manifest.Id),
+                        ArtifactExpectationNodeId(target.Id, artifactId),
+                        "records-provenance-for-artifact-expectation"));
+                }
+            }
         }
 
         if (sourceFiles.Count > 0)
@@ -377,7 +433,16 @@ public sealed class ProjectSourceGraphGenerator
             edges.Count(edge => StringComparer.Ordinal.Equals(edge.Kind, "feeds-generator-target") ||
                 StringComparer.Ordinal.Equals(edge.Kind, "reads-generated-evidence")),
             edges.Count(edge => StringComparer.Ordinal.Equals(edge.Kind, "writes-generated-output-boundary") ||
-                StringComparer.Ordinal.Equals(edge.Kind, "writes-distribution-output-boundary")));
+                StringComparer.Ordinal.Equals(edge.Kind, "writes-distribution-output-boundary")),
+            generatorTargets.Sum(target => target.ArtifactExpectations.Count),
+            edges.Count(edge => StringComparer.Ordinal.Equals(edge.Kind, "declares-generated-artifact-expectation") ||
+                StringComparer.Ordinal.Equals(edge.Kind, "expects-generated-output-boundary") ||
+                StringComparer.Ordinal.Equals(edge.Kind, "expects-distribution-output-boundary")),
+            generatorTargets.Sum(target => target.ManifestProvenanceReferences.Count),
+            edges.Count(edge => StringComparer.Ordinal.Equals(edge.Kind, "declares-manifest-provenance-reference") ||
+                StringComparer.Ordinal.Equals(edge.Kind, "references-generated-provenance-boundary") ||
+                StringComparer.Ordinal.Equals(edge.Kind, "references-distribution-provenance-boundary") ||
+                StringComparer.Ordinal.Equals(edge.Kind, "records-provenance-for-artifact-expectation")));
     }
 
     private static JsonObject CreateGraphJson(
@@ -500,6 +565,14 @@ public sealed class ProjectSourceGraphGenerator
         builder.Append(summary.GeneratorTargetInputEdges);
         builder.Append("\n- Generator target output edges: ");
         builder.Append(summary.GeneratorTargetOutputEdges);
+        builder.Append("\n- Generated artifact expectations: ");
+        builder.Append(summary.GeneratedArtifactExpectations);
+        builder.Append("\n- Generated artifact expectation edges: ");
+        builder.Append(summary.GeneratedArtifactExpectationEdges);
+        builder.Append("\n- Manifest provenance references: ");
+        builder.Append(summary.ManifestProvenanceReferences);
+        builder.Append("\n- Manifest provenance reference edges: ");
+        builder.Append(summary.ManifestProvenanceReferenceEdges);
         builder.Append("\n\n");
 
         builder.Append("Capability catalogue: `");
@@ -543,6 +616,8 @@ public sealed class ProjectSourceGraphGenerator
         builder.Append("- This is a project source graph skeleton, not a graph visualization renderer.\n");
         builder.Append("- Capability requirement graphing is declaration-only and catalogue-backed.\n");
         builder.Append("- Generator target graphing is declaration-only and does not execute targets.\n");
+        builder.Append("- Generated artifact expectation graphing is declaration-only and does not check file existence.\n");
+        builder.Append("- Manifest provenance reference graphing is declaration-only and does not read generated manifests.\n");
         builder.Append("- Runtime provider resolution and capability scan behavior changes: not implemented.\n");
         builder.Append("- Graph visualization formats: not implemented.\n");
         builder.Append("- Build planning or execution changes: not implemented.\n");
@@ -572,7 +647,11 @@ public sealed class ProjectSourceGraphGenerator
             ["catalogueProviders"] = summary.CatalogueProviders,
             ["generatorTargets"] = summary.GeneratorTargets,
             ["generatorTargetInputEdges"] = summary.GeneratorTargetInputEdges,
-            ["generatorTargetOutputEdges"] = summary.GeneratorTargetOutputEdges
+            ["generatorTargetOutputEdges"] = summary.GeneratorTargetOutputEdges,
+            ["generatedArtifactExpectations"] = summary.GeneratedArtifactExpectations,
+            ["generatedArtifactExpectationEdges"] = summary.GeneratedArtifactExpectationEdges,
+            ["manifestProvenanceReferences"] = summary.ManifestProvenanceReferences,
+            ["manifestProvenanceReferenceEdges"] = summary.ManifestProvenanceReferenceEdges
         };
 
     private static JsonObject ToJson(ProjectSourceGraphNode node)
@@ -614,6 +693,8 @@ public sealed class ProjectSourceGraphGenerator
             ["capabilityScan"] = false,
             ["providerResolution"] = false,
             ["generatorExecution"] = false,
+            ["artifactExistenceCheck"] = false,
+            ["manifestRead"] = false,
             ["buildPlanner"] = false,
             ["packageRelease"] = false,
             ["executesXEdit"] = false,
@@ -705,31 +786,108 @@ public sealed class ProjectSourceGraphGenerator
             ["generate", "build"],
             ["wastelandforge.json", "src/registries/"],
             ["generated", "dist"],
-            ReadsGeneratedEvidence: false),
+            ReadsGeneratedEvidence: false,
+            ArtifactExpectations:
+            [
+                new("generated-report-json", "Generated metadata report JSON", "generated/reports/*-report.json", "generated"),
+                new("generated-validation-json", "Generated validation report JSON", "generated/reports/validation.json", "generated"),
+                new("generated-generation-manifest", "Generated reports manifest", "generated/reports/generation-manifest.json", "generated"),
+                new("dist-report-json", "Distribution metadata report JSON", "dist/build/*-report.json", "dist"),
+                new("dist-validation-json", "Distribution validation report JSON", "dist/build/validation.json", "dist"),
+                new("dist-build-manifest", "Distribution build manifest", "dist/build/build-manifest.json", "dist"),
+                new("dist-checksums", "Distribution checksum sidecar", "dist/build/checksums.sha256", "dist")
+            ],
+            ManifestProvenanceReferences:
+            [
+                new("generated-generation-manifest", "Generated reports generation manifest provenance", "generated/reports/generation-manifest.json", "generated", ["generated-report-json", "generated-validation-json"]),
+                new("dist-build-manifest", "Distribution reports build manifest provenance", "dist/build/build-manifest.json", "dist", ["dist-report-json", "dist-validation-json"])
+            ]),
         new(
             McmJsonGenerator.Target,
             ["generate", "build"],
             ["src/registries/dependencies/", "src/registries/capabilities/", "src/registries/mcm/", "src/registries/assets/"],
             ["generated", "dist"],
-            ReadsGeneratedEvidence: false),
+            ReadsGeneratedEvidence: false,
+            ArtifactExpectations:
+            [
+                new("generated-menu-json", "Generated MCM runtime menu JSON", "generated/mcm-json/MCM/*.json", "generated"),
+                new("generated-translations", "Generated MCM translation INI", "generated/mcm-json/MCM/Translations/*.ini", "generated"),
+                new("generated-staged-assets", "Generated MCM staged assets", "generated/mcm-json/textures/*", "generated"),
+                new("generated-package-evidence", "Generated MCM package evidence", "generated/mcm-json/package-*.json", "generated"),
+                new("generated-install-evidence", "Generated MCM install evidence", "generated/mcm-json/install-*.json", "generated"),
+                new("generated-human-summaries", "Generated MCM Markdown summaries", "generated/mcm-json/*.md", "generated"),
+                new("generated-generation-manifest", "Generated MCM generation manifest", "generated/mcm-json/generation-manifest.json", "generated"),
+                new("dist-menu-json", "Distribution MCM runtime menu JSON", "dist/mcm-json/MCM/*.json", "dist"),
+                new("dist-translations", "Distribution MCM translation INI", "dist/mcm-json/MCM/Translations/*.ini", "dist"),
+                new("dist-staged-assets", "Distribution MCM staged assets", "dist/mcm-json/textures/*", "dist"),
+                new("dist-package-evidence", "Distribution MCM package evidence", "dist/mcm-json/package-*.json", "dist"),
+                new("dist-install-evidence", "Distribution MCM install evidence", "dist/mcm-json/install-*.json", "dist"),
+                new("dist-human-summaries", "Distribution MCM Markdown summaries", "dist/mcm-json/*.md", "dist"),
+                new("dist-package-archive", "Distribution MCM package archive", "dist/mcm-json/package.zip", "dist"),
+                new("dist-build-manifest", "Distribution MCM build manifest", "dist/mcm-json/build-manifest.json", "dist"),
+                new("dist-checksums", "Distribution MCM checksum sidecar", "dist/mcm-json/checksums.sha256", "dist")
+            ],
+            ManifestProvenanceReferences:
+            [
+                new("generated-generation-manifest", "Generated MCM generation manifest provenance", "generated/mcm-json/generation-manifest.json", "generated", ["generated-menu-json", "generated-translations", "generated-staged-assets", "generated-package-evidence", "generated-install-evidence", "generated-human-summaries"]),
+                new("generated-package-manifest", "Generated MCM package manifest provenance", "generated/mcm-json/package-manifest.json", "generated", ["generated-menu-json", "generated-translations", "generated-staged-assets"]),
+                new("dist-build-manifest", "Distribution MCM build manifest provenance", "dist/mcm-json/build-manifest.json", "dist", ["dist-menu-json", "dist-translations", "dist-staged-assets", "dist-package-evidence", "dist-install-evidence", "dist-human-summaries", "dist-package-archive"]),
+                new("dist-package-manifest", "Distribution MCM package manifest provenance", "dist/mcm-json/package-manifest.json", "dist", ["dist-menu-json", "dist-translations", "dist-staged-assets", "dist-package-archive"])
+            ]),
         new(
             JipScriptFileEmitter.Target,
             ["generate", "build"],
             ["src/registries/dependencies/", "src/registries/capabilities/", "src/registries/jip-scripts/"],
             ["generated", "dist"],
-            ReadsGeneratedEvidence: false),
+            ReadsGeneratedEvidence: false,
+            ArtifactExpectations:
+            [
+                new("generated-script-text", "Generated JIP script text", "generated/jip-scripts/nvse/plugins/scripts/*.txt", "generated"),
+                new("generated-emission-manifest", "Generated JIP emission manifest", "generated/jip-scripts/jip-script-emission-manifest.json", "generated"),
+                new("generated-checksums", "Generated JIP checksum sidecar", "generated/jip-scripts/checksums.sha256", "generated"),
+                new("dist-script-text", "Distribution JIP script text", "dist/jip-scripts/nvse/plugins/scripts/*.txt", "dist"),
+                new("dist-build-manifest", "Distribution JIP build manifest", "dist/jip-scripts/build-manifest.json", "dist"),
+                new("dist-checksums", "Distribution JIP checksum sidecar", "dist/jip-scripts/checksums.sha256", "dist")
+            ],
+            ManifestProvenanceReferences:
+            [
+                new("generated-emission-manifest", "Generated JIP emission manifest provenance", "generated/jip-scripts/jip-script-emission-manifest.json", "generated", ["generated-script-text"]),
+                new("dist-build-manifest", "Distribution JIP build manifest provenance", "dist/jip-scripts/build-manifest.json", "dist", ["dist-script-text"])
+            ]),
         new(
             XEditAuditScriptScaffoldEmitter.Target,
             ["generate"],
             ["src/registries/dependencies/", "src/registries/capabilities/", "src/registries/xedit-audit/"],
             ["generated"],
-            ReadsGeneratedEvidence: false),
+            ReadsGeneratedEvidence: false,
+            ArtifactExpectations:
+            [
+                new("generated-script-scaffold", "Generated xEdit audit script scaffold", "generated/xedit-audit/scripts/*.pas", "generated"),
+                new("expected-report-json", "Expected xEdit audit report JSON", "generated/xedit-audit/reports/*.json", "generated"),
+                new("generated-script-manifest", "Generated xEdit audit script manifest", "generated/xedit-audit/xedit-audit-script-manifest.json", "generated"),
+                new("generated-checksums", "Generated xEdit audit checksum sidecar", "generated/xedit-audit/checksums.sha256", "generated")
+            ],
+            ManifestProvenanceReferences:
+            [
+                new("generated-script-manifest", "Generated xEdit audit script manifest provenance", "generated/xedit-audit/xedit-audit-script-manifest.json", "generated", ["generated-script-scaffold", "expected-report-json"])
+            ]),
         new(
             XEditAuditReportHandoffEmitter.CommandTarget,
             ["generate"],
             [],
             ["generated"],
-            ReadsGeneratedEvidence: true)
+            ReadsGeneratedEvidence: true,
+            ArtifactExpectations:
+            [
+                new("generated-handoff-json", "Generated xEdit audit handoff JSON", "generated/xedit-audit/xedit-audit-report-handoff.json", "generated"),
+                new("generated-handoff-text", "Generated xEdit audit handoff text", "generated/xedit-audit/xedit-audit-report-handoff.txt", "generated"),
+                new("generated-handoff-manifest", "Generated xEdit audit handoff manifest", "generated/xedit-audit/xedit-audit-report-handoff-manifest.json", "generated"),
+                new("generated-handoff-checksums", "Generated xEdit audit handoff checksum sidecar", "generated/xedit-audit/xedit-audit-report-handoff-checksums.sha256", "generated")
+            ],
+            ManifestProvenanceReferences:
+            [
+                new("generated-handoff-manifest", "Generated xEdit audit handoff manifest provenance", "generated/xedit-audit/xedit-audit-report-handoff-manifest.json", "generated", ["generated-handoff-json", "generated-handoff-text"])
+            ])
     ];
 
     private static bool TargetConsumesSource(GeneratorTargetDefinition target, string displayPath) =>
@@ -750,6 +908,12 @@ public sealed class ProjectSourceGraphGenerator
     private static string CatalogueNodeId(CapabilityCatalog catalog) => "catalogue:" + catalog.CatalogId;
 
     private static string GeneratorTargetNodeId(string targetId) => "generator-target:" + targetId;
+
+    private static string ArtifactExpectationNodeId(string targetId, string artifactId) =>
+        "artifact-expectation:" + targetId + ":" + artifactId;
+
+    private static string ManifestProvenanceReferenceNodeId(string targetId, string manifestId) =>
+        "manifest-reference:" + targetId + ":" + manifestId;
 
     private static IReadOnlyList<string> CollectSourceFiles(string projectRoot)
     {
@@ -852,7 +1016,22 @@ public sealed class ProjectSourceGraphGenerator
         IReadOnlyList<string> Commands,
         IReadOnlyList<string> SourcePrefixes,
         IReadOnlyList<string> OutputBoundaries,
-        bool ReadsGeneratedEvidence);
+        bool ReadsGeneratedEvidence,
+        IReadOnlyList<ArtifactExpectationDefinition> ArtifactExpectations,
+        IReadOnlyList<ManifestProvenanceReferenceDefinition> ManifestProvenanceReferences);
+
+    private sealed record ArtifactExpectationDefinition(
+        string Id,
+        string Label,
+        string Path,
+        string Boundary);
+
+    private sealed record ManifestProvenanceReferenceDefinition(
+        string Id,
+        string Label,
+        string Path,
+        string Boundary,
+        IReadOnlyList<string> CoversArtifactExpectationIds);
 
     private sealed record ReproducibleTimestamp(string Source, long UnixTime, string Utc);
 }

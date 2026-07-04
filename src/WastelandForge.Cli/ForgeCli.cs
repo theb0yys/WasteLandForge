@@ -97,6 +97,11 @@ internal static class ForgeCli
             return RunGraphCommand(resolution.RemainingArgs);
         }
 
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "explain"))
+        {
+            return RunExplainCommand(resolution.RemainingArgs);
+        }
+
         if (StringComparer.Ordinal.Equals(resolution.CommandPath, "capabilities list"))
         {
             return RunCapabilitiesList(resolution.RemainingArgs);
@@ -746,6 +751,126 @@ internal static class ForgeCli
         }
 
         return (int)CliExitCode.Usage;
+    }
+
+    private static int RunExplainCommand(string[] args)
+    {
+        if (args.Length == 0)
+        {
+            return RunReservedCommand("explain", args);
+        }
+
+        if (StringComparer.Ordinal.Equals(args[0], "diagnostic"))
+        {
+            var parse = ParseExplainDiagnosticOptions(args[1..]);
+            if (!parse.Success)
+            {
+                WriteUsage(parse.Format, "explain diagnostic", parse.Message);
+                return (int)CliExitCode.Usage;
+            }
+
+            var result = ExplainDiagnosticRuleFamilies.Explain(parse.RuleId);
+            var payload = CliConstants.IsMachineFormat(parse.Format)
+                ? ExplainDiagnosticJsonSerializer.Serialize(result)
+                : ExplainDiagnosticTextRenderer.Render(result);
+            Console.Write(payload);
+
+            return (int)CliExitCode.Success;
+        }
+
+        if (StringComparer.Ordinal.Equals(args[0], "target"))
+        {
+            var parse = ParseExplainTargetOptions(args[1..]);
+            if (!parse.Success)
+            {
+                WriteUsage(parse.Format, "explain target", parse.Message);
+                return (int)CliExitCode.Usage;
+            }
+
+            if (!ExplainTargetCatalog.TryExplain(parse.TargetId, out var result))
+            {
+                WriteUsage(parse.Format, "explain target", $"Unknown explain target '{parse.TargetId}'. Use a documented target such as mcm-json, docs, graph, or release-verify.");
+                return (int)CliExitCode.Usage;
+            }
+
+            var payload = CliConstants.IsMachineFormat(parse.Format)
+                ? ExplainTargetJsonSerializer.Serialize(result)
+                : ExplainTargetTextRenderer.Render(result);
+            Console.Write(payload);
+
+            return (int)CliExitCode.Success;
+        }
+
+        if (StringComparer.Ordinal.Equals(args[0], "output"))
+        {
+            var parse = ParseExplainOutputOptions(args[1..]);
+            if (!parse.Success)
+            {
+                WriteUsage(parse.Format, "explain output", parse.Message);
+                return (int)CliExitCode.Usage;
+            }
+
+            if (!ExplainOutputCatalog.TryExplain(parse.OutputPath, out var result))
+            {
+                WriteUsage(parse.Format, "explain output", $"Unknown explain output path '{parse.OutputPath}'. Use a documented generated/ or dist/ output path such as generated/docs/reference-index.json.");
+                return (int)CliExitCode.Usage;
+            }
+
+            var payload = CliConstants.IsMachineFormat(parse.Format)
+                ? ExplainOutputJsonSerializer.Serialize(result)
+                : ExplainOutputTextRenderer.Render(result);
+            Console.Write(payload);
+
+            return (int)CliExitCode.Success;
+        }
+
+        if (StringComparer.Ordinal.Equals(args[0], "capability"))
+        {
+            var parse = ParseExplainCapabilityOptions(args[1..]);
+            if (!parse.Success)
+            {
+                WriteUsage(parse.Format, "explain capability", parse.Message);
+                return (int)CliExitCode.Usage;
+            }
+
+            if (!ExplainCapabilityCatalog.TryExplain(parse.CapabilityId, out var result))
+            {
+                WriteUsage(parse.Format, "explain capability", $"Unknown explain capability '{parse.CapabilityId}'. Use a documented capability such as runtime.scripting.xnvse, runtime.ui.mcm_json, tool.xedit, or tool.mo2.");
+                return (int)CliExitCode.Usage;
+            }
+
+            var payload = CliConstants.IsMachineFormat(parse.Format)
+                ? ExplainCapabilityJsonSerializer.Serialize(result)
+                : ExplainCapabilityTextRenderer.Render(result);
+            Console.Write(payload);
+
+            return (int)CliExitCode.Success;
+        }
+
+        if (StringComparer.Ordinal.Equals(args[0], "provenance"))
+        {
+            var parse = ParseExplainProvenanceOptions(args[1..]);
+            if (!parse.Success)
+            {
+                WriteUsage(parse.Format, "explain provenance", parse.Message);
+                return (int)CliExitCode.Usage;
+            }
+
+            if (!ExplainProvenanceCatalog.TryExplain(parse.Path, out var result))
+            {
+                WriteUsage(parse.Format, "explain provenance", $"Unknown explain provenance path '{parse.Path}'. Use a documented generated/ or dist/ output path such as dist/build/build-manifest.json or generated/docs/reference-index.json.");
+                return (int)CliExitCode.Usage;
+            }
+
+            var payload = CliConstants.IsMachineFormat(parse.Format)
+                ? ExplainProvenanceJsonSerializer.Serialize(result)
+                : ExplainProvenanceTextRenderer.Render(result);
+            Console.Write(payload);
+
+            return (int)CliExitCode.Success;
+        }
+
+        return RunReservedCommand("explain", args);
     }
 
     private static CommandResolution ResolveCommand(string[] args)
@@ -1989,6 +2114,286 @@ internal static class ForgeCli
         return format;
     }
 
+    private static ExplainDiagnosticParseResult ParseExplainDiagnosticOptions(string[] args)
+    {
+        var format = "human";
+        RuleId? ruleId = null;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return ExplainDiagnosticParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return ExplainDiagnosticParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return ExplainDiagnosticParseResult.Fail(format, $"--format {format} is only available for diagnostic report commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return ExplainDiagnosticParseResult.Fail(format, $"Unsupported explain diagnostic option '{arg}'.");
+            }
+
+            if (ruleId is not null)
+            {
+                return ExplainDiagnosticParseResult.Fail(format, "Diagnostic rule ID was specified more than once.");
+            }
+
+            if (!RuleId.TryParse(arg, out var parsedRuleId))
+            {
+                return ExplainDiagnosticParseResult.Fail(format, $"Invalid diagnostic rule ID '{arg}'. Use a reserved WastelandForge rule ID such as WF-CAP-004.");
+            }
+
+            ruleId = parsedRuleId;
+        }
+
+        if (ruleId is null)
+        {
+            return ExplainDiagnosticParseResult.Fail(format, "Missing diagnostic rule ID.");
+        }
+
+        return ExplainDiagnosticParseResult.Ok(ruleId.Value, format);
+    }
+
+    private static ExplainTargetParseResult ParseExplainTargetOptions(string[] args)
+    {
+        var format = "human";
+        string? targetId = null;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return ExplainTargetParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return ExplainTargetParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return ExplainTargetParseResult.Fail(format, $"--format {format} is only available for diagnostic report commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return ExplainTargetParseResult.Fail(format, $"Unsupported explain target option '{arg}'.");
+            }
+
+            if (targetId is not null)
+            {
+                return ExplainTargetParseResult.Fail(format, "Target ID was specified more than once.");
+            }
+
+            targetId = arg;
+        }
+
+        if (targetId is null)
+        {
+            return ExplainTargetParseResult.Fail(format, "Missing target ID.");
+        }
+
+        return ExplainTargetParseResult.Ok(targetId, format);
+    }
+
+    private static ExplainOutputParseResult ParseExplainOutputOptions(string[] args)
+    {
+        var format = "human";
+        string? outputPath = null;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return ExplainOutputParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return ExplainOutputParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return ExplainOutputParseResult.Fail(format, $"--format {format} is only available for diagnostic report commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return ExplainOutputParseResult.Fail(format, $"Unsupported explain output option '{arg}'.");
+            }
+
+            if (outputPath is not null)
+            {
+                return ExplainOutputParseResult.Fail(format, "Output path was specified more than once.");
+            }
+
+            outputPath = arg;
+        }
+
+        if (outputPath is null)
+        {
+            return ExplainOutputParseResult.Fail(format, "Missing output path.");
+        }
+
+        return ExplainOutputParseResult.Ok(outputPath, format);
+    }
+
+    private static ExplainCapabilityParseResult ParseExplainCapabilityOptions(string[] args)
+    {
+        var format = "human";
+        string? capabilityId = null;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return ExplainCapabilityParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return ExplainCapabilityParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return ExplainCapabilityParseResult.Fail(format, $"--format {format} is only available for diagnostic report commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return ExplainCapabilityParseResult.Fail(format, $"Unsupported explain capability option '{arg}'.");
+            }
+
+            if (capabilityId is not null)
+            {
+                return ExplainCapabilityParseResult.Fail(format, "Capability ID was specified more than once.");
+            }
+
+            capabilityId = arg;
+        }
+
+        if (capabilityId is null)
+        {
+            return ExplainCapabilityParseResult.Fail(format, "Missing capability ID.");
+        }
+
+        return ExplainCapabilityParseResult.Ok(capabilityId, format);
+    }
+
+    private static ExplainProvenanceParseResult ParseExplainProvenanceOptions(string[] args)
+    {
+        var format = "human";
+        string? path = null;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return ExplainProvenanceParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return ExplainProvenanceParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return ExplainProvenanceParseResult.Fail(format, $"--format {format} is only available for diagnostic report commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return ExplainProvenanceParseResult.Fail(format, $"Unsupported explain provenance option '{arg}'.");
+            }
+
+            if (path is not null)
+            {
+                return ExplainProvenanceParseResult.Fail(format, "Manifest or output path was specified more than once.");
+            }
+
+            path = arg;
+        }
+
+        if (path is null)
+        {
+            return ExplainProvenanceParseResult.Fail(format, "Missing manifest or output path.");
+        }
+
+        return ExplainProvenanceParseResult.Ok(path, format);
+    }
+
     private static bool TryReadValue(string[] args, ref int index, out string value)
     {
         if (index + 1 >= args.Length)
@@ -2743,5 +3148,70 @@ internal static class ForgeCli
 
         public static DoctorExportParseResult Fail(string format, string message) =>
             new(false, null, null, null, [], null, null, null, format, message);
+    }
+
+    private sealed record ExplainDiagnosticParseResult(
+        bool Success,
+        RuleId RuleId,
+        string Format,
+        string Message)
+    {
+        public static ExplainDiagnosticParseResult Ok(RuleId ruleId, string format) =>
+            new(true, ruleId, format, string.Empty);
+
+        public static ExplainDiagnosticParseResult Fail(string format, string message) =>
+            new(false, default, format, message);
+    }
+
+    private sealed record ExplainTargetParseResult(
+        bool Success,
+        string TargetId,
+        string Format,
+        string Message)
+    {
+        public static ExplainTargetParseResult Ok(string targetId, string format) =>
+            new(true, targetId, format, string.Empty);
+
+        public static ExplainTargetParseResult Fail(string format, string message) =>
+            new(false, string.Empty, format, message);
+    }
+
+    private sealed record ExplainOutputParseResult(
+        bool Success,
+        string OutputPath,
+        string Format,
+        string Message)
+    {
+        public static ExplainOutputParseResult Ok(string outputPath, string format) =>
+            new(true, outputPath, format, string.Empty);
+
+        public static ExplainOutputParseResult Fail(string format, string message) =>
+            new(false, string.Empty, format, message);
+    }
+
+    private sealed record ExplainCapabilityParseResult(
+        bool Success,
+        string CapabilityId,
+        string Format,
+        string Message)
+    {
+        public static ExplainCapabilityParseResult Ok(string capabilityId, string format) =>
+            new(true, capabilityId, format, string.Empty);
+
+        public static ExplainCapabilityParseResult Fail(string format, string message) =>
+            new(false, string.Empty, format, message);
+    }
+
+    private sealed record ExplainProvenanceParseResult(
+        bool Success,
+        string Path,
+        string Format,
+        string Message)
+    {
+        public static ExplainProvenanceParseResult Ok(string path, string format) =>
+            new(true, path, format, string.Empty);
+
+        public static ExplainProvenanceParseResult Fail(string format, string message) =>
+            new(false, string.Empty, format, message);
     }
 }

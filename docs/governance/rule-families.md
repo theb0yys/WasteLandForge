@@ -488,3 +488,57 @@ Gate 237 adds no new rule family or diagnostic ID. `forge graph` capability
 requirement graph generation remains under the existing `WF-GEN-*`
 generated-output containment boundary and does not project new `WF-CAP-*`
 diagnostics.
+
+Gate 238 adds no new rule family or diagnostic ID. `forge graph` generator
+target graph generation remains under the existing `WF-GEN-*`
+generated-output containment boundary and does not execute generator targets.
+
+Gate 239 adds no new rule family or diagnostic ID. `forge graph` generated
+artifact expectation graph generation remains under the existing `WF-GEN-*`
+generated-output containment boundary and does not check generated artifact
+existence.
+
+Gate 240 adds no new rule family or diagnostic ID. `forge graph` manifest
+provenance reference graph generation remains under the existing `WF-GEN-*`
+generated-output containment boundary and does not read generated manifests.
+
+Gate 241 adds no new rule family or diagnostic ID. It only records graph lane
+closeout and the transition to top-level `forge explain` planning.
+
+Gate 242 adds no new rule family or diagnostic ID. It only records the
+top-level `forge explain` subject contract and reserved status skeleton for
+diagnostic, target, output, capability, and provenance explanations.
+
+Gate 243 adds no new rule family or diagnostic ID. The diagnostic explain
+subject explains existing reserved rule families at family level only;
+rule-specific catalogue metadata remains future work.
+
+Gate 244 adds no new rule family or diagnostic ID. The diagnostic explain
+subject now embeds documented concrete rule metadata for existing loader,
+schema, semantic, capability, asset, generator, build, and release rule IDs,
+while valid reserved IDs without embedded metadata continue to use
+family-level fallback explanation.
+
+Gate 245 adds no new rule family or diagnostic ID. The target explain subject
+uses deterministic target metadata only and does not inspect diagnostics or
+assign any new `WF-*` rule IDs.
+
+Gate 246 adds no new rule family or diagnostic ID. The output explain subject
+uses deterministic output path metadata only and does not inspect diagnostics,
+generated manifests, provenance sidecars, or artifacts.
+
+Gate 247 adds no new rule family or diagnostic ID. The capability explain
+subject uses deterministic built-in capability catalogue metadata only and
+does not inspect diagnostics, provider evidence, generated manifests,
+provenance sidecars, or artifacts.
+
+Gate 248 adds no new rule family or diagnostic ID. The provenance explain
+subject uses deterministic output and target metadata only and does not
+inspect diagnostics, generated manifests, build manifests, checksums,
+provenance sidecars, or artifacts.
+
+Gate 249 adds no new rule family or diagnostic ID. It closes the documented
+top-level `forge explain` subject lane and routes the next lane to
+`forge clean` planning without inspecting diagnostics, generated manifests,
+build manifests, checksums, provenance sidecars, artifacts, provider evidence,
+external tools, runtime probes, or AI.

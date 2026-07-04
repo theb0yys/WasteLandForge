@@ -233,6 +233,76 @@ summary counts, manifest evidence, explicit no-scan/no-provider-resolution
 execution flags, dry-run no-write behavior, and continued avoidance of `Data`
 writes.
 
+Gate 238 extends that golden CLI coverage for `forge graph` with
+declaration-only generator target graph metadata. Tests assert generator target
+nodes and source/output edges, generated-evidence handoff edges, summary
+counts, manifest evidence, explicit no-execution flags, dry-run no-write
+behavior, and continued avoidance of `Data` writes.
+
+Gate 239 extends that golden CLI coverage for `forge graph` with
+declaration-only generated artifact expectation graph metadata. Tests assert
+artifact expectation nodes, target-to-expectation edges, expectation-to-boundary
+edges, summary counts, manifest evidence, explicit no-existence-check flags,
+dry-run no-write behavior, and continued avoidance of `Data` writes.
+
+Gate 240 extends that golden CLI coverage for `forge graph` with
+declaration-only manifest provenance reference graph metadata. Tests assert
+manifest reference nodes, target-to-manifest edges, manifest-to-artifact edges,
+manifest-to-boundary edges, summary counts, manifest evidence, explicit
+no-manifest-read flags, dry-run no-write behavior, and continued avoidance of
+`Data` writes.
+
+Gate 241 is a planning/routing closeout gate for `forge graph`. It adds no new
+fixture, golden output, test project, or runtime behavior; validation stays on
+build/test smoke plus documentation and routing consistency checks.
+
+Gate 242 extends `WastelandForge.GoldenTests` coverage for top-level
+`forge explain` planning. Tests assert `forge help explain` lists diagnostic,
+target, output, capability, and provenance subjects, and that Gate 242
+placeholder JSON includes those planned subjects plus false execution flags
+while still exiting with usage code 2.
+
+Gate 243 extends `WastelandForge.GoldenTests` coverage for
+`forge explain diagnostic <rule-id>`. Tests assert plain output uses reserved
+rule-family metadata, JSON output includes false execution flags, invalid rule
+IDs return usage JSON, and non-diagnostic explain subjects still use the Gate
+242 placeholder status.
+
+Gate 244 extends `WastelandForge.GoldenTests` coverage for
+`forge explain diagnostic <rule-id>` rule metadata. Tests assert documented
+concrete rule metadata appears in plain and JSON output, execution flags remain
+false, and valid reserved IDs without embedded concrete metadata fall back to
+family-level output.
+
+Gate 245 extends `WastelandForge.GoldenTests` coverage for
+`forge explain target <target-id>`. Tests assert documented target metadata
+appears in plain and JSON output, execution flags remain false, unknown target
+IDs return usage JSON, and non-target explain subjects still use the Gate 242
+placeholder status.
+
+Gate 246 extends `WastelandForge.GoldenTests` coverage for
+`forge explain output <generated-or-dist-path>`. Tests assert documented
+generated/dist output path metadata appears in plain and JSON output,
+execution flags remain false, unknown output paths return usage JSON, and
+the capability and provenance explain subjects still use placeholder status at
+Gate 246.
+
+Gate 247 extends `WastelandForge.GoldenTests` coverage for
+`forge explain capability <capability-id>`. Tests assert built-in capability
+catalogue metadata appears in plain and JSON output, execution flags remain
+false, and unknown capability IDs return usage JSON.
+
+Gate 248 extends `WastelandForge.GoldenTests` coverage for
+`forge explain provenance <manifest-or-output-path>`. Tests assert provenance
+boundary planning appears in plain and JSON output, execution flags remain
+false, unknown provenance paths return usage JSON, and unknown explain
+subjects still return reserved-command JSON.
+
+Gate 249 adds no new test files or runtime test cases. It closes the
+documented top-level `forge explain` command slice and routes the next
+implementation lane to `forge clean` planning, relying on the Gate 243 through
+Gate 248 golden coverage plus the full local suite for regression evidence.
+
 Gate 31 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
 dialogue link graph endpoints: `linkTo` targets and `linkFrom` sources that are
 declared topics but have no authored dialogue line.

@@ -783,6 +783,73 @@ plugin files, provider DLLs, Bethesda assets, third-party mod files, local
 install snapshots, MO2 profiles, GECK outputs, external tool fixtures, or
 generated evidence fixtures.
 
+Gate 238 commits no generated graph output. It uses temp-copied synthetic
+project fixtures for `forge graph` golden tests and commits no generated graph
+JSON, generated graph Markdown, graph manifests, checksum sidecars, generated
+target outputs, provider status fixtures, scanner output fixtures, static site
+output, xEdit outputs, plugin files, provider DLLs, Bethesda assets,
+third-party mod files, local install snapshots, MO2 profiles, GECK outputs,
+external tool fixtures, or generated evidence fixtures.
+
+Gate 239 commits no generated graph output. It uses temp-copied synthetic
+project fixtures for `forge graph` golden tests and commits no generated graph
+JSON, generated graph Markdown, graph manifests, checksum sidecars, generated
+artifact output fixtures, provider status fixtures, scanner output fixtures,
+static site output, xEdit outputs, plugin files, provider DLLs, Bethesda
+assets, third-party mod files, local install snapshots, MO2 profiles, GECK
+outputs, external tool fixtures, or generated evidence fixtures.
+
+Gate 240 commits no generated graph output. It uses temp-copied synthetic
+project fixtures for `forge graph` golden tests and commits no generated graph
+JSON, generated graph Markdown, graph manifests, checksum sidecars, generated
+manifest fixtures, generated artifact output fixtures, provider status
+fixtures, scanner output fixtures, static site output, xEdit outputs, plugin
+files, provider DLLs, Bethesda assets, third-party mod files, local install
+snapshots, MO2 profiles, GECK outputs, external tool fixtures, or generated
+evidence fixtures.
+
+Gate 241 adds no public fixture, private fixture, generated graph golden
+payload, or real provider sample. It is validated by documentation/routing
+consistency plus normal local build/test smoke checks.
+
+Gate 242 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses existing golden CLI tests for `forge help
+explain` and reserved JSON metadata only.
+
+Gate 243 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses golden CLI tests only for
+`forge explain diagnostic <rule-id>` plain, JSON, and usage output.
+
+Gate 244 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It extends golden CLI tests only for documented rule
+metadata and reserved-family fallback output from
+`forge explain diagnostic <rule-id>`.
+
+Gate 245 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It extends golden CLI tests only for documented target
+metadata, unknown-target usage output, and reserved-subject behavior from
+`forge explain target <target-id>`.
+
+Gate 246 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It extends golden CLI tests only for documented output
+path classification, unknown-output usage output, and reserved-subject
+behavior from `forge explain output <generated-or-dist-path>`.
+
+Gate 247 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It extends golden CLI tests only for built-in
+capability catalogue metadata, unknown-capability usage output, and
+reserved-subject behavior from `forge explain capability <capability-id>`.
+
+Gate 248 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It extends golden CLI tests only for deterministic
+provenance boundary planning, unknown-provenance usage output, and
+unknown-subject reserved JSON from `forge explain provenance
+<manifest-or-output-path>`.
+
+Gate 249 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It is a documentation and routing closeout for the
+top-level `forge explain` lane and a transition to `forge clean` planning.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

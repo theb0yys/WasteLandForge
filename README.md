@@ -2,17 +2,25 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 237 extends
-`forge graph` with deterministic declaration-only capability requirement graph
-evidence under `generated/graph/`. The graph links the project, source
-manifest/registry documents, dependency requirements, built-in catalogue
-capabilities/providers, and generated/dist output boundaries while the docs
-lane continues to expose schema, registry, rule, capability, provider, and
-command reference pages.
+The project is currently in gated v0.1 implementation. Gate 249 closes the
+top-level `forge explain` lane and routes the next implementation lane to
+`forge clean` planning. The implemented explain subjects are
+`diagnostic <rule-id>`, `target <target-id>`,
+`output <generated-or-dist-path>`, `capability <capability-id>`, and
+`provenance <manifest-or-output-path>`. They emit deterministic local
+explanation metadata without reading project diagnostics, generated manifests,
+build manifests, provenance sidecars, checksums, artifacts, local provider
+evidence, external tools, runtime probes, or AI.
 Existing xEdit audit scaffold and handoff commands remain available, but Forge
 still does not execute xEdit, generate real xEdit reports, generate patches,
-mutate plugins, automate MO2 or GECK, run runtime probes, add xEdit
-build/package targets, publish docs, or use real third-party plugin fixtures.
+mutate plugins, automate MO2 or GECK, run runtime probes, execute generator
+targets through `forge graph`, check generated artifact existence through
+`forge graph`, read generated manifests through `forge graph`, add xEdit
+build/package targets, publish docs, implement `forge clean`, delete generated
+files, read provenance sidecars through `forge explain`, inspect project
+diagnostic reports through `forge explain`, plan builds through
+`forge explain target`, execute generators through `forge explain target`, or
+use real third-party plugin fixtures.
 
 ## Architecture Spine
 
@@ -619,8 +627,96 @@ built-in catalogue capability and provider nodes in the generated graph and
 manifest evidence, while still avoiding capability scans, provider status
 resolution, graph visualization formats, `--subject`, build planning changes,
 package/release behavior, xEdit execution, plugin mutation, MO2/GECK
-automation, runtime probes, real third-party plugin fixtures, or AI. The next
-graph slice is Gate 238: generator target graph skeleton.
+automation, runtime probes, real third-party plugin fixtures, or AI.
+
+Gate 238 extends `forge graph` with declaration-only generator target graph
+nodes for the currently implemented generation targets. Source registry
+documents feed known targets, targets link to generated/dist output
+boundaries, and the xEdit audit report handoff records that it reads generated
+evidence while still avoiding target execution, build planning changes,
+capability scans, provider status resolution, graph visualization formats,
+`--subject`, package/release behavior, xEdit execution, plugin mutation,
+MO2/GECK automation, runtime probes, real third-party plugin fixtures, or AI.
+
+Gate 239 extends `forge graph` with declaration-only generated artifact
+expectation nodes. Known generator targets now link to expected artifact
+families such as report JSON, MCM menu JSON, JIP text scripts, xEdit scaffold
+files, handoff sidecars, manifests, checksums, and package archives, and each
+expectation links to the generated or dist boundary. The graph still does not
+execute targets, check artifact existence, change build planning, run
+capability scans, resolve provider status, render graph visualization formats,
+accept `--subject`, package/release outputs, execute xEdit, mutate plugins,
+automate MO2/GECK, run runtime probes, use real third-party plugin fixtures,
+or use AI.
+
+Gate 240 extends `forge graph` with declaration-only manifest provenance
+reference nodes. Known generator targets now link to manifest sidecar families
+that record provenance for expected artifact families, and those manifest
+references link to generated/dist boundaries. The graph still does not read
+generated manifests, check artifact existence, execute targets, change build
+planning, run capability scans, resolve provider status, render graph
+visualization formats, accept `--subject`, package/release outputs, execute
+xEdit, mutate plugins, automate MO2/GECK, run runtime probes, use real
+third-party plugin fixtures, or use AI.
+
+Gate 241 closes the current `forge graph` command lane. Gate 236 through Gate
+240 are treated as the complete current graph metadata slice unless explicitly
+reopened. The next value lane is top-level `forge explain`, starting with a
+subject contract and planning skeleton for diagnostic, target, output,
+capability, and provenance explanations while preserving deterministic,
+offline-first behavior.
+
+Gate 242 implements that top-level `forge explain` subject contract as help and
+placeholder JSON metadata only. Planned subjects are diagnostic, target,
+output, capability, and provenance. At Gate 242 the command did not parse
+subject values, read generated manifests, check artifact existence, run build
+planning, execute generators, resolve providers, change capability scan
+behavior, mutate external tools, or use AI. Gate 243 implements the first
+diagnostic subject skeleton.
+
+Gate 243 implements `forge explain diagnostic <rule-id>` as a family-level
+diagnostic explanation skeleton. Gate 244 adds documented concrete rule
+metadata for current loader, schema, semantic, capability, asset, generator,
+build, and release rule IDs while preserving reserved-family fallback for
+valid IDs without embedded metadata. Project diagnostic report lookup,
+generated manifest reads, artifact existence checks, build planning, generator
+execution, provider resolution, external tools, and AI remain out of scope.
+
+Gate 245 implements `forge explain target <target-id>` as deterministic target
+metadata for `reports`, `mcm-json`, `jip-scripts`, `xedit-audit`,
+`xedit-audit-report-handoff`, `docs`, `graph`, and `release-verify`. It
+explains command surfaces, output roots, primary outputs, required
+capabilities, related rules, and boundaries without reading projects,
+generated manifests, provenance sidecars, or artifacts, and without planning
+builds, executing generators, resolving providers, calling external tools, or
+using AI.
+
+Gate 246 implements `forge explain output <generated-or-dist-path>` as
+deterministic output path classification for documented `generated/` and
+`dist/` outputs. It explains the matching output pattern, output kind,
+boundary, target, rebuild command, provenance expectation, and related rules
+without reading project files, generated manifests, provenance sidecars,
+artifacts, provider evidence, external tools, or AI.
+
+Gate 247 implements `forge explain capability <capability-id>` as
+deterministic built-in capability catalogue metadata. It explains the
+capability title, description, satisfying providers, detector kinds, provider
+version declaration metadata, related `WF-CAP-*` rules, recovery commands, and
+boundaries without reading project files, generated manifests, provenance
+sidecars, artifacts, provider evidence, external tools, runtime probes, or AI.
+
+Gate 248 implements `forge explain provenance <manifest-or-output-path>` as a
+deterministic provenance boundary planning skeleton for documented
+`generated/` and `dist/` paths. It explains the evidence role, target, rebuild
+command, expected trace plan, related rules, and boundaries without reading
+project files, generated manifests, build manifests, provenance sidecars,
+checksums, artifacts, provider evidence, external tools, runtime probes, or AI.
+
+Gate 249 closes the top-level `forge explain` command slice. It records
+`diagnostic`, `target`, `output`, `capability`, and `provenance` as the
+completed planned explain subjects and routes the next implementation lane to
+`forge clean` planning without adding runtime behavior, filesystem mutation,
+manifest reads, artifact checks, external tools, runtime probes, or AI.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

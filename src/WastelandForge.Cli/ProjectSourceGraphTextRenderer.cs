@@ -67,6 +67,14 @@ internal static class ProjectSourceGraphTextRenderer
             builder.AppendLine(result.Summary.GeneratorTargetInputEdges.ToString());
             builder.Append("  Generator target output edges: ");
             builder.AppendLine(result.Summary.GeneratorTargetOutputEdges.ToString());
+            builder.Append("  Generated artifact expectations: ");
+            builder.AppendLine(result.Summary.GeneratedArtifactExpectations.ToString());
+            builder.Append("  Generated artifact expectation edges: ");
+            builder.AppendLine(result.Summary.GeneratedArtifactExpectationEdges.ToString());
+            builder.Append("  Manifest provenance references: ");
+            builder.AppendLine(result.Summary.ManifestProvenanceReferences.ToString());
+            builder.Append("  Manifest provenance reference edges: ");
+            builder.AppendLine(result.Summary.ManifestProvenanceReferenceEdges.ToString());
         }
 
         foreach (var issue in result.Diagnostics.Issues)

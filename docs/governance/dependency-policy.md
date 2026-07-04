@@ -881,3 +881,86 @@ call, download, rehosted runtime binary, runtime probe, MO2/GECK integration,
 detector dependency, provider-version parser dependency, new capability
 resolver dependency, release-publishing dependency, external tool execution,
 archive/FOMOD dependency, or AI requirement.
+
+Gate 238 extends `forge graph` with declaration-only generator target links
+using existing generator metadata and project source file enumeration. It adds
+no graph visualization dependency, static-site generator, network call,
+download, rehosted runtime binary, runtime probe, MO2/GECK integration,
+detector dependency, provider-version parser dependency, new capability
+resolver dependency, release-publishing dependency, external tool execution,
+archive/FOMOD dependency, generator runtime dependency, or AI requirement.
+
+Gate 239 extends `forge graph` with declaration-only generated artifact
+expectation links using existing generator metadata only. It adds no graph
+visualization dependency, static-site generator, network call, download,
+rehosted runtime binary, runtime probe, MO2/GECK integration, detector
+dependency, provider-version parser dependency, new capability resolver
+dependency, release-publishing dependency, external tool execution,
+archive/FOMOD dependency, generated artifact scanner, generator runtime
+dependency, or AI requirement.
+
+Gate 240 extends `forge graph` with declaration-only manifest provenance
+reference links using existing generator metadata only. It adds no graph
+visualization dependency, static-site generator, network call, download,
+rehosted runtime binary, runtime probe, MO2/GECK integration, detector
+dependency, provider-version parser dependency, new capability resolver
+dependency, release-publishing dependency, external tool execution,
+archive/FOMOD dependency, generated artifact scanner, generated manifest
+reader, generator runtime dependency, or AI requirement.
+
+Gate 241 closes the `forge graph` metadata lane and adds no dependency. It
+does not add a graph visualization dependency, static-site generator, network
+call, generated manifest reader, generated artifact scanner, provider
+resolver dependency, package/release dependency, external tool execution,
+runtime probe, MO2/GECK integration, or AI requirement.
+
+Gate 242 adds no dependency. The top-level `forge explain` subject contract is
+implemented with existing CLI help, System.Text.Json.Nodes reserved status
+metadata, and golden tests only; it does not add a diagnostic database,
+generated manifest reader, provenance sidecar reader, artifact scanner,
+provider resolver, external tool integration, network call, or AI requirement.
+
+Gate 243 adds no dependency. `forge explain diagnostic <rule-id>` reuses the
+existing `RuleId` parser, CLI code, and System.Text.Json.Nodes serializer. It
+does not add a diagnostic database, generated manifest reader, provenance
+sidecar reader, artifact scanner, provider resolver, external tool
+integration, network call, or AI requirement.
+
+Gate 244 adds no dependency. `forge explain diagnostic <rule-id>` continues to
+use embedded deterministic CLI metadata and System.Text.Json.Nodes output. It
+does not add a diagnostic database, generated manifest reader, provenance
+sidecar reader, artifact scanner, provider resolver, external tool
+integration, network call, or AI requirement.
+
+Gate 245 adds no dependency. `forge explain target <target-id>` uses embedded
+deterministic CLI metadata and System.Text.Json.Nodes output. It does not add
+a target database, generated manifest reader, provenance sidecar reader,
+artifact scanner, provider resolver, external tool integration, network call,
+or AI requirement.
+
+Gate 246 adds no dependency. `forge explain output <generated-or-dist-path>`
+uses embedded deterministic CLI metadata and System.Text.Json.Nodes output. It
+does not add an output database, generated manifest reader, provenance sidecar
+reader, artifact scanner, provider resolver, external tool integration,
+network call, or AI requirement.
+
+Gate 247 adds no dependency. `forge explain capability <capability-id>` uses
+the existing built-in FNV capability catalogue plus System.Text.Json.Nodes
+output. It does not add a capability database, generated manifest reader,
+provenance sidecar reader, artifact scanner, provider resolver, capability
+scanner dependency, runtime probe, external tool integration, network call, or
+AI requirement.
+
+Gate 248 adds no dependency. `forge explain provenance
+<manifest-or-output-path>` uses existing deterministic output metadata plus
+System.Text.Json.Nodes output. It does not add a generated manifest reader,
+build manifest reader, provenance sidecar reader, checksum reader, artifact
+scanner, provider resolver, capability scanner dependency, runtime probe,
+external tool integration, network call, or AI requirement.
+
+Gate 249 adds no dependency. It updates planning and routing documentation for
+the closed `forge explain` lane and upcoming `forge clean` planning lane. It
+does not add filesystem deletion libraries, manifest readers, provenance
+sidecar readers, checksum readers, artifact scanners, provider resolvers,
+capability scanner dependencies, runtime probes, external tool integrations,
+network calls, or AI requirements.

@@ -4375,8 +4375,8 @@ public sealed class CliGoldenTests
         Assert.Equal("generated/graph/project-source-graph.md", (string?)json["outputs"]?["graphMarkdown"]);
         Assert.Equal("generated/graph/graph-manifest.json", (string?)json["outputs"]?["manifest"]);
         Assert.Equal("generated/graph/checksums.sha256", (string?)json["outputs"]?["checksums"]);
-        Assert.Equal(24, (int?)json["summary"]?["nodes"]);
-        Assert.Equal(64, (int?)json["summary"]?["edges"]);
+        Assert.Equal(71, (int?)json["summary"]?["nodes"]);
+        Assert.Equal(188, (int?)json["summary"]?["edges"]);
         Assert.Equal(8, (int?)json["summary"]?["sourceDocuments"]);
         Assert.Equal(1, (int?)json["summary"]?["manifestDocuments"]);
         Assert.Equal(7, (int?)json["summary"]?["registryDocuments"]);
@@ -4391,6 +4391,10 @@ public sealed class CliGoldenTests
         Assert.Equal(5, (int?)json["summary"]?["generatorTargets"]);
         Assert.Equal(20, (int?)json["summary"]?["generatorTargetInputEdges"]);
         Assert.Equal(8, (int?)json["summary"]?["generatorTargetOutputEdges"]);
+        Assert.Equal(37, (int?)json["summary"]?["generatedArtifactExpectations"]);
+        Assert.Equal(74, (int?)json["summary"]?["generatedArtifactExpectationEdges"]);
+        Assert.Equal(10, (int?)json["summary"]?["manifestProvenanceReferences"]);
+        Assert.Equal(50, (int?)json["summary"]?["manifestProvenanceReferenceEdges"]);
         Assert.Equal(8, (int?)json["summary"]?["sources"]);
         Assert.True((int?)json["summary"]?["outputs"] > 0);
         Assert.True(json["nodes"]?.AsArray().Any(node =>
@@ -4414,6 +4418,25 @@ public sealed class CliGoldenTests
         Assert.True(json["nodes"]?.AsArray().Any(node =>
             StringComparer.Ordinal.Equals("generator-target:xedit-audit-report-handoff", (string?)node?["id"]) &&
             StringComparer.Ordinal.Equals("generator-target", (string?)node?["kind"])) ?? false);
+        Assert.True(json["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("artifact-expectation:mcm-json:generated-menu-json", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("generated/mcm-json/MCM/*.json", (string?)node?["path"]) &&
+            StringComparer.Ordinal.Equals("generated", (string?)node?["boundary"])) ?? false);
+        Assert.True(json["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("artifact-expectation:mcm-json:dist-package-archive", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
+        Assert.True(json["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("manifest-reference:mcm-json:generated-generation-manifest", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("manifest-provenance-reference", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("generated/mcm-json/generation-manifest.json", (string?)node?["path"]) &&
+            StringComparer.Ordinal.Equals("generated", (string?)node?["boundary"])) ?? false);
+        Assert.True(json["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("manifest-reference:reports:dist-build-manifest", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("manifest-provenance-reference", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("dist/build/build-manifest.json", (string?)node?["path"]) &&
+            StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
         Assert.True(json["edges"]?.AsArray().Any(edge =>
             StringComparer.Ordinal.Equals("source-root", (string?)edge?["from"]) &&
             StringComparer.Ordinal.Equals("source:src/registries/dependencies/main.json", (string?)edge?["to"]) &&
@@ -4438,6 +4461,26 @@ public sealed class CliGoldenTests
             StringComparer.Ordinal.Equals("boundary:generated", (string?)edge?["from"]) &&
             StringComparer.Ordinal.Equals("generator-target:xedit-audit-report-handoff", (string?)edge?["to"]) &&
             StringComparer.Ordinal.Equals("reads-generated-evidence", (string?)edge?["kind"])) ?? false);
+        Assert.True(json["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("generator-target:mcm-json", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("artifact-expectation:mcm-json:generated-menu-json", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("declares-generated-artifact-expectation", (string?)edge?["kind"])) ?? false);
+        Assert.True(json["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("artifact-expectation:mcm-json:dist-package-archive", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("boundary:dist", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("expects-distribution-output-boundary", (string?)edge?["kind"])) ?? false);
+        Assert.True(json["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("generator-target:mcm-json", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("manifest-reference:mcm-json:generated-generation-manifest", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("declares-manifest-provenance-reference", (string?)edge?["kind"])) ?? false);
+        Assert.True(json["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("manifest-reference:mcm-json:generated-generation-manifest", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("artifact-expectation:mcm-json:generated-menu-json", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("records-provenance-for-artifact-expectation", (string?)edge?["kind"])) ?? false);
+        Assert.True(json["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("manifest-reference:reports:dist-build-manifest", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("boundary:dist", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("references-distribution-provenance-boundary", (string?)edge?["kind"])) ?? false);
         Assert.Contains(
             json["sourceDigests"]?.AsArray() ?? [],
             digest => StringComparer.Ordinal.Equals("src/registries/dependencies/main.json", (string?)digest?["path"]));
@@ -4461,8 +4504,8 @@ public sealed class CliGoldenTests
         Assert.Equal("generated/graph", (string?)graph["outputRoot"]);
         Assert.Equal("wastelandforge.fnv.builtin", (string?)graph["catalogue"]?["id"]);
         Assert.Equal("built-in", (string?)graph["catalogue"]?["source"]);
-        Assert.Equal(24, (int?)graph["summary"]?["nodes"]);
-        Assert.Equal(64, (int?)graph["summary"]?["edges"]);
+        Assert.Equal(71, (int?)graph["summary"]?["nodes"]);
+        Assert.Equal(188, (int?)graph["summary"]?["edges"]);
         Assert.Equal(8, (int?)graph["summary"]?["sourceDocuments"]);
         Assert.Equal(2, (int?)graph["summary"]?["capabilityRequirements"]);
         Assert.Equal(2, (int?)graph["summary"]?["referencedCapabilities"]);
@@ -4470,6 +4513,10 @@ public sealed class CliGoldenTests
         Assert.Equal(5, (int?)graph["summary"]?["generatorTargets"]);
         Assert.Equal(20, (int?)graph["summary"]?["generatorTargetInputEdges"]);
         Assert.Equal(8, (int?)graph["summary"]?["generatorTargetOutputEdges"]);
+        Assert.Equal(37, (int?)graph["summary"]?["generatedArtifactExpectations"]);
+        Assert.Equal(74, (int?)graph["summary"]?["generatedArtifactExpectationEdges"]);
+        Assert.Equal(10, (int?)graph["summary"]?["manifestProvenanceReferences"]);
+        Assert.Equal(50, (int?)graph["summary"]?["manifestProvenanceReferenceEdges"]);
         Assert.True(graph["nodes"]?.AsArray().Any(node =>
             StringComparer.Ordinal.Equals("source:src/registries/dependencies/main.json", (string?)node?["id"]) &&
             StringComparer.Ordinal.Equals("source-registry", (string?)node?["kind"])) ?? false);
@@ -4482,6 +4529,16 @@ public sealed class CliGoldenTests
         Assert.True(graph["nodes"]?.AsArray().Any(node =>
             StringComparer.Ordinal.Equals("generator-target:reports", (string?)node?["id"]) &&
             StringComparer.Ordinal.Equals("generator-target", (string?)node?["kind"])) ?? false);
+        Assert.True(graph["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("artifact-expectation:reports:dist-build-manifest", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("dist/build/build-manifest.json", (string?)node?["path"]) &&
+            StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
+        Assert.True(graph["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("manifest-reference:xedit-audit:generated-script-manifest", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("manifest-provenance-reference", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("generated/xedit-audit/xedit-audit-script-manifest.json", (string?)node?["path"]) &&
+            StringComparer.Ordinal.Equals("generated", (string?)node?["boundary"])) ?? false);
         Assert.True(graph["edges"]?.AsArray().Any(edge =>
             StringComparer.Ordinal.Equals("source:src/registries/dependencies/main.json", (string?)edge?["from"]) &&
             StringComparer.Ordinal.Equals("boundary:generated", (string?)edge?["to"]) &&
@@ -4498,10 +4555,28 @@ public sealed class CliGoldenTests
             StringComparer.Ordinal.Equals("generator-target:mcm-json", (string?)edge?["from"]) &&
             StringComparer.Ordinal.Equals("boundary:generated", (string?)edge?["to"]) &&
             StringComparer.Ordinal.Equals("writes-generated-output-boundary", (string?)edge?["kind"])) ?? false);
+        Assert.True(graph["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("generator-target:xedit-audit", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("artifact-expectation:xedit-audit:expected-report-json", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("declares-generated-artifact-expectation", (string?)edge?["kind"])) ?? false);
+        Assert.True(graph["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("artifact-expectation:jip-scripts:generated-script-text", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("boundary:generated", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("expects-generated-output-boundary", (string?)edge?["kind"])) ?? false);
+        Assert.True(graph["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("manifest-reference:xedit-audit:generated-script-manifest", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("artifact-expectation:xedit-audit:expected-report-json", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("records-provenance-for-artifact-expectation", (string?)edge?["kind"])) ?? false);
+        Assert.True(graph["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("manifest-reference:jip-scripts:generated-emission-manifest", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("boundary:generated", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("references-generated-provenance-boundary", (string?)edge?["kind"])) ?? false);
         Assert.Equal(false, (bool?)graph["execution"]?["graphVisualization"]);
         Assert.Equal(false, (bool?)graph["execution"]?["capabilityScan"]);
         Assert.Equal(false, (bool?)graph["execution"]?["providerResolution"]);
         Assert.Equal(false, (bool?)graph["execution"]?["generatorExecution"]);
+        Assert.Equal(false, (bool?)graph["execution"]?["artifactExistenceCheck"]);
+        Assert.Equal(false, (bool?)graph["execution"]?["manifestRead"]);
         Assert.Equal(false, (bool?)graph["execution"]?["buildPlanner"]);
         Assert.Equal(false, (bool?)graph["execution"]?["runtimeProbes"]);
         Assert.Equal(false, (bool?)graph["execution"]?["ai"]);
@@ -4514,8 +4589,12 @@ public sealed class CliGoldenTests
         Assert.Contains("`requirement:src/registries/dependencies/main.json#/requires/capabilities/0`", graphMarkdown, StringComparison.Ordinal);
         Assert.Contains("`capability:runtime.scripting.xnvse`", graphMarkdown, StringComparison.Ordinal);
         Assert.Contains("`generator-target:mcm-json`", graphMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`artifact-expectation:mcm-json:generated-menu-json`", graphMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`manifest-reference:mcm-json:generated-generation-manifest`", graphMarkdown, StringComparison.Ordinal);
         Assert.Contains("Capability requirement graphing is declaration-only and catalogue-backed.", graphMarkdown, StringComparison.Ordinal);
         Assert.Contains("Generator target graphing is declaration-only and does not execute targets.", graphMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Generated artifact expectation graphing is declaration-only and does not check file existence.", graphMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Manifest provenance reference graphing is declaration-only and does not read generated manifests.", graphMarkdown, StringComparison.Ordinal);
         Assert.Contains("## Edges", graphMarkdown, StringComparison.Ordinal);
         Assert.Contains("Graph visualization formats: not implemented.", graphMarkdown, StringComparison.Ordinal);
 
@@ -4530,6 +4609,10 @@ public sealed class CliGoldenTests
         Assert.Equal(5, (int?)manifest["summary"]?["generatorTargets"]);
         Assert.Equal(20, (int?)manifest["summary"]?["generatorTargetInputEdges"]);
         Assert.Equal(8, (int?)manifest["summary"]?["generatorTargetOutputEdges"]);
+        Assert.Equal(37, (int?)manifest["summary"]?["generatedArtifactExpectations"]);
+        Assert.Equal(74, (int?)manifest["summary"]?["generatedArtifactExpectationEdges"]);
+        Assert.Equal(10, (int?)manifest["summary"]?["manifestProvenanceReferences"]);
+        Assert.Equal(50, (int?)manifest["summary"]?["manifestProvenanceReferenceEdges"]);
         Assert.Contains(
             manifest["sources"]?.AsArray() ?? [],
             source => StringComparer.Ordinal.Equals("src/registries/dependencies/main.json", (string?)source?["path"]));
@@ -4540,6 +4623,8 @@ public sealed class CliGoldenTests
         Assert.Equal(false, (bool?)manifest["execution"]?["capabilityScan"]);
         Assert.Equal(false, (bool?)manifest["execution"]?["providerResolution"]);
         Assert.Equal(false, (bool?)manifest["execution"]?["generatorExecution"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["artifactExistenceCheck"]);
+        Assert.Equal(false, (bool?)manifest["execution"]?["manifestRead"]);
         Assert.Equal(false, (bool?)manifest["execution"]?["buildPlanner"]);
 
         var checksums = File.ReadAllText(checksumsPath);
@@ -4564,8 +4649,8 @@ public sealed class CliGoldenTests
         Assert.Equal("planned", (string?)json["status"]);
         Assert.Equal(true, (bool?)json["dryRun"]);
         Assert.Equal("generated/graph", (string?)json["outputs"]?["root"]);
-        Assert.Equal(24, (int?)json["summary"]?["nodes"]);
-        Assert.Equal(64, (int?)json["summary"]?["edges"]);
+        Assert.Equal(71, (int?)json["summary"]?["nodes"]);
+        Assert.Equal(188, (int?)json["summary"]?["edges"]);
         Assert.Equal(8, (int?)json["summary"]?["sourceDocuments"]);
         Assert.Equal(2, (int?)json["summary"]?["capabilityRequirements"]);
         Assert.Equal(2, (int?)json["summary"]?["referencedCapabilities"]);
@@ -4573,6 +4658,10 @@ public sealed class CliGoldenTests
         Assert.Equal(5, (int?)json["summary"]?["generatorTargets"]);
         Assert.Equal(20, (int?)json["summary"]?["generatorTargetInputEdges"]);
         Assert.Equal(8, (int?)json["summary"]?["generatorTargetOutputEdges"]);
+        Assert.Equal(37, (int?)json["summary"]?["generatedArtifactExpectations"]);
+        Assert.Equal(74, (int?)json["summary"]?["generatedArtifactExpectationEdges"]);
+        Assert.Equal(10, (int?)json["summary"]?["manifestProvenanceReferences"]);
+        Assert.Equal(50, (int?)json["summary"]?["manifestProvenanceReferenceEdges"]);
         Assert.Equal(0, json["outputDigests"]?.AsArray().Count);
         Assert.Equal(string.Empty, result.Stderr);
         Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
@@ -6615,6 +6704,427 @@ public sealed class CliGoldenTests
         Assert.Equal(2, result.ExitCode);
         Assert.Equal("reserved", (string?)json["status"]);
         Assert.Equal("release prepare", (string?)json["command"]);
+    }
+
+    [Fact]
+    public void ExplainHelpListsPlannedSubjects()
+    {
+        var result = RunCli("help", "explain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("forge explain", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("forge explain diagnostic <rule-id>", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("forge explain target <target-id>", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("forge explain output <generated-or-dist-path>", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("forge explain capability <capability-id>", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("forge explain provenance <manifest-or-output-path>", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("diagnostic - rule explanation from documented rule metadata with reserved-family fallback.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("target - deterministic target metadata for documented command targets.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("output - deterministic generated/dist output path classification.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("capability - deterministic built-in capability catalogue metadata.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("provenance - deterministic provenance boundary planning for documented generated/dist paths.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Reserved in the current gate:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("none", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainDiagnosticPlainUsesRuleFamilyMetadata()
+    {
+        var result = RunCli("explain", "diagnostic", "WF-CAP-004", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("forge explain diagnostic WF-CAP-004", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status: explained", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Family: WF-CAP-*", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Scope: Capability/provider rules", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Validation stage: capability and environment validation", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Rule detail: documented concrete rule skeleton", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Documentation status: documented-concrete-rule", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Rule title: Capability provider installed in wrong scope", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Rule source: docs/governance/rule-families.md#gate-132", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("forge capabilities scan --project <project-root>", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Project diagnostic report lookup is not implemented in this gate.", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainDiagnosticJsonUsesRuleFamilyMetadataWithoutExecution()
+    {
+        var result = RunCli("explain", "diagnostic", "WF-GEN-001", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain diagnostic JSON did not parse.");
+        var execution = json["execution"] ?? throw new InvalidOperationException("Explain diagnostic JSON did not include execution flags.");
+        var rule = json["rule"] ?? throw new InvalidOperationException("Explain diagnostic JSON did not include rule metadata.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("explain diagnostic", (string?)json["command"]);
+        Assert.Equal("explained", (string?)json["status"]);
+        Assert.Equal("diagnostic", (string?)json["subject"]?["kind"]);
+        Assert.Equal("WF-GEN-001", (string?)json["subject"]?["ruleId"]);
+        Assert.Equal("WF-GEN-*", (string?)json["family"]?["id"]);
+        Assert.Equal("Generator rules", (string?)json["family"]?["scope"]);
+        Assert.Equal("generation planning / output validation", (string?)json["family"]?["validationStage"]);
+        Assert.Equal("rule-specific-metadata-skeleton", (string?)json["detailStatus"]);
+        Assert.Equal("WF-GEN-001", (string?)rule["id"]);
+        Assert.Equal("documented-concrete-rule", (string?)rule["documentationStatus"]);
+        Assert.Equal("rule-specific-metadata-skeleton", (string?)rule["detailStatus"]);
+        Assert.Equal("Generated output path escapes generated root", (string?)rule["title"]);
+        Assert.Equal("docs/governance/rule-families.md#gate-61", (string?)rule["source"]);
+        Assert.Equal(false, (bool?)execution["projectRead"]);
+        Assert.Equal(false, (bool?)execution["manifestRead"]);
+        Assert.Equal(false, (bool?)execution["artifactExistenceCheck"]);
+        Assert.Equal(false, (bool?)execution["provenanceSidecarRead"]);
+        Assert.Equal(false, (bool?)execution["buildPlanning"]);
+        Assert.Equal(false, (bool?)execution["generatorExecution"]);
+        Assert.Equal(false, (bool?)execution["providerResolution"]);
+        Assert.Equal(false, (bool?)execution["capabilityScanBehaviorChange"]);
+        Assert.Equal(false, (bool?)execution["externalToolExecution"]);
+        Assert.Equal(false, (bool?)execution["aiRequired"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainDiagnosticJsonFallsBackForReservedRuleWithoutDocumentedMetadata()
+    {
+        var result = RunCli("explain", "diagnostic", "WF-GOV-001", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain diagnostic JSON did not parse.");
+        var rule = json["rule"] ?? throw new InvalidOperationException("Explain diagnostic JSON did not include rule metadata.");
+        var boundaries = json["boundaries"]?.AsArray() ?? throw new InvalidOperationException("Explain diagnostic JSON did not include boundaries.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("WF-GOV-*", (string?)json["family"]?["id"]);
+        Assert.Equal("family-level-skeleton", (string?)json["detailStatus"]);
+        Assert.Equal("WF-GOV-001", (string?)rule["id"]);
+        Assert.Equal("reserved-family-only", (string?)rule["documentationStatus"]);
+        Assert.Equal("family-level-skeleton", (string?)rule["detailStatus"]);
+        Assert.Contains(boundaries, boundary => ((string?)boundary)?.Contains("No documented concrete rule metadata", StringComparison.Ordinal) == true);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainDiagnosticRejectsInvalidRuleId()
+    {
+        var result = RunCli("explain", "diagnostic", "--format", "json", "CAP-004");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain diagnostic usage JSON did not parse.");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal("usage-error", (string?)json["status"]);
+        Assert.Equal("explain diagnostic", (string?)json["command"]);
+        Assert.Contains("Invalid diagnostic rule ID 'CAP-004'.", (string?)json["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainTargetPlainUsesDocumentedTargetMetadata()
+    {
+        var result = RunCli("explain", "target", "mcm-json", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("forge explain target mcm-json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status: explained", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Target: MCM Extender JSON", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Category: game-facing-generator", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("forge generate --target mcm-json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("forge package --target mcm-json --verify-existing", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("generated/mcm-json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("runtime.ui.mcm_json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("WF-GEN-005", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Build planning, generator execution, package execution, release execution, provider resolution, capability scans, runtime probes, and AI calls are not performed.", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainTargetJsonUsesDocumentedTargetMetadataWithoutExecution()
+    {
+        var result = RunCli("explain", "target", "graph", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain target JSON did not parse.");
+        var target = json["target"] ?? throw new InvalidOperationException("Explain target JSON did not include target metadata.");
+        var execution = json["execution"] ?? throw new InvalidOperationException("Explain target JSON did not include execution flags.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("explain target", (string?)json["command"]);
+        Assert.Equal("explained", (string?)json["status"]);
+        Assert.Equal("target", (string?)json["subject"]?["kind"]);
+        Assert.Equal("graph", (string?)json["subject"]?["targetId"]);
+        Assert.Equal("target-metadata-skeleton", (string?)json["detailStatus"]);
+        Assert.Equal("graph", (string?)target["id"]);
+        Assert.Equal("Project source graph", (string?)target["title"]);
+        Assert.Equal("graph-evidence", (string?)target["category"]);
+        Assert.Contains(target["commandSurface"]?.AsArray() ?? [], command => StringComparer.Ordinal.Equals("forge graph", (string?)command));
+        Assert.Contains(target["outputRoots"]?.AsArray() ?? [], output => StringComparer.Ordinal.Equals("generated/graph", (string?)output));
+        Assert.Contains(target["primaryOutputs"]?.AsArray() ?? [], output => StringComparer.Ordinal.Equals("project-source-graph.json", (string?)output));
+        Assert.Contains(target["relatedRules"]?.AsArray() ?? [], rule => StringComparer.Ordinal.Equals("WF-GEN-001", (string?)rule));
+        Assert.Equal(false, (bool?)execution["projectRead"]);
+        Assert.Equal(false, (bool?)execution["manifestRead"]);
+        Assert.Equal(false, (bool?)execution["artifactExistenceCheck"]);
+        Assert.Equal(false, (bool?)execution["provenanceSidecarRead"]);
+        Assert.Equal(false, (bool?)execution["buildPlanning"]);
+        Assert.Equal(false, (bool?)execution["generatorExecution"]);
+        Assert.Equal(false, (bool?)execution["packageExecution"]);
+        Assert.Equal(false, (bool?)execution["releaseExecution"]);
+        Assert.Equal(false, (bool?)execution["providerResolution"]);
+        Assert.Equal(false, (bool?)execution["capabilityScanBehaviorChange"]);
+        Assert.Equal(false, (bool?)execution["externalToolExecution"]);
+        Assert.Equal(false, (bool?)execution["aiRequired"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainTargetRejectsUnknownTargetId()
+    {
+        var result = RunCli("explain", "target", "--format", "json", "unknown-target");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain target usage JSON did not parse.");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal("usage-error", (string?)json["status"]);
+        Assert.Equal("explain target", (string?)json["command"]);
+        Assert.Contains("Unknown explain target 'unknown-target'.", (string?)json["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainOutputPlainUsesDocumentedOutputMetadata()
+    {
+        var result = RunCli("explain", "output", "generated/mcm-json/MCM/MyMenu.json", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("forge explain output generated/mcm-json/MCM/MyMenu.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status: explained", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Classification: expected-output", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Pattern: generated/mcm-json/MCM/*.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Output kind: mcm-menu-json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Output boundary: generated", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Target: mcm-json - MCM Extender JSON", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Rebuild command: forge generate --target mcm-json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Provenance expectation: Recorded in generated/mcm-json/generation-manifest.json.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("No project files, generated manifests, provenance sidecars, artifacts, provider evidence, or external tools are read.", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainOutputJsonClassifiesKnownOutputPathWithoutExecution()
+    {
+        var result = RunCli("explain", "output", "generated/graph/project-source-graph.json", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain output JSON did not parse.");
+        var classification = json["classification"] ?? throw new InvalidOperationException("Explain output JSON did not include classification.");
+        var target = json["target"] ?? throw new InvalidOperationException("Explain output JSON did not include target metadata.");
+        var execution = json["execution"] ?? throw new InvalidOperationException("Explain output JSON did not include execution flags.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("explain output", (string?)json["command"]);
+        Assert.Equal("explained", (string?)json["status"]);
+        Assert.Equal("output", (string?)json["subject"]?["kind"]);
+        Assert.Equal("generated/graph/project-source-graph.json", (string?)json["subject"]?["normalizedPath"]);
+        Assert.Equal("expected-output", (string?)classification["status"]);
+        Assert.Equal("generated/graph/project-source-graph.json", (string?)classification["pattern"]);
+        Assert.Equal("project-source-graph-json", (string?)classification["outputKind"]);
+        Assert.Equal("graph", (string?)target["id"]);
+        Assert.Equal("Project source graph", (string?)target["title"]);
+        Assert.Equal("output-path-classification-skeleton", (string?)json["detailStatus"]);
+        Assert.Equal(false, (bool?)execution["projectRead"]);
+        Assert.Equal(false, (bool?)execution["manifestRead"]);
+        Assert.Equal(false, (bool?)execution["artifactExistenceCheck"]);
+        Assert.Equal(false, (bool?)execution["provenanceSidecarRead"]);
+        Assert.Equal(false, (bool?)execution["buildPlanning"]);
+        Assert.Equal(false, (bool?)execution["generatorExecution"]);
+        Assert.Equal(false, (bool?)execution["packageExecution"]);
+        Assert.Equal(false, (bool?)execution["releaseExecution"]);
+        Assert.Equal(false, (bool?)execution["providerResolution"]);
+        Assert.Equal(false, (bool?)execution["capabilityScanBehaviorChange"]);
+        Assert.Equal(false, (bool?)execution["externalToolExecution"]);
+        Assert.Equal(false, (bool?)execution["aiRequired"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainOutputRejectsUnknownOutputPath()
+    {
+        var result = RunCli("explain", "output", "generated/unknown/file.txt", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain output usage JSON did not parse.");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal("usage-error", (string?)json["status"]);
+        Assert.Equal("explain output", (string?)json["command"]);
+        Assert.Contains("Unknown explain output path 'generated/unknown/file.txt'.", (string?)json["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainCapabilityPlainUsesBuiltInCapabilityMetadata()
+    {
+        var result = RunCli("explain", "capability", "runtime.ui.mcm_json", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("forge explain capability runtime.ui.mcm_json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status: explained", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Capability: runtime.ui.mcm_json - MCM Extender JSON", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Catalogue: wastelandforge.fnv.builtin 0.1.0", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("provider.runtime.mcm_extender - MCM Extender (runtime-ui, data-managed)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Detector kinds: data-file, runtime-probe", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("WF-CAP-002", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("forge capabilities explain runtime.ui.mcm_json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("No project files, generated manifests, provenance sidecars, artifacts, provider evidence, or external tools are read.", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainCapabilityJsonUsesBuiltInCapabilityMetadataWithoutExecution()
+    {
+        var result = RunCli("explain", "capability", "runtime.scripting.xnvse", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain capability JSON did not parse.");
+        var capability = json["capability"] ?? throw new InvalidOperationException("Explain capability JSON did not include capability metadata.");
+        var provider = json["providers"]?[0] ?? throw new InvalidOperationException("Explain capability JSON did not include provider metadata.");
+        var execution = json["execution"] ?? throw new InvalidOperationException("Explain capability JSON did not include execution flags.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("explain capability", (string?)json["command"]);
+        Assert.Equal("explained", (string?)json["status"]);
+        Assert.Equal("capability", (string?)json["subject"]?["kind"]);
+        Assert.Equal("runtime.scripting.xnvse", (string?)json["subject"]?["capabilityId"]);
+        Assert.Equal("wastelandforge.fnv.builtin", (string?)json["catalog"]?["id"]);
+        Assert.Equal("0.1.0", (string?)json["catalog"]?["version"]);
+        Assert.Equal("runtime.scripting.xnvse", (string?)capability["id"]);
+        Assert.Equal("xNVSE runtime", (string?)capability["title"]);
+        Assert.Equal("provider.runtime.xnvse", (string?)capability["satisfiedBy"]?[0]);
+        Assert.Equal("provider.runtime.xnvse", (string?)provider["id"]);
+        Assert.Equal("root", (string?)provider["installScope"]);
+        Assert.Equal("root-file", (string?)provider["detectorKinds"]?[0]);
+        Assert.Equal("provider-defined", (string?)provider["version"]?["scheme"]);
+        Assert.Equal("declared-only", (string?)provider["version"]?["status"]);
+        Assert.Contains(json["relatedRules"]?.AsArray() ?? [], rule => StringComparer.Ordinal.Equals("WF-CAP-002", (string?)rule));
+        Assert.Equal("capability-catalogue-metadata-skeleton", (string?)json["detailStatus"]);
+        Assert.Equal(false, (bool?)execution["projectRead"]);
+        Assert.Equal(false, (bool?)execution["manifestRead"]);
+        Assert.Equal(false, (bool?)execution["artifactExistenceCheck"]);
+        Assert.Equal(false, (bool?)execution["provenanceSidecarRead"]);
+        Assert.Equal(false, (bool?)execution["providerEvidenceRead"]);
+        Assert.Equal(false, (bool?)execution["buildPlanning"]);
+        Assert.Equal(false, (bool?)execution["generatorExecution"]);
+        Assert.Equal(false, (bool?)execution["packageExecution"]);
+        Assert.Equal(false, (bool?)execution["releaseExecution"]);
+        Assert.Equal(false, (bool?)execution["providerResolution"]);
+        Assert.Equal(false, (bool?)execution["capabilityScanBehaviorChange"]);
+        Assert.Equal(false, (bool?)execution["runtimeProbeExecution"]);
+        Assert.Equal(false, (bool?)execution["externalToolExecution"]);
+        Assert.Equal(false, (bool?)execution["aiRequired"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainCapabilityRejectsUnknownCapabilityId()
+    {
+        var result = RunCli("explain", "capability", "runtime.fake.missing", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain capability usage JSON did not parse.");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal("usage-error", (string?)json["status"]);
+        Assert.Equal("explain capability", (string?)json["command"]);
+        Assert.Contains("Unknown explain capability 'runtime.fake.missing'.", (string?)json["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainProvenancePlainUsesDocumentedPathMetadata()
+    {
+        var result = RunCli("explain", "provenance", "dist/build/build-manifest.json", "--format", "plain");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("forge explain provenance dist/build/build-manifest.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status: explained", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Classification: provenance-boundary-plan", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Evidence role: local-manifest-evidence", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Pattern: dist/build/build-manifest.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Output kind: build-manifest", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Target: reports - Metadata reports", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Rebuild command: forge build --target reports", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Trace plan:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Source contract digests are expected in local manifest evidence; no source files are read by this command.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("No project files, generated manifests, build manifests, provenance sidecars, checksums, artifacts, provider evidence, or external tools are read.", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainProvenanceJsonUsesDocumentedPathMetadataWithoutExecution()
+    {
+        var result = RunCli("explain", "provenance", "generated/docs/reference-index.json", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain provenance JSON did not parse.");
+        var classification = json["classification"] ?? throw new InvalidOperationException("Explain provenance JSON did not include classification.");
+        var target = json["target"] ?? throw new InvalidOperationException("Explain provenance JSON did not include target metadata.");
+        var execution = json["execution"] ?? throw new InvalidOperationException("Explain provenance JSON did not include execution flags.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("explain provenance", (string?)json["command"]);
+        Assert.Equal("explained", (string?)json["status"]);
+        Assert.Equal("provenance", (string?)json["subject"]?["kind"]);
+        Assert.Equal("generated/docs/reference-index.json", (string?)json["subject"]?["normalizedPath"]);
+        Assert.Equal("provenance-boundary-plan", (string?)classification["status"]);
+        Assert.Equal("generated-output", (string?)classification["evidenceRole"]);
+        Assert.Equal("generated/docs/reference-index.json", (string?)classification["pattern"]);
+        Assert.Equal("docs-reference-index", (string?)classification["outputKind"]);
+        Assert.Equal("docs", (string?)target["id"]);
+        Assert.Equal("Local reference docs", (string?)target["title"]);
+        Assert.Equal("provenance-subject-planning-skeleton", (string?)json["detailStatus"]);
+        Assert.Contains(json["tracePlan"]?.AsArray() ?? [], step => ((string?)step)?.Contains("Expected provenance evidence", StringComparison.Ordinal) == true);
+        Assert.Equal(false, (bool?)execution["projectRead"]);
+        Assert.Equal(false, (bool?)execution["manifestRead"]);
+        Assert.Equal(false, (bool?)execution["buildManifestRead"]);
+        Assert.Equal(false, (bool?)execution["artifactExistenceCheck"]);
+        Assert.Equal(false, (bool?)execution["provenanceSidecarRead"]);
+        Assert.Equal(false, (bool?)execution["providerEvidenceRead"]);
+        Assert.Equal(false, (bool?)execution["checksumRead"]);
+        Assert.Equal(false, (bool?)execution["buildPlanning"]);
+        Assert.Equal(false, (bool?)execution["generatorExecution"]);
+        Assert.Equal(false, (bool?)execution["packageExecution"]);
+        Assert.Equal(false, (bool?)execution["releaseExecution"]);
+        Assert.Equal(false, (bool?)execution["providerResolution"]);
+        Assert.Equal(false, (bool?)execution["capabilityScanBehaviorChange"]);
+        Assert.Equal(false, (bool?)execution["graphVisualization"]);
+        Assert.Equal(false, (bool?)execution["runtimeProbeExecution"]);
+        Assert.Equal(false, (bool?)execution["externalToolExecution"]);
+        Assert.Equal(false, (bool?)execution["aiRequired"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainProvenanceRejectsUnknownPath()
+    {
+        var result = RunCli("explain", "provenance", "dist/unknown/build-manifest.json", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain provenance usage JSON did not parse.");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal("usage-error", (string?)json["status"]);
+        Assert.Equal("explain provenance", (string?)json["command"]);
+        Assert.Contains("Unknown explain provenance path 'dist/unknown/build-manifest.json'.", (string?)json["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ExplainReservedJsonListsPlannedSubjectsWithoutExecution()
+    {
+        var result = RunCli("explain", "unknown-subject", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain reserved status JSON did not parse.");
+        var plannedSubjects = json["plannedSubjects"]?.AsArray() ?? throw new InvalidOperationException("Explain reserved status did not include planned subjects.");
+        var execution = json["execution"] ?? throw new InvalidOperationException("Explain reserved status did not include execution flags.");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal("reserved", (string?)json["status"]);
+        Assert.Equal("explain", (string?)json["command"]);
+        Assert.Contains(plannedSubjects, subject => StringComparer.Ordinal.Equals("capability", (string?)subject?["subject"]));
+        Assert.Contains(plannedSubjects, subject => StringComparer.Ordinal.Equals("output", (string?)subject?["subject"]));
+        Assert.Contains(plannedSubjects, subject => StringComparer.Ordinal.Equals("provenance", (string?)subject?["subject"]));
+        Assert.Equal(false, (bool?)execution["subjectParsing"]);
+        Assert.Equal(false, (bool?)execution["manifestRead"]);
+        Assert.Equal(false, (bool?)execution["artifactExistenceCheck"]);
+        Assert.Equal(false, (bool?)execution["provenanceSidecarRead"]);
+        Assert.Equal(false, (bool?)execution["buildPlanning"]);
+        Assert.Equal(false, (bool?)execution["generatorExecution"]);
+        Assert.Equal(false, (bool?)execution["packageExecution"]);
+        Assert.Equal(false, (bool?)execution["releaseExecution"]);
+        Assert.Equal(false, (bool?)execution["providerResolution"]);
+        Assert.Equal(false, (bool?)execution["capabilityScanBehaviorChange"]);
+        Assert.Equal(false, (bool?)execution["externalToolExecution"]);
+        Assert.Equal(false, (bool?)execution["aiRequired"]);
+        Assert.Equal(string.Empty, result.Stderr);
     }
 
     [Fact]

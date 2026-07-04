@@ -64,9 +64,28 @@ reference index output, schema reference page skeletons under
 under `generated/docs/providers/`, and canonical command reference page
 skeletons under `generated/docs/commands/`. Gate 236 starts the `forge graph`
 command lane with deterministic project source graph evidence under
-`generated/graph/`, and Gate 237 adds declaration-only capability requirement
-links to that graph, still before xEdit process execution, report generation,
-plugin patch generation, plugin mutation, MO2 automation, GECK automation,
-runtime probes, real third-party plugin fixtures,
-`forge build --target xedit-audit`, package/release behavior, or applying
-parsed report findings to plugins.
+`generated/graph/`, Gate 237 adds declaration-only capability requirement
+links to that graph, Gate 238 adds declaration-only generator target links,
+Gate 239 adds declaration-only generated artifact expectation links, Gate 240
+adds declaration-only manifest provenance reference links, Gate 241 closes the
+graph metadata lane, and Gate 242 starts top-level `forge explain` subject
+planning. Gate 243 implements diagnostic subject family-level explanation,
+Gate 244 adds documented diagnostic rule metadata, and Gate 245 adds target
+subject metadata. Gate 246 adds output path classification before xEdit
+process execution. Gate 247 adds capability catalogue metadata before xEdit
+process execution. Gate 248 adds provenance boundary planning before xEdit
+process execution, report generation, generated artifact existence checks,
+generated manifest reads, build manifest reads, provider resolution,
+capability scan behavior changes, plugin patch generation, plugin mutation,
+MO2 automation, GECK automation, runtime probes, real third-party plugin
+fixtures, `forge build --target xedit-audit`, package/release behavior, or
+applying parsed report findings to plugins.
+
+Gate 249 closes the top-level `forge explain` lane and routes the next
+implementation lane to `forge clean` planning before xEdit process execution,
+report generation, generated artifact existence checks, generated manifest
+reads, build manifest reads, provenance sidecar reads, checksum reads,
+provider resolution, capability scan behavior changes, plugin patch
+generation, plugin mutation, MO2 automation, GECK automation, runtime probes,
+real third-party plugin fixtures, `forge build --target xedit-audit`,
+package/release behavior, or applying parsed report findings to plugins.

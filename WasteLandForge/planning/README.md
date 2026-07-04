@@ -242,9 +242,21 @@ Gate status:
 - `gates/gate-235-forge-docs-canonical-command-reference-page-skeleton.md` - Gate 235, `forge docs` canonical command reference page skeleton.
 - `gates/gate-236-forge-graph-project-source-graph-skeleton.md` - Gate 236, minimal `forge graph` project source graph skeleton.
 - `gates/gate-237-forge-graph-capability-requirement-graph-skeleton.md` - Gate 237, declaration-only `forge graph` capability requirement graph skeleton.
+- `gates/gate-238-forge-graph-generator-target-graph-skeleton.md` - Gate 238, declaration-only `forge graph` generator target graph skeleton.
+- `gates/gate-239-forge-graph-generated-artifact-expectation-graph-skeleton.md` - Gate 239, declaration-only `forge graph` generated artifact expectation graph skeleton.
+- `gates/gate-240-forge-graph-manifest-provenance-reference-graph-skeleton.md` - Gate 240, declaration-only `forge graph` manifest provenance reference graph skeleton.
+- `gates/gate-241-forge-graph-command-slice-closeout.md` - Gate 241, `forge graph` command slice closeout and `forge explain` transition.
+- `gates/gate-242-forge-explain-subject-contract-planning-skeleton.md` - Gate 242, top-level `forge explain` subject contract and reserved status planning skeleton.
+- `gates/gate-243-forge-explain-diagnostic-subject-skeleton.md` - Gate 243, `forge explain diagnostic <rule-id>` family-level subject skeleton.
+- `gates/gate-244-forge-explain-diagnostic-rule-metadata-skeleton.md` - Gate 244, `forge explain diagnostic <rule-id>` documented rule metadata skeleton.
+- `gates/gate-245-forge-explain-target-subject-skeleton.md` - Gate 245, `forge explain target <target-id>` documented target metadata skeleton.
+- `gates/gate-246-forge-explain-output-subject-skeleton.md` - Gate 246, `forge explain output <generated-or-dist-path>` generated/dist output path classification skeleton.
+- `gates/gate-247-forge-explain-capability-subject-skeleton.md` - Gate 247, `forge explain capability <capability-id>` built-in capability catalogue metadata skeleton.
+- `gates/gate-248-forge-explain-provenance-subject-planning-skeleton.md` - Gate 248, `forge explain provenance <manifest-or-output-path>` provenance boundary planning skeleton.
+- `gates/gate-249-forge-explain-command-slice-closeout.md` - Gate 249, top-level `forge explain` command-slice closeout and `forge clean` transition routing.
 
 Next gate:
 
-- Gate 238 - `forge graph` generator target graph skeleton, stopping before build planning changes, generator execution changes, runtime provider resolution, capability scan behavior changes, graph visualization formats, package/release behavior, xEdit process execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 250 - `forge clean` planning skeleton, defining documented scopes and safety boundaries while stopping before delete behavior, filesystem mutation, generated manifest reads, build manifest reads, provenance sidecar reads, checksum reads, artifact existence checks, build planning changes, generator execution, package execution, release execution, provider resolution, capability scan behavior changes, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

@@ -7,11 +7,11 @@ Source: R006, ADR-009, ADR-010, ADR-011
 ## Purpose
 
 `forge docs` produces deterministic local documentation reference evidence
-from canonical source truth. The current slice writes an aggregate reference
-index, per-schema reference page skeletons, project registry reference page
-skeletons, validation rule reference page skeletons, built-in capability
-reference page skeletons, built-in provider reference page skeletons, and
-canonical command reference page skeletons, not a static site.
+from canonical source truth. The implemented docs lane writes an aggregate
+reference index, per-schema reference page skeletons, project registry
+reference page skeletons, validation rule reference page skeletons, built-in
+capability reference page skeletons, built-in provider reference page
+skeletons, and canonical command reference page skeletons, not a static site.
 
 ## Implemented
 
@@ -96,4 +96,19 @@ is rejected with `WF-GEN-001`.
 The docs reference lane is parked after Gate 235. Gate 236 moved to the
 separate `forge graph` command with a project source graph skeleton, and Gate
 237 extends that graph with declaration-only capability requirement links.
-Gate 238 should continue the graph lane with generator target graph evidence.
+Gate 238 extends that graph with declaration-only generator target links. Gate
+239 extends that graph with declaration-only generated artifact expectation
+links. Gate 240 extends that graph with declaration-only manifest provenance
+reference links. Gate 241 closes the graph metadata lane. Gate 242 starts
+top-level `forge explain` subject planning with help and reserved JSON
+metadata only. Gate 243 implements the diagnostic subject skeleton. Gate 244
+adds documented diagnostic rule metadata. Gate 245 implements the
+`forge explain target <target-id>` subject skeleton. Gate 246 implements the
+`forge explain output <generated-or-dist-path>` subject skeleton. Gate 247
+implements the `forge explain capability <capability-id>` subject skeleton.
+Gate 248 implements the `forge explain provenance <manifest-or-output-path>`
+planning skeleton. Gate 249 closes out the explain lane and routes the next
+implementation lane to `forge clean` planning without adding clean execution,
+filesystem mutation, generated manifest reads, build manifest reads,
+provenance sidecar reads, checksum reads, artifact existence checks, external
+tools, runtime probes, or AI.

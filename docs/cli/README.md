@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 237 forge graph capability requirement graph skeleton
+Status: Gate 249 forge explain command-slice closeout
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -410,16 +410,52 @@ forge --version
   `project-source-graph.md`, `graph-manifest.json`, and `checksums.sha256`.
 - `forge graph` links project, source-root, source manifest/registry
   documents, declared capability requirements, built-in catalogue capability
-  and provider nodes, generated-output-boundary, and
+  and provider nodes, known generator targets, generated artifact expectation
+  nodes, manifest provenance reference nodes, generated-output-boundary, and
   distribution-output-boundary nodes.
 - `forge graph --output generated/<name>` changes the generated graph output
   directory. Output outside `generated/` is rejected with `WF-GEN-001`.
 - `forge graph --dry-run` reports planned outputs and writes no files.
 - `forge graph` does not render graph visualization formats, accept
   `--subject`, run capability scans, resolve provider status, change build
-  planning or execution, build a static site, watch files, publish to the
-  network, package or release outputs, execute xEdit, mutate plugins, automate
-  MO2 or GECK, run runtime probes, or use AI.
+  planning or execution, execute generator targets, check generated artifact
+  existence, read generated manifests, build a static site, watch files,
+  publish to the network, package or release outputs, execute xEdit, mutate
+  plugins, automate MO2 or GECK, run runtime probes, or use AI.
+- `forge help explain` lists the planned top-level `forge explain` subjects:
+  diagnostic, target, output, capability, and provenance.
+- `forge explain diagnostic <rule-id>` validates reserved WastelandForge rule
+  IDs and emits deterministic local family metadata plus documented concrete
+  rule metadata where available.
+- `forge explain diagnostic <rule-id> --format json` emits the same
+  explanation with a `rule` object, reserved-family fallback when no
+  documented concrete metadata is embedded, and explicit false execution flags
+  for project reads, manifest reads, artifact existence checks, provenance
+  sidecar reads, build planning, generator execution, provider resolution,
+  capability scan behavior changes, external tool execution, and AI
+  requirements.
+- `forge explain target <target-id>` validates documented command target IDs
+  and emits deterministic target metadata for `reports`, `mcm-json`,
+  `jip-scripts`, `xedit-audit`, `xedit-audit-report-handoff`, `docs`,
+  `graph`, and `release-verify`.
+- `forge explain target <target-id> --format json` emits the same target
+  metadata with explicit false execution flags for project reads, manifest
+  reads, artifact existence checks, provenance sidecar reads, build planning,
+  generator execution, package execution, release execution, provider
+  resolution, capability scan behavior changes, external tool execution, and
+  AI requirements.
+- `forge explain --format json` remains reserved but now includes
+  machine-readable planned subject metadata and explicit false execution
+  flags for subject parsing, manifest reads, artifact existence checks, build
+  planning, generator execution, package execution, release execution,
+  provenance sidecar reads, provider resolution, capability scan behavior
+  changes, external tool execution, and AI requirements.
+- Top-level `forge explain` does not execute output, capability, or
+  provenance subject explanations, read generated manifests, check artifact
+  existence, read provenance sidecars, inspect project diagnostics, run build
+  planning, execute generators, execute packages or releases, resolve
+  providers, change capability scan behavior, execute xEdit, mutate plugins,
+  automate MO2 or GECK, run runtime probes, or use AI.
 - `forge generate --target mcm-json` writes deterministic MCM Extender JSON
   files, translation INI files when declared, a schema-validated package
   manifest, a schema-validated install-preview report, a human summary,
@@ -840,13 +876,85 @@ generated/graph/checksums.sha256
 
 `--output` is accepted only when the resolved path stays under project
 `generated/`. The current graph target writes project source graph evidence
-with a declaration-only capability requirement layer. It links dependency
-registry requirements to built-in catalogue capability/provider nodes, but it
-does not run `forge capabilities scan`, resolve provider status, render graph
-visualization formats, accept `--subject`, change build planning or execution,
-build a static site, watch files, publish to the network, package or release
-outputs, execute xEdit, mutate plugins, automate MO2 or GECK, run runtime
-probes, use real third-party plugin fixtures, or use AI.
+with declaration-only capability requirement, generator target, generated
+artifact expectation, and manifest provenance reference layers. It links
+dependency registry requirements to built-in catalogue capability/provider
+nodes, links source registries to known generator targets, links those targets
+to expected artifact families, links manifest sidecars to expected artifact
+families, and links expectations and manifest references to generated/dist
+output boundaries, but it does not run `forge capabilities scan`, resolve
+provider status, execute generator targets, check generated artifact
+existence, read generated manifests, render graph visualization formats,
+accept `--subject`, change build planning or execution, build a static site,
+watch files, publish to the network, package or release outputs, execute
+xEdit, mutate plugins, automate MO2 or GECK, run runtime probes, use real
+third-party plugin fixtures, or use AI.
+
+## Explain Subject Contract
+
+Gate 243 implements the first top-level `forge explain` subject skeleton,
+Gate 244 adds documented rule metadata, Gate 245 adds target metadata, Gate
+246 adds output path classification, Gate 247 adds built-in capability
+catalogue metadata, Gate 248 adds provenance boundary planning, and Gate 249
+closes the planned top-level explain subject surface:
+
+```text
+forge explain diagnostic <rule-id>
+forge explain target <target-id>
+forge explain output <generated-or-dist-path>
+forge explain capability <capability-id>
+forge explain provenance <manifest-or-output-path>
+```
+
+Unknown top-level explain subjects remain reserved and usage-safe. Gate 249
+routes the next command lane to `forge clean` planning, but it does not add
+delete behavior, filesystem mutation, generated manifest reads, build manifest
+reads, provenance sidecar reads, checksum reads, artifact existence checks, or
+external tool behavior.
+
+The diagnostic subject validates rule IDs such as `WF-CAP-004`, maps them to
+the reserved rule family, and explains the family scope, category, validation
+stage, recovery commands, documentation status, rule title, rule summary, and
+metadata source when a concrete rule is documented. Valid reserved rule IDs
+without embedded concrete metadata still return family-level fallback output.
+It does not inspect project diagnostics.
+
+The target subject validates target IDs such as `mcm-json`, `docs`, `graph`,
+and `release-verify`, then explains command surfaces, output roots, primary
+outputs, required capabilities, related rules, and no-execution boundaries. It
+does not read project files, generated manifests, provenance sidecars, or
+artifacts, and does not plan builds, execute generators, execute package or
+release behavior, resolve providers, run external tools, or use AI.
+
+The output subject validates documented generated/dist output paths such as
+`generated/mcm-json/MCM/MyMenu.json` and
+`generated/graph/project-source-graph.json`, then explains the matching output
+pattern, output kind, boundary, target, rebuild command, provenance
+expectation, and related rules. It does not read project files, generated
+manifests, provenance sidecars, artifacts, provider evidence, or external tool
+output.
+
+The capability subject validates built-in capability IDs such as
+`runtime.scripting.xnvse`, `runtime.ui.mcm_json`, `tool.xedit`, and `tool.mo2`,
+then explains capability catalogue metadata, satisfying providers, detector
+kinds, provider version declaration metadata, related `WF-CAP-*` rules,
+recovery commands, and no-execution boundaries. It does not read project
+files, generated manifests, provenance sidecars, artifacts, local provider
+evidence, runtime probes, or external tool output. Use
+`forge capabilities explain <capability-or-provider-id>` when evidence-aware
+local status is needed.
+
+The provenance subject validates documented generated/dist manifest or output
+paths such as `dist/build/build-manifest.json` and
+`generated/docs/reference-index.json`, then explains the evidence role, target,
+rebuild command, expected trace plan, related rules, and no-read boundaries. It
+does not read project files, generated manifests, build manifests, provenance
+sidecars, checksums, artifacts, provider evidence, runtime probes, or external
+tool output.
+
+Unknown explain subjects still return reserved-command JSON with the planned
+subject list. The evidence-aware local capability explainer remains
+`forge capabilities explain`.
 
 ## Generate, Build, And Package Evidence
 

@@ -77,6 +77,10 @@ internal static class ProjectSourceGraphJsonSerializer
             ["generatorTargets"] = summary.GeneratorTargets,
             ["generatorTargetInputEdges"] = summary.GeneratorTargetInputEdges,
             ["generatorTargetOutputEdges"] = summary.GeneratorTargetOutputEdges,
+            ["generatedArtifactExpectations"] = summary.GeneratedArtifactExpectations,
+            ["generatedArtifactExpectationEdges"] = summary.GeneratedArtifactExpectationEdges,
+            ["manifestProvenanceReferences"] = summary.ManifestProvenanceReferences,
+            ["manifestProvenanceReferenceEdges"] = summary.ManifestProvenanceReferenceEdges,
             ["sources"] = result.SourceDigests.Count,
             ["outputs"] = result.OutputDigests.Count
         };

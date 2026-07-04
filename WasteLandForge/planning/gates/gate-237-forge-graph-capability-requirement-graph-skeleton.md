@@ -88,10 +88,14 @@ Required validation:
 
 ## Next Gate
 
-Gate 238 should expand `forge graph` with a generator target graph skeleton. It
-should link known generator targets to source registries and generated/dist
-output boundaries while still stopping before build planning changes,
-generator execution changes, runtime provider resolution, capability scan
-behavior changes, graph visualization formats, package/release behavior, xEdit
-process execution, plugin mutation, MO2 automation, GECK automation, runtime
-probes, real third-party plugin fixtures, or AI behavior.
+Gate 238 expanded `forge graph` with a generator target graph skeleton, Gate
+239 expanded it with a generated artifact expectation graph skeleton, Gate 240
+expanded it with a manifest provenance reference graph skeleton, and Gate 241
+closed the graph command lane. The next implementation lane is Gate 242:
+top-level `forge explain` subject contract and planning skeleton, still
+stopping before generated manifest reads, build planning changes, generator
+execution changes, generated artifact existence checks, runtime provider
+resolution, capability scan behavior changes, graph visualization formats,
+package/release behavior, xEdit process execution, plugin mutation, MO2
+automation, GECK automation, runtime probes, real third-party plugin fixtures,
+or AI behavior.

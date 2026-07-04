@@ -258,6 +258,93 @@ visualization formats, `--subject`, build planning changes, package/release
 behavior, xEdit execution, plugin mutation, MO2/GECK automation, runtime
 probes, and AI.
 
+Gate 238 extends `ProjectSourceGraphGenerator` with declaration-only generator
+target graph nodes. `forge graph` now links current generator targets to
+source registry documents and generated/dist output boundaries, records target
+edge counts in graph summaries, and still avoids generator execution, build
+planning changes, capability scans, provider status resolution, graph
+visualization formats, `--subject`, package/release behavior, xEdit execution,
+plugin mutation, MO2/GECK automation, runtime probes, and AI.
+
+Gate 239 extends `ProjectSourceGraphGenerator` with declaration-only generated
+artifact expectation nodes. `forge graph` now links generator targets to
+expected artifact families and generated/dist boundaries, records expectation
+counts in graph summaries, and still avoids artifact existence checks,
+generator execution, build planning changes, capability scans, provider status
+resolution, graph visualization formats, `--subject`, package/release
+behavior, xEdit execution, plugin mutation, MO2/GECK automation, runtime
+probes, and AI.
+
+Gate 240 extends `ProjectSourceGraphGenerator` with declaration-only manifest
+provenance reference nodes. `forge graph` now links generator targets to known
+manifest sidecar families, links those manifests to covered artifact
+expectations and generated/dist boundaries, records manifest reference counts
+in graph summaries, and still avoids generated manifest reads, artifact
+existence checks, generator execution, build planning changes, capability
+scans, provider status resolution, graph visualization formats, `--subject`,
+package/release behavior, xEdit execution, plugin mutation, MO2/GECK
+automation, runtime probes, and AI.
+
+Gate 241 closes the current `forge graph` implementation lane without changing
+runtime code. The next implementation lane should start top-level
+`forge explain` subject planning rather than adding more graph metadata edges.
+
+Gate 242 adds `ExplainSubjectContract` and `ExplainSubjectContracts` in
+`WastelandForge.Cli`, wires `forge help explain` to the planned subject
+contract, and adds `forge explain --format json` reserved metadata for
+diagnostic, target, output, capability, and provenance subjects. The command
+remains reserved and does not parse subjects, read manifests, check artifacts,
+plan builds, execute generators, resolve providers, change capability scans,
+or use AI.
+
+Gate 243 adds `ExplainDiagnosticRuleFamily`,
+`ExplainDiagnosticRuleFamilies`, `ExplainDiagnosticTextRenderer`, and
+`ExplainDiagnosticJsonSerializer` in `WastelandForge.Cli`. Gate 244 adds
+`ExplainDiagnosticRuleDetail` metadata and a JSON `rule` object so
+`forge explain diagnostic <rule-id>` can return documented concrete rule
+metadata when available and reserved-family fallback metadata otherwise.
+At Gate 244, non-diagnostic explain subjects were still reserved. The
+diagnostic subject does not read project files, generated manifests,
+provenance sidecars, artifacts, provider evidence, external tools, or AI.
+
+Gate 245 adds `ExplainTargetCatalog`, `ExplainTargetTextRenderer`, and
+`ExplainTargetJsonSerializer` in `WastelandForge.Cli`. `ForgeCli` now routes
+`forge explain target <target-id>` to deterministic documented target metadata
+for implemented command targets while leaving capability and provenance
+subjects reserved. The target subject does not read project files,
+generated manifests, provenance sidecars, artifacts, provider evidence,
+external tools, or AI, and it does not plan builds or execute generators,
+packages, or releases.
+
+Gate 246 adds `ExplainOutputCatalog`, `ExplainOutputTextRenderer`, and
+`ExplainOutputJsonSerializer` in `WastelandForge.Cli`. `ForgeCli` now routes
+`forge explain output <generated-or-dist-path>` to deterministic output path
+classification for documented generated/dist outputs while leaving provenance
+reserved. The output subject does not read project
+files, generated manifests, provenance sidecars, artifacts, provider evidence,
+external tools, or AI.
+
+Gate 247 adds `ExplainCapabilityCatalog`, `ExplainCapabilityTextRenderer`, and
+`ExplainCapabilityJsonSerializer` in `WastelandForge.Cli`. `ForgeCli` now
+routes `forge explain capability <capability-id>` to deterministic built-in
+capability catalogue metadata. The capability subject does not read project files, generated manifests,
+provenance sidecars, artifacts, provider evidence, external tools, runtime
+probes, or AI.
+
+Gate 248 adds `ExplainProvenanceCatalog`, `ExplainProvenanceTextRenderer`, and
+`ExplainProvenanceJsonSerializer` in `WastelandForge.Cli`. `ForgeCli` now
+routes `forge explain provenance <manifest-or-output-path>` to deterministic
+provenance boundary planning for documented generated/dist paths. The
+provenance subject does not read project files, generated manifests, build
+manifests, provenance sidecars, checksums, artifacts, provider evidence,
+external tools, runtime probes, or AI.
+
+Gate 249 adds no runtime source code. It closes the planned top-level
+`forge explain` subject slice in documentation and routes the next source
+implementation lane to `forge clean` planning while leaving delete behavior,
+filesystem mutation, manifest reads, artifact checks, external tools, runtime
+probes, and AI untouched.
+
 Gate 29 adds semantic checks for mutation variable references while preserving
 earlier dialogue registry schema versions in `WastelandForge.Schema`.
 

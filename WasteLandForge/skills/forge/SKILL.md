@@ -716,22 +716,53 @@ watch mode, network publishing, capability scan/explain behavior, provider
 detection changes, provider-version parsing changes,
 graph/explain/clean behavior, package/release behavior, xEdit execution,
 plugin patching, plugin mutation, MO2/GECK automation, runtime probes, real
-third-party plugin fixtures, command aliases, or AI behavior. Route the next
-graph implementation slice to Gate 238: `forge graph` generator target graph
-skeleton.
+third-party plugin fixtures, command aliases, or AI behavior. Gate 238 adds
+declaration-only generator target graph links, and Gate 239 adds
+declaration-only generated artifact expectation graph links, and Gate 240
+adds declaration-only manifest provenance reference graph links, and Gate 241
+closes the graph command lane, Gate 242 starts the top-level `forge explain`
+lane with subject-contract help and reserved JSON metadata, and Gate 243
+implements `forge explain diagnostic <rule-id>` as a family-level subject
+skeleton, Gate 244 adds documented diagnostic rule metadata, Gate 245
+implements `forge explain target <target-id>` as deterministic target
+metadata, and Gate 246 implements `forge explain output
+<generated-or-dist-path>` as deterministic output path classification, and
+Gate 247 implements `forge explain capability <capability-id>` as
+deterministic built-in capability catalogue metadata, and Gate 248 implements
+`forge explain provenance <manifest-or-output-path>` as deterministic
+provenance boundary planning, and Gate 249 closes the top-level
+`forge explain` command slice. Route the next implementation slice to Gate 250:
+`forge clean` planning skeleton.
 
 - `/forge graph` maps to the real `forge graph` behavior when available. Gate
   236 implements minimal project source graph evidence under `generated/graph`,
   and Gate 237 adds declaration-only capability requirement graph links to the
-  built-in capability/provider catalogue. Treat generated
+  built-in capability/provider catalogue, and Gate 238 adds declaration-only
+  generator target graph links, and Gate 239 adds declaration-only generated
+  artifact expectation graph links, and Gate 240 adds declaration-only
+  manifest provenance reference graph links, and Gate 241 closes the graph
+  command lane. Treat generated
   `project-source-graph.json`, `project-source-graph.md`,
   `graph-manifest.json`, and `checksums.sha256` as local generated graph
   evidence only. Do not route this as graph visualization formats, `--subject`,
-  capability scan behavior changes, provider status resolution, build planning
-  changes, package/release behavior, xEdit execution, plugin patching, plugin
-  mutation, MO2/GECK automation, runtime probes, real third-party plugin
-  fixtures, command aliases, or AI behavior. Route the next graph slice to
-  Gate 238: `forge graph` generator target graph skeleton.
+  capability scan behavior changes, provider status resolution, generated
+  manifest reads, generated artifact existence checks, generator execution,
+  build planning changes, package/release behavior, xEdit execution, plugin
+  patching, plugin mutation, MO2/GECK automation, runtime probes, real
+  third-party plugin fixtures, command aliases, or AI behavior. Gate 242
+  starts the top-level `forge explain` lane with subject-contract help and
+  reserved JSON metadata, and Gate 243 implements
+  `forge explain diagnostic <rule-id>` as a family-level subject skeleton,
+  Gate 244 adds documented diagnostic rule metadata, Gate 245 implements
+  `forge explain target <target-id>` as deterministic target metadata, and
+  Gate 246 implements `forge explain output <generated-or-dist-path>` as
+  deterministic output path classification, and Gate 247 implements
+  `forge explain capability <capability-id>` as deterministic built-in
+  capability catalogue metadata, and Gate 248 implements
+  `forge explain provenance <manifest-or-output-path>` as deterministic
+  provenance boundary planning, and Gate 249 closes the top-level
+  `forge explain` command slice. Route the next implementation slice to Gate 250:
+  `forge clean` planning skeleton.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a

@@ -111,6 +111,9 @@ internal static class CliHelpWriter
             case "graph":
                 WriteGraphHelp(writer);
                 return true;
+            case "explain":
+                WriteExplainHelp(writer);
+                return true;
             case "doctor":
                 WriteDoctorHelp(writer);
                 return true;
@@ -118,7 +121,6 @@ internal static class CliHelpWriter
                 WriteDoctorExportHelp(writer);
                 return true;
             case "init":
-            case "explain":
             case "clean":
                 WriteReservedCommandHelp(writer, commandPath, "This command is part of the ADR-010 command surface and is reserved for a later gate.");
                 return true;
@@ -262,7 +264,7 @@ internal static class CliHelpWriter
         writer.WriteLine("Usage:");
         writer.WriteLine("  forge docs [project-root] [--project <path>] [--output generated/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Writes deterministic local docs reference evidence under project generated/. The current gate indexes embedded schemas, project registry files, reserved rule families, the built-in FNV capability/provider catalogue, canonical command references, per-schema reference page skeletons, project registry reference page skeletons, validation rule reference page skeletons, built-in capability reference page skeletons, built-in provider reference page skeletons, and canonical command reference page skeletons.");
+        writer.WriteLine("Writes deterministic local docs reference evidence under project generated/. The implemented docs lane indexes embedded schemas, project registry files, reserved rule families, the built-in FNV capability/provider catalogue, canonical command references, per-schema reference page skeletons, project registry reference page skeletons, validation rule reference page skeletons, built-in capability reference page skeletons, built-in provider reference page skeletons, and canonical command reference page skeletons.");
         writer.WriteLine("This does not build a static site, watch files, publish to the network, execute graph/explain/clean behavior, package or release outputs, execute xEdit, generate patches, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.");
         writer.WriteLine();
         writer.WriteLine("Outputs:");
@@ -301,7 +303,10 @@ internal static class CliHelpWriter
         writer.WriteLine("Usage:");
         writer.WriteLine("  forge graph [project-root] [--project <path>] [--output generated/<name>] [--format human|plain|json] [--dry-run] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Writes deterministic project source graph evidence under project generated/. The current gate links the project, known source contract documents, declared capability requirements, built-in catalogue capabilities/providers, and generated/dist output boundaries.");
+        writer.WriteLine("Writes deterministic project source graph evidence under project generated/. The implemented graph lane links the project, known source contract documents, declared capability requirements, built-in catalogue capabilities/providers, known generator targets, generated artifact expectations, manifest provenance references, and generated/dist output boundaries.");
+        writer.WriteLine("Generator target graphing is declaration-only and does not execute targets.");
+        writer.WriteLine("Generated artifact expectation graphing is declaration-only and does not check file existence.");
+        writer.WriteLine("Manifest provenance reference graphing is declaration-only and does not read generated manifests.");
         writer.WriteLine("This does not render graph visualization formats, accept --subject, run capability scans, resolve provider status, plan or execute builds, build a static site, watch files, publish to the network, package or release outputs, execute xEdit, generate patches, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.");
         writer.WriteLine();
         writer.WriteLine("Outputs:");
@@ -319,6 +324,51 @@ internal static class CliHelpWriter
         writer.WriteLine("  0 graph evidence written or planned");
         writer.WriteLine("  1 blocking diagnostics found");
         writer.WriteLine("  2 usage or unsupported format");
+    }
+
+    private static void WriteExplainHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge explain");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        foreach (var subject in ExplainSubjectContracts.All)
+        {
+            writer.WriteLine($"  {subject.Usage}");
+        }
+
+        writer.WriteLine();
+        writer.WriteLine("Planned subjects:");
+        foreach (var subject in ExplainSubjectContracts.All)
+        {
+            writer.WriteLine($"  {subject.Subject} - {subject.Purpose}");
+        }
+
+        writer.WriteLine();
+        writer.WriteLine("Implemented in the current gate:");
+        writer.WriteLine("  diagnostic - rule explanation from documented rule metadata with reserved-family fallback.");
+        writer.WriteLine("  target - deterministic target metadata for documented command targets.");
+        writer.WriteLine("  output - deterministic generated/dist output path classification.");
+        writer.WriteLine("  capability - deterministic built-in capability catalogue metadata.");
+        writer.WriteLine("  provenance - deterministic provenance boundary planning for documented generated/dist paths.");
+        writer.WriteLine();
+        writer.WriteLine("Reserved in the current gate:");
+        writer.WriteLine("  none");
+        writer.WriteLine();
+        writer.WriteLine("Boundary:");
+        writer.WriteLine("  forge explain diagnostic, forge explain target, forge explain output, forge explain capability, and forge explain provenance do not read project files, generated manifests, build manifests, provenance sidecars, artifacts, provider evidence, or external tool output.");
+        writer.WriteLine("  Project diagnostic report lookup, generated manifest reads, build manifest reads, artifact existence checks, build planning, generator execution, package execution, release execution, provider resolution, capability scan changes, runtime probes, external tool execution, and AI calls are not performed.");
+        writer.WriteLine("  Use --format json for machine-readable explanation or usage output.");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge explain diagnostic WF-CAP-004");
+        writer.WriteLine("  forge explain target docs");
+        writer.WriteLine("  forge explain output generated/docs/reference-index.md");
+        writer.WriteLine("  forge explain capability runtime.scripting.xnvse");
+        writer.WriteLine("  forge explain provenance dist/build/build-manifest.json");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 diagnostic, target, output, capability, or provenance explanation written");
+        writer.WriteLine("  2 usage error");
     }
 
     private static void WritePackageHelp(TextWriter writer)

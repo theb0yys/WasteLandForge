@@ -973,5 +973,63 @@ Gate 237 adds no new diagnostic rule ID. `forge graph` capability requirement
 graph generation remains declaration-only and reuses existing validation and
 `WF-GEN-001` generated-output containment behavior.
 
+Gate 238 adds no new diagnostic rule ID. `forge graph` generator target graph
+generation remains declaration-only and reuses existing validation and
+`WF-GEN-001` generated-output containment behavior.
+
+Gate 239 adds no new diagnostic rule ID. `forge graph` generated artifact
+expectation graph generation remains declaration-only and reuses existing
+validation and `WF-GEN-001` generated-output containment behavior.
+
+Gate 240 adds no new diagnostic rule ID. `forge graph` manifest provenance
+reference graph generation remains declaration-only and reuses existing
+validation and `WF-GEN-001` generated-output containment behavior.
+
+Gate 241 adds no new diagnostic rule ID. It is a graph lane closeout and
+`forge explain` transition marker only; it does not introduce top-level
+explain diagnostics, graph diagnostics, generated manifest reads, artifact
+existence checks, provider resolution, generator execution, or capability scan
+behavior changes.
+
+Gate 242 adds no new diagnostic rule ID. It defines top-level `forge explain`
+subject-contract help and reserved JSON metadata only; diagnostic subject
+execution and diagnostic rule catalogue lookup remain future work.
+
+Gate 243 adds no new diagnostic rule ID. It implements
+`forge explain diagnostic <rule-id>` as a family-level explanation over the
+reserved rule ID pattern and rule-family scopes. Rule-specific catalogue lookup
+and project diagnostic report lookup remain future work.
+
+Gate 244 adds no new diagnostic rule ID. It adds deterministic documented rule
+metadata to `forge explain diagnostic <rule-id>` for known concrete rule IDs,
+plus reserved-family fallback metadata for valid IDs with no embedded concrete
+record. Project diagnostic report lookup remains future work.
+
+Gate 245 adds no new diagnostic rule ID. It implements
+`forge explain target <target-id>` as deterministic command-target metadata
+only; it does not inspect diagnostics, generated manifests, provenance
+sidecars, or artifacts.
+
+Gate 246 adds no new diagnostic rule ID. It implements
+`forge explain output <generated-or-dist-path>` as deterministic output path
+classification only; it does not inspect diagnostics, generated manifests,
+provenance sidecars, or artifacts.
+
+Gate 247 adds no new diagnostic rule ID. It implements
+`forge explain capability <capability-id>` as deterministic built-in
+capability catalogue metadata only; it does not inspect diagnostics, provider
+evidence, generated manifests, provenance sidecars, or artifacts.
+
+Gate 248 adds no new diagnostic rule ID. It implements
+`forge explain provenance <manifest-or-output-path>` as deterministic
+provenance boundary planning only; it does not inspect diagnostics, generated
+manifests, build manifests, checksums, provenance sidecars, or artifacts.
+
+Gate 249 adds no new diagnostic rule ID. It closes the documented top-level
+`forge explain` command slice and routes the next lane to `forge clean`
+planning without inspecting diagnostics, generated manifests, build manifests,
+checksums, provenance sidecars, artifacts, provider evidence, external tools,
+runtime probes, or AI.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

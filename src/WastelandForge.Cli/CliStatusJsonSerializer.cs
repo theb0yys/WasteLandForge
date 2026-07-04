@@ -13,8 +13,28 @@ internal static class CliStatusJsonSerializer
 
     public static string SerializeReservedCommand(string commandPath)
     {
-        return CreateStatus(commandPath, "reserved", $"forge {commandPath} is reserved by ADR-010 but is not implemented in the current gate.", 1)
-            .ToJsonString(SerializerOptions);
+        var status = CreateStatus(commandPath, "reserved", $"forge {commandPath} is reserved by ADR-010 but is not implemented in the current gate.", 1);
+        if (StringComparer.Ordinal.Equals(commandPath, "explain"))
+        {
+            status["plannedSubjects"] = CreateExplainSubjectArray();
+            status["execution"] = new JsonObject
+            {
+                ["subjectParsing"] = false,
+                ["manifestRead"] = false,
+                ["artifactExistenceCheck"] = false,
+                ["provenanceSidecarRead"] = false,
+                ["buildPlanning"] = false,
+                ["generatorExecution"] = false,
+                ["packageExecution"] = false,
+                ["releaseExecution"] = false,
+                ["providerResolution"] = false,
+                ["capabilityScanBehaviorChange"] = false,
+                ["externalToolExecution"] = false,
+                ["aiRequired"] = false
+            };
+        }
+
+        return status.ToJsonString(SerializerOptions);
     }
 
     public static string SerializeUsageError(string commandPath, string message)
@@ -43,5 +63,22 @@ internal static class CliStatusJsonSerializer
             },
             ["message"] = message
         };
+    }
+
+    private static JsonArray CreateExplainSubjectArray()
+    {
+        var subjects = new JsonArray();
+        foreach (var subject in ExplainSubjectContracts.All)
+        {
+            subjects.Add(new JsonObject
+            {
+                ["subject"] = subject.Subject,
+                ["usage"] = subject.Usage,
+                ["purpose"] = subject.Purpose,
+                ["boundary"] = subject.Boundary
+            });
+        }
+
+        return subjects;
     }
 }

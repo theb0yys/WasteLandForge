@@ -16,4 +16,8 @@ public sealed record ProjectSourceGraphSummary(
     int CatalogueProviders,
     int GeneratorTargets,
     int GeneratorTargetInputEdges,
-    int GeneratorTargetOutputEdges);
+    int GeneratorTargetOutputEdges,
+    int GeneratedArtifactExpectations,
+    int GeneratedArtifactExpectationEdges,
+    int ManifestProvenanceReferences,
+    int ManifestProvenanceReferenceEdges);
