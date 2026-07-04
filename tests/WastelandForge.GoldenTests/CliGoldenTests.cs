@@ -6696,32 +6696,156 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
-    public void ReleasePrepareJsonReportsPlanningSkeleton()
+    public void ReleasePrepareJsonWritesStagingPlanSummaryBuildManifestAndChecksums()
     {
         var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-prepare-plan");
         Directory.CreateDirectory(projectRoot);
 
         var result = RunCli("release", "prepare", projectRoot, "--format", "json", "--no-input");
         var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release prepare JSON did not parse.");
+        var stagingRootPath = Path.Combine(projectRoot, "dist", "release-prepare", "staging");
+        var stagingPayloadPath = Path.Combine(stagingRootPath, "release-payload.json");
+        var releasePlanPath = Path.Combine(projectRoot, "dist", "release-prepare", "release-plan.json");
+        var releaseSummaryPath = Path.Combine(projectRoot, "dist", "release-prepare", "release-summary.json");
+        var buildManifestPath = Path.Combine(projectRoot, "dist", "release-prepare", "build-manifest.json");
+        var checksumsPath = Path.Combine(projectRoot, "dist", "release-prepare", "checksums.sha256");
+        var stagingPayloadJson = JsonNode.Parse(File.ReadAllText(stagingPayloadPath)) ?? throw new InvalidOperationException("Staging payload JSON did not parse.");
+        var releasePlanJson = JsonNode.Parse(File.ReadAllText(releasePlanPath)) ?? throw new InvalidOperationException("Release plan JSON did not parse.");
+        var releaseSummaryJson = JsonNode.Parse(File.ReadAllText(releaseSummaryPath)) ?? throw new InvalidOperationException("Release summary JSON did not parse.");
+        var buildManifestJson = JsonNode.Parse(File.ReadAllText(buildManifestPath)) ?? throw new InvalidOperationException("Build manifest JSON did not parse.");
+        var checksums = File.ReadAllText(checksumsPath);
 
         Assert.Equal(0, result.ExitCode);
         Assert.Equal("release prepare", (string?)json["command"]);
-        Assert.Equal("planned", (string?)json["status"]);
-        Assert.Equal(true, (bool?)json["dryRun"]);
-        Assert.Equal(true, (bool?)json["planningOnly"]);
+        Assert.Equal("prepared", (string?)json["status"]);
+        Assert.Equal(false, (bool?)json["dryRun"]);
+        Assert.Equal(false, (bool?)json["planningOnly"]);
         Assert.Equal("dist/release-prepare", (string?)json["output"]?["root"]);
+        Assert.Equal("dist/release-prepare/staging", (string?)json["output"]?["stagingRoot"]);
+        Assert.Equal("dist/release-prepare/staging/release-payload.json", (string?)json["output"]?["stagingPayload"]);
+        Assert.Equal("dist/release-prepare/release-plan.json", (string?)json["output"]?["releasePlan"]);
+        Assert.Equal("dist/release-prepare/release-summary.json", (string?)json["output"]?["releaseSummary"]);
+        Assert.Equal("dist/release-prepare/build-manifest.json", (string?)json["output"]?["buildManifest"]);
+        Assert.Equal("dist/release-prepare/checksums.sha256", (string?)json["output"]?["checksums"]);
         Assert.Equal(true, (bool?)json["output"]?["defaulted"]);
         Assert.Equal("inside-dist", (string?)json["outputSafety"]?["status"]);
-        Assert.Equal("dist/release-prepare/release-plan.json", (string?)json["plannedOutputs"]?[1]?["path"]);
-        Assert.Equal(false, (bool?)json["plannedOutputs"]?[1]?["wouldWriteInCurrentGate"]);
-        Assert.Equal(false, (bool?)json["reportContract"]?["mutatesFilesystemInCurrentGate"]);
+        Assert.Equal("dist/release-prepare/staging/", (string?)json["plannedOutputs"]?[0]?["path"]);
+        Assert.Equal(true, (bool?)json["plannedOutputs"]?[0]?["wouldWriteInCurrentGate"]);
+        Assert.Equal("dist/release-prepare/staging/release-payload.json", (string?)json["plannedOutputs"]?[1]?["path"]);
+        Assert.Equal(true, (bool?)json["plannedOutputs"]?[1]?["wouldWriteInCurrentGate"]);
+        Assert.Equal("dist/release-prepare/release-plan.json", (string?)json["plannedOutputs"]?[2]?["path"]);
+        Assert.Equal(true, (bool?)json["plannedOutputs"]?[2]?["wouldWriteInCurrentGate"]);
+        Assert.Equal("dist/release-prepare/release-summary.json", (string?)json["plannedOutputs"]?[3]?["path"]);
+        Assert.Equal(true, (bool?)json["plannedOutputs"]?[3]?["wouldWriteInCurrentGate"]);
+        Assert.Equal("dist/release-prepare/build-manifest.json", (string?)json["plannedOutputs"]?[4]?["path"]);
+        Assert.Equal(true, (bool?)json["plannedOutputs"]?[4]?["wouldWriteInCurrentGate"]);
+        Assert.Equal("dist/release-prepare/checksums.sha256", (string?)json["plannedOutputs"]?[5]?["path"]);
+        Assert.Equal(true, (bool?)json["plannedOutputs"]?[5]?["wouldWriteInCurrentGate"]);
+        Assert.Equal("dist/release-prepare/staging/release-payload.json", (string?)json["writtenOutputs"]?[0]?["path"]);
+        Assert.Equal("dist/release-prepare/release-plan.json", (string?)json["writtenOutputs"]?[1]?["path"]);
+        Assert.Equal("dist/release-prepare/release-summary.json", (string?)json["writtenOutputs"]?[2]?["path"]);
+        Assert.Equal("dist/release-prepare/build-manifest.json", (string?)json["writtenOutputs"]?[3]?["path"]);
+        Assert.Equal("dist/release-prepare/checksums.sha256", (string?)json["writtenOutputs"]?[4]?["path"]);
+        Assert.Equal(true, (bool?)json["reportContract"]?["mutatesFilesystemInCurrentGate"]);
+        Assert.Equal(true, (bool?)json["execution"]?["releasePrepareExecution"]);
+        Assert.Equal(true, (bool?)json["execution"]?["filesystemMutation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["outputWrites"]);
         Assert.Equal(false, (bool?)json["execution"]?["archiveCreation"]);
         Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
         Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
         Assert.Equal(false, (bool?)json["execution"]?["attestationSigning"]);
         Assert.Equal(false, (bool?)json["execution"]?["externalToolExecution"]);
         Assert.Equal(false, (bool?)json["execution"]?["aiRequired"]);
+        Assert.Equal("wastelandforge.release-staging-payload", (string?)stagingPayloadJson["kind"]);
+        Assert.Equal("release prepare", (string?)stagingPayloadJson["command"]);
+        Assert.Equal("skeleton", (string?)stagingPayloadJson["status"]);
+        Assert.Equal("dist/release-prepare/staging", (string?)stagingPayloadJson["output"]?["stagingRoot"]);
+        Assert.Equal("dist/release-prepare/staging/release-payload.json", (string?)stagingPayloadJson["output"]?["stagingPayload"]);
+        Assert.Equal(0, (int?)stagingPayloadJson["payload"]?["modPayloadFiles"]);
+        Assert.Equal(false, (bool?)stagingPayloadJson["payload"]?["writesToGameData"]);
+        Assert.Equal(false, (bool?)stagingPayloadJson["payload"]?["pluginMutation"]);
+        Assert.Equal(false, (bool?)stagingPayloadJson["payload"]?["archiveCreated"]);
+        Assert.Equal("wastelandforge.release-plan", (string?)releasePlanJson["kind"]);
+        Assert.Equal("release prepare", (string?)releasePlanJson["command"]);
+        Assert.Equal("dist/release-prepare/staging", (string?)releasePlanJson["output"]?["stagingRoot"]);
+        Assert.Equal("dist/release-prepare/staging/release-payload.json", (string?)releasePlanJson["output"]?["stagingPayload"]);
+        Assert.Equal("dist/release-prepare/release-plan.json", (string?)releasePlanJson["output"]?["releasePlan"]);
+        Assert.Equal("dist/release-prepare/release-summary.json", (string?)releasePlanJson["output"]?["releaseSummary"]);
+        Assert.Equal("dist/release-prepare/build-manifest.json", (string?)releasePlanJson["output"]?["buildManifest"]);
+        Assert.Equal("dist/release-prepare/checksums.sha256", (string?)releasePlanJson["output"]?["checksums"]);
+        Assert.Equal(false, (bool?)releasePlanJson["execution"]?["archiveCreation"]);
+        Assert.Equal("wastelandforge.release-summary", (string?)releaseSummaryJson["kind"]);
+        Assert.Equal("release prepare", (string?)releaseSummaryJson["command"]);
+        Assert.Equal("prepared", (string?)releaseSummaryJson["status"]);
+        Assert.Equal("dist/release-prepare/staging", (string?)releaseSummaryJson["output"]?["stagingRoot"]);
+        Assert.Equal("dist/release-prepare/staging/release-payload.json", (string?)releaseSummaryJson["output"]?["stagingPayload"]);
+        Assert.Equal("dist/release-prepare/release-plan.json", (string?)releaseSummaryJson["output"]?["releasePlan"]);
+        Assert.Equal("dist/release-prepare/release-summary.json", (string?)releaseSummaryJson["output"]?["releaseSummary"]);
+        Assert.Equal("dist/release-prepare/build-manifest.json", (string?)releaseSummaryJson["output"]?["buildManifest"]);
+        Assert.Equal("dist/release-prepare/checksums.sha256", (string?)releaseSummaryJson["output"]?["checksums"]);
+        Assert.Equal(5, (int?)releaseSummaryJson["summary"]?["writtenOutputs"]);
+        Assert.Equal(true, (bool?)releaseSummaryJson["summary"]?["buildManifestWritten"]);
+        Assert.Equal(true, (bool?)releaseSummaryJson["summary"]?["checksumsWritten"]);
+        Assert.Equal(true, (bool?)releaseSummaryJson["summary"]?["stagingPayloadWritten"]);
+        Assert.Equal(false, (bool?)releaseSummaryJson["summary"]?["archiveCreated"]);
+        Assert.Equal(false, (bool?)releaseSummaryJson["execution"]?["archiveCreation"]);
+        Assert.Equal("wastelandforge.build-manifest", (string?)buildManifestJson["kind"]);
+        Assert.Equal("wastelandforge/release-prepare/v1", (string?)buildManifestJson["buildType"]);
+        Assert.Equal("release prepare", (string?)buildManifestJson["command"]);
+        Assert.Equal("prepared", (string?)buildManifestJson["status"]);
+        Assert.Equal("default-epoch", (string?)buildManifestJson["timestamp"]?["source"]);
+        Assert.Equal("dist/release-prepare/staging", (string?)buildManifestJson["output"]?["stagingRoot"]);
+        Assert.Equal("dist/release-prepare/staging/release-payload.json", (string?)buildManifestJson["output"]?["stagingPayload"]);
+        Assert.Equal("dist/release-prepare/release-plan.json", (string?)buildManifestJson["output"]?["releasePlan"]);
+        Assert.Equal("dist/release-prepare/release-summary.json", (string?)buildManifestJson["output"]?["releaseSummary"]);
+        Assert.Equal("dist/release-prepare/build-manifest.json", (string?)buildManifestJson["output"]?["buildManifest"]);
+        Assert.Equal("dist/release-prepare/checksums.sha256", (string?)buildManifestJson["output"]?["checksums"]);
+        Assert.Equal(0, buildManifestJson["sources"]?.AsArray().Count);
+        Assert.Equal(3, buildManifestJson["outputs"]?.AsArray().Count);
+        Assert.Equal("dist/release-prepare/release-plan.json", (string?)buildManifestJson["outputs"]?[0]?["path"]);
+        Assert.Equal("dist/release-prepare/release-summary.json", (string?)buildManifestJson["outputs"]?[1]?["path"]);
+        Assert.Equal("dist/release-prepare/staging/release-payload.json", (string?)buildManifestJson["outputs"]?[2]?["path"]);
+        Assert.Equal(64, ((string?)buildManifestJson["outputs"]?[0]?["sha256"])?.Length);
+        Assert.Equal(64, ((string?)buildManifestJson["outputs"]?[1]?["sha256"])?.Length);
+        Assert.Equal(64, ((string?)buildManifestJson["outputs"]?[2]?["sha256"])?.Length);
+        Assert.Equal(false, (bool?)buildManifestJson["execution"]?["archiveCreation"]);
+        Assert.Equal(false, (bool?)buildManifestJson["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)buildManifestJson["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)buildManifestJson["execution"]?["externalToolExecution"]);
+        Assert.Contains($"{ComputeSha256(buildManifestPath)}  build-manifest.json", checksums, StringComparison.Ordinal);
+        Assert.Contains($"{ComputeSha256(releasePlanPath)}  release-plan.json", checksums, StringComparison.Ordinal);
+        Assert.Contains($"{ComputeSha256(releaseSummaryPath)}  release-summary.json", checksums, StringComparison.Ordinal);
+        Assert.Contains($"{ComputeSha256(stagingPayloadPath)}  staging/release-payload.json", checksums, StringComparison.Ordinal);
+        Assert.EndsWith(Environment.NewLine, checksums, StringComparison.Ordinal);
+        Assert.DoesNotContain("checksums.sha256", checksums, StringComparison.Ordinal);
+        Assert.True(Directory.Exists(stagingRootPath));
         Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePrepareDryRunReportsPlanningWithoutWritingFiles()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-prepare-plan");
+        Directory.CreateDirectory(projectRoot);
+
+        var result = RunCli("release", "prepare", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release prepare JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("planned", (string?)json["status"]);
+        Assert.Equal(true, (bool?)json["dryRun"]);
+        Assert.Equal(true, (bool?)json["planningOnly"]);
+        Assert.Equal(false, (bool?)json["plannedOutputs"]?[0]?["wouldWriteInCurrentGate"]);
+        Assert.Equal(false, (bool?)json["plannedOutputs"]?[1]?["wouldWriteInCurrentGate"]);
+        Assert.Equal(false, (bool?)json["plannedOutputs"]?[2]?["wouldWriteInCurrentGate"]);
+        Assert.Equal(false, (bool?)json["plannedOutputs"]?[3]?["wouldWriteInCurrentGate"]);
+        Assert.Equal(false, (bool?)json["plannedOutputs"]?[4]?["wouldWriteInCurrentGate"]);
+        Assert.Equal(false, (bool?)json["plannedOutputs"]?[5]?["wouldWriteInCurrentGate"]);
+        Assert.Equal(false, (bool?)json["reportContract"]?["mutatesFilesystemInCurrentGate"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePrepareExecution"]);
+        Assert.Equal(false, (bool?)json["execution"]?["filesystemMutation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["outputWrites"]);
+        Assert.Equal(0, json["writtenOutputs"]?.AsArray().Count);
         Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
     }
 
@@ -6732,9 +6856,13 @@ public sealed class CliGoldenTests
 
         Assert.Equal(0, result.ExitCode);
         Assert.Contains("forge release prepare", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Gate 260 emits a local release-preparation plan only.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Gate 265 writes local staging/release-payload.json, release-plan.json, release-summary.json, build-manifest.json, and checksums.sha256 files only.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("dist/release-prepare/staging/release-payload.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("dist/release-prepare/release-plan.json", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("It does not create archives, write release evidence, publish releases, call remote repositories, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("dist/release-prepare/release-summary.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("dist/release-prepare/build-manifest.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("dist/release-prepare/checksums.sha256", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("It does not create archives, publish releases, call remote repositories, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 

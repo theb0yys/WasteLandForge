@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -15,6 +16,21 @@ internal sealed record ReleasePreparePlannedOutput(
     string Description,
     bool WouldWriteInCurrentGate);
 
+internal sealed record ReleasePrepareWrittenOutput(
+    string Kind,
+    string Path,
+    long Length);
+
+internal sealed record ReleasePrepareOutputDigest(
+    string Path,
+    string Sha256,
+    long Length);
+
+internal sealed record ReleasePrepareReproducibleTimestamp(
+    string Source,
+    long UnixTime,
+    string Utc);
+
 internal sealed record ReleasePrepareOutputSafety(
     bool Checked,
     string DistRoot,
@@ -29,8 +45,17 @@ internal sealed record ReleasePreparePlanResult(
     bool OutputDefaulted,
     bool DryRun,
     bool PlanningOnly,
+    bool FilesystemMutation,
+    bool OutputWrites,
+    string StagingRootPath,
+    string StagingPayloadPath,
+    string ReleasePlanPath,
+    string ReleaseSummaryPath,
+    string BuildManifestPath,
+    string ChecksumsPath,
     ReleasePrepareOutputSafety OutputSafety,
     IReadOnlyList<ReleasePreparePlannedOutput> PlannedOutputs,
+    IReadOnlyList<ReleasePrepareWrittenOutput> WrittenOutputs,
     IReadOnlyList<string> Boundaries)
 {
     public bool IsRefused => StringComparer.Ordinal.Equals(Status, "refused");
@@ -40,9 +65,9 @@ internal static class ReleasePreparePlanPlanner
 {
     private static readonly string[] BoundaryLines =
     [
-        "Gate 260 defines release prepare planning metadata only.",
+        "Gate 265 writes staging/release-payload.json, release-plan.json, release-summary.json, build-manifest.json, and checksums.sha256 only.",
         "No release archive is created.",
-        "No filesystem output is written.",
+        "No package archive, installer, live Data write, plugin mutation, or archive output is written.",
         "No release is published.",
         "Remote repositories are not called.",
         "Attestations and signing are not performed.",
@@ -62,7 +87,22 @@ internal static class ReleasePreparePlanPlanner
             : Path.GetFullPath(Path.Combine(projectRoot, options.OutputDirectory!));
         var outputRootDisplay = ToDisplayPath(projectRoot, outputRoot);
         var insideDist = IsInside(distRoot, outputRoot);
-        var status = insideDist ? "planned" : "refused";
+        var stagingRootPath = Path.Combine(outputRoot, "staging");
+        var stagingPayloadPath = Path.Combine(stagingRootPath, "release-payload.json");
+        var releasePlanPath = Path.Combine(outputRoot, "release-plan.json");
+        var releaseSummaryPath = Path.Combine(outputRoot, "release-summary.json");
+        var buildManifestPath = Path.Combine(outputRoot, "build-manifest.json");
+        var checksumsPath = Path.Combine(outputRoot, "checksums.sha256");
+        var stagingRootDisplayPath = ToDisplayPath(projectRoot, stagingRootPath);
+        var stagingPayloadDisplayPath = ToDisplayPath(projectRoot, stagingPayloadPath);
+        var releasePlanDisplayPath = ToDisplayPath(projectRoot, releasePlanPath);
+        var releaseSummaryDisplayPath = ToDisplayPath(projectRoot, releaseSummaryPath);
+        var buildManifestDisplayPath = ToDisplayPath(projectRoot, buildManifestPath);
+        var checksumsDisplayPath = ToDisplayPath(projectRoot, checksumsPath);
+        var writes = insideDist && !options.DryRun;
+        var status = insideDist
+            ? options.DryRun ? "planned" : "prepared"
+            : "refused";
         var refusalReason = insideDist
             ? null
             : "Release prepare output must stay under the project dist/ directory.";
@@ -74,29 +114,325 @@ internal static class ReleasePreparePlanPlanner
             Status: insideDist ? "inside-dist" : "refused-output-outside-dist",
             RefusalReason: refusalReason);
 
-        return new ReleasePreparePlanResult(
+        var result = new ReleasePreparePlanResult(
             status,
             projectRoot,
             outputRootDisplay,
             outputDefaulted,
-            DryRun: true,
-            PlanningOnly: true,
+            DryRun: options.DryRun,
+            PlanningOnly: options.DryRun,
+            FilesystemMutation: writes,
+            OutputWrites: writes,
+            stagingRootDisplayPath,
+            stagingPayloadDisplayPath,
+            releasePlanDisplayPath,
+            releaseSummaryDisplayPath,
+            buildManifestDisplayPath,
+            checksumsDisplayPath,
             safety,
-            CreatePlannedOutputs(outputRootDisplay),
+            CreatePlannedOutputs(
+                outputRootDisplay,
+                writesStagingRoot: writes,
+                writesStagingPayload: writes,
+                writesReleasePlan: writes,
+                writesReleaseSummary: writes,
+                writesBuildManifest: writes,
+                writesChecksums: writes),
+            [],
             BoundaryLines);
+
+        if (!writes)
+        {
+            return result;
+        }
+
+        Directory.CreateDirectory(outputRoot);
+        Directory.CreateDirectory(stagingRootPath);
+        var stagingPayloadJson = CreateStagingPayloadJson(result).ToJsonString(SerializerOptions) + Environment.NewLine;
+        File.WriteAllText(stagingPayloadPath, stagingPayloadJson, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        var releasePlanJson = CreateReleasePlanJson(result).ToJsonString(SerializerOptions) + Environment.NewLine;
+        File.WriteAllText(releasePlanPath, releasePlanJson, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        var releaseSummaryJson = CreateReleaseSummaryJson(result).ToJsonString(SerializerOptions) + Environment.NewLine;
+        File.WriteAllText(releaseSummaryPath, releaseSummaryJson, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        var outputDigests = new[] { releasePlanPath, releaseSummaryPath, stagingPayloadPath }
+            .Select(path => ComputeDigest(projectRoot, path))
+            .OrderBy(digest => digest.Path, StringComparer.Ordinal)
+            .ToArray();
+        var buildManifestJson = CreateBuildManifestJson(result, outputDigests).ToJsonString(SerializerOptions) + Environment.NewLine;
+        File.WriteAllText(buildManifestPath, buildManifestJson, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        WriteChecksums(outputRoot, checksumsPath, [releasePlanPath, releaseSummaryPath, stagingPayloadPath, buildManifestPath]);
+
+        var stagingPayloadWritten = new ReleasePrepareWrittenOutput("staging-payload", stagingPayloadDisplayPath, new FileInfo(stagingPayloadPath).Length);
+        var written = new ReleasePrepareWrittenOutput("release-plan", releasePlanDisplayPath, new FileInfo(releasePlanPath).Length);
+        var summaryWritten = new ReleasePrepareWrittenOutput("release-summary", releaseSummaryDisplayPath, new FileInfo(releaseSummaryPath).Length);
+        var manifestWritten = new ReleasePrepareWrittenOutput("build-manifest", buildManifestDisplayPath, new FileInfo(buildManifestPath).Length);
+        var checksumsWritten = new ReleasePrepareWrittenOutput("checksums", checksumsDisplayPath, new FileInfo(checksumsPath).Length);
+
+        return result with
+        {
+            WrittenOutputs = [stagingPayloadWritten, written, summaryWritten, manifestWritten, checksumsWritten]
+        };
     }
 
-    private static IReadOnlyList<ReleasePreparePlannedOutput> CreatePlannedOutputs(string outputRoot) =>
+    private static IReadOnlyList<ReleasePreparePlannedOutput> CreatePlannedOutputs(string outputRoot, bool writesStagingRoot, bool writesStagingPayload, bool writesReleasePlan, bool writesReleaseSummary, bool writesBuildManifest, bool writesChecksums) =>
     [
-        Output("staging-root", $"{outputRoot}/staging/", "Future local release staging root."),
-        Output("release-plan", $"{outputRoot}/release-plan.json", "Future machine-readable release preparation plan."),
-        Output("release-summary", $"{outputRoot}/release-summary.json", "Future local release preparation summary."),
-        Output("build-manifest", $"{outputRoot}/build-manifest.json", "Future local build manifest for release-preparation evidence."),
-        Output("checksums", $"{outputRoot}/checksums.sha256", "Future checksum sidecar for release-preparation evidence.")
+        Output("staging-root", $"{outputRoot}/staging/", "Local release staging root.", writesStagingRoot),
+        Output("staging-payload", $"{outputRoot}/staging/release-payload.json", "Machine-readable local release staging payload skeleton.", writesStagingPayload),
+        Output("release-plan", $"{outputRoot}/release-plan.json", "Machine-readable release preparation plan.", writesReleasePlan),
+        Output("release-summary", $"{outputRoot}/release-summary.json", "Machine-readable local release preparation summary.", writesReleaseSummary),
+        Output("build-manifest", $"{outputRoot}/build-manifest.json", "Local build manifest for release-preparation evidence.", writesBuildManifest),
+        Output("checksums", $"{outputRoot}/checksums.sha256", "Local checksum sidecar for release-preparation evidence.", writesChecksums)
     ];
 
-    private static ReleasePreparePlannedOutput Output(string kind, string path, string description) =>
-        new(kind, path, description, WouldWriteInCurrentGate: false);
+    private static ReleasePreparePlannedOutput Output(string kind, string path, string description, bool wouldWrite = false) =>
+        new(kind, path, description, wouldWrite);
+
+    private static JsonObject CreateReleasePlanJson(ReleasePreparePlanResult result) =>
+        new()
+        {
+            ["formatVersion"] = CliConstants.JsonFormatVersion,
+            ["kind"] = "wastelandforge.release-plan",
+            ["command"] = "release prepare",
+            ["status"] = "planned",
+            ["tool"] = new JsonObject
+            {
+                ["name"] = CliConstants.ToolName,
+                ["version"] = CliConstants.Version
+            },
+            ["project"] = new JsonObject
+            {
+                ["root"] = result.ProjectRoot
+            },
+            ["output"] = new JsonObject
+            {
+                ["root"] = result.OutputRoot,
+                ["stagingRoot"] = result.StagingRootPath,
+                ["stagingPayload"] = result.StagingPayloadPath,
+                ["releasePlan"] = result.ReleasePlanPath,
+                ["releaseSummary"] = result.ReleaseSummaryPath,
+                ["buildManifest"] = result.BuildManifestPath,
+                ["checksums"] = result.ChecksumsPath
+            },
+            ["plannedOutputs"] = ReleasePreparePlanJsonSerializer.ToPlannedOutputs(result.PlannedOutputs),
+            ["execution"] = ReleasePreparePlanJsonSerializer.ToExecution(result),
+            ["boundaries"] = ReleasePreparePlanJsonSerializer.ToStringArray(result.Boundaries)
+        };
+
+    private static JsonObject CreateStagingPayloadJson(ReleasePreparePlanResult result) =>
+        new()
+        {
+            ["formatVersion"] = CliConstants.JsonFormatVersion,
+            ["kind"] = "wastelandforge.release-staging-payload",
+            ["command"] = "release prepare",
+            ["status"] = "skeleton",
+            ["tool"] = new JsonObject
+            {
+                ["name"] = CliConstants.ToolName,
+                ["version"] = CliConstants.Version
+            },
+            ["project"] = new JsonObject
+            {
+                ["root"] = result.ProjectRoot
+            },
+            ["output"] = new JsonObject
+            {
+                ["root"] = result.OutputRoot,
+                ["stagingRoot"] = result.StagingRootPath,
+                ["stagingPayload"] = result.StagingPayloadPath,
+                ["releasePlan"] = result.ReleasePlanPath,
+                ["releaseSummary"] = result.ReleaseSummaryPath,
+                ["buildManifest"] = result.BuildManifestPath,
+                ["checksums"] = result.ChecksumsPath
+            },
+            ["payload"] = new JsonObject
+            {
+                ["status"] = "skeleton",
+                ["modPayloadFiles"] = 0,
+                ["writesToGameData"] = false,
+                ["writesToMo2Profile"] = false,
+                ["pluginMutation"] = false,
+                ["archiveCreated"] = false,
+                ["installerCreated"] = false
+            },
+            ["execution"] = ReleasePreparePlanJsonSerializer.ToExecution(result),
+            ["boundaries"] = ReleasePreparePlanJsonSerializer.ToStringArray(result.Boundaries)
+        };
+
+    private static JsonObject CreateReleaseSummaryJson(ReleasePreparePlanResult result) =>
+        new()
+        {
+            ["formatVersion"] = CliConstants.JsonFormatVersion,
+            ["kind"] = "wastelandforge.release-summary",
+            ["command"] = "release prepare",
+            ["status"] = result.Status,
+            ["tool"] = new JsonObject
+            {
+                ["name"] = CliConstants.ToolName,
+                ["version"] = CliConstants.Version
+            },
+            ["project"] = new JsonObject
+            {
+                ["root"] = result.ProjectRoot
+            },
+            ["output"] = new JsonObject
+            {
+                ["root"] = result.OutputRoot,
+                ["stagingRoot"] = result.StagingRootPath,
+                ["stagingPayload"] = result.StagingPayloadPath,
+                ["releasePlan"] = result.ReleasePlanPath,
+                ["releaseSummary"] = result.ReleaseSummaryPath,
+                ["buildManifest"] = result.BuildManifestPath,
+                ["checksums"] = result.ChecksumsPath
+            },
+            ["summary"] = new JsonObject
+            {
+                ["plannedOutputs"] = result.PlannedOutputs.Count,
+                ["writtenOutputs"] = 5,
+                ["buildManifestWritten"] = true,
+                ["checksumsWritten"] = true,
+                ["stagingPayloadWritten"] = true,
+                ["archiveCreated"] = false,
+                ["releasePublished"] = false
+            },
+            ["execution"] = ReleasePreparePlanJsonSerializer.ToExecution(result),
+            ["boundaries"] = ReleasePreparePlanJsonSerializer.ToStringArray(result.Boundaries)
+        };
+
+    private static JsonObject CreateBuildManifestJson(ReleasePreparePlanResult result, IReadOnlyList<ReleasePrepareOutputDigest> outputDigests)
+    {
+        var timestamp = ResolveReproducibleTimestamp();
+        return new JsonObject
+        {
+            ["formatVersion"] = "0.1",
+            ["kind"] = "wastelandforge.build-manifest",
+            ["buildType"] = "wastelandforge/release-prepare/v1",
+            ["tool"] = new JsonObject
+            {
+                ["name"] = CliConstants.ToolName,
+                ["version"] = CliConstants.Version
+            },
+            ["command"] = "release prepare",
+            ["dryRun"] = result.DryRun,
+            ["status"] = result.Status,
+            ["project"] = new JsonObject
+            {
+                ["root"] = result.ProjectRoot
+            },
+            ["output"] = new JsonObject
+            {
+                ["root"] = result.OutputRoot,
+                ["stagingRoot"] = result.StagingRootPath,
+                ["stagingPayload"] = result.StagingPayloadPath,
+                ["releasePlan"] = result.ReleasePlanPath,
+                ["releaseSummary"] = result.ReleaseSummaryPath,
+                ["buildManifest"] = result.BuildManifestPath,
+                ["checksums"] = result.ChecksumsPath
+            },
+            ["timestamp"] = new JsonObject
+            {
+                ["source"] = timestamp.Source,
+                ["unixTime"] = timestamp.UnixTime,
+                ["utc"] = timestamp.Utc
+            },
+            ["validation"] = new JsonObject
+            {
+                ["status"] = "not-run",
+                ["errors"] = 0,
+                ["warnings"] = 0,
+                ["notes"] = 0
+            },
+            ["capabilities"] = new JsonObject
+            {
+                ["status"] = "not-evaluated",
+                ["resolved"] = new JsonArray()
+            },
+            ["generators"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["id"] = "wf.release.prepare",
+                    ["version"] = CliConstants.Version,
+                    ["target"] = "release-prepare"
+                }
+            },
+            ["sources"] = new JsonArray(),
+            ["outputs"] = ToDigestArray(outputDigests),
+            ["execution"] = ReleasePreparePlanJsonSerializer.ToExecution(result),
+            ["boundaries"] = ReleasePreparePlanJsonSerializer.ToStringArray(result.Boundaries),
+            ["limitations"] = new JsonArray
+            {
+                "Staging payload is skeleton metadata only.",
+                "No release archive.",
+                "No release publishing.",
+                "No remote repository calls.",
+                "No attestation or signing.",
+                "No external tool execution.",
+                "No runtime probes.",
+                "No AI calls."
+            }
+        };
+    }
+
+    private static void WriteChecksums(string outputRoot, string checksumsPath, IReadOnlyList<string> files)
+    {
+        var lines = files
+            .OrderBy(path => ToDisplayPath(outputRoot, path), StringComparer.Ordinal)
+            .Select(path =>
+            {
+                using var stream = File.OpenRead(path);
+                var hash = SHA256.HashData(stream);
+                return $"{Convert.ToHexString(hash).ToLowerInvariant()}  {ToDisplayPath(outputRoot, path)}";
+            })
+            .ToArray();
+
+        File.WriteAllText(
+            checksumsPath,
+            string.Join(Environment.NewLine, lines) + Environment.NewLine,
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+    }
+
+    private static JsonArray ToDigestArray(IReadOnlyList<ReleasePrepareOutputDigest> digests)
+    {
+        var array = new JsonArray();
+        foreach (var digest in digests)
+        {
+            array.Add(new JsonObject
+            {
+                ["path"] = digest.Path,
+                ["sha256"] = digest.Sha256,
+                ["length"] = digest.Length
+            });
+        }
+
+        return array;
+    }
+
+    private static ReleasePrepareOutputDigest ComputeDigest(string projectRoot, string path)
+    {
+        using var stream = File.OpenRead(path);
+        var hash = SHA256.HashData(stream);
+        return new ReleasePrepareOutputDigest(
+            ToDisplayPath(projectRoot, path),
+            Convert.ToHexString(hash).ToLowerInvariant(),
+            stream.Length);
+    }
+
+    private static ReleasePrepareReproducibleTimestamp ResolveReproducibleTimestamp()
+    {
+        var sourceDateEpoch = Environment.GetEnvironmentVariable("SOURCE_DATE_EPOCH");
+        if (long.TryParse(sourceDateEpoch, out var unixTime) && unixTime >= 0)
+        {
+            return new ReleasePrepareReproducibleTimestamp(
+                "SOURCE_DATE_EPOCH",
+                unixTime,
+                DateTimeOffset.FromUnixTimeSeconds(unixTime).UtcDateTime.ToString("O"));
+        }
+
+        return new ReleasePrepareReproducibleTimestamp(
+            "default-epoch",
+            0,
+            DateTimeOffset.FromUnixTimeSeconds(0).UtcDateTime.ToString("O"));
+    }
 
     private static string ToDisplayPath(string root, string path)
     {
@@ -110,6 +446,12 @@ internal static class ReleasePreparePlanPlanner
         var normalizedCandidate = Path.GetFullPath(candidate);
         return normalizedCandidate.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase);
     }
+
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
 }
 
 internal static class ReleasePreparePlanJsonSerializer
@@ -143,33 +485,25 @@ internal static class ReleasePreparePlanJsonSerializer
             ["output"] = new JsonObject
             {
                 ["root"] = result.OutputRoot,
+                ["stagingRoot"] = result.StagingRootPath,
+                ["stagingPayload"] = result.StagingPayloadPath,
+                ["releasePlan"] = result.ReleasePlanPath,
+                ["releaseSummary"] = result.ReleaseSummaryPath,
+                ["buildManifest"] = result.BuildManifestPath,
+                ["checksums"] = result.ChecksumsPath,
                 ["defaulted"] = result.OutputDefaulted
             },
             ["outputSafety"] = ToOutputSafety(result.OutputSafety),
             ["plannedOutputs"] = ToPlannedOutputs(result.PlannedOutputs),
+            ["writtenOutputs"] = ToWrittenOutputs(result.WrittenOutputs),
             ["reportContract"] = new JsonObject
             {
-                ["status"] = "planned",
+                ["status"] = result.OutputWrites ? "written" : "planned",
                 ["canonicalFormat"] = "json",
-                ["mutatesFilesystemInCurrentGate"] = false,
-                ["summary"] = "Release prepare will report local release-preparation evidence before any archive or publish gate executes."
+                ["mutatesFilesystemInCurrentGate"] = result.FilesystemMutation,
+                ["summary"] = "Release prepare reports local staging-payload, release-plan, release-summary, build-manifest, and checksum evidence before any archive or publish gate executes."
             },
-            ["execution"] = new JsonObject
-            {
-                ["releasePrepareExecution"] = false,
-                ["filesystemMutation"] = false,
-                ["outputWrites"] = false,
-                ["archiveCreation"] = false,
-                ["releasePublishing"] = false,
-                ["remoteRepositoryCall"] = false,
-                ["attestationSigning"] = false,
-                ["externalToolExecution"] = false,
-                ["pluginMutation"] = false,
-                ["mo2Automation"] = false,
-                ["geckAutomation"] = false,
-                ["runtimeProbe"] = false,
-                ["aiRequired"] = false
-            },
+            ["execution"] = ToExecution(result),
             ["boundaries"] = ToStringArray(result.Boundaries)
         };
 
@@ -191,7 +525,7 @@ internal static class ReleasePreparePlanJsonSerializer
             ["refusalReason"] = safety.RefusalReason
         };
 
-    private static JsonArray ToPlannedOutputs(IReadOnlyList<ReleasePreparePlannedOutput> outputs)
+    internal static JsonArray ToPlannedOutputs(IReadOnlyList<ReleasePreparePlannedOutput> outputs)
     {
         var array = new JsonArray();
         foreach (var output in outputs)
@@ -208,7 +542,41 @@ internal static class ReleasePreparePlanJsonSerializer
         return array;
     }
 
-    private static JsonArray ToStringArray(IReadOnlyList<string> values)
+    private static JsonArray ToWrittenOutputs(IReadOnlyList<ReleasePrepareWrittenOutput> outputs)
+    {
+        var array = new JsonArray();
+        foreach (var output in outputs)
+        {
+            array.Add(new JsonObject
+            {
+                ["kind"] = output.Kind,
+                ["path"] = output.Path,
+                ["length"] = output.Length
+            });
+        }
+
+        return array;
+    }
+
+    internal static JsonObject ToExecution(ReleasePreparePlanResult result) =>
+        new()
+        {
+            ["releasePrepareExecution"] = result.OutputWrites,
+            ["filesystemMutation"] = result.FilesystemMutation,
+            ["outputWrites"] = result.OutputWrites,
+            ["archiveCreation"] = false,
+            ["releasePublishing"] = false,
+            ["remoteRepositoryCall"] = false,
+            ["attestationSigning"] = false,
+            ["externalToolExecution"] = false,
+            ["pluginMutation"] = false,
+            ["mo2Automation"] = false,
+            ["geckAutomation"] = false,
+            ["runtimeProbe"] = false,
+            ["aiRequired"] = false
+        };
+
+    internal static JsonArray ToStringArray(IReadOnlyList<string> values)
     {
         var array = new JsonArray();
         foreach (var value in values)
@@ -234,7 +602,20 @@ internal static class ReleasePreparePlanTextRenderer
         builder.AppendLine(result.ProjectRoot);
         builder.Append("Output: ");
         builder.AppendLine(result.OutputRoot);
-        builder.AppendLine("Mode: planning-only");
+        builder.Append("Staging root: ");
+        builder.AppendLine(result.StagingRootPath);
+        builder.Append("Staging payload: ");
+        builder.AppendLine(result.StagingPayloadPath);
+        builder.Append("Release plan: ");
+        builder.AppendLine(result.ReleasePlanPath);
+        builder.Append("Release summary: ");
+        builder.AppendLine(result.ReleaseSummaryPath);
+        builder.Append("Build manifest: ");
+        builder.AppendLine(result.BuildManifestPath);
+        builder.Append("Checksums: ");
+        builder.AppendLine(result.ChecksumsPath);
+        builder.Append("Mode: ");
+        builder.AppendLine(result.OutputWrites ? "release-evidence-written" : "planning-only");
         if (result.OutputSafety.RefusalReason is not null)
         {
             builder.Append("Refusal: ");
@@ -251,10 +632,30 @@ internal static class ReleasePreparePlanTextRenderer
             builder.AppendLine(output.Path);
         }
 
+        if (result.WrittenOutputs.Count > 0)
+        {
+            builder.AppendLine();
+            builder.AppendLine("Written outputs");
+            foreach (var output in result.WrittenOutputs)
+            {
+                builder.Append("  WRITE ");
+                builder.Append(output.Kind);
+                builder.Append(": ");
+                builder.Append(output.Path);
+                builder.Append(" (");
+                builder.Append(output.Length);
+                builder.AppendLine(" bytes)");
+            }
+        }
+
         builder.AppendLine();
         builder.AppendLine("Execution");
-        builder.AppendLine("  release prepare execution: false");
-        builder.AppendLine("  filesystem mutation: false");
+        builder.Append("  release prepare execution: ");
+        builder.AppendLine(result.OutputWrites.ToString().ToLowerInvariant());
+        builder.Append("  filesystem mutation: ");
+        builder.AppendLine(result.FilesystemMutation.ToString().ToLowerInvariant());
+        builder.Append("  output writes: ");
+        builder.AppendLine(result.OutputWrites.ToString().ToLowerInvariant());
         builder.AppendLine("  archive creation: false");
         builder.AppendLine("  release publishing: false");
         builder.AppendLine("  remote repository calls: false");

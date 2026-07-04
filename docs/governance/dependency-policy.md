@@ -1045,3 +1045,27 @@ parsing, path normalization, and JSON/text rendering only. It does not add
 archive writers, publishing clients, repository API clients, signing or
 attestation dependencies, external tool integrations, network calls, runtime
 probes, or AI requirements.
+
+Gate 261 adds no new dependency. Release-plan emission uses built-in .NET file
+and JSON APIs already available to the CLI. It does not add archive writers,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, or AI
+requirements.
+
+Gate 262 adds no new dependency. Release-summary emission uses built-in .NET
+file and JSON APIs already available to the CLI. It does not add archive
+writers, publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, or AI
+requirements.
+
+Gate 263 adds no new dependency. Release-prepare build-manifest emission uses
+built-in .NET file, JSON, and SHA-256 APIs already available to the CLI. It
+does not add archive writers, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, or AI requirements.
+
+Gate 264 adds no new dependency. Release-prepare checksum sidecar emission
+uses built-in .NET file and SHA-256 APIs already available to the CLI. It does
+not add archive writers, publishing clients, repository API clients, signing
+or attestation dependencies, external tool integrations, network calls,
+runtime probes, or AI requirements.

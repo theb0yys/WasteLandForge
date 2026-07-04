@@ -436,6 +436,40 @@ creating archives, publishing, calling remote repositories, executing external
 tools, mutating plugins, automating MO2 or GECK, running runtime probes, or
 using AI.
 
+Gate 261 extends `ReleasePreparePlan` so normal `forge release prepare`
+execution writes only `dist/release-prepare/release-plan.json`. `--dry-run`
+keeps the no-write planning path, output roots outside project `dist/` remain
+refused, and the implementation still does not write release summaries, build
+manifests, checksums, staging payloads, archives, publish releases, call
+remote repositories, execute external tools, mutate plugins, automate MO2 or
+GECK, run runtime probes, or use AI.
+
+Gate 262 extends `ReleasePreparePlan` so normal `forge release prepare`
+execution writes `dist/release-prepare/release-summary.json` beside the
+existing release plan. `--dry-run` keeps the no-write planning path, output
+roots outside project `dist/` remain refused, and the implementation still
+does not write build manifests, checksums, staging payloads, archives, publish
+releases, call remote repositories, execute external tools, mutate plugins,
+automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 263 extends `ReleasePreparePlan` so normal `forge release prepare`
+execution writes `dist/release-prepare/build-manifest.json` beside the
+existing release plan and release summary. The manifest records output digests
+for the plan and summary only. `--dry-run` keeps the no-write planning path,
+output roots outside project `dist/` remain refused, and the implementation
+still does not write checksums, staging payloads, archives, publish releases,
+call remote repositories, execute external tools, mutate plugins, automate
+MO2 or GECK, run runtime probes, or use AI.
+
+Gate 264 extends `ReleasePreparePlan` so normal `forge release prepare`
+execution writes `dist/release-prepare/checksums.sha256` beside the existing
+release plan, release summary, and build manifest. The checksum sidecar covers
+those three evidence files and does not checksum itself. `--dry-run` keeps the
+no-write planning path, output roots outside project `dist/` remain refused,
+and the implementation still does not write staging payloads, archives,
+publish releases, call remote repositories, execute external tools, mutate
+plugins, automate MO2 or GECK, run runtime probes, or use AI.
+
 Gate 29 adds semantic checks for mutation variable references while preserving
 earlier dialogue registry schema versions in `WastelandForge.Schema`.
 

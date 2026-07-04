@@ -618,3 +618,23 @@ Gate 260 adds no new rule family or diagnostic ID. Release prepare planning
 reports command status, output containment, planned outputs, and false
 execution flags without emitting `WF-REL-*` diagnostics, executing external
 tools, running runtime probes, or using AI.
+
+Gate 261 adds no new rule family or diagnostic ID. Release-plan emission
+reports command status, output containment, written output metadata, and
+execution flags without emitting `WF-REL-*` diagnostics, executing external
+tools, running runtime probes, or using AI.
+
+Gate 262 adds no new rule family or diagnostic ID. Release-summary emission
+reports command status, output containment, written output metadata, and
+execution flags without emitting `WF-REL-*` diagnostics, executing external
+tools, running runtime probes, or using AI.
+
+Gate 263 adds no new rule family or diagnostic ID. Release-prepare
+build-manifest emission reports command status, output containment, written
+output metadata, and execution flags without emitting `WF-REL-*` diagnostics,
+executing external tools, running runtime probes, or using AI.
+
+Gate 264 adds no new rule family or diagnostic ID. Release-prepare checksum
+sidecar emission reports command status, output containment, written output
+metadata, and execution flags without emitting `WF-REL-*` diagnostics,
+executing external tools, running runtime probes, or using AI.

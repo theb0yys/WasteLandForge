@@ -2,11 +2,19 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 260 adds the
-`forge release prepare` planning skeleton after the Gate 259 `forge clean`
-closeout. `forge release prepare` now reports planned local release-preparation
-outputs under `dist/release-prepare`, refuses planned output roots outside
-project `dist/`, and keeps all release execution flags false.
+The project is currently in gated v0.1 implementation. Gate 264 adds the
+local `forge release prepare` checksum sidecar after the Gate 259
+`forge clean` closeout, Gate 260 release-prepare planning skeleton, Gate 261
+release-plan emission, Gate 262 release-summary emission, and Gate 263
+build-manifest emission. `forge release prepare` now writes
+`dist/release-prepare/release-plan.json` and
+`dist/release-prepare/release-summary.json`, plus
+`dist/release-prepare/build-manifest.json` with digests for those two evidence
+files, and `dist/release-prepare/checksums.sha256` covering the plan, summary,
+and build manifest by default. It reports those writes in CLI output,
+preserves `--dry-run` as no-write planning, refuses output roots outside
+project `dist/`, and keeps archive, publish, remote, signing, external-tool,
+runtime-probe, and AI execution flags false.
 Gate 258 added active build/cache lock safety for `forge clean` beside the
 existing generated, dist, cache, and manifest-confirmed all clean behavior.
 Explicit `forge clean --generated`, `forge clean --dist`,
@@ -20,9 +28,11 @@ code 6. Cache-affecting clean execution now also refuses with exit code 6 when
 generated manifests, read build manifests, read provenance sidecars, read
 checksums, inspect artifacts beyond the selected target roots and lock marker,
 call external tools, run runtime probes, or use AI. `forge release prepare`
-is planning-only; Forge still does not write release-preparation evidence,
-create release archives, publish releases, call remote repositories,
-sign/attest artifacts, or execute external release tools. The implemented explain subjects remain
+now writes only the local release plan, release summary, release-prepare build
+manifest, and checksum sidecar; Forge still does not stage payloads, create
+release archives, publish releases, call remote repositories, sign/attest
+artifacts, or execute external release tools.
+The implemented explain subjects remain
 `diagnostic <rule-id>`, `target <target-id>`,
 `output <generated-or-dist-path>`, `capability <capability-id>`, and
 `provenance <manifest-or-output-path>`.
@@ -843,6 +853,55 @@ exit code 6 without writing files. Gate 260 does not write
 checksums, create archives, publish releases, call remote repositories,
 sign/attest artifacts, execute external tools, mutate plugins, automate MO2
 or GECK, run runtime probes, use real third-party plugin fixtures, or use AI.
+
+Gate 261 implements local release-plan file emission for
+`forge release prepare`. Normal execution writes
+`dist/release-prepare/release-plan.json` and reports `status: prepared`,
+`output.releasePlan`, and `writtenOutputs` in JSON output. `--dry-run` remains
+planning-only and writes nothing. Gate 261 still does not write
+`release-summary.json`, write release-prepare build manifests, write
+release-prepare checksums, stage payloads, create archives, publish releases,
+call remote repositories, sign/attest artifacts, execute external tools,
+mutate plugins, automate MO2 or GECK, run runtime probes, use real third-party
+plugin fixtures, or use AI.
+
+Gate 262 implements local release-summary file emission for
+`forge release prepare`. Normal execution now writes both
+`dist/release-prepare/release-plan.json` and
+`dist/release-prepare/release-summary.json`, reports both paths in
+`writtenOutputs`, and includes `output.releaseSummary` in JSON output.
+`--dry-run` remains planning-only and writes nothing. Gate 262 still does not
+write release-prepare build manifests, write release-prepare checksums, stage
+payloads, create archives, publish releases, call remote repositories,
+sign/attest artifacts, execute external tools, mutate plugins, automate MO2
+or GECK, run runtime probes, use real third-party plugin fixtures, or use AI.
+
+Gate 263 implements local build-manifest file emission for
+`forge release prepare`. Normal execution now writes
+`dist/release-prepare/release-plan.json`,
+`dist/release-prepare/release-summary.json`, and
+`dist/release-prepare/build-manifest.json`, reports all three paths in
+`writtenOutputs`, and includes `output.buildManifest` in JSON output. The
+build manifest records digests for the release plan and release summary only.
+`--dry-run` remains planning-only and writes nothing. Gate 263 still does not
+write release-prepare checksums, stage payloads, create archives, publish
+releases, call remote repositories, sign/attest artifacts, execute external
+tools, mutate plugins, automate MO2 or GECK, run runtime probes, use real
+third-party plugin fixtures, or use AI.
+
+Gate 264 implements local checksum sidecar emission for
+`forge release prepare`. Normal execution now writes
+`dist/release-prepare/release-plan.json`,
+`dist/release-prepare/release-summary.json`,
+`dist/release-prepare/build-manifest.json`, and
+`dist/release-prepare/checksums.sha256`, reports all four paths in
+`writtenOutputs`, and includes `output.checksums` in JSON output. The checksum
+sidecar covers the release plan, release summary, and build manifest, but not
+itself. `--dry-run` remains planning-only and writes nothing. Gate 264 still
+does not stage payloads, create archives, publish releases, call remote
+repositories, sign/attest artifacts, execute external tools, mutate plugins,
+automate MO2 or GECK, run runtime probes, use real third-party plugin
+fixtures, or use AI.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

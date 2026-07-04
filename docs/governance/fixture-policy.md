@@ -909,6 +909,29 @@ or real provider sample. It uses temporary synthetic project directories in
 golden CLI tests only to prove release-prepare planning output, output-root
 refusal, and no filesystem writes.
 
+Gate 261 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. It uses temporary synthetic project
+directories in golden CLI tests only to prove release-plan emission,
+`--dry-run` no-write behavior, and unsafe output-root refusal.
+
+Gate 262 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. It uses temporary synthetic project
+directories in golden CLI tests only to prove release-summary emission beside
+the release plan, `--dry-run` no-write behavior, and unsafe output-root
+refusal.
+
+Gate 263 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. It uses temporary synthetic project
+directories in golden CLI tests only to prove release-prepare build-manifest
+emission beside the release plan and summary, `--dry-run` no-write behavior,
+and unsafe output-root refusal.
+
+Gate 264 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. It uses temporary synthetic project
+directories in golden CLI tests only to prove release-prepare checksum sidecar
+emission beside the release plan, summary, and build manifest, `--dry-run`
+no-write behavior, and unsafe output-root refusal.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

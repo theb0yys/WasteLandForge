@@ -265,9 +265,13 @@ Gate status:
 - `gates/gate-258-forge-clean-active-build-cache-lock-safety.md` - Gate 258, active build/cache lock safety using `.wastelandforge/cache/build.lock` for cache-affecting clean refusals.
 - `gates/gate-259-forge-clean-command-slice-closeout.md` - Gate 259, `forge clean` command slice closeout and transition to release-prepare planning.
 - `gates/gate-260-forge-release-prepare-planning-skeleton.md` - Gate 260, `forge release prepare` planning skeleton with planned outputs, dist containment, and false execution flags.
+- `gates/gate-261-forge-release-prepare-release-plan-emission.md` - Gate 261, `forge release prepare` local release-plan file emission under `dist/release-prepare/release-plan.json`.
+- `gates/gate-262-forge-release-prepare-release-summary-emission.md` - Gate 262, `forge release prepare` local release-summary file emission under `dist/release-prepare/release-summary.json`.
+- `gates/gate-263-forge-release-prepare-build-manifest-emission.md` - Gate 263, `forge release prepare` local build-manifest file emission under `dist/release-prepare/build-manifest.json`.
+- `gates/gate-264-forge-release-prepare-checksum-sidecar-emission.md` - Gate 264, `forge release prepare` local checksum sidecar emission under `dist/release-prepare/checksums.sha256`.
 
 Next gate:
 
-- Gate 261 - `forge release prepare` local release-plan file emission under `dist/release-prepare/release-plan.json`, stopping before release archive creation, deterministic ZIP/FOMOD assembly, release publishing, remote repository calls, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 265 - `forge release prepare` local staging payload skeleton under `dist/release-prepare/staging/`, stopping before release archive creation, deterministic ZIP/FOMOD assembly, release publishing, remote repository calls, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

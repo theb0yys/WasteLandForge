@@ -366,6 +366,37 @@ Gate 260 extends `WastelandForge.GoldenTests` coverage for planning-only
 text, unsafe output-root refusal, false execution flags, and no filesystem
 writes using temporary synthetic project directories only.
 
+Gate 261 extends `WastelandForge.GoldenTests` coverage for local
+`release-plan.json` emission from `forge release prepare`. Tests assert the
+written release plan, CLI `writtenOutputs` metadata, `--dry-run` no-write
+behavior, unsafe output-root refusal, and no release summary, build manifest,
+checksum, staging, archive, publish, external tool, runtime probe, or AI
+behavior using temporary synthetic project directories only.
+
+Gate 262 extends `WastelandForge.GoldenTests` coverage for local
+`release-summary.json` emission from `forge release prepare`. Tests assert the
+written release summary beside the release plan, CLI `output.releaseSummary`
+and `writtenOutputs` metadata, `--dry-run` no-write behavior, unsafe
+output-root refusal, and no build manifest, checksum, staging, archive,
+publish, external tool, runtime probe, or AI behavior using temporary
+synthetic project directories only.
+
+Gate 263 extends `WastelandForge.GoldenTests` coverage for local
+`build-manifest.json` emission from `forge release prepare`. Tests assert the
+written build manifest beside the release plan and summary, CLI
+`output.buildManifest` and `writtenOutputs` metadata, output digests for the
+plan and summary, `--dry-run` no-write behavior, unsafe output-root refusal,
+and no checksum, staging, archive, publish, external tool, runtime probe, or
+AI behavior using temporary synthetic project directories only.
+
+Gate 264 extends `WastelandForge.GoldenTests` coverage for local
+`checksums.sha256` emission from `forge release prepare`. Tests assert the
+written checksum sidecar beside the release plan, summary, and build manifest,
+CLI `output.checksums` and `writtenOutputs` metadata, checksum entries for
+the three evidence files, `--dry-run` no-write behavior, unsafe output-root
+refusal, and no staging, archive, publish, external tool, runtime probe, or
+AI behavior using temporary synthetic project directories only.
+
 Gate 31 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
 dialogue link graph endpoints: `linkTo` targets and `linkFrom` sources that are
 declared topics but have no authored dialogue line.

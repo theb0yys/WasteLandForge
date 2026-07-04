@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 260 forge release prepare planning skeleton
+Status: Gate 264 forge release prepare checksum sidecar emission
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -828,18 +828,21 @@ dist/release-dry-run/checksums.sha256
 
 `--output` is accepted only when the resolved path stays under project `dist/`.
 
-## Release Prepare Planning
+## Release Prepare Evidence
 
-Gate 260 implements planning-only `forge release prepare` output:
+Gate 260 implemented planning-only `forge release prepare` output. Gate 261
+added local release-plan file emission, Gate 262 added local release-summary
+file emission, Gate 263 added local build-manifest file emission, and Gate 264
+adds local checksum sidecar emission:
 
 ```text
 forge release prepare [project-root] [--project <path>] [--output dist/<name>]
 ```
 
 Supported formats are `human`, `plain`, and `json`. SARIF and GitHub formats
-remain diagnostic-only and are rejected for release-prepare planning. The
-planned output root defaults to `dist/release-prepare`; `--output` is refused
-with exit code 6 when the resolved root is outside project `dist/`.
+remain diagnostic-only and are rejected for release-prepare output. The output
+root defaults to `dist/release-prepare`; `--output` is refused with exit code
+6 when the resolved root is outside project `dist/`.
 
 The planned future outputs are:
 
@@ -851,11 +854,16 @@ dist/release-prepare/build-manifest.json
 dist/release-prepare/checksums.sha256
 ```
 
-Gate 260 writes none of those files. JSON output includes `plannedOutputs`,
-`outputSafety`, `reportContract`, and false `execution` flags for filesystem
-mutation, output writes, archive creation, release publishing, remote
+Gate 264 writes only `release-plan.json`, `release-summary.json`,
+`build-manifest.json`, and `checksums.sha256`. `--dry-run` reports the same
+plan without writing files. JSON output includes `plannedOutputs`,
+`writtenOutputs`, `outputSafety`, `reportContract`, and `execution` flags.
+Filesystem mutation and output writes are true only when those four local
+evidence files are written; archive creation, release publishing, remote
 repository calls, attestation/signing, external tools, plugin mutation,
-MO2/GECK automation, runtime probes, and AI.
+MO2/GECK automation, runtime probes, and AI remain false.
+
+Gate 264 does not stage payloads and does not create release archives.
 
 `release publish` remains reserved.
 

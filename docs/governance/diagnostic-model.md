@@ -1098,5 +1098,29 @@ diagnostic pipeline. It does not read release artifacts, emit release
 diagnostics, inspect provider evidence, execute external tools, run runtime
 probes, or use AI.
 
+Gate 261 adds no new diagnostic rule ID. Release-plan emission reports command
+status, output containment, written output metadata, and false execution flags
+without running the diagnostic pipeline, reading release artifacts, emitting
+release diagnostics, inspecting provider evidence, executing external tools,
+running runtime probes, or using AI.
+
+Gate 262 adds no new diagnostic rule ID. Release-summary emission reports
+command status, output containment, written output metadata, and false
+execution flags without running the diagnostic pipeline, reading release
+artifacts, emitting release diagnostics, inspecting provider evidence,
+executing external tools, running runtime probes, or using AI.
+
+Gate 263 adds no new diagnostic rule ID. Release-prepare build-manifest
+emission reports command status, output containment, written output metadata,
+and false execution flags without running the diagnostic pipeline, reading
+release artifacts, emitting release diagnostics, inspecting provider evidence,
+executing external tools, running runtime probes, or using AI.
+
+Gate 264 adds no new diagnostic rule ID. Release-prepare checksum sidecar
+emission reports command status, output containment, written output metadata,
+and false execution flags without running the diagnostic pipeline, reading
+release artifacts, emitting release diagnostics, inspecting provider evidence,
+executing external tools, running runtime probes, or using AI.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

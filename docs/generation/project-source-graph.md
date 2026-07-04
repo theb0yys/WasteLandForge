@@ -1,6 +1,6 @@
 # Project Source Graph Output
 
-Status: Gate 260 release prepare planning skeleton
+Status: Gate 264 release prepare checksum sidecar emission
 Research classification: Documented
 Source: R004, R006, ADR-007, ADR-009, ADR-010, ADR-011
 
@@ -120,3 +120,27 @@ graph` still does not execute release prepare, write release-plan files, create
 release archives, publish releases, call remote repositories, sign or attest
 artifacts, inspect artifacts, call external tools, run runtime probes, or use
 AI.
+
+Gate 261 implements local `release-plan.json` emission in `forge release
+prepare`. `forge graph` still does not execute release prepare, write release
+summaries, write build manifests, write checksums, create release archives,
+publish releases, call remote repositories, sign or attest artifacts, inspect
+artifacts, call external tools, run runtime probes, or use AI.
+
+Gate 262 implements local `release-summary.json` emission in `forge release
+prepare`. `forge graph` still does not execute release prepare, write build
+manifests, write checksums, stage release payloads, create release archives,
+publish releases, call remote repositories, sign or attest artifacts, inspect
+artifacts, call external tools, run runtime probes, or use AI.
+
+Gate 263 implements local `build-manifest.json` emission in `forge release
+prepare`. `forge graph` still does not execute release prepare, write
+checksums, stage release payloads, create release archives, publish releases,
+call remote repositories, sign or attest artifacts, inspect artifacts, call
+external tools, run runtime probes, or use AI.
+
+Gate 264 implements local `checksums.sha256` emission in `forge release
+prepare`. `forge graph` still does not execute release prepare, stage release
+payloads, create release archives, publish releases, call remote repositories,
+sign or attest artifacts, inspect artifacts, call external tools, run runtime
+probes, or use AI.
