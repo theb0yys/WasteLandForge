@@ -345,6 +345,30 @@ implementation lane to `forge clean` planning while leaving delete behavior,
 filesystem mutation, manifest reads, artifact checks, external tools, runtime
 probes, and AI untouched.
 
+Gate 250 adds `CleanScopeContract` and `CleanScopeContracts` in
+`WastelandForge.Cli`. `CliHelpWriter` now gives `forge clean` a
+scope-specific planning help page, `CliStatusJsonSerializer` emits reserved
+clean contract JSON with planned scopes and false execution flags, and
+`ForgeCli` parses documented clean scope flags safely. `forge clean` still
+returns reserved/usage exit code 2 and does not delete files, mutate the
+filesystem, read manifests, inspect artifacts, execute generators, call
+external tools, run runtime probes, or use AI.
+
+Gate 251 adds `CleanPlanPlanner`, `CleanPlanTextRenderer`, and
+`CleanPlanJsonSerializer` in `WastelandForge.Cli`. `ForgeCli` now routes
+supported `forge clean` scope flags to dry-run path-plan output and defaults
+to the `generated` scope when no scope is supplied. The clean plan calculates
+contained project roots only and does not delete files, mutate the filesystem,
+read manifests, inspect artifacts, execute generators, call external tools,
+run runtime probes, or use AI.
+
+Gate 252 extends the clean plan with all-scope refusal metadata. `ForgeCli`
+now returns exit code 6 for `forge clean --all` unless both `--yes` and
+`--confirm <project-id>` are supplied. Refused and confirmed all-scope paths
+still emit dry-run plans only and do not delete files, mutate the filesystem,
+read manifests, validate project IDs, inspect artifacts, execute generators,
+call external tools, run runtime probes, or use AI.
+
 Gate 29 adds semantic checks for mutation variable references while preserving
 earlier dialogue registry schema versions in `WastelandForge.Schema`.
 

@@ -1,6 +1,6 @@
 # Project Source Graph Output
 
-Status: Gate 249 explain command-slice closeout
+Status: Gate 252 clean all-scope confirmation refusal
 Research classification: Documented
 Source: R004, R006, ADR-007, ADR-009, ADR-010, ADR-011
 
@@ -63,3 +63,18 @@ to `forge clean` planning without adding clean execution, filesystem mutation,
 generated manifest reads, build manifest reads, provenance sidecar reads,
 checksum reads, artifact existence checks, external tools, runtime probes, or
 AI.
+
+Gate 250 implements `forge clean` planning metadata and reserved JSON only.
+`forge graph` still does not execute clean behavior, delete files, mutate the
+filesystem, read manifests, inspect artifact existence, call external tools,
+run runtime probes, or use AI.
+
+Gate 251 implements `forge clean` dry-run path planning. `forge graph` still
+does not execute clean behavior, delete files, mutate the filesystem, read
+manifests, inspect artifact existence, call external tools, run runtime probes,
+or use AI.
+
+Gate 252 implements `forge clean --all` confirmation/refusal planning.
+`forge graph` still does not execute clean behavior, delete files, mutate the
+filesystem, read manifests, inspect artifact existence, call external tools,
+run runtime probes, or use AI.

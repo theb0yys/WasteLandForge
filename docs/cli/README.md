@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 249 forge explain command-slice closeout
+Status: Gate 252 forge clean all-scope confirmation refusal
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -907,10 +907,41 @@ forge explain provenance <manifest-or-output-path>
 ```
 
 Unknown top-level explain subjects remain reserved and usage-safe. Gate 249
-routes the next command lane to `forge clean` planning, but it does not add
+closed the explain lane, and Gate 250 starts the `forge clean` lane without
 delete behavior, filesystem mutation, generated manifest reads, build manifest
 reads, provenance sidecar reads, checksum reads, artifact existence checks, or
 external tool behavior.
+
+## Clean Command Contract
+
+Gate 250 started the `forge clean` command lane with a reserved planning
+skeleton. Gate 251 adds dry-run path planning. Gate 252 adds all-scope
+confirmation/refusal behavior:
+
+```text
+forge clean [project-root] [--project <path>] [--generated|--dist|--cache|--all]
+```
+
+Documented scopes:
+
+```text
+--generated  generated/                 safe, non-interactive by default
+--dist       dist/                      safe, non-interactive by default
+--cache      .wastelandforge/cache/     safe, warn if a build is active later
+--all        generated/, dist/, cache   severe, requires --yes and --confirm <project-id>
+```
+
+`forge help clean` lists the scope contract and safety policy. `forge clean
+--format json` now returns a dry-run path plan with project root, scope source,
+planned clean roots, containment status, dry-run safety metadata, report
+expectations, and false execution flags. If no scope flag is supplied, Forge
+defaults to the `generated` scope. Unsupported or duplicate clean scopes return
+usage errors. Unconfirmed `--all` returns exit code 6 with `status: refused`
+unless both `--yes` and `--confirm <project-id>` are supplied. Gate 252 does
+not delete files, mutate the filesystem, read generated manifests, read build
+manifests, read provenance sidecars, read checksums, inspect artifact
+existence, execute generators, execute package/release behavior, call external
+tools, run runtime probes, or use AI.
 
 The diagnostic subject validates rule IDs such as `WF-CAP-004`, maps them to
 the reserved rule family, and explains the family scope, category, validation

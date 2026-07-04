@@ -303,6 +303,24 @@ documented top-level `forge explain` command slice and routes the next
 implementation lane to `forge clean` planning, relying on the Gate 243 through
 Gate 248 golden coverage plus the full local suite for regression evidence.
 
+Gate 250 extends `WastelandForge.GoldenTests` coverage for the `forge clean`
+planning skeleton. Tests assert `forge help clean` lists documented scopes,
+reserved JSON includes planned scopes and false execution flags, unsupported
+scopes return usage JSON, and a synthetic generated file remains untouched
+after `forge clean --generated --format json`.
+
+Gate 251 extends `WastelandForge.GoldenTests` coverage for `forge clean`
+dry-run path planning. Tests assert generated-scope path plans, default
+generated-scope behavior, all-scope generated/dist/cache root planning,
+unsupported-scope usage JSON, false execution flags, and preservation of
+synthetic generated, dist, and cache files.
+
+Gate 252 extends `WastelandForge.GoldenTests` coverage for `forge clean --all`
+confirmation/refusal planning. Tests assert exit code 6 and `status: refused`
+without `--yes` and `--confirm <project-id>`, exit code 0 when both are
+provided, false execution flags, and preservation of synthetic generated, dist,
+and cache files in both paths.
+
 Gate 31 adds semantic fixture coverage in `WastelandForge.SemanticTests` for
 dialogue link graph endpoints: `linkTo` targets and `linkFrom` sources that are
 declared topics but have no authored dialogue line.

@@ -896,8 +896,11 @@ Gate 247 implements `forge explain capability <capability-id>` as
 deterministic built-in capability catalogue metadata, and Gate 248 implements
 `forge explain provenance <manifest-or-output-path>` as deterministic
 provenance boundary planning, and Gate 249 closes the top-level
-`forge explain` command slice. Route the next implementation slice to Gate 250:
-`forge clean` planning skeleton.
+`forge explain` command slice, and Gate 250 implements the reserved
+`forge clean` planning skeleton with documented scopes and false execution
+flags, and Gate 251 implements `forge clean` dry-run path planning. Route the
+next implementation slice to Gate 253: `forge clean --generated` execution
+skeleton.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -926,8 +929,11 @@ provenance boundary planning, and Gate 249 closes the top-level
   capability catalogue metadata, and Gate 248 implements
   `forge explain provenance <manifest-or-output-path>` as deterministic
   provenance boundary planning, and Gate 249 closes the top-level
-  `forge explain` command slice. Route the next implementation slice to Gate 250:
-  `forge clean` planning skeleton.
+  `forge explain` command slice, and Gate 250 implements the reserved
+  `forge clean` planning skeleton with documented scopes and false execution
+  flags, and Gate 251 implements `forge clean` dry-run path planning. Route
+  the next implementation slice to Gate 253: `forge clean --generated`
+  execution skeleton.
 
 ## Required output
 

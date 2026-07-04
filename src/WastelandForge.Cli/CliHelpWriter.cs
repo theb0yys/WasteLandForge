@@ -121,8 +121,10 @@ internal static class CliHelpWriter
                 WriteDoctorExportHelp(writer);
                 return true;
             case "init":
-            case "clean":
                 WriteReservedCommandHelp(writer, commandPath, "This command is part of the ADR-010 command surface and is reserved for a later gate.");
+                return true;
+            case "clean":
+                WriteCleanHelp(writer);
                 return true;
             case "help":
                 WriteTopLevel(writer);
@@ -414,6 +416,40 @@ internal static class CliHelpWriter
         writer.WriteLine("  0 package written, planned, or verified");
         writer.WriteLine("  1 blocking diagnostics found");
         writer.WriteLine("  2 usage or unsupported format");
+    }
+
+    private static void WriteCleanHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge clean");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge clean [project-root] [--project <path>] [--generated|--dist|--cache|--all] [--yes] [--confirm <project-id>] [--format human|plain|json] [--dry-run] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Gate 253 deletes only the contained generated/ root for explicit --generated cleans. Omitted scope, --generated --dry-run, --dist, --cache, and --all remain path plans or refusals. It does not read manifests, inspect artifacts beyond the selected target root, execute generators, call external tools, run runtime probes, or use AI.");
+        writer.WriteLine();
+        writer.WriteLine("Planned scopes:");
+        foreach (var scope in CleanScopeContracts.All)
+        {
+            writer.WriteLine($"  {scope.Flag} - {scope.Root} ({scope.Risk}); {scope.Confirmation}");
+        }
+
+        writer.WriteLine();
+        writer.WriteLine("Reporting contract:");
+        writer.WriteLine("  Explicit --generated removes the contained project generated/ root and reports removed or missing paths.");
+        writer.WriteLine("  --generated --dry-run and omitted-scope generated plans report paths without deletion.");
+        writer.WriteLine("  Unconfirmed --all returns exit code 6 with the same dry-run path plan and no filesystem mutation.");
+        writer.WriteLine("  JSON is the canonical machine contract; human/plain output is for operators.");
+        writer.WriteLine("  Unknown or duplicate scopes are usage errors and must not delete anything.");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge clean fixtures/projects/ExampleMod --generated --format json");
+        writer.WriteLine("  forge clean --project fixtures/projects/ExampleMod --dist --dry-run");
+        writer.WriteLine("  forge clean . --all --yes --confirm example.author.modname");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 generated root cleaned, missing root reported, or dry-run path plan written");
+        writer.WriteLine("  2 usage error");
+        writer.WriteLine("  6 unsafe all-scope operation refused or confirmation required");
     }
 
     private static void WriteCapabilitiesHelp(TextWriter writer)

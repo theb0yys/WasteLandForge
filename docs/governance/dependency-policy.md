@@ -964,3 +964,24 @@ does not add filesystem deletion libraries, manifest readers, provenance
 sidecar readers, checksum readers, artifact scanners, provider resolvers,
 capability scanner dependencies, runtime probes, external tool integrations,
 network calls, or AI requirements.
+
+Gate 250 adds no dependency. `forge clean` planning uses in-process CLI
+contract metadata and System.Text.Json.Nodes output already used by the CLI. It
+does not add filesystem deletion libraries, manifest readers, provenance
+sidecar readers, checksum readers, artifact scanners, provider resolvers,
+capability scanner dependencies, runtime probes, external tool integrations,
+network calls, or AI requirements.
+
+Gate 251 adds no dependency. `forge clean` dry-run path planning uses
+in-process path calculation and existing JSON output infrastructure only. It
+does not add filesystem deletion libraries, manifest readers, provenance
+sidecar readers, checksum readers, artifact scanners, provider resolvers,
+capability scanner dependencies, runtime probes, external tool integrations,
+network calls, or AI requirements.
+
+Gate 252 adds no dependency. `forge clean --all` confirmation/refusal planning
+uses existing CLI flags, exit codes, and JSON/text output infrastructure only.
+It does not add filesystem deletion libraries, manifest readers, project-ID
+validation dependencies, provenance sidecar readers, checksum readers,
+artifact scanners, provider resolvers, capability scanner dependencies,
+runtime probes, external tool integrations, network calls, or AI requirements.

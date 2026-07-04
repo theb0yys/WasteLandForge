@@ -254,9 +254,12 @@ Gate status:
 - `gates/gate-247-forge-explain-capability-subject-skeleton.md` - Gate 247, `forge explain capability <capability-id>` built-in capability catalogue metadata skeleton.
 - `gates/gate-248-forge-explain-provenance-subject-planning-skeleton.md` - Gate 248, `forge explain provenance <manifest-or-output-path>` provenance boundary planning skeleton.
 - `gates/gate-249-forge-explain-command-slice-closeout.md` - Gate 249, top-level `forge explain` command-slice closeout and `forge clean` transition routing.
+- `gates/gate-250-forge-clean-planning-skeleton.md` - Gate 250, `forge clean` planning skeleton with documented scopes, reserved JSON contract, and usage-safe unknown-scope behavior.
+- `gates/gate-251-forge-clean-dry-run-path-plan-skeleton.md` - Gate 251, `forge clean` dry-run/path-plan skeleton for documented scopes without filesystem mutation or artifact checks.
+- `gates/gate-252-forge-clean-all-confirmation-refusal-planning.md` - Gate 252, `forge clean --all` confirmation/refusal planning with exit code 6 for unconfirmed all-scope plans.
 
 Next gate:
 
-- Gate 250 - `forge clean` planning skeleton, defining documented scopes and safety boundaries while stopping before delete behavior, filesystem mutation, generated manifest reads, build manifest reads, provenance sidecar reads, checksum reads, artifact existence checks, build planning changes, generator execution, package execution, release execution, provider resolution, capability scan behavior changes, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 253 - `forge clean --generated` execution skeleton, deleting only the contained project `generated/` output root after path containment validation while stopping before `dist`, `cache`, `all`, project manifest reads, project-id validation, generated manifest reads, build manifest reads, provenance sidecar reads, checksum reads, artifact existence checks beyond the target root, build planning changes, generator execution, package execution, release execution, provider resolution, capability scan behavior changes, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

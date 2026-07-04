@@ -2,22 +2,25 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 249 closes the
-top-level `forge explain` lane and routes the next implementation lane to
-`forge clean` planning. The implemented explain subjects are
+The project is currently in gated v0.1 implementation. Gate 252 adds
+`forge clean --all` confirmation/refusal planning. `forge clean` calculates
+dry-run clean roots for the default `generated` scope or explicit
+`--generated`, `--dist`, `--cache`, and `--all` scopes; unconfirmed `--all`
+returns exit code 6 with `status: refused` unless both `--yes` and
+`--confirm <project-id>` are supplied. It still does not delete files, mutate
+the filesystem, read generated manifests, read build manifests, read
+provenance sidecars, read checksums, inspect artifact existence, call external
+tools, run runtime probes, or use AI. The implemented explain subjects remain
 `diagnostic <rule-id>`, `target <target-id>`,
 `output <generated-or-dist-path>`, `capability <capability-id>`, and
-`provenance <manifest-or-output-path>`. They emit deterministic local
-explanation metadata without reading project diagnostics, generated manifests,
-build manifests, provenance sidecars, checksums, artifacts, local provider
-evidence, external tools, runtime probes, or AI.
+`provenance <manifest-or-output-path>`.
 Existing xEdit audit scaffold and handoff commands remain available, but Forge
 still does not execute xEdit, generate real xEdit reports, generate patches,
 mutate plugins, automate MO2 or GECK, run runtime probes, execute generator
 targets through `forge graph`, check generated artifact existence through
 `forge graph`, read generated manifests through `forge graph`, add xEdit
-build/package targets, publish docs, implement `forge clean`, delete generated
-files, read provenance sidecars through `forge explain`, inspect project
+build/package targets, publish docs, delete generated files, read provenance
+sidecars through `forge explain`, inspect project
 diagnostic reports through `forge explain`, plan builds through
 `forge explain target`, execute generators through `forge explain target`, or
 use real third-party plugin fixtures.
@@ -717,6 +720,31 @@ Gate 249 closes the top-level `forge explain` command slice. It records
 completed planned explain subjects and routes the next implementation lane to
 `forge clean` planning without adding runtime behavior, filesystem mutation,
 manifest reads, artifact checks, external tools, runtime probes, or AI.
+
+Gate 250 implements the first `forge clean` planning skeleton. Help now lists
+the documented `--generated`, `--dist`, `--cache`, and `--all` scopes and
+their safety boundaries. JSON output returns a reserved clean contract with
+planned scopes, selected scope metadata, report expectations, and false
+execution flags. Unsupported or duplicate scopes fail as usage errors, and no
+delete behavior, filesystem mutation, manifest reads, checksum reads, artifact
+existence checks, external tools, runtime probes, or AI are used.
+
+Gate 251 implements `forge clean` dry-run path planning. Supported clean scopes
+now produce text or JSON path-plan output with project root, scope source,
+planned roots, containment status, dry-run safety metadata, report contract,
+and false execution flags. The command defaults to the `generated` scope when
+no scope is supplied. `--all` reports generated, dist, and cache roots plus
+confirmation metadata, but still performs no deletion, filesystem mutation,
+manifest reads, checksum reads, artifact existence checks, external tools,
+runtime probes, or AI.
+
+Gate 252 implements `forge clean --all` confirmation/refusal planning.
+Unconfirmed `--all` plans return exit code 6 with `status: refused` and a
+refusal reason unless both `--yes` and `--confirm <project-id>` are provided.
+Confirmed `--all` still only emits a dry-run path plan. No delete behavior,
+filesystem mutation, project manifest reads, project-id validation, manifest
+reads, checksum reads, artifact existence checks, external tools, runtime
+probes, or AI are used.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

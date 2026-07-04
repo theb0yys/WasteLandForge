@@ -542,3 +542,24 @@ top-level `forge explain` subject lane and routes the next lane to
 `forge clean` planning without inspecting diagnostics, generated manifests,
 build manifests, checksums, provenance sidecars, artifacts, provider evidence,
 external tools, runtime probes, or AI.
+
+Gate 250 adds no new rule family or diagnostic ID. The `forge clean` planning
+skeleton exposes clean scope metadata and usage-safe unsupported-scope errors
+without deleting files, inspecting diagnostics, reading generated manifests,
+reading build manifests, reading checksums, reading provenance sidecars,
+checking artifact existence, executing external tools, running runtime probes,
+or using AI.
+
+Gate 251 adds no new rule family or diagnostic ID. The `forge clean` dry-run
+path-plan skeleton calculates contained clean roots and usage-safe
+unsupported-scope errors without deleting files, inspecting diagnostics,
+reading generated manifests, reading build manifests, reading checksums,
+reading provenance sidecars, checking artifact existence, executing external
+tools, running runtime probes, or using AI.
+
+Gate 252 adds no new rule family or diagnostic ID. The `forge clean --all`
+confirmation/refusal skeleton uses exit code 6 and path-plan safety metadata
+without deleting files, inspecting diagnostics, reading project manifests,
+validating project IDs, reading generated manifests, reading build manifests,
+reading checksums, reading provenance sidecars, checking artifact existence,
+executing external tools, running runtime probes, or using AI.

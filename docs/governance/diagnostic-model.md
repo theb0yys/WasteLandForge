@@ -1031,5 +1031,20 @@ planning without inspecting diagnostics, generated manifests, build manifests,
 checksums, provenance sidecars, artifacts, provider evidence, external tools,
 runtime probes, or AI.
 
+Gate 250 adds no new diagnostic rule ID. It implements `forge clean` planning
+metadata and usage-safe unsupported-scope errors without inspecting
+diagnostics, generated manifests, build manifests, checksums, provenance
+sidecars, artifacts, provider evidence, external tools, runtime probes, or AI.
+
+Gate 251 adds no new diagnostic rule ID. It implements `forge clean` dry-run
+path planning and usage-safe unsupported-scope errors without inspecting
+diagnostics, generated manifests, build manifests, checksums, provenance
+sidecars, artifacts, provider evidence, external tools, runtime probes, or AI.
+
+Gate 252 adds no new diagnostic rule ID. It implements `forge clean --all`
+confirmation/refusal exit behavior without inspecting diagnostics, generated
+manifests, build manifests, checksums, provenance sidecars, artifacts, provider
+evidence, external tools, runtime probes, or AI.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

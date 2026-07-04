@@ -97,6 +97,11 @@ internal static class ForgeCli
             return RunGraphCommand(resolution.RemainingArgs);
         }
 
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "clean"))
+        {
+            return RunCleanCommand(resolution.RemainingArgs);
+        }
+
         if (StringComparer.Ordinal.Equals(resolution.CommandPath, "explain"))
         {
             return RunExplainCommand(resolution.RemainingArgs);
@@ -751,6 +756,32 @@ internal static class ForgeCli
         }
 
         return (int)CliExitCode.Usage;
+    }
+
+    private static int RunCleanCommand(string[] args)
+    {
+        var parse = ParseCleanOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "clean", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var result = CleanPlanPlanner.Plan(new CleanPlanOptions(
+            parse.ProjectPath,
+            parse.Scope,
+            parse.ScopeWasExplicit,
+            parse.Yes,
+            parse.Confirm,
+            parse.DryRun));
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? CleanPlanJsonSerializer.Serialize(result)
+            : CleanPlanTextRenderer.Render(result);
+        Console.Write(payload);
+
+        return StringComparer.Ordinal.Equals(result.SafetyStatus, "refused")
+            ? (int)CliExitCode.UnsafeOperationRefused
+            : (int)CliExitCode.Success;
     }
 
     private static int RunExplainCommand(string[] args)
@@ -2114,6 +2145,112 @@ internal static class ForgeCli
         return format;
     }
 
+    private static CleanParseResult ParseCleanOptions(string[] args)
+    {
+        var format = "human";
+        string? projectPath = null;
+        string? scope = null;
+        string? confirm = null;
+        var yes = false;
+        var dryRun = false;
+        var projectWasSet = false;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return CleanParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return CleanParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return CleanParseResult.Fail(format, $"--format {format} is only available for diagnostic report commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return CleanParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectWasSet)
+                {
+                    return CleanParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                projectWasSet = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--yes"))
+            {
+                yes = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--confirm"))
+            {
+                if (!TryReadValue(args, ref index, out confirm))
+                {
+                    return CleanParseResult.Fail(format, "Missing value for --confirm.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--dry-run"))
+            {
+                dryRun = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (CleanScopeContracts.TryGetByFlag(arg, out var cleanScope))
+            {
+                if (scope is not null)
+                {
+                    return CleanParseResult.Fail(format, "Clean scope was specified more than once.");
+                }
+
+                scope = cleanScope.Scope;
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return CleanParseResult.Fail(format, $"Unsupported clean option or scope '{arg}'. Use --generated, --dist, --cache, or --all.");
+            }
+
+            if (projectWasSet)
+            {
+                return CleanParseResult.Fail(format, "Project root was specified more than once.");
+            }
+
+            projectPath = arg;
+            projectWasSet = true;
+        }
+
+        return CleanParseResult.Ok(projectPath, scope, scope is not null, yes, confirm, dryRun, format);
+    }
+
     private static ExplainDiagnosticParseResult ParseExplainDiagnosticOptions(string[] args)
     {
         var format = "human";
@@ -3148,6 +3285,24 @@ internal static class ForgeCli
 
         public static DoctorExportParseResult Fail(string format, string message) =>
             new(false, null, null, null, [], null, null, null, format, message);
+    }
+
+    private sealed record CleanParseResult(
+        bool Success,
+        string? ProjectPath,
+        string? Scope,
+        bool ScopeWasExplicit,
+        bool Yes,
+        string? Confirm,
+        bool DryRun,
+        string Format,
+        string Message)
+    {
+        public static CleanParseResult Ok(string? projectPath, string? scope, bool scopeWasExplicit, bool yes, string? confirm, bool dryRun, string format) =>
+            new(true, projectPath, scope, scopeWasExplicit, yes, confirm, dryRun, format, string.Empty);
+
+        public static CleanParseResult Fail(string format, string message) =>
+            new(false, null, null, false, false, null, false, format, message);
     }
 
     private sealed record ExplainDiagnosticParseResult(

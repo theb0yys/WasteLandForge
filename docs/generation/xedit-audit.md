@@ -89,3 +89,30 @@ provider resolution, capability scan behavior changes, plugin patch
 generation, plugin mutation, MO2 automation, GECK automation, runtime probes,
 real third-party plugin fixtures, `forge build --target xedit-audit`,
 package/release behavior, or applying parsed report findings to plugins.
+
+Gate 250 implements the `forge clean` planning skeleton before xEdit process
+execution, report generation, clean deletion behavior, filesystem mutation,
+generated artifact existence checks, generated manifest reads, build manifest
+reads, provenance sidecar reads, checksum reads, provider resolution,
+capability scan behavior changes, plugin patch generation, plugin mutation,
+MO2 automation, GECK automation, runtime probes, real third-party plugin
+fixtures, `forge build --target xedit-audit`, package/release behavior, or
+applying parsed report findings to plugins.
+
+Gate 251 implements `forge clean` dry-run path planning before xEdit process
+execution, report generation, clean deletion behavior, filesystem mutation,
+generated artifact existence checks, generated manifest reads, build manifest
+reads, provenance sidecar reads, checksum reads, provider resolution,
+capability scan behavior changes, plugin patch generation, plugin mutation,
+MO2 automation, GECK automation, runtime probes, real third-party plugin
+fixtures, `forge build --target xedit-audit`, package/release behavior, or
+applying parsed report findings to plugins.
+
+Gate 252 implements `forge clean --all` confirmation/refusal planning before
+xEdit process execution, report generation, clean deletion behavior,
+filesystem mutation, generated artifact existence checks, generated manifest
+reads, build manifest reads, provenance sidecar reads, checksum reads,
+provider resolution, capability scan behavior changes, plugin patch generation,
+plugin mutation, MO2 automation, GECK automation, runtime probes, real
+third-party plugin fixtures, `forge build --target xedit-audit`,
+package/release behavior, or applying parsed report findings to plugins.

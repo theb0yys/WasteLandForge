@@ -11,7 +11,7 @@ internal static class CliStatusJsonSerializer
         WriteIndented = true
     };
 
-    public static string SerializeReservedCommand(string commandPath)
+    public static string SerializeReservedCommand(string commandPath, string? cleanScope = null)
     {
         var status = CreateStatus(commandPath, "reserved", $"forge {commandPath} is reserved by ADR-010 but is not implemented in the current gate.", 1);
         if (StringComparer.Ordinal.Equals(commandPath, "explain"))
@@ -23,6 +23,41 @@ internal static class CliStatusJsonSerializer
                 ["manifestRead"] = false,
                 ["artifactExistenceCheck"] = false,
                 ["provenanceSidecarRead"] = false,
+                ["buildPlanning"] = false,
+                ["generatorExecution"] = false,
+                ["packageExecution"] = false,
+                ["releaseExecution"] = false,
+                ["providerResolution"] = false,
+                ["capabilityScanBehaviorChange"] = false,
+                ["externalToolExecution"] = false,
+                ["aiRequired"] = false
+            };
+        }
+        else if (StringComparer.Ordinal.Equals(commandPath, "clean"))
+        {
+            status["plannedScopes"] = CreateCleanScopeArray();
+            if (!string.IsNullOrWhiteSpace(cleanScope) &&
+                CleanScopeContracts.TryGetByScope(cleanScope, out var contract))
+            {
+                status["selectedScope"] = CreateCleanScope(contract);
+            }
+
+            status["reportContract"] = new JsonObject
+            {
+                ["status"] = "planned",
+                ["summary"] = "Future clean execution reports removed outputs and refused unsafe operations.",
+                ["canonicalFormat"] = "json",
+                ["mutatesFilesystemInCurrentGate"] = false
+            };
+            status["execution"] = new JsonObject
+            {
+                ["deleteBehavior"] = false,
+                ["filesystemMutation"] = false,
+                ["generatedManifestRead"] = false,
+                ["buildManifestRead"] = false,
+                ["provenanceSidecarRead"] = false,
+                ["checksumRead"] = false,
+                ["artifactExistenceCheck"] = false,
                 ["buildPlanning"] = false,
                 ["generatorExecution"] = false,
                 ["packageExecution"] = false,
@@ -81,4 +116,27 @@ internal static class CliStatusJsonSerializer
 
         return subjects;
     }
+
+    private static JsonArray CreateCleanScopeArray()
+    {
+        var scopes = new JsonArray();
+        foreach (var scope in CleanScopeContracts.All)
+        {
+            scopes.Add(CreateCleanScope(scope));
+        }
+
+        return scopes;
+    }
+
+    private static JsonObject CreateCleanScope(CleanScopeContract scope) =>
+        new()
+        {
+            ["scope"] = scope.Scope,
+            ["flag"] = scope.Flag,
+            ["root"] = scope.Root,
+            ["risk"] = scope.Risk,
+            ["confirmation"] = scope.Confirmation,
+            ["reportExpectation"] = scope.ReportExpectation,
+            ["boundary"] = scope.Boundary
+        };
 }

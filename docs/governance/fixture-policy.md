@@ -850,6 +850,21 @@ Gate 249 adds no public fixture, private fixture, generated evidence payload,
 or real provider sample. It is a documentation and routing closeout for the
 top-level `forge explain` lane and a transition to `forge clean` planning.
 
+Gate 250 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses a temporary synthetic generated file in golden
+CLI tests only to prove the reserved `forge clean` planning skeleton does not
+delete files.
+
+Gate 251 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses temporary synthetic generated, dist, and cache
+files in golden CLI tests only to prove dry-run clean path planning does not
+delete files.
+
+Gate 252 adds no public fixture, private fixture, generated evidence payload,
+or real provider sample. It uses temporary synthetic generated, dist, and cache
+files in golden CLI tests only to prove unconfirmed and confirmed all-scope
+clean planning does not delete files.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

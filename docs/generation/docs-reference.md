@@ -112,3 +112,19 @@ implementation lane to `forge clean` planning without adding clean execution,
 filesystem mutation, generated manifest reads, build manifest reads,
 provenance sidecar reads, checksum reads, artifact existence checks, external
 tools, runtime probes, or AI.
+
+Gate 250 implements the `forge clean` planning skeleton as help, scope
+metadata, reserved JSON, and usage-safe unsupported-scope errors. Docs
+generation still does not execute clean behavior, delete files, mutate the
+filesystem, read manifests, inspect artifacts, call external tools, run runtime
+probes, or use AI.
+
+Gate 251 implements `forge clean` dry-run path planning. Docs generation still
+does not execute clean behavior, delete files, mutate the filesystem, read
+manifests, inspect artifacts, call external tools, run runtime probes, or use
+AI.
+
+Gate 252 implements `forge clean --all` confirmation/refusal planning. Docs
+generation still does not execute clean behavior, delete files, mutate the
+filesystem, read manifests, inspect artifacts, call external tools, run runtime
+probes, or use AI.

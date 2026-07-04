@@ -6707,6 +6707,215 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void CleanHelpListsPlannedScopes()
+    {
+        var result = RunCli("help", "clean");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("forge clean", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("--generated - generated/ (safe); non-interactive by default", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("--dist - dist/ (safe); non-interactive by default", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("--cache - .wastelandforge/cache/ (safe-with-active-build-warning); non-interactive by default; warn if a build is active in a later execution gate", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("--all - generated/, dist/, .wastelandforge/cache/ (severe); requires --yes and --confirm <project-id> in non-interactive mode", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Gate 253 deletes only the contained generated/ root for explicit --generated cleans.", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CleanJsonDeletesGeneratedScope()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "clean-plan");
+        var generatedFile = Path.Combine(projectRoot, "generated", "keep.txt");
+        Touch(generatedFile);
+
+        var result = RunCli("clean", projectRoot, "--generated", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Clean plan JSON did not parse.");
+        var plannedRoots = json["plannedRoots"]?.AsArray() ?? throw new InvalidOperationException("Clean plan did not include planned roots.");
+        var execution = json["execution"] ?? throw new InvalidOperationException("Clean plan did not include execution flags.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("cleaned", (string?)json["status"]);
+        Assert.Equal("clean", (string?)json["command"]);
+        Assert.Equal("generated-clean-execution", (string?)json["mode"]);
+        Assert.Equal(projectRoot, (string?)json["project"]?["root"]);
+        Assert.Equal("generated", (string?)json["scope"]?["id"]);
+        Assert.Equal("explicit", (string?)json["scope"]?["source"]);
+        Assert.Single(plannedRoots);
+        Assert.Equal("generated", (string?)plannedRoots[0]?["kind"]);
+        Assert.Equal("generated/", (string?)plannedRoots[0]?["relativePath"]);
+        Assert.Equal(
+            Path.GetFullPath(Path.Combine(projectRoot, "generated")).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+            ((string?)plannedRoots[0]?["fullPath"])?.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        Assert.Equal(true, (bool?)plannedRoots[0]?["contained"]);
+        Assert.Equal("delete-root", (string?)plannedRoots[0]?["plannedAction"]);
+        Assert.Equal(true, (bool?)plannedRoots[0]?["existsBefore"]);
+        Assert.Equal(true, (bool?)plannedRoots[0]?["removed"]);
+        Assert.Equal(false, (bool?)plannedRoots[0]?["missing"]);
+        Assert.Equal(false, (bool?)json["safety"]?["effectiveDryRun"]);
+        Assert.Equal(true, (bool?)json["safety"]?["deleteBehavior"]);
+        Assert.Equal(true, (bool?)json["safety"]?["filesystemMutation"]);
+        Assert.Equal("deleted-generated-root", (string?)json["operation"]?["status"]);
+        Assert.Equal(Path.GetFullPath(Path.Combine(projectRoot, "generated")), (string?)json["operation"]?["removedPaths"]?[0]);
+        Assert.Empty(json["operation"]?["missingPaths"]?.AsArray() ?? throw new InvalidOperationException("Clean report missing missing paths."));
+        Assert.Equal(true, (bool?)execution["deleteBehavior"]);
+        Assert.Equal(true, (bool?)execution["filesystemMutation"]);
+        Assert.Equal(true, (bool?)execution["targetRootExistenceCheck"]);
+        Assert.Equal(false, (bool?)execution["generatedManifestRead"]);
+        Assert.Equal(false, (bool?)execution["buildManifestRead"]);
+        Assert.Equal(false, (bool?)execution["provenanceSidecarRead"]);
+        Assert.Equal(false, (bool?)execution["checksumRead"]);
+        Assert.Equal(false, (bool?)execution["artifactExistenceCheck"]);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+        Assert.False(File.Exists(generatedFile));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CleanJsonDryRunGeneratedScopeWithoutDeletion()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "clean-dry-run");
+        var generatedFile = Path.Combine(projectRoot, "generated", "keep.txt");
+        Touch(generatedFile);
+
+        var result = RunCli("clean", projectRoot, "--generated", "--dry-run", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Clean dry-run JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("planned", (string?)json["status"]);
+        Assert.Equal("dry-run-path-plan", (string?)json["mode"]);
+        Assert.Equal(true, (bool?)json["safety"]?["effectiveDryRun"]);
+        Assert.Equal(false, (bool?)json["safety"]?["deleteBehavior"]);
+        Assert.Equal(false, (bool?)json["execution"]?["filesystemMutation"]);
+        Assert.Equal("path-plan-only", (string?)json["operation"]?["status"]);
+        Assert.True(File.Exists(generatedFile));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CleanJsonReportsMissingGeneratedRoot()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "clean-missing");
+        var generatedRoot = Path.Combine(projectRoot, "generated");
+        Directory.CreateDirectory(projectRoot);
+
+        var result = RunCli("clean", projectRoot, "--generated", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Clean missing JSON did not parse.");
+        var plannedRoots = json["plannedRoots"]?.AsArray() ?? throw new InvalidOperationException("Clean missing report did not include planned roots.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("missing", (string?)json["status"]);
+        Assert.Equal("generated-clean-execution", (string?)json["mode"]);
+        Assert.Equal(false, (bool?)json["safety"]?["effectiveDryRun"]);
+        Assert.Equal(true, (bool?)json["safety"]?["deleteBehavior"]);
+        Assert.Equal(false, (bool?)json["safety"]?["filesystemMutation"]);
+        Assert.Equal("delete-root-missing", (string?)plannedRoots[0]?["plannedAction"]);
+        Assert.Equal(false, (bool?)plannedRoots[0]?["existsBefore"]);
+        Assert.Equal(false, (bool?)plannedRoots[0]?["removed"]);
+        Assert.Equal(true, (bool?)plannedRoots[0]?["missing"]);
+        Assert.Equal("generated-root-missing", (string?)json["operation"]?["status"]);
+        Assert.Equal(Path.GetFullPath(generatedRoot), (string?)json["operation"]?["missingPaths"]?[0]);
+        Assert.False(Directory.Exists(generatedRoot));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CleanJsonDefaultsToGeneratedScope()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "clean-default");
+        var generatedFile = Path.Combine(projectRoot, "generated", "keep.txt");
+        Touch(generatedFile);
+
+        var result = RunCli("clean", "--project", projectRoot, "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Clean default JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("generated", (string?)json["scope"]?["id"]);
+        Assert.Equal("default-generated", (string?)json["scope"]?["source"]);
+        Assert.Equal("generated/", (string?)json["plannedRoots"]?[0]?["relativePath"]);
+        Assert.Equal("path-plan-only", (string?)json["operation"]?["status"]);
+        Assert.Equal(true, (bool?)json["safety"]?["effectiveDryRun"]);
+        Assert.Equal(false, (bool?)json["execution"]?["deleteBehavior"]);
+        Assert.Equal(false, (bool?)json["execution"]?["filesystemMutation"]);
+        Assert.True(File.Exists(generatedFile));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CleanJsonRefusesAllScopeWithoutConfirmation()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "clean-all");
+        var generatedFile = Path.Combine(projectRoot, "generated", "keep.txt");
+        var distFile = Path.Combine(projectRoot, "dist", "keep.txt");
+        var cacheFile = Path.Combine(projectRoot, ".wastelandforge", "cache", "keep.txt");
+        Touch(generatedFile);
+        Touch(distFile);
+        Touch(cacheFile);
+
+        var result = RunCli("clean", projectRoot, "--all", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Clean all JSON did not parse.");
+        var plannedRoots = json["plannedRoots"]?.AsArray() ?? throw new InvalidOperationException("Clean all plan did not include planned roots.");
+
+        Assert.Equal(6, result.ExitCode);
+        Assert.Equal("refused", (string?)json["status"]);
+        Assert.Equal("all", (string?)json["scope"]?["id"]);
+        Assert.Equal(3, plannedRoots.Count);
+        Assert.Contains(plannedRoots, root => StringComparer.Ordinal.Equals("generated/", (string?)root?["relativePath"]));
+        Assert.Contains(plannedRoots, root => StringComparer.Ordinal.Equals("dist/", (string?)root?["relativePath"]));
+        Assert.Contains(plannedRoots, root => StringComparer.Ordinal.Equals(".wastelandforge/cache/", (string?)root?["relativePath"]));
+        Assert.Equal(true, (bool?)json["safety"]?["confirmationRequired"]);
+        Assert.Equal(false, (bool?)json["safety"]?["confirmationProvided"]);
+        Assert.Contains("requires --yes and --confirm", (string?)json["safety"]?["refusalReason"], StringComparison.Ordinal);
+        Assert.Equal(false, (bool?)json["execution"]?["artifactExistenceCheck"]);
+        Assert.True(File.Exists(generatedFile));
+        Assert.True(File.Exists(distFile));
+        Assert.True(File.Exists(cacheFile));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CleanJsonPlansAllScopeWithConfirmationWithoutDeletion()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "clean-all-confirmed");
+        var generatedFile = Path.Combine(projectRoot, "generated", "keep.txt");
+        var distFile = Path.Combine(projectRoot, "dist", "keep.txt");
+        var cacheFile = Path.Combine(projectRoot, ".wastelandforge", "cache", "keep.txt");
+        Touch(generatedFile);
+        Touch(distFile);
+        Touch(cacheFile);
+
+        var result = RunCli("clean", projectRoot, "--all", "--yes", "--confirm", "example.author.modname", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Clean all confirmed JSON did not parse.");
+        var plannedRoots = json["plannedRoots"]?.AsArray() ?? throw new InvalidOperationException("Clean all confirmed plan did not include planned roots.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("planned", (string?)json["status"]);
+        Assert.Equal("all", (string?)json["scope"]?["id"]);
+        Assert.Equal(3, plannedRoots.Count);
+        Assert.Equal(true, (bool?)json["safety"]?["confirmationRequired"]);
+        Assert.Equal(true, (bool?)json["safety"]?["confirmationProvided"]);
+        Assert.Equal("example.author.modname", (string?)json["safety"]?["confirmationValue"]);
+        Assert.Null(json["safety"]?["refusalReason"]);
+        Assert.Equal(false, (bool?)json["execution"]?["filesystemMutation"]);
+        Assert.True(File.Exists(generatedFile));
+        Assert.True(File.Exists(distFile));
+        Assert.True(File.Exists(cacheFile));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CleanUnknownScopeReturnsUsageJson()
+    {
+        var result = RunCli("clean", "--format", "json", "--temporary");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Clean usage JSON did not parse.");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal("usage-error", (string?)json["status"]);
+        Assert.Equal("clean", (string?)json["command"]);
+        Assert.Contains("Unsupported clean option or scope '--temporary'.", (string?)json["message"], StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
     public void ExplainHelpListsPlannedSubjects()
     {
         var result = RunCli("help", "explain");
