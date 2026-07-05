@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
     <OutputType>WinExe</OutputType>
     <AssemblyName>WastelandForge</AssemblyName>
     <RootNamespace>WastelandForge.Desktop</RootNamespace>
@@ -11,11 +11,19 @@
     <AssemblyVersion>0.1.0.0</AssemblyVersion>
     <FileVersion>0.1.0.0</FileVersion>
     <InformationalVersion>0.1.0</InformationalVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WastelandForge.Core\WastelandForge.Core.csproj" />
-    <ProjectReference Include="..\WastelandForge.Validation\WastelandForge.Validation.csproj" />
+    <Content Include="..\..\dist\local\forge.exe" Link="forge.exe" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('..\..\dist\local\forge.exe')" />
+    <Content Include="..\..\dist\local\forge.pdb" Link="forge.pdb" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('..\..\dist\local\forge.pdb')" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(HeatSourceRoot)' != '' and Exists('$(HeatSourceRoot)')">
+    <Resource Include="$(HeatSourceRoot)\Textures\Borders\Special\Cross Frame.png" Link="Assets\Heat\Cross Frame.png" Condition="Exists('$(HeatSourceRoot)\Textures\Borders\Special\Cross Frame.png')" />
+    <Resource Include="$(HeatSourceRoot)\Fonts\RobotoCondensed-Regular.ttf" Link="Assets\Heat\RobotoCondensed-Regular.ttf" Condition="Exists('$(HeatSourceRoot)\Fonts\RobotoCondensed-Regular.ttf')" />
+    <Resource Include="$(HeatSourceRoot)\Fonts\RobotoCondensed-Bold.ttf" Link="Assets\Heat\RobotoCondensed-Bold.ttf" Condition="Exists('$(HeatSourceRoot)\Fonts\RobotoCondensed-Bold.ttf')" />
   </ItemGroup>
 
 </Project>

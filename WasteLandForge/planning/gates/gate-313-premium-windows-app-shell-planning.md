@@ -9,8 +9,8 @@ Decision base: ADR-012, ADR-006, ADR-010, ADR-011, WFG-001
 Start the premium Windows GUI lane without disrupting the existing Gate 312
 `forge init` route.
 
-Gate 313 records the first app-shell plan for a Unity-built
-`WastelandForge.exe` using the licensed Heat - Complete Modern UI 1.1.8 kit,
+Gate 313 records the app-shell plan for a native .NET/WPF `WastelandForge.exe`
+using the licensed Heat - Complete Modern UI 1.1.8 kit as the visual system,
 with `forge.exe` bundled beside the app as the deterministic backend worker.
 
 ## Research Grounding
@@ -22,16 +22,17 @@ with `forge.exe` bundled beside the app as the deterministic backend worker.
 | Documented | Validation, build, release, and contribution correctness must remain offline-first and AI-optional. | ADR-011 / R008 |
 | Documented | No proprietary or redistribution-unclear dependency may become a hard requirement of WastelandForge core. | WFG-001 |
 | Inferred | A GUI app shell is acceptable when it is a thin presentation/orchestration layer over the same Forge core and CLI JSON contracts. | ADR-006 / ADR-010 / ADR-011 |
-| Inferred | Unity is the most direct first GUI route because the chosen premium UI kit is a Unity package with scenes, prefabs, scripts, textures, fonts, and animations. | User-provided Heat 1.1.8 asset evidence |
-| Open | Unity version, app project location, installer technology, signing, update channel, and CI strategy still require follow-up gates. | ADR-012 open checks |
+| Inferred | WPF is an acceptable first app-shell route because it produces a native Windows `.exe` while still allowing selected Heat visual resources to be embedded under the license boundary. | ADR-012 / user-provided Heat 1.1.8 asset evidence |
+| Open | Installer technology, signing, update channel, Heat attribution, and CI strategy still require follow-up gates. | ADR-012 open checks |
 
 ## Planned App-Shell Shape
 
 The first app-shell lane targets:
 
 - `WastelandForge.exe` as the double-clickable Windows app,
+- .NET/WPF as the native desktop shell implementation,
 - `forge.exe` as a bundled backend worker,
-- Heat 1.1.8 as the initial UI system,
+- Heat 1.1.8 as the initial visual system,
 - JSON output consumption rather than human console parsing,
 - no external provider installation,
 - no GECK automation,
@@ -59,7 +60,7 @@ does not open that implementation scope.
 
 The first MVP view set is:
 
-- branded splash screen,
+- branded splash/application chrome,
 - project selector,
 - Doctor/capability dashboard shell,
 - validation report view shell,
@@ -70,7 +71,7 @@ The first MVP view set is:
 Heat source assets must not be committed to the public repository or
 redistributed as a raw asset pack.
 
-Before any asset is copied into a build tree, the app-shell lane must audit:
+Before public release, the app-shell lane must audit:
 
 - Heat Asset Store license tier and Restricted Asset status,
 - contributor seat coverage,
@@ -83,8 +84,8 @@ Before any asset is copied into a build tree, the app-shell lane must audit:
 - ADR-012 accepted.
 - App-shell brief under `docs/app-shell/`.
 - Planning index route that preserves Gate 312 as `forge init`.
-- No Unity project scaffold yet.
-- No Heat asset import yet.
+- WPF app-shell direction recorded.
+- No raw Heat asset import into source control.
 - No installer yet.
 - No runtime behavior change.
 
@@ -92,10 +93,10 @@ Before any asset is copied into a build tree, the app-shell lane must audit:
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Premium app-shell direction is recorded | Complete | ADR-012 and this gate define the Unity/Heat shell over `forge.exe`. |
+| Premium app-shell direction is recorded | Complete | ADR-012 and this gate define the WPF/Heat shell over `forge.exe`. |
 | Gate 312 remains intact | Complete | Planning index keeps Gate 312 routed to `forge init`. |
 | Core correctness path remains CLI-backed | Complete | ADR-012 keeps JSON contracts and `forge.exe` as the backend worker. |
-| Asset redistribution boundary is explicit | Complete | Heat source assets remain outside the public repository until an audit gate opens import scope. |
+| Asset redistribution boundary is explicit | Complete | Heat source assets remain outside the public repository and may only be embedded under audit. |
 | Runtime behavior is unchanged | Complete | This gate adds no code, commands, schemas, assets, installer, or generated outputs. |
 
 ## Not Implemented
@@ -103,7 +104,7 @@ Before any asset is copied into a build tree, the app-shell lane must audit:
 Gate 313 does not implement:
 
 - a Unity project,
-- Heat asset import,
+- raw Heat asset import into source control,
 - app shell code,
 - app-to-CLI process execution,
 - installer generation,
@@ -136,11 +137,9 @@ are changed by this gate.
 
 The next app-shell gates should be:
 
-1. Gate 314 - app-shell asset and license audit.
-2. Gate 315 - Unity project layout decision.
-3. Gate 316 - Unity app-shell scaffold.
-4. Gate 317 - app-to-CLI process runner and JSON bridge.
-5. Gate 318 - splash and project selector MVP.
-6. Gate 319 - capability/Doctor dashboard MVP.
-7. Gate 320 - validation report view MVP.
-8. Later gate - installer, signing, and release evidence.
+1. Gate 314 - Heat asset and WPF build boundary.
+2. Gate 315 - WPF app-shell scaffold and backend bridge.
+3. Gate 316 - splash and project selector MVP.
+4. Gate 317 - capability/Doctor dashboard MVP.
+5. Gate 318 - validation report view MVP.
+6. Later gate - installer, signing, and release evidence.

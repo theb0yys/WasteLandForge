@@ -316,12 +316,12 @@ Gate status:
 - `gates/gate-309-forge-release-publish-dry-run-evidence-remediation.md` - Gate 309, `forge release publish` local release dry-run evidence remediation summaries for missing, malformed, or cross-link-mismatched dry-run evidence, with manual action items, command hints, no-execution boundary, JSON/plain output, CLI help, and test coverage.
 - `gates/gate-310-forge-doctor-export-dry-run-evidence-remediation-handoff.md` - Gate 310, `forge doctor export` release dry-run evidence remediation handoff projection from local `forge release publish --dry-run` preflight evidence, with JSON/plain/Markdown/bundle triage coverage and still no command fan-out or publish behavior.
 - `gates/gate-311-release-dry-run-remediation-handoff-lane-closeout.md` - Gate 311, release dry-run remediation handoff lane closeout and next-value routing to `forge init` project scaffold planning, with no runtime behavior change.
-- `gates/gate-313-premium-windows-app-shell-planning.md` - Gate 313, premium Windows app shell planning for a Unity/Heat `WastelandForge.exe` over `forge.exe`, while preserving Gate 312 as the `forge init` route.
-- `gates/gate-314-app-shell-asset-license-audit.md` - Gate 314, Heat 1.1.8 asset/license audit and local-only ignored Unity asset import boundary for the app-shell lane.
+- `gates/gate-313-premium-windows-app-shell-planning.md` - Gate 313, premium Windows app shell planning for a native WPF/Heat `WastelandForge.exe` over `forge.exe`, while preserving Gate 312 as the `forge init` route.
+- `gates/gate-314-app-shell-asset-license-audit.md` - Gate 314, Heat 1.1.8 asset/license audit and optional WPF embedded-resource build boundary for the app-shell lane.
 
 Next gates:
 
 - Gate 312 - start `forge init` project scaffold planning, while still stopping before external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior unless a later gate explicitly opens one of those scopes.
-- Gate 315 - define the Unity app-shell project layout and scaffold after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
+- Gate 315 - harden the WPF app-shell scaffold and backend bridge after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.
