@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 300 forge package reports lane closeout and release verify routing
+Status: Gate 304 forge release verify evidence status projection
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -356,7 +356,8 @@ forge --version
 - `forge validate` emits `WF-SEM-021` when a quest condition variable
   reference does not resolve to a variable declared in the same quest.
 - `forge release verify` runs the Gate 9 release dry-run verifier and writes
-  local evidence under project `dist/`.
+  local evidence under project `dist/`, including a release-verification
+  self-report.
 - `forge generate --target reports` writes deterministic metadata reports
   under project `generated/reports`.
 - `forge build --target reports` writes deterministic metadata reports, a
@@ -845,9 +846,24 @@ format set as `human`, `plain`, `json`, `sarif`, and `github`.
 dist/release-dry-run/staging/
 dist/release-dry-run/validation.json
 dist/release-dry-run/release-summary.json
+dist/release-dry-run/release-verify.json
+dist/release-dry-run/release-evidence-index.json
+dist/release-dry-run/release-evidence-status.json
+dist/release-dry-run/release-evidence-handoff.md
 dist/release-dry-run/build-manifest.json
 dist/release-dry-run/checksums.sha256
 ```
+
+`release-verify.json` uses the same JSON report shape as
+`forge release verify --format json`. `release-evidence-index.json` lists
+release-publish preflight evidence paths for validation, capability scan,
+package verification, and release verification plus command hints for
+producing them. `release-evidence-status.json` marks indexed evidence paths
+as `present` or `missing` from local file presence only.
+`release-evidence-handoff.md` renders that status as an operator-facing
+Markdown summary with command hints and disabled execution boundaries.
+`build-manifest.json` and `checksums.sha256` cover all four files as local
+release-verification evidence.
 
 `--output` is accepted only when the resolved path stays under project `dist/`.
 
@@ -1076,6 +1092,59 @@ behavior, external tool execution, plugin mutation, MO2/GECK automation,
 runtime probes, publish behavior, or AI behavior. The next implementation
 route is Gate 301 local `forge release verify` release-verification
 self-report evidence under `dist/release-dry-run/release-verify.json`.
+
+Gate 301 adds release-verification self-report evidence to `forge release
+verify`. Successful release dry-run runs now write
+`dist/release-dry-run/release-verify.json`, report the path as
+`outputs.releaseVerification`, include the file in
+`dist/release-dry-run/build-manifest.json`, and cover it in
+`dist/release-dry-run/checksums.sha256`. The gate does not run capability
+scans, run package verification, publish releases, call remote repositories,
+sign or attest artifacts, execute external tools, mutate plugins, automate
+MO2/GECK, run runtime probes, use real third-party fixtures, or use AI. The
+next implementation route is Gate 302 local release dry-run evidence index
+planning under `dist/release-dry-run`.
+
+Gate 302 adds the local release dry-run evidence index. Successful release
+verify runs now write `dist/release-dry-run/release-evidence-index.json`,
+report the path as `outputs.releaseEvidenceIndex`, include the file in
+`dist/release-dry-run/build-manifest.json`, and cover it in
+`dist/release-dry-run/checksums.sha256`. The index lists the local
+release-publish preflight evidence files and command hints, but it does not
+run capability scans, run package verification, publish releases, call remote
+repositories, sign or attest artifacts, execute external tools, mutate
+plugins, automate MO2/GECK, run runtime probes, use real third-party
+fixtures, or use AI. The next implementation route is Gate 303 local release
+dry-run evidence handoff summary.
+
+Gate 303 adds the local release dry-run evidence handoff summary. Successful
+release verify runs now write
+`dist/release-dry-run/release-evidence-handoff.md`, report the path as
+`outputs.releaseEvidenceHandoff`, include the file in
+`dist/release-dry-run/build-manifest.json`, and cover it in
+`dist/release-dry-run/checksums.sha256`. The Markdown summary renders the
+evidence index as operator-facing evidence rows, command hints, release
+publish preflight guidance, and disabled execution boundaries. The gate does
+not run capability scans, run package verification, publish releases, call
+remote repositories, sign or attest artifacts, execute external tools, mutate
+plugins, automate MO2/GECK, run runtime probes, use real third-party
+fixtures, or use AI. The next implementation route is Gate 304 local release
+dry-run evidence status projection.
+
+Gate 304 adds the local release dry-run evidence status projection.
+Successful release verify runs now write
+`dist/release-dry-run/release-evidence-status.json`, report the path as
+`outputs.releaseEvidenceStatus`, include the file in
+`dist/release-dry-run/build-manifest.json`, and cover it in
+`dist/release-dry-run/checksums.sha256`. The status projection marks indexed
+evidence paths as `present` or `missing` using local file presence only, and
+the Markdown handoff now includes status rows and present/missing counts. The
+gate does not run capability scans, run package verification, parse or
+validate evidence content, publish releases, call remote repositories, sign
+or attest artifacts, execute external tools, mutate plugins, automate
+MO2/GECK, run runtime probes, use real third-party fixtures, or use AI. The
+next implementation route is Gate 305 local missing-evidence action
+checklist.
 
 ## Docs Evidence
 

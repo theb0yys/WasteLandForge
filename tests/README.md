@@ -1471,6 +1471,37 @@ reports remain `missing`, clean temp-only
 and publish, remote, upload, signing, external-tool, runtime-probe, MO2
 automation, and AI behavior remain disabled.
 
+Gate 301 extends unit and golden CLI coverage for `forge release verify`
+self-report evidence. Tests verify `dist/release-dry-run/release-verify.json`
+is written from temp-copied synthetic fixtures, uses the existing release
+verify JSON report identity, is surfaced as `outputs.releaseVerification`,
+and is covered by release dry-run build-manifest and checksum evidence.
+
+Gate 302 extends unit and golden CLI coverage for `forge release verify`
+evidence-index output. Tests verify
+`dist/release-dry-run/release-evidence-index.json` is written from temp-copied
+synthetic fixtures, lists release-publish preflight evidence paths and command
+hints, records disabled execution boundaries, is surfaced as
+`outputs.releaseEvidenceIndex`, and is covered by release dry-run
+build-manifest and checksum evidence.
+
+Gate 303 extends unit and golden CLI coverage for `forge release verify`
+evidence-handoff output. Tests verify
+`dist/release-dry-run/release-evidence-handoff.md` is written from
+temp-copied synthetic fixtures, renders evidence rows and command hints,
+records disabled execution boundaries, is surfaced as
+`outputs.releaseEvidenceHandoff`, and is covered by release dry-run
+build-manifest and checksum evidence.
+
+Gate 304 extends unit and golden CLI coverage for `forge release verify`
+evidence-status output. Tests verify
+`dist/release-dry-run/release-evidence-status.json` is written from
+temp-copied synthetic fixtures, marks indexed release-publish preflight
+evidence paths as present or missing, projects present/missing counts into
+the evidence index and Markdown handoff, is surfaced as
+`outputs.releaseEvidenceStatus`, and is covered by release dry-run
+build-manifest and checksum evidence.
+
 Run the full local suite serially:
 
 ```text

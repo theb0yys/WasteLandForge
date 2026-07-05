@@ -7039,10 +7039,89 @@ public sealed class CliGoldenTests
         Assert.Equal("release verify", (string?)json["command"]);
         Assert.Equal("passed", (string?)json["status"]);
         Assert.Equal(true, (bool?)json["dryRun"]);
+        Assert.Equal("dist/release-dry-run/release-verify.json", (string?)json["outputs"]?["releaseVerification"]);
+        Assert.Equal("dist/release-dry-run/release-evidence-index.json", (string?)json["outputs"]?["releaseEvidenceIndex"]);
+        Assert.Equal("dist/release-dry-run/release-evidence-status.json", (string?)json["outputs"]?["releaseEvidenceStatus"]);
+        Assert.Equal("dist/release-dry-run/release-evidence-handoff.md", (string?)json["outputs"]?["releaseEvidenceHandoff"]);
         Assert.Equal("dist/release-dry-run/build-manifest.json", (string?)json["outputs"]?["buildManifest"]);
         Assert.Equal(string.Empty, result.Stderr);
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "release-dry-run", "release-verify.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "release-dry-run", "release-evidence-index.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "release-dry-run", "release-evidence-status.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "release-dry-run", "release-evidence-handoff.md")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "release-dry-run", "build-manifest.json")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "release-dry-run", "checksums.sha256")));
+
+        var selfReport = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "release-dry-run", "release-verify.json")))
+            ?? throw new InvalidOperationException("Release verify self-report JSON did not parse.");
+        Assert.Equal("release verify", (string?)selfReport["command"]);
+        Assert.Equal("passed", (string?)selfReport["status"]);
+        Assert.Equal("dist/release-dry-run/release-verify.json", (string?)selfReport["outputs"]?["releaseVerification"]);
+        Assert.Equal("dist/release-dry-run/release-evidence-index.json", (string?)selfReport["outputs"]?["releaseEvidenceIndex"]);
+        Assert.Equal("dist/release-dry-run/release-evidence-status.json", (string?)selfReport["outputs"]?["releaseEvidenceStatus"]);
+        Assert.Equal("dist/release-dry-run/release-evidence-handoff.md", (string?)selfReport["outputs"]?["releaseEvidenceHandoff"]);
+
+        var evidenceIndex = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "release-dry-run", "release-evidence-index.json")))
+            ?? throw new InvalidOperationException("Release evidence index JSON did not parse.");
+        Assert.Equal("wastelandforge.release-dry-run-evidence-index", (string?)evidenceIndex["kind"]);
+        Assert.Equal("planned", (string?)evidenceIndex["status"]);
+        Assert.Equal("dist/release-dry-run/release-evidence-status.json", (string?)evidenceIndex["statusProjection"]);
+        Assert.Equal("dist/release-dry-run/release-evidence-handoff.md", (string?)evidenceIndex["handoffSummary"]);
+        Assert.Equal(2, (int?)evidenceIndex["summary"]?["present"]);
+        Assert.Equal(2, (int?)evidenceIndex["summary"]?["missing"]);
+        Assert.Equal("forge release publish <project-root> --dry-run --format json --no-input", (string?)evidenceIndex["releasePublishPreflight"]?["commandHint"]);
+        Assert.Equal(false, (bool?)evidenceIndex["execution"]?["commandFanOut"]);
+        Assert.Equal(false, (bool?)evidenceIndex["execution"]?["releasePublishExecution"]);
+        var requiredEvidence = evidenceIndex["requiredEvidence"]?.AsArray()
+            ?? throw new InvalidOperationException("Release evidence index required evidence missing.");
+        Assert.Equal(4, requiredEvidence.Count);
+        Assert.Contains(
+            requiredEvidence,
+            evidence => StringComparer.Ordinal.Equals("dist/release-dry-run/capabilities-scan.json", (string?)evidence?["path"]));
+        Assert.Contains(
+            requiredEvidence,
+            evidence => StringComparer.Ordinal.Equals("dist/release-dry-run/package-verify.json", (string?)evidence?["path"]));
+        Assert.Contains(
+            requiredEvidence,
+            evidence => StringComparer.Ordinal.Equals("missing", (string?)evidence?["status"]));
+
+        var evidenceStatus = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "release-dry-run", "release-evidence-status.json")))
+            ?? throw new InvalidOperationException("Release evidence status JSON did not parse.");
+        Assert.Equal("wastelandforge.release-dry-run-evidence-status", (string?)evidenceStatus["kind"]);
+        Assert.Equal("projected", (string?)evidenceStatus["status"]);
+        Assert.Equal(4, (int?)evidenceStatus["summary"]?["total"]);
+        Assert.Equal(2, (int?)evidenceStatus["summary"]?["present"]);
+        Assert.Equal(2, (int?)evidenceStatus["summary"]?["missing"]);
+        Assert.Equal(false, (bool?)evidenceStatus["execution"]?["commandFanOut"]);
+
+        var handoff = File.ReadAllText(Path.Combine(projectRoot, "dist", "release-dry-run", "release-evidence-handoff.md"));
+        Assert.Contains("# WastelandForge Release Evidence Handoff", handoff, StringComparison.Ordinal);
+        Assert.Contains("Evidence status: `dist/release-dry-run/release-evidence-status.json`", handoff, StringComparison.Ordinal);
+        Assert.Contains("Evidence present: 2 / 4", handoff, StringComparison.Ordinal);
+        Assert.Contains("| `package-validation` | `missing` | `dist/release-dry-run/package-verify.json` | no |", handoff, StringComparison.Ordinal);
+        Assert.Contains("Command hint: `forge release publish <project-root> --dry-run --format json --no-input`", handoff, StringComparison.Ordinal);
+        Assert.Contains("- release publish execution: false", handoff, StringComparison.Ordinal);
+
+        var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "release-dry-run", "build-manifest.json")))
+            ?? throw new InvalidOperationException("Release dry-run build manifest did not parse.");
+        Assert.Contains(
+            manifest["outputs"]?.AsArray() ?? throw new InvalidOperationException("Release dry-run manifest outputs missing."),
+            output => StringComparer.Ordinal.Equals("dist/release-dry-run/release-verify.json", (string?)output?["path"]));
+        Assert.Contains(
+            manifest["outputs"]?.AsArray() ?? throw new InvalidOperationException("Release dry-run manifest outputs missing."),
+            output => StringComparer.Ordinal.Equals("dist/release-dry-run/release-evidence-index.json", (string?)output?["path"]));
+        Assert.Contains(
+            manifest["outputs"]?.AsArray() ?? throw new InvalidOperationException("Release dry-run manifest outputs missing."),
+            output => StringComparer.Ordinal.Equals("dist/release-dry-run/release-evidence-status.json", (string?)output?["path"]));
+        Assert.Contains(
+            manifest["outputs"]?.AsArray() ?? throw new InvalidOperationException("Release dry-run manifest outputs missing."),
+            output => StringComparer.Ordinal.Equals("dist/release-dry-run/release-evidence-handoff.md", (string?)output?["path"]));
+
+        var checksums = File.ReadAllText(Path.Combine(projectRoot, "dist", "release-dry-run", "checksums.sha256"));
+        Assert.Contains("release-verify.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("release-evidence-index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("release-evidence-status.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("release-evidence-handoff.md", checksums, StringComparison.Ordinal);
     }
 
     [Fact]

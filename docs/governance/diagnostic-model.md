@@ -1403,5 +1403,38 @@ diagnostics, execute external tools, run runtime probes, automate MO2 or
 GECK, call remote repositories, upload release assets, sign or attest
 artifacts, or use AI.
 
+Gate 301 adds no new diagnostic rule ID. `release-verify.json` is release
+verification evidence that carries the existing release verify diagnostic
+report shape and any existing `WF-REL-*` issues. The gate does not add
+package verification diagnostics, capability execution diagnostics, external
+tool diagnostics, runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, or AI requirements.
+
+Gate 302 adds no new diagnostic rule ID. `release-evidence-index.json` is
+release dry-run planning evidence, not a blocking diagnostic report. It
+records expected local evidence paths, command hints, and disabled execution
+boundaries while continuing to reuse existing `WF-REL-*` release diagnostics.
+The gate does not add package verification diagnostics, capability execution
+diagnostics, external tool diagnostics, runtime probe diagnostics, repository
+publish diagnostics, signing/attestation diagnostics, or AI requirements.
+
+Gate 303 adds no new diagnostic rule ID. `release-evidence-handoff.md` is a
+human-readable projection of release dry-run planning evidence, not a
+blocking diagnostic report. It renders expected local evidence paths, command
+hints, and disabled execution boundaries while continuing to reuse existing
+`WF-REL-*` release diagnostics. The gate does not add package verification
+diagnostics, capability execution diagnostics, external tool diagnostics,
+runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, or AI requirements.
+
+Gate 304 adds no new diagnostic rule ID. `release-evidence-status.json` is a
+local file-presence projection for release dry-run planning evidence, not a
+blocking diagnostic report. It marks expected local evidence paths as present
+or missing while continuing to reuse existing `WF-REL-*` release diagnostics.
+The gate does not add package verification diagnostics, capability execution
+diagnostics, evidence content validation diagnostics, external tool
+diagnostics, runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, or AI requirements.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

@@ -305,9 +305,13 @@ Gate status:
 - `gates/gate-298-forge-package-reports-archive-creation.md` - Gate 298, `forge package --target reports` deterministic local archive creation from staged reports payload and package plan/layout evidence.
 - `gates/gate-299-forge-package-reports-archive-evidence-revalidation.md` - Gate 299, `forge package --target reports` local archive evidence revalidation for archive digest, entry names, entry ordering, deterministic timestamps, and stored compression metadata.
 - `gates/gate-300-forge-package-reports-lane-closeout-release-verify-routing.md` - Gate 300, `forge package --target reports` lane closeout and next-value routing to local `forge release verify` release-verification self-report evidence.
+- `gates/gate-301-forge-release-verify-self-report-emission.md` - Gate 301, `forge release verify` local release-verification self-report emission under `dist/release-dry-run/release-verify.json` with build-manifest and checksum coverage.
+- `gates/gate-302-forge-release-verify-evidence-index.md` - Gate 302, `forge release verify` local release dry-run evidence index under `dist/release-dry-run/release-evidence-index.json` with release-publish preflight evidence paths, command hints, build-manifest coverage, and checksum coverage.
+- `gates/gate-303-forge-release-verify-evidence-handoff-summary.md` - Gate 303, `forge release verify` local release dry-run evidence handoff summary under `dist/release-dry-run/release-evidence-handoff.md` with operator-facing evidence rows, command hints, disabled execution boundaries, build-manifest coverage, and checksum coverage.
+- `gates/gate-304-forge-release-verify-evidence-status-projection.md` - Gate 304, `forge release verify` local release dry-run evidence status projection under `dist/release-dry-run/release-evidence-status.json` with present/missing indexed evidence statuses, handoff summary status rendering, build-manifest coverage, and checksum coverage.
 
 Next gate:
 
-- Gate 301 - add local `forge release verify` release-verification self-report emission under `dist/release-dry-run/release-verify.json`, with build-manifest and checksum coverage, while still stopping before `reports` package verify-existing behavior, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 305 - add a local missing-evidence action checklist for release dry-run evidence status, while still stopping before command fan-out, capability scan execution, package verify execution, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

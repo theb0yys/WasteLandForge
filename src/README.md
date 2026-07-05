@@ -1657,3 +1657,48 @@ Release-prepare backlog items such as real payload staging, FOMOD installer
 assembly, archive payload validation, signing/attestation material, external
 tools, MO2/GECK automation, runtime probes, and AI remain parked unless
 explicitly reopened.
+
+Gate 301 extends `forge release verify` self-contained dry-run evidence.
+Successful release verify runs now write
+`dist/release-dry-run/release-verify.json` using the existing release verify
+JSON report shape, report that path through CLI JSON/text, and cover the file
+in `dist/release-dry-run/build-manifest.json` and
+`dist/release-dry-run/checksums.sha256`. It does not run capability scans,
+run package verification, publish releases, call remote repositories, sign or
+attest artifacts, execute external tools, mutate plugins, automate MO2/GECK,
+run runtime probes, or use AI.
+
+Gate 302 extends `forge release verify` with a local evidence index.
+Successful release verify runs now write
+`dist/release-dry-run/release-evidence-index.json`, listing release-publish
+preflight evidence paths and command hints for validation, capability scan,
+package verification, and release verification. CLI JSON/text reports the
+index, and `dist/release-dry-run/build-manifest.json` plus
+`dist/release-dry-run/checksums.sha256` cover it. It does not run command
+fan-out, capability scans, package verification, publish releases, call
+remote repositories, sign or attest artifacts, execute external tools, mutate
+plugins, automate MO2/GECK, run runtime probes, or use AI.
+
+Gate 303 extends `forge release verify` with a local evidence handoff summary.
+Successful release verify runs now write
+`dist/release-dry-run/release-evidence-handoff.md`, rendering the evidence
+index as operator-facing Markdown with evidence rows, command hints,
+release-publish dry-run guidance, and disabled execution boundaries. CLI
+JSON/text reports the handoff, and `dist/release-dry-run/build-manifest.json`
+plus `dist/release-dry-run/checksums.sha256` cover it. It does not run
+command fan-out, capability scans, package verification, publish releases,
+call remote repositories, sign or attest artifacts, execute external tools,
+mutate plugins, automate MO2/GECK, run runtime probes, or use AI.
+
+Gate 304 extends `forge release verify` with a local evidence status
+projection. Successful release verify runs now write
+`dist/release-dry-run/release-evidence-status.json`, marking indexed
+release-publish preflight evidence paths as present or missing from local file
+presence only. CLI JSON/text reports the status projection, the Markdown
+handoff renders the statuses and present/missing counts, and
+`dist/release-dry-run/build-manifest.json` plus
+`dist/release-dry-run/checksums.sha256` cover it. It does not run command
+fan-out, capability scans, package verification, evidence content validation,
+publish releases, call remote repositories, sign or attest artifacts, execute
+external tools, mutate plugins, automate MO2/GECK, run runtime probes, or use
+AI.

@@ -57,6 +57,11 @@ internal static class ReleaseDryRunJsonSerializer
                 ["stagingRoot"] = result.Outputs.StagingRoot,
                 ["validationReport"] = result.Outputs.ValidationReport,
                 ["releaseSummary"] = result.Outputs.ReleaseSummary,
+                ["releaseVerification"] = result.Outputs.ReleaseVerification,
+                ["releaseEvidenceIndex"] = result.Outputs.ReleaseEvidenceIndex,
+                ["releaseEvidenceStatus"] = result.Outputs.ReleaseEvidenceStatus,
+                ["releaseEvidenceActions"] = result.Outputs.ReleaseEvidenceActions,
+                ["releaseEvidenceHandoff"] = result.Outputs.ReleaseEvidenceHandoff,
                 ["buildManifest"] = result.Outputs.BuildManifest,
                 ["checksums"] = result.Outputs.Checksums
             };

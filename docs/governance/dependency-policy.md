@@ -1306,3 +1306,29 @@ next route stays on existing .NET JSON, hashing, and file APIs and does not
 add package validators, publishing clients, repository API clients, signing
 or attestation dependencies, external tool integrations, network calls,
 runtime probes, MO2 or GECK automation, or AI requirements.
+
+Gate 301 adds no package dependency. Release verify self-report emission uses
+existing .NET JSON, hashing, and file APIs plus the existing core diagnostic
+JSON serializer. It does not add package validators, command runners,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.
+
+Gate 302 adds no package dependency. Release verify evidence-index emission
+uses existing .NET JSON, hashing, and file APIs. It does not add command
+runners, package validators, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, MO2 or GECK automation, or AI requirements.
+
+Gate 303 adds no package dependency. Release verify evidence-handoff Markdown
+emission uses existing .NET text, hashing, and file APIs. It does not add
+Markdown libraries, command runners, package validators, publishing clients,
+repository API clients, signing or attestation dependencies, external tool
+integrations, network calls, runtime probes, MO2 or GECK automation, or AI
+requirements.
+
+Gate 304 adds no package dependency. Release verify evidence-status projection
+uses existing .NET JSON, file-existence, hashing, and file APIs. It does not
+add command runners, package validators, publishing clients, repository API
+clients, signing or attestation dependencies, external tool integrations,
+network calls, runtime probes, MO2 or GECK automation, or AI requirements.

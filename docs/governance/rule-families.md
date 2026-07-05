@@ -909,3 +909,35 @@ route should continue to use existing `WF-REL-*` release diagnostics for
 `forge release verify` and must not add `reports` package verify-existing
 rules, external tool diagnostics, runtime probe diagnostics, repository
 publish diagnostics, signing/attestation diagnostics, or AI requirements.
+
+Gate 301 adds no new rule family or diagnostic ID. Release verify self-report
+emission reuses existing `WF-REL-*` diagnostics and `WF-REL-001` output
+containment behavior. It does not add `WF-BUILD-*`, `WF-GOV-*`, or
+`WF-SEC-*` diagnostics, command fan-out diagnostics, package verifier rules,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, or AI requirements.
+
+Gate 302 adds no new rule family or diagnostic ID. Release verify
+evidence-index emission is release planning evidence covered by existing
+release dry-run provenance outputs and `WF-REL-001` output containment
+behavior. It does not add `WF-BUILD-*`, `WF-GOV-*`, or `WF-SEC-*`
+diagnostics, command fan-out diagnostics, package verifier rules, external
+tool diagnostics, runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, or AI requirements.
+
+Gate 303 adds no new rule family or diagnostic ID. Release verify
+evidence-handoff emission is a human-readable release planning projection
+covered by existing release dry-run provenance outputs and `WF-REL-001`
+output containment behavior. It does not add `WF-BUILD-*`, `WF-GOV-*`, or
+`WF-SEC-*` diagnostics, command fan-out diagnostics, package verifier rules,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, or AI requirements.
+
+Gate 304 adds no new rule family or diagnostic ID. Release verify
+evidence-status emission is a local file-presence planning projection covered
+by existing release dry-run provenance outputs and `WF-REL-001` output
+containment behavior. It does not add `WF-BUILD-*`, `WF-GOV-*`, or
+`WF-SEC-*` diagnostics, command fan-out diagnostics, package verifier rules,
+evidence content validation rules, external tool diagnostics, runtime probe
+diagnostics, repository publish diagnostics, signing/attestation diagnostics,
+or AI requirements.

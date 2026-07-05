@@ -1141,6 +1141,30 @@ no Bethesda assets, third-party mod files, local install snapshots, MO2
 profiles, GECK outputs, external tool fixtures, or generated evidence
 fixtures.
 
+Gate 301 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Release verify self-report tests reuse the
+synthetic `fixtures/projects/ExampleMod` project through temporary copies and
+create `dist/release-dry-run/release-verify.json` only in temp test
+directories.
+
+Gate 302 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Release verify evidence-index tests reuse
+the synthetic `fixtures/projects/ExampleMod` project through temporary copies
+and create `dist/release-dry-run/release-evidence-index.json` only in temp
+test directories.
+
+Gate 303 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Release verify evidence-handoff tests reuse
+the synthetic `fixtures/projects/ExampleMod` project through temporary copies
+and create `dist/release-dry-run/release-evidence-handoff.md` only in temp
+test directories.
+
+Gate 304 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Release verify evidence-status tests reuse
+the synthetic `fixtures/projects/ExampleMod` project through temporary copies
+and create `dist/release-dry-run/release-evidence-status.json` only in temp
+test directories.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

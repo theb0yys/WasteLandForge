@@ -570,6 +570,11 @@ internal static class CliHelpWriter
         writer.WriteLine("  dist/release-dry-run/staging/");
         writer.WriteLine("  dist/release-dry-run/validation.json");
         writer.WriteLine("  dist/release-dry-run/release-summary.json");
+        writer.WriteLine("  dist/release-dry-run/release-verify.json");
+        writer.WriteLine("  dist/release-dry-run/release-evidence-index.json");
+        writer.WriteLine("  dist/release-dry-run/release-evidence-status.json");
+        writer.WriteLine("  dist/release-dry-run/release-evidence-actions.json");
+        writer.WriteLine("  dist/release-dry-run/release-evidence-handoff.md");
         writer.WriteLine("  dist/release-dry-run/build-manifest.json");
         writer.WriteLine("  dist/release-dry-run/checksums.sha256");
         writer.WriteLine();

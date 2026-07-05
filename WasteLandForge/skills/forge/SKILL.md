@@ -78,7 +78,7 @@ Use this routing:
 | `/forge generate` | deterministic generator planning/execution through build CLI release prompts |
 | `/forge build` | validation-first build graph with reports build-plan/report-index evidence through build CLI release and validation governance prompts |
 | `/forge package` | deterministic staging/ZIP/checksum work through build CLI release and content pipeline prompts |
-| `/forge release verify` | release gates, manifests, checksums, and governance through validation release governance prompts |
+| `/forge release verify` | release gates, local self-report evidence, manifests, checksums, and governance through validation release governance prompts |
 | `/forge release prepare` | release dry-run and packaging preparation through build CLI release and governance prompts |
 | `/forge release publish` | closed no-publish governance preflight with local Doctor export release-readiness handoff completed |
 | `/forge docs` | deterministic docs generation through contracts and build CLI release prompts |
@@ -778,11 +778,20 @@ classification, and Gate 297 implements forge package --target reports
 staging copy for present build evidence, and Gate 298 implements forge
 package --target reports deterministic local archive creation, and Gate 299
 implements forge package --target reports archive evidence revalidation, and
-Gate 300 closes the reports package lane. Route the next implementation slice
-to Gate 301: forge release verify local release-verification self-report
-evidence under `dist/release-dry-run/release-verify.json`, still with no
-reports package verify-existing behavior, publish behavior, external tool
-execution, runtime probes, or AI behavior.
+Gate 300 closes the reports package lane and routed Gate 301 to forge release
+verify local release-verification self-report evidence under
+`dist/release-dry-run/release-verify.json`. Gate 301 implements that
+self-report emission, and Gate 302 implements local release dry-run evidence
+index emission under `dist/release-dry-run/release-evidence-index.json`.
+Gate 303 implements local release dry-run evidence handoff summary emission
+under `dist/release-dry-run/release-evidence-handoff.md`. Route the next
+implementation slice to Gate 304: local release dry-run evidence status
+projection. Gate 304 implements status projection under
+`dist/release-dry-run/release-evidence-status.json`. Route the next
+implementation slice to Gate 305: local missing-evidence action checklist,
+still with no command fan-out, capability scan execution, package verify
+execution, publish behavior, external tool execution, runtime probes, or AI
+behavior.
 
 - `/forge graph` maps to the real `forge graph` behavior when available. Gate
   236 implements minimal project source graph evidence under `generated/graph`,
@@ -860,11 +869,20 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   build evidence, and Gate 298 implements forge package --target reports
   deterministic local archive creation, and Gate 299 implements forge package
   --target reports archive evidence revalidation, and Gate 300 closes the
-  reports package lane. Route the next implementation slice to Gate 301: forge
-  release verify local release-verification self-report evidence under
-  `dist/release-dry-run/release-verify.json`, still with no reports package
-  verify-existing behavior, publish behavior, external tool execution,
-  runtime probes, or AI behavior.
+  reports package lane and routed Gate 301 to forge release verify local
+  release-verification self-report evidence under
+  `dist/release-dry-run/release-verify.json`. Gate 301 implements that
+  self-report emission, and Gate 302 implements local release dry-run evidence
+  index emission under `dist/release-dry-run/release-evidence-index.json`.
+  Gate 303 implements local release dry-run evidence handoff summary emission
+  under `dist/release-dry-run/release-evidence-handoff.md`. Route the next
+  implementation slice to Gate 304: local release dry-run evidence status
+  projection. Gate 304 implements status projection under
+  `dist/release-dry-run/release-evidence-status.json`. Route the next
+  implementation slice to Gate 305: local missing-evidence action checklist,
+  still with no command fan-out, capability scan execution, package verify
+  execution, publish behavior, external tool execution, runtime probes, or AI
+  behavior.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a
