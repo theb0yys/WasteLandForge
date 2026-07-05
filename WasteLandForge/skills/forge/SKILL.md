@@ -822,8 +822,14 @@ content. Gate 318 implements VS Code task scaffold generation. Gate 319
 implements GitHub Actions workflow scaffold generation. Gate 320 implements
 editor schema association scaffold generation. Gate 321 closes the current
 `forge init` onboarding lane. Gate 322 defines Forge CLI runner/bootstrap
-planning. Route the next development step to Gate 323: source-built Forge
-runner shim scaffold.
+planning. Gate 323 implements the source-built Forge runner shim scaffold.
+Gate 324 plans Forge CLI local-tool package metadata. Gate 325 implements the
+Forge CLI local-tool package metadata scaffold. Gate 326 plans the checked-in
+local tool manifest flow. Gate 327 implements the checked-in local tool
+manifest scaffold. Gate 328 plans generated workflow and task bootstrap
+integration for the repository-pinned local tool flow. Route the next
+development step to Gate 329: repo-local Forge local-tool restore helper
+scaffold.
 
 - `/forge graph` maps to the real `forge graph` behavior when available. Gate
   236 implements minimal project source graph evidence under `generated/graph`,
@@ -945,8 +951,14 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   implements GitHub Actions workflow scaffold generation. Gate 320 implements
   editor schema association scaffold generation. Gate 321 closes the current
   `forge init` onboarding lane. Gate 322 defines Forge CLI runner/bootstrap
-  planning. Route the next development step to Gate 323: source-built Forge
-  runner shim scaffold.
+  planning. Gate 323 implements the source-built Forge runner shim scaffold.
+  Gate 324 plans Forge CLI local-tool package metadata. Gate 325 implements
+  the Forge CLI local-tool package metadata scaffold. Gate 326 plans the
+  checked-in local tool manifest flow. Gate 327 implements the checked-in local
+  tool manifest scaffold. Gate 328 plans generated workflow and task bootstrap
+  integration for the repository-pinned local tool flow. Route the next
+  development step to Gate 329: repo-local Forge local-tool restore helper
+  scaffold.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a

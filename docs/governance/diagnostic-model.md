@@ -1574,5 +1574,46 @@ security, external-tool, runtime-probe, repository-publish,
 signing/attestation, plugin-mutation, VS Code extension, language-server, or
 AI diagnostics.
 
+Gate 323 adds no new diagnostic rule ID. The source-built runner shim reports
+bootstrap failures through script errors and then delegates all CLI behavior
+to the existing `forge` command implementation. It does not add schema,
+semantic, capability, build, release, governance, security, external-tool,
+runtime-probe, repository-publish, signing/attestation, plugin-mutation,
+VS Code extension, language-server, or AI diagnostics.
+
+Gate 324 adds no new diagnostic rule ID. It plans the local-tool package
+metadata lane and does not add package validation diagnostics yet. It does not
+add schema, semantic, capability, build, release, governance, security,
+external-tool, runtime-probe, repository-publish, signing/attestation,
+plugin-mutation, VS Code extension, language-server, or AI diagnostics.
+
+Gate 325 adds no new diagnostic rule ID. Local package pack/install smoke is
+validation evidence for the bootstrap lane, not a Forge diagnostic report. It
+does not add schema, semantic, capability, build, release, governance,
+security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server, or
+AI diagnostics.
+
+Gate 326 adds no new diagnostic rule ID. Checked-in local tool manifest
+planning is a bootstrap governance decision, not a Forge diagnostic report.
+It does not add schema, semantic, capability, build, release, governance,
+security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server, or
+AI diagnostics.
+
+Gate 327 adds no new diagnostic rule ID. The checked-in local tool manifest
+and restore smoke are bootstrap validation evidence, not a Forge diagnostic
+report. It does not add schema, semantic, capability, build, release,
+governance, security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server, or
+AI diagnostics.
+
+Gate 328 adds no new diagnostic rule ID. Generated workflow and task
+bootstrap integration planning is a bootstrap governance decision, not a Forge
+diagnostic report. It does not add schema, semantic, capability, build,
+release, governance, security, external-tool, runtime-probe,
+repository-publish, signing/attestation, plugin-mutation, VS Code extension,
+language-server, generated workflow/task, or AI diagnostics.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

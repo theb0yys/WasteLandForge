@@ -1634,6 +1634,58 @@ external tool fixtures, runtime probes, VS Code extension processes,
 language-server processes, local tool package publication, or AI requirements
 are added.
 
+Gate 323 adds source-built runner smoke validation instead of new fixture
+coverage. The required checks run `eng/forge.ps1 --version`,
+`eng/forge.cmd --version`, and `eng/forge.ps1 help` to verify the wrappers
+invoke the real CLI through `dotnet run`. No public fixtures, generated
+payload fixtures, real provider samples, Bethesda assets, third-party mod
+files, external tool fixtures, runtime probes, VS Code extension processes,
+language-server processes, local tool package publication, or AI requirements
+are added.
+
+Gate 324 adds no runtime test or fixture coverage. It records the future
+local-tool package validation lane: metadata inspection, `dotnet pack`, local
+package-source install into a temporary tool manifest, and local tool
+`--version`/`help` smoke checks. No public fixtures, generated payload
+fixtures, real provider samples, Bethesda assets, third-party mod files,
+external tool fixtures, runtime probes, VS Code extension processes,
+language-server processes, local tool package publication, or AI requirements
+are added.
+
+Gate 325 adds local-tool package smoke validation. The required checks run
+`dotnet pack`, install `WastelandForge.Cli` from ignored local package output
+into a temporary tool manifest, then run installed `forge --version` and
+`forge help` through `dotnet tool run`. No public fixtures, generated payload
+fixtures, real provider samples, Bethesda assets, third-party mod files,
+external tool fixtures, runtime probes, VS Code extension processes,
+language-server processes, local tool package publication, or AI requirements
+are added.
+
+Gate 326 adds no runtime test or fixture coverage. It validates the planning
+boundary by confirming no checked-in `.config/dotnet-tools.json` exists and by
+checking routing/protected-file scans. No public fixtures, generated payload
+fixtures, real provider samples, Bethesda assets, third-party mod files,
+external tool fixtures, runtime probes, VS Code extension processes,
+language-server processes, local tool package publication, checked-in tool
+manifest, or AI requirements are added.
+
+Gate 327 adds local tool restore smoke validation. The required checks pack
+`WastelandForge.Cli`, restore the checked-in `.config/dotnet-tools.json`
+manifest from local package output using an ignored local-only NuGet config
+and isolated package cache, then run `forge --version` and `forge help`
+through `dotnet tool run`. No public fixtures, generated payload fixtures,
+real provider samples, Bethesda assets, third-party mod files, external tool
+fixtures, runtime probes, VS Code extension processes, language-server
+processes, local tool package publication, or AI requirements are added.
+
+Gate 328 adds no runtime test or fixture coverage. It is a planning gate for
+generated workflow and task bootstrap integration, covered by documentation
+and routing consistency checks plus protected-file scans. No public fixtures,
+generated payload fixtures, real provider samples, Bethesda assets,
+third-party mod files, external tool fixtures, runtime probes, generated
+workflow/task mutations, VS Code extension processes, language-server
+processes, local tool package publication, or AI requirements are added.
+
 Run the full local suite serially:
 
 ```text

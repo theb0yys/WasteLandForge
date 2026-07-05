@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 322 Forge CLI runner bootstrap planning
+Status: Gate 328 generated workflow and task bootstrap integration planning
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -1354,6 +1354,71 @@ shim, then local tool package metadata and local package-source testing, then a
 repository-pinned `.config/dotnet-tools.json` flow for consumer projects, then
 workflow/task integration once a stable restore path exists. The next route is
 Gate 323 source-built Forge runner shim scaffold.
+
+Gate 323 keeps the same canonical command surface and adds source-built
+repository-local runner adapters under `eng/`. `eng/forge.ps1` runs the real
+CLI project through `dotnet run` from the repository root so `global.json`
+applies, and `eng/forge.cmd` delegates to that PowerShell runner for Windows
+command-shell use. The scripts pass arguments through unchanged and preserve
+the CLI exit code. They do not add aliases, package metadata, a tool manifest,
+workflow mutation, provider installation, external tool execution, runtime
+probes, MO2/GECK automation, release publication, signing, attestation, or AI
+behavior.
+
+Gate 324 keeps the same canonical command surface and plans the local-tool
+package metadata lane for the real CLI. The planned sequence is CLI project
+metadata, local package output, temporary local package-source install smoke,
+then a later checked-in `.config/dotnet-tools.json` flow after package
+behavior is proven. It does not add aliases, change CLI runtime behavior,
+change project metadata, create packages, install local tools, create a tool
+manifest, mutate workflows, publish to NuGet, run external tools, automate
+MO2/GECK, run runtime probes, sign or attest artifacts, or add AI behavior.
+
+Gate 325 keeps the same canonical command surface and makes
+`WastelandForge.Cli` packable as a local .NET tool with command name `forge`.
+The CLI project now opts in to tool packaging, writes local packages under
+`artifacts/local-tool/nupkg`, and includes a package readme. A temporary
+local-tool manifest smoke installs `WastelandForge.Cli` version `0.1.0` from
+that local package source and runs `forge --version` plus `forge help` through
+`dotnet tool run`. It does not add aliases, change CLI runtime behavior,
+check in `.config/dotnet-tools.json`, publish to NuGet, mutate workflows, run
+external tools, automate MO2/GECK, run runtime probes, sign or attest
+artifacts, or add AI behavior.
+
+Gate 326 keeps the same canonical command surface and plans the checked-in
+local tool manifest flow. The planned manifest pins package
+`wastelandforge.cli` version `0.1.0` with command `forge`, but the gate keeps
+`.config/dotnet-tools.json` absent because the package is not yet published
+to a stable feed. Until publication is gated, restore must explicitly use the
+local package source after `dotnet pack`, for example
+`dotnet tool restore --add-source artifacts/local-tool/nupkg`. Gate 326 does
+not add aliases, change CLI runtime behavior, check in a tool manifest, add
+root `NuGet.config`, mutate workflows, publish to NuGet, run external tools,
+automate MO2/GECK, run runtime probes, sign or attest artifacts, or add AI
+behavior.
+
+Gate 327 keeps the same canonical command surface and checks in the root
+`.config/dotnet-tools.json` manifest for `wastelandforge.cli` version `0.1.0`
+with command `forge`. Because the package is still local, restore must remain
+explicit about package source: pack first, then run `dotnet tool restore
+--add-source artifacts/local-tool/nupkg`. Validation uses an isolated
+temporary NuGet package cache and local-only NuGet config under ignored
+`artifacts/local-tool/restore/`. Gate 327 does not add aliases, change CLI
+runtime behavior, add root `NuGet.config`, mutate workflows, publish to
+NuGet, run external tools, automate MO2/GECK, run runtime probes, sign or
+attest artifacts, or add AI behavior.
+
+Gate 328 keeps the same canonical command surface and plans generated workflow
+and task bootstrap integration for the checked-in local tool flow. It records
+that this repository can pack and restore `WastelandForge.Cli` from source
+before invoking `dotnet tool run forge`, but generated consumer projects
+cannot assume the WastelandForge source tree exists. Consumer-project
+`.vscode/tasks.json` and `.github/workflows/wastelandforge.yml` scaffolds
+therefore must not blindly call `dotnet pack src/WastelandForge.Cli/...`
+until publication or another explicit package-source policy is gated. Gate
+328 changes no CLI runtime behavior, adds no aliases, mutates no generated
+task or workflow templates, publishes nothing, runs no external tools or
+runtime probes, and adds no AI behavior.
 
 ## Docs Evidence
 

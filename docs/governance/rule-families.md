@@ -1074,3 +1074,55 @@ not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`,
 external tool diagnostics, runtime probe diagnostics, repository publish
 diagnostics, signing/attestation diagnostics, plugin mutation diagnostics, or
 AI requirements.
+
+Gate 323 adds no new rule family or diagnostic ID. The source-built Forge
+runner shim is a repository-local adapter around the existing CLI project and
+does not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`,
+`WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or
+`WF-SEC-*` rules, external tool diagnostics, runtime probe diagnostics,
+repository publish diagnostics, signing/attestation diagnostics, plugin
+mutation diagnostics, VS Code extension diagnostics, language-server
+diagnostics, or AI requirements.
+
+Gate 324 adds no new rule family or diagnostic ID. Local-tool package
+metadata planning does not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`,
+`WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` rules, package validation diagnostics, external
+tool diagnostics, runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, plugin mutation diagnostics, VS Code
+extension diagnostics, language-server diagnostics, or AI requirements.
+
+Gate 325 adds no new rule family or diagnostic ID. CLI local-tool package
+metadata and temporary package smoke validation do not add `WF-LOAD-*`,
+`WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`,
+`WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules, package
+validation diagnostics, external tool diagnostics, runtime probe diagnostics,
+repository publish diagnostics, signing/attestation diagnostics, plugin
+mutation diagnostics, VS Code extension diagnostics, language-server
+diagnostics, or AI requirements.
+
+Gate 326 adds no new rule family or diagnostic ID. Checked-in local tool
+manifest planning does not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`,
+`WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` rules, package validation diagnostics, external
+tool diagnostics, runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, plugin mutation diagnostics, VS Code
+extension diagnostics, language-server diagnostics, or AI requirements.
+
+Gate 327 adds no new rule family or diagnostic ID. The checked-in local tool
+manifest and local-source restore validation do not add `WF-LOAD-*`,
+`WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`,
+`WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules, package
+validation diagnostics, external tool diagnostics, runtime probe diagnostics,
+repository publish diagnostics, signing/attestation diagnostics, plugin
+mutation diagnostics, VS Code extension diagnostics, language-server
+diagnostics, or AI requirements.
+
+Gate 328 adds no new rule family or diagnostic ID. Generated workflow and
+task bootstrap integration planning does not add `WF-LOAD-*`, `WF-SCHEMA-*`,
+`WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`,
+`WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules, package validation diagnostics,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, plugin mutation diagnostics,
+generated workflow/task diagnostics, VS Code extension diagnostics,
+language-server diagnostics, or AI requirements.

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "wastelandforge.cli": {
+      "version": "0.1.0",
+      "commands": [
+        "forge"
+      ],
+      "rollForward": false
+    }
+  }
+}

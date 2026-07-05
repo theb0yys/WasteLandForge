@@ -1846,3 +1846,47 @@ command.
 Gate 322 changes no runtime source behavior. It defines the staged Forge CLI
 runner/bootstrap model and routes Gate 323 to a source-built repo-local runner
 shim scaffold.
+
+Gate 323 changes no C# runtime source behavior. It adds source-built
+repository-local runner scripts under `eng/` that invoke the existing CLI
+project through `dotnet run` and pass arguments through unchanged. Local-tool
+package metadata, tool manifests, workflow mutation, provider installation,
+external tool execution, runtime probes, release publication, signing,
+attestation, and AI behavior remain future work.
+
+Gate 324 changes no C# runtime source behavior and no project metadata. It
+plans the local-tool package metadata lane for `WastelandForge.Cli`, including
+future CLI-only pack opt-in, `forge` tool command metadata, local package
+output, temporary local-tool install smoke, and a later checked-in tool
+manifest flow. It does not create packages, install tools, mutate workflows,
+run external tools, run runtime probes, publish releases, sign or attest
+artifacts, or use AI.
+
+Gate 325 changes project metadata only for `WastelandForge.Cli`. The CLI
+project now opts into .NET tool packaging with command `forge`, package ID
+`WastelandForge.Cli`, local package output under ignored
+`artifacts/local-tool/nupkg`, and package readme metadata. It changes no CLI
+runtime behavior, adds no command aliases, checks in no tool manifest, mutates
+no workflows, runs no external tools or runtime probes, publishes no releases,
+signs or attests nothing, and uses no AI.
+
+Gate 326 changes no source code and no project metadata. It plans the checked-in
+local tool manifest flow and records that package restore must use an explicit
+local package source until `WastelandForge.Cli` is published or another stable
+feed is gated. It checks in no `.config/dotnet-tools.json`, adds no root
+`NuGet.config`, mutates no workflows, runs no external tools or runtime
+probes, publishes no releases, signs or attests nothing, and uses no AI.
+
+Gate 327 adds repository bootstrap source metadata only. `.config/dotnet-tools.json`
+pins `wastelandforge.cli` version `0.1.0` with command `forge`; restore still
+requires local package output until publication is separately gated. It
+changes no CLI runtime behavior, adds no root `NuGet.config`, mutates no
+workflows, runs no external tools or runtime probes, publishes no releases,
+signs or attests nothing, and uses no AI.
+
+Gate 328 changes no source code and no project metadata. It plans how
+generated workflow and task bootstrap should use the checked-in local tool
+manifest, while recording that consumer-project scaffolds cannot assume this
+source tree exists. It mutates no generated workflow or task templates, adds
+no root `NuGet.config`, runs no external tools or runtime probes, publishes no
+releases, signs or attests nothing, and uses no AI.

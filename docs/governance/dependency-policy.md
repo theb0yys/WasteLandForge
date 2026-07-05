@@ -1440,3 +1440,55 @@ standalone packaging dependencies, command runners beyond future wrapper
 planning, publishing clients, repository API clients, signing or attestation
 dependencies, external tool integrations, network calls, runtime probes, MO2
 or GECK automation, plugin mutation dependencies, or AI requirements.
+
+Gate 323 adds no package dependency. The source-built runner shim uses
+PowerShell, Windows command shell dispatch, and the existing checked-in .NET
+CLI project. It does not add .NET local tool packages,
+`.config/dotnet-tools.json`, local NuGet package creation, NuGet publication,
+standalone packaging dependencies, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, MO2 or GECK automation, plugin mutation dependencies,
+or AI requirements.
+
+Gate 324 adds no package dependency. It plans future CLI project package
+metadata and a local package-source smoke path, but does not change project
+metadata, create a NuGet package, add `.config/dotnet-tools.json`, publish to
+NuGet, add standalone packaging dependencies, publishing clients, repository
+API clients, signing or attestation dependencies, external tool integrations,
+network calls, runtime probes, MO2 or GECK automation, plugin mutation
+dependencies, or AI requirements.
+
+Gate 325 adds no package dependency. It adds package metadata to the existing
+CLI project and proves a local package-source smoke install using the
+already-built project and SDK. It does not add new NuGet dependencies,
+checked-in `.config/dotnet-tools.json`, NuGet publication, standalone
+packaging dependencies, publishing clients, repository API clients, signing
+or attestation dependencies, external tool integrations, network calls,
+runtime probes, MO2 or GECK automation, plugin mutation dependencies, or AI
+requirements.
+
+Gate 326 adds no package dependency. It plans the checked-in local tool
+manifest flow and records that restore must use an explicit local package
+source until publication or another stable feed is gated. It does not add new
+NuGet dependencies, checked-in `.config/dotnet-tools.json`, root
+`NuGet.config`, NuGet publication, standalone packaging dependencies,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, plugin mutation dependencies, or AI requirements.
+
+Gate 327 adds no package dependency. It checks in `.config/dotnet-tools.json`
+for the existing `WastelandForge.Cli` package and validates restore from
+ignored local package output. It does not add new NuGet dependencies, root
+`NuGet.config`, NuGet publication, standalone packaging dependencies,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, plugin mutation dependencies, or AI requirements.
+
+Gate 328 adds no package dependency. It plans generated workflow and task
+bootstrap integration by separating source-repository local package restore
+from consumer-project scaffolds that do not contain WastelandForge source. It
+does not add new NuGet dependencies, root `NuGet.config`, NuGet publication,
+standalone packaging dependencies, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, MO2 or GECK automation, plugin mutation dependencies,
+generated workflow/task mutation, or AI requirements.

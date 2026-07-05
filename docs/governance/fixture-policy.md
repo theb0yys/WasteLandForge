@@ -1257,3 +1257,39 @@ Gate 322 commits no new public fixture, private fixture, generated evidence
 payload, provider sample, Bethesda asset, third-party mod file, local install
 snapshot, MO2 profile, GECK output, external tool fixture, or AI-generated
 fixture. It is a docs and prompt routing planning gate only.
+
+Gate 323 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, or AI-generated
+fixture. It adds source-built runner scripts and documentation only.
+
+Gate 324 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, local tool package
+fixture, or AI-generated fixture. It is a docs and prompt routing planning
+gate only.
+
+Gate 325 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, checked-in local
+tool package fixture, or AI-generated fixture. Local `.nupkg` and temporary
+tool-manifest smoke files are generated under ignored `artifacts/local-tool/`.
+
+Gate 326 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, checked-in local
+tool package fixture, checked-in tool manifest fixture, or AI-generated
+fixture. It is a docs and prompt routing planning gate only.
+
+Gate 327 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, checked-in local
+tool package fixture, or AI-generated fixture. The checked-in tool manifest is
+bootstrap source metadata; generated `.nupkg`, NuGet config, and package cache
+smoke files stay under ignored `artifacts/local-tool/`.
+
+Gate 328 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, generated
+workflow/task fixture, checked-in local tool package fixture, or AI-generated
+fixture. It is a docs and prompt routing planning gate only.
