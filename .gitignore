@@ -18,6 +18,25 @@ artifacts/
 coverage/
 *.trx
 
+# Unity app shell generated/local state
+apps/WastelandForge.App/Library/
+apps/WastelandForge.App/Temp/
+apps/WastelandForge.App/Obj/
+apps/WastelandForge.App/Build/
+apps/WastelandForge.App/Builds/
+apps/WastelandForge.App/Logs/
+apps/WastelandForge.App/UserSettings/
+apps/WastelandForge.App/MemoryCaptures/
+apps/WastelandForge.App/*.csproj
+apps/WastelandForge.App/*.sln
+apps/WastelandForge.App/Assets/StreamingAssets/forge.exe
+apps/WastelandForge.App/Assets/StreamingAssets/forge.pdb
+
+# Licensed local Unity Asset Store imports. These are usable locally, but the
+# raw source asset pack must not be committed or redistributed as repo content.
+apps/WastelandForge.App/Assets/ThirdParty/Heat - Complete Modern UI/
+apps/WastelandForge.App/Assets/ThirdParty/Heat - Complete Modern UI.meta
+
 # Editor and OS noise
 .vs/
 .vscode/.ropeproject/

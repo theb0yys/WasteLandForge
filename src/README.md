@@ -1762,3 +1762,21 @@ dry-run evidence. It does not run those command hints, run command fan-out,
 capability scans, package verification, publish releases, call remote
 repositories, sign or attest artifacts, execute external tools, mutate
 plugins, automate MO2/GECK, run runtime probes, or use AI.
+
+Gate 310 extends `forge doctor export` with release dry-run evidence
+remediation handoff projection. Doctor release-readiness JSON/plain/Markdown
+output now exposes `dryRunEvidenceRemediation`, and Doctor triage projects
+remediation-required evidence as the manual
+`restore-release-dry-run-evidence-files` blocker with a local
+`forge release verify <project-root> --format json --no-input` command hint.
+It does not run that hint, run command fan-out, remediate automatically,
+capability scan, package verify, publish releases, call remote repositories,
+sign or attest artifacts, execute external tools, mutate plugins, automate
+MO2/GECK, run runtime probes, or use AI.
+
+Gate 311 closes the release dry-run remediation handoff lane without source
+runtime changes. The release/Doctor remediation path is parked unless a later
+gate reopens it, and the next source lane moves to `forge init` project
+scaffold planning. It does not add `forge init` execution yet, command
+fan-out, automatic remediation, capability scan execution, package verify
+execution, publish behavior, external tool execution, runtime probes, or AI.

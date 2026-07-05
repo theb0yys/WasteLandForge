@@ -1547,6 +1547,21 @@ cross-link-mismatched, and complete dry-run evidence states, surface
 assert summary and execution fields, and keep release publishing, uploads,
 external tools, runtime probes, and AI disabled.
 
+Gate 310 extends golden CLI coverage for `forge doctor export` release
+dry-run evidence remediation handoff. Tests verify primary JSON, plain text,
+Markdown summaries, release-readiness bundle indexes, triage indexes, and
+handoff summaries expose `dryRunEvidenceRemediation`, the manual
+`restore-release-dry-run-evidence-files` work item, and the local
+`forge release verify <project-root> --format json --no-input` command hint,
+while keeping release publishing, uploads, external tools, runtime probes, and
+AI disabled.
+
+Gate 311 is a planning/routing closeout for the release dry-run remediation
+handoff lane. It adds no new fixture corpus, golden output, runtime command
+behavior, schema, diagnostic, release execution, Doctor execution, init
+execution, external tool execution, runtime probe, or AI requirement. Normal
+build/test smoke checks remain the validation expectation.
+
 Run the full local suite serially:
 
 ```text

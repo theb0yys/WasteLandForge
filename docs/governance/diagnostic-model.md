@@ -1484,5 +1484,24 @@ package verification diagnostics, capability execution diagnostics, external
 tool diagnostics, runtime probe diagnostics, repository publish diagnostics,
 signing/attestation diagnostics, or AI requirements.
 
+Gate 310 adds no new diagnostic rule ID. `forge doctor export` projects the
+existing release dry-run evidence remediation summary into release-readiness
+and triage handoff artifacts, not as a new diagnostic report. The manual
+remediation item remains an operator worklist blocker while continuing to
+reuse existing `WF-REL-*` release diagnostics. The gate does not add command
+fan-out diagnostics, automatic remediation diagnostics, package verification
+diagnostics, capability execution diagnostics, external tool diagnostics,
+runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, or AI requirements.
+
+Gate 311 adds no new diagnostic rule ID. The release dry-run remediation
+handoff closeout is planning and routing evidence only, not a diagnostic
+report. It keeps using the existing `WF-REL-*` release diagnostics and parks
+automatic remediation, command fan-out, package verification diagnostics,
+capability execution diagnostics, external tool diagnostics, runtime probe
+diagnostics, repository publish diagnostics, signing/attestation diagnostics,
+and AI requirements unless a later gate explicitly reopens one of those
+scopes.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

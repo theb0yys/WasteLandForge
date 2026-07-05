@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 309 forge release publish release dry-run evidence remediation
+Status: Gate 311 release dry-run remediation handoff lane closeout
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -1242,6 +1242,31 @@ sign or attest artifacts, execute external tools, mutate plugins, automate
 MO2/GECK, run runtime probes, use real third-party fixtures, or use AI. The
 next implementation route is Gate 310 `forge doctor export` release dry-run
 evidence remediation handoff projection.
+
+Gate 310 adds that Doctor export handoff projection. `forge doctor export`
+now includes `releaseReadiness.dryRunEvidenceRemediation` in primary JSON and
+bundle release-readiness JSON, renders the remediation section in plain and
+Markdown output, and projects remediation-required dry-run evidence into
+triage as the manual `restore-release-dry-run-evidence-files` blocker. The
+operator command hint remains local:
+`forge release verify <project-root> --format json --no-input`. The gate still
+does not run that hint, run command fan-out, remediate automatically, run
+capability scans, run package verification, publish releases, call remote
+repositories, sign or attest artifacts, execute external tools, mutate
+plugins, automate MO2/GECK, run runtime probes, use real third-party fixtures,
+or use AI. The next implementation route is Gate 311 release dry-run
+remediation handoff lane closeout and next-value routing.
+
+Gate 311 closes the local release dry-run remediation handoff lane without
+new runtime behavior. The accepted lane now includes `forge release verify`
+local dry-run evidence files, `forge release publish --dry-run` cross-link and
+manual remediation summaries, and `forge doctor export` release-readiness and
+triage handoff projection. Automatic remediation, command fan-out, capability
+scan execution, package verification execution, release publishing, remote
+calls, signing or attestation, external tool execution, plugin mutation,
+MO2/GECK automation, runtime probes, real third-party fixtures, and AI remain
+deferred. The next implementation route is Gate 312 `forge init` project
+scaffold planning.
 
 ## Docs Evidence
 

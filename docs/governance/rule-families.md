@@ -986,3 +986,19 @@ outputs and `WF-REL-001` output containment behavior. It does not add
 rules, command fan-out diagnostics, package verifier rules, external tool
 diagnostics, runtime probe diagnostics, repository publish diagnostics,
 signing/attestation diagnostics, or AI requirements.
+
+Gate 310 adds no new rule family or diagnostic ID. Doctor export release
+dry-run remediation handoff projection reuses existing release dry-run
+readiness and `WF-REL-*` evidence instead of adding a new diagnostic family.
+It does not add automatic remediation rules, command fan-out diagnostics,
+package verifier rules, capability execution diagnostics, external tool
+diagnostics, runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, or AI requirements.
+
+Gate 311 adds no new rule family or diagnostic ID. Release dry-run
+remediation handoff lane closeout is documentation and prompt-routing only.
+It does not add `WF-BUILD-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics,
+automatic remediation rules, command fan-out diagnostics, package verifier
+rules, capability execution diagnostics, external tool diagnostics, runtime
+probe diagnostics, repository publish diagnostics, signing/attestation
+diagnostics, or AI requirements.

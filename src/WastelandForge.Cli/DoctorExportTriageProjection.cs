@@ -133,7 +133,8 @@ internal static class DoctorExportTriageProjection
     {
         if (report.Summary.Diagnostics.Errors > 0 ||
             (report.Summary.Requirements?.RequiredUnavailable ?? 0) > 0 ||
-            HasReleaseReadinessBlockers(report))
+            HasReleaseReadinessBlockers(report) ||
+            HasReleaseDryRunEvidenceRemediation(report))
         {
             return "blocked";
         }
@@ -217,6 +218,17 @@ internal static class DoctorExportTriageProjection
                 report.ReleaseReadiness.BlockingChecks,
                 "Release-readiness checks are blocking local publish readiness.",
                 ["releaseReadiness"],
+                ["release-readiness/index.md", "release-readiness/index.json"]);
+        }
+
+        if (HasReleaseDryRunEvidenceRemediation(report))
+        {
+            yield return new DoctorExportTriageItem(
+                "release-dry-run-evidence-remediation",
+                "error",
+                report.ReleaseReadiness.DryRunEvidenceRemediation.BlockingIssues,
+                "Release dry-run evidence remediation requires manual operator action.",
+                ["releaseReadiness.dryRunEvidenceRemediation"],
                 ["release-readiness/index.md", "release-readiness/index.json"]);
         }
     }
@@ -341,6 +353,16 @@ internal static class DoctorExportTriageProjection
                     "releaseReadiness",
                     "release-readiness/index.md");
             }
+        }
+
+        if (HasReleaseDryRunEvidenceRemediation(report))
+        {
+            yield return new DoctorExportTriageCommandHint(
+                "regenerate-release-dry-run-evidence",
+                report.ReleaseReadiness.DryRunEvidenceRemediation.RecommendedCommand,
+                "Regenerate local release dry-run evidence files before reviewing publish readiness.",
+                "releaseReadiness.dryRunEvidenceRemediation",
+                "release-readiness/index.md");
         }
 
         if (report.Summary.Doctor.Actions > 0)
@@ -539,6 +561,10 @@ internal static class DoctorExportTriageProjection
         if (report.ReleaseReadiness.Included)
         {
             yield return new DoctorExportTriageReviewTarget("releaseReadiness", "release-readiness/index.md", "Review local release-readiness evidence and blocking checks.");
+            if (HasReleaseDryRunEvidenceRemediation(report))
+            {
+                yield return new DoctorExportTriageReviewTarget("releaseReadiness.dryRunEvidenceRemediation", "release-readiness/index.md", "Review manual release dry-run evidence remediation actions.");
+            }
         }
 
         yield return new DoctorExportTriageReviewTarget("index.providerStatuses", "providers/index.md", "Review provider readiness.");
@@ -579,13 +605,28 @@ internal static class DoctorExportTriageProjection
         DoctorExportReport report,
         int startOrder)
     {
-        if (!HasReleaseReadinessBlockers(report))
+        if (!HasReleaseReadinessBlockers(report) &&
+            !HasReleaseDryRunEvidenceRemediation(report))
         {
             yield break;
         }
 
         var evidenceById = report.ReleaseReadiness.Evidence.ToDictionary(item => item.Id, StringComparer.Ordinal);
         var order = startOrder;
+        foreach (var item in report.ReleaseReadiness.DryRunEvidenceRemediation.Items)
+        {
+            yield return new DoctorExportTriageWorkItem(
+                order,
+                item.Id,
+                item.Priority,
+                FormatDryRunEvidenceRemediationTitle(item),
+                item.Reason,
+                "regenerate-release-dry-run-evidence",
+                "releaseReadiness.dryRunEvidenceRemediation",
+                "release-readiness/index.md");
+            order += 10;
+        }
+
         foreach (var checkId in report.ReleaseReadiness.BlockingCheckIds)
         {
             evidenceById.TryGetValue(checkId, out var evidence);
@@ -618,6 +659,20 @@ internal static class DoctorExportTriageProjection
 
     private static bool HasReleaseReadinessBlockers(DoctorExportReport report) =>
         report.ReleaseReadiness.Included && report.ReleaseReadiness.BlockingChecks > 0;
+
+    private static bool HasReleaseDryRunEvidenceRemediation(DoctorExportReport report) =>
+        report.ReleaseReadiness.Included &&
+        report.ReleaseReadiness.DryRunEvidenceRemediation.RequiresOperatorAction;
+
+    private static string FormatDryRunEvidenceRemediationTitle(
+        DoctorExportReleaseDryRunEvidenceRemediationItem item) =>
+        item.Category switch
+        {
+            "missing-files" => "Restore release dry-run evidence files",
+            "malformed-files" => "Regenerate malformed release dry-run evidence",
+            "cross-link-mismatch" => "Regenerate release dry-run evidence cross-links",
+            _ => $"Review release dry-run evidence remediation {item.Id}"
+        };
 
     private static IEnumerable<DoctorExportTriageReviewTarget> PrimaryReviewTargets(DoctorExportTriageReport triage) =>
         triage.ReviewTargets.Where(target => !string.IsNullOrWhiteSpace(target.Section));

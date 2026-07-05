@@ -759,9 +759,17 @@ evaluation across `release-evidence-index.json`,
 Gate 309 implements release-publish local evidence remediation summaries for
 missing, malformed, or cross-link-mismatched dry-run evidence. Route the next
 implementation slice to Gate 310: forge doctor export release dry-run evidence
-remediation handoff projection, still with no command fan-out, automatic
-remediation, capability scan execution, package verify execution, publish
-behavior, external tool execution, runtime probes, or AI behavior.
+remediation handoff projection. Gate 310 implements that Doctor handoff
+projection with release-readiness JSON/plain/Markdown and triage worklist
+coverage. Route the next implementation slice to Gate 311: release dry-run
+remediation handoff lane closeout and next-value routing, still with no
+command fan-out, automatic remediation, capability scan execution, package
+verify execution, publish behavior, external tool execution, runtime probes,
+or AI behavior. Gate 311 closes that lane without runtime behavior changes and
+routes the next implementation slice to Gate 312: `forge init` project
+scaffold planning, still with no provider installation, external tool
+execution, MO2/GECK automation, runtime probes, release publication, remote
+repository calls, signing/attestation, plugin mutation, or AI behavior.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -862,9 +870,17 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   Gate 309 implements release-publish local evidence remediation summaries for
   missing, malformed, or cross-link-mismatched dry-run evidence. Route the next
   implementation slice to Gate 310: forge doctor export release dry-run evidence
-  remediation handoff projection, still with no command fan-out, automatic
-  remediation, capability scan execution, package verify execution, publish
-  behavior, external tool execution, runtime probes, or AI behavior.
+  remediation handoff projection. Gate 310 implements that Doctor handoff
+  projection with release-readiness JSON/plain/Markdown and triage worklist
+  coverage. Route the next implementation slice to Gate 311: release dry-run
+  remediation handoff lane closeout and next-value routing, still with no
+  command fan-out, automatic remediation, capability scan execution, package
+  verify execution, publish behavior, external tool execution, runtime probes,
+  or AI behavior. Gate 311 closes that lane without runtime behavior changes and
+  routes the next implementation slice to Gate 312: `forge init` project
+  scaffold planning, still with no provider installation, external tool
+  execution, MO2/GECK automation, runtime probes, release publication, remote
+  repository calls, signing/attestation, plugin mutation, or AI behavior.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider

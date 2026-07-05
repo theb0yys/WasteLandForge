@@ -1,0 +1,462 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Channel LicenseClient-kane0 doesn't exist
+Built from '6000.4/staging' branch; Version is '6000.4.9f1 (f7258d6eebbe) revision 16197005'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26200) Core' Language: 'en' Physical Memory: 63032 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-07-05T07:22:12Z
+[Licensing::Module] Successfully launched the LicensingClient (PId: 20220)
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Unity.exe
+-batchmode
+-nographics
+-quit
+-createProject
+D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App
+-logFile
+D:\documents\GitHub\WasteLandForge\_codex_tmp\unity-createproject.log
+D:/documents/GitHub/WasteLandForge/apps/WastelandForge.App
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+Player connection [46048]  Target information:
+
+Player connection [46048]  * "[IP] 192.168.0.4 [Port] 55504 [Flags] 2 [Guid] 2767827367 [EditorId] 2767827367 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-M5TON4G) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [46048] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [46048] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-53100" after 0.6 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-kane0" at "2026-07-05T07:22:15.7164792Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 20220, path: "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              a687c4e1c5ac4c5182aa8721ca9b6088
+  Correlation Id:          2f774c4abaeb0d4df8452420125181a4
+  External correlation Id: 6464449793094971509
+  Machine Id:              BBLp9Q/jiuPUNFou3v5DjvzqQ30=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-kane0" (connect: 2.91s, validation: 0.18s, handshake: 0.03s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-kane0-notifications" at "2026-07-05T07:22:15.9271296Z"
+[Licensing::Module] Connected to LicensingClient (PId: 20220, launch time: 0.01, total connection time: 3.12s)
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 5774059954321-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.01
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 3.14s
+[Licensing::Module] Licensing is initialized (took 2.37s).
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Initialize engine version: 6000.4.9f1 (f7258d6eebbe)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path D:/documents/GitHub/WasteLandForge/apps/WastelandForge.App/Assets
+Forcing GfxDevice: Null
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+NullGfxDevice:
+    Version:  NULL 1.0 [1.0]
+    Renderer: Null Device
+    Vendor:   Unity Technologies
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56100
+CodeReloadManager initialized
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.392509 seconds.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:False
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.364 seconds
+Domain Reload Profiling: 2601ms
+	BeginReloadAssembly (263ms)
+		CreateAndSetChildDomain (12ms)
+	RebuildCommonClasses (382ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (462ms)
+	LoadAllAssembliesAndSetupDomain (1120ms)
+		LoadAssemblies (249ms)
+		AnalyzeDomain (1105ms)
+			TypeCache.Refresh (1103ms)
+				TypeCache.ScanAssembly (880ms)
+	FinalizeReload (366ms)
+		SetupLoadedEditorAssemblies (0ms)
+			InitializePlatformSupportModulesInManaged (33ms)
+			BeforeProcessingInitializeOnLoad (51ms)
+			ProcessInitializeOnLoadAttributes (105ms)
+			ProcessInitializeOnLoadMethodAttributes (122ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] The file [D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Packages\manifest.json] cannot be found
+[Package Manager] Done resolving packages in 1.98 seconds
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Lock file was modified
+[Package Manager] Registered 37 packages:
+  Built-in packages:
+    com.unity.multiplayer.center@1.0.1 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.multiplayer.center@f01f4ba8d00a)
+    com.unity.modules.accessibility@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.accessibility)
+    com.unity.modules.adaptiveperformance@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.adaptiveperformance)
+    com.unity.modules.ai@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.ai)
+    com.unity.modules.androidjni@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.androidjni)
+    com.unity.modules.animation@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.assetbundle@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.assetbundle)
+    com.unity.modules.audio@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.cloth@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.cloth)
+    com.unity.modules.director@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.director)
+    com.unity.modules.imageconversion@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.imgui@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.particlesystem@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.physics@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.physics2d@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.physics2d)
+    com.unity.modules.screencapture@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.terrain@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.terrainphysics@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.terrainphysics)
+    com.unity.modules.tilemap@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.tilemap)
+    com.unity.modules.ui@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.umbra@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.umbra)
+    com.unity.modules.unityanalytics@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.unityanalytics)
+    com.unity.modules.unitywebrequest@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.unitywebrequestassetbundle@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.unitywebrequestassetbundle)
+    com.unity.modules.unitywebrequestaudio@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.unitywebrequestaudio)
+    com.unity.modules.unitywebrequesttexture@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.unitywebrequesttexture)
+    com.unity.modules.unitywebrequestwww@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.unitywebrequestwww)
+    com.unity.modules.vectorgraphics@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.vectorgraphics)
+    com.unity.modules.vehicles@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.vehicles)
+    com.unity.modules.video@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.video)
+    com.unity.modules.vr@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.vr)
+    com.unity.modules.wind@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.wind)
+    com.unity.modules.xr@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.xr)
+    com.unity.modules.subsystems@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.subsystems)
+    com.unity.modules.hierarchycore@1.0.0 (location: D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\PackageCache\com.unity.modules.hierarchycore)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.00 seconds
+[ScriptCompilation] Requested script compilation because: Assembly Definition File(s) changed
+[ScriptCompilation] Requested script compilation because: AssetDatabase observed changes in script compilation related files
+Starting: C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: D:/documents/GitHub/WasteLandForge/apps/WastelandForge.App
+ExitCode: 4 Duration: 0s33ms
+[             ] Require frontend run.  Library/Bee/1900b0aE.dag couldn't be loaded
+DisplayProgressbar: Compiling Scripts
+Starting: C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Tools\BuildPipeline\ScriptCompilationBuildProgram.exe" "Library/Bee/1900b0aE.dag.json" "Library/Bee/1900b0aE-inputdata.json" "Library\Bee\buildprogram0.traceevents"
+WorkingDir: D:/documents/GitHub/WasteLandForge/apps/WastelandForge.App
+ExitCode: 0 Duration: 1s290ms
+Starting: C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --dagfilejson="Library\Bee\1900b0aE.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssemblies
+WorkingDir: D:/documents/GitHub/WasteLandForge/apps/WastelandForge.App
+ExitCode: -1073741819 Duration: 3s29ms
+Finished compiling graph: 163 nodes, 622 flattened edges (610 ToBuild, 4 ToUse), maximum node priority 24
+[  1/160    0s] WriteText Library/Bee/artifacts/1900b0aE.dag/Unity.Multiplayer.Center.Common.rsp2
+[  2/160    0s] WriteText Library/Bee/artifacts/1900b0aE.dag/Unity.Multiplayer.Center.Common.UnityAdditionalFile.txt
+[  3/160    0s] WriteText Library/Bee/artifacts/1900b0aE.dag/Unity.Multiplayer.Center.Common.dll.mvfrm.rsp
+[  4/160    0s] WriteText Library/Bee/artifacts/1900b0aE.dag/Unity.Multiplayer.Center.Common.rsp
+[  5/160    0s] WriteText Library/Bee/artifacts/1900b0aE.dag/Unity.Multiplayer.Center.Editor.rsp2
+[  6/160    0s] WriteText Library/Bee/artifacts/1900b0aE.dag/Unity.Multiplayer.Center.Editor.UnityAdditionalFile.txt
+[  7/160    0s] WriteText Library/Bee/artifacts/1900b0aE.dag/Unity.Multiplayer.Center.Editor.dll.mvfrm.rsp
+[  8/160    0s] WriteText Library/Bee/artifacts/1900b0aE.dag/Unity.Multiplayer.Center.Editor.rsp
+[  9/160    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.MultiplayerModule.dll_6483A4FC2BB0B8AE.mvfrm
+##### CommandLine
+"C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe" "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Tools/BuildPipeline/Compilation/ApiUpdater/ApiUpdater.MovedFromExtractor.dll" "Library\Bee\artifacts\mvdfrm\UnityEditor.MultiplayerModule.dll_6483A4FC2BB0B8AE.mvfrm" "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Managed\UnityEngine\UnityEditor.MultiplayerModule.dll"
+##### ExitCode
+1
+##### Output
+System.IO.FileNotFoundException: Could not find file 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.MultiplayerModule.dll_6483A4FC2BB0B8AE.mvfrm'.
+
+File name: 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.MultiplayerModule.dll_6483A4FC2BB0B8AE.mvfrm'
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.StreamWriter.ValidateArgsAndOpenPath(String path, Boolean append, Encoding encoding, Int32 bufferSize)
+
+   at System.IO.File.CreateText(String path)
+
+   at ApiUpdater.MovedFromOptimizer.Program.RealMain(String[] args)
+
+   at ApiUpdater.MovedFromOptimizer.Program.Main(String[] args)
+[ 10/160    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.GridModule.dll_52819D8E8D53BD46.mvfrm
+##### CommandLine
+"C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe" "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Tools/BuildPipeline/Compilation/ApiUpdater/ApiUpdater.MovedFromExtractor.dll" "Library\Bee\artifacts\mvdfrm\UnityEditor.GridModule.dll_52819D8E8D53BD46.mvfrm" "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Managed\UnityEngine\UnityEditor.GridModule.dll"
+##### ExitCode
+1
+##### Output
+System.IO.FileNotFoundException: Could not find file 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.GridModule.dll_52819D8E8D53BD46.mvfrm'.
+
+File name: 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.GridModule.dll_52819D8E8D53BD46.mvfrm'
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.StreamWriter.ValidateArgsAndOpenPath(String path, Boolean append, Encoding encoding, Int32 bufferSize)
+
+   at System.IO.File.CreateText(String path)
+
+   at ApiUpdater.MovedFromOptimizer.Program.RealMain(String[] args)
+
+   at ApiUpdater.MovedFromOptimizer.Program.Main(String[] args)
+[ 11/160    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.GraphicsStateCollectionSerializerModule.dll_C784B09D684E598A.mvfrm
+##### CommandLine
+"C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe" "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Tools/BuildPipeline/Compilation/ApiUpdater/ApiUpdater.MovedFromExtractor.dll" "Library\Bee\artifacts\mvdfrm\UnityEditor.GraphicsStateCollectionSerializerModule.dll_C784B09D684E598A.mvfrm" "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Managed\UnityEngine\UnityEditor.GraphicsStateCollectionSerializerModule.dll"
+##### ExitCode
+1
+##### Output
+System.IO.FileNotFoundException: Could not find file 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.GraphicsStateCollectionSerializerModule.dll_C784B09D684E598A.mvfrm'.
+
+File name: 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.GraphicsStateCollectionSerializerModule.dll_C784B09D684E598A.mvfrm'
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.StreamWriter.ValidateArgsAndOpenPath(String path, Boolean append, Encoding encoding, Int32 bufferSize)
+
+   at System.IO.File.CreateText(String path)
+
+   at ApiUpdater.MovedFromOptimizer.Program.RealMain(String[] args)
+
+   at ApiUpdater.MovedFromOptimizer.Program.Main(String[] args)
+[ 12/160    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.GraphToolkitModule.dll_E9D0023B4DEBC6F0.mvfrm
+##### CommandLine
+"C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe" "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Tools/BuildPipeline/Compilation/ApiUpdater/ApiUpdater.MovedFromExtractor.dll" "Library\Bee\artifacts\mvdfrm\UnityEditor.GraphToolkitModule.dll_E9D0023B4DEBC6F0.mvfrm" "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Managed\UnityEngine\UnityEditor.GraphToolkitModule.dll"
+##### ExitCode
+1
+##### Output
+System.IO.FileNotFoundException: Could not find file 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.GraphToolkitModule.dll_E9D0023B4DEBC6F0.mvfrm'.
+
+File name: 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.GraphToolkitModule.dll_E9D0023B4DEBC6F0.mvfrm'
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.StreamWriter.ValidateArgsAndOpenPath(String path, Boolean append, Encoding encoding, Int32 bufferSize)
+
+   at System.IO.File.CreateText(String path)
+
+   at ApiUpdater.MovedFromOptimizer.Program.RealMain(String[] args)
+
+   at ApiUpdater.MovedFromOptimizer.Program.Main(String[] args)
+[ 13/160    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.GraphViewModule.dll_2FAF84816E67C047.mvfrm
+##### CommandLine
+"C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe" "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Tools/BuildPipeline/Compilation/ApiUpdater/ApiUpdater.MovedFromExtractor.dll" "Library\Bee\artifacts\mvdfrm\UnityEditor.GraphViewModule.dll_2FAF84816E67C047.mvfrm" "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Managed\UnityEngine\UnityEditor.GraphViewModule.dll"
+##### ExitCode
+1
+##### Output
+System.IO.FileNotFoundException: Could not find file 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.GraphViewModule.dll_2FAF84816E67C047.mvfrm'.
+
+File name: 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.GraphViewModule.dll_2FAF84816E67C047.mvfrm'
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.StreamWriter.ValidateArgsAndOpenPath(String path, Boolean append, Encoding encoding, Int32 bufferSize)
+
+   at System.IO.File.CreateText(String path)
+
+   at ApiUpdater.MovedFromOptimizer.Program.RealMain(String[] args)
+
+   at ApiUpdater.MovedFromOptimizer.Program.Main(String[] args)
+[ 14/160    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.GIModule.dll_8CB245AD5E2E5612.mvfrm
+##### CommandLine
+"C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe" "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Tools/BuildPipeline/Compilation/ApiUpdater/ApiUpdater.MovedFromExtractor.dll" "Library\Bee\artifacts\mvdfrm\UnityEditor.GIModule.dll_8CB245AD5E2E5612.mvfrm" "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Managed\UnityEngine\UnityEditor.GIModule.dll"
+##### ExitCode
+1
+##### Output
+System.IO.FileNotFoundException: Could not find file 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.GIModule.dll_8CB245AD5E2E5612.mvfrm'.
+
+File name: 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.GIModule.dll_8CB245AD5E2E5612.mvfrm'
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.StreamWriter.ValidateArgsAndOpenPath(String path, Boolean append, Encoding encoding, Int32 bufferSize)
+
+   at System.IO.File.CreateText(String path)
+
+   at ApiUpdater.MovedFromOptimizer.Program.RealMain(String[] args)
+
+   at ApiUpdater.MovedFromOptimizer.Program.Main(String[] args)
+[ 15/160    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.DiagnosticsModule.dll_1BA8A3FFC9E58A70.mvfrm
+##### CommandLine
+"C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe" "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Tools/BuildPipeline/Compilation/ApiUpdater/ApiUpdater.MovedFromExtractor.dll" "Library\Bee\artifacts\mvdfrm\UnityEditor.DiagnosticsModule.dll_1BA8A3FFC9E58A70.mvfrm" "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Managed\UnityEngine\UnityEditor.DiagnosticsModule.dll"
+##### ExitCode
+1
+##### Output
+System.IO.FileNotFoundException: Could not find file 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.DiagnosticsModule.dll_1BA8A3FFC9E58A70.mvfrm'.
+
+File name: 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.DiagnosticsModule.dll_1BA8A3FFC9E58A70.mvfrm'
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.StreamWriter.ValidateArgsAndOpenPath(String path, Boolean append, Encoding encoding, Int32 bufferSize)
+
+   at System.IO.File.CreateText(String path)
+
+   at ApiUpdater.MovedFromOptimizer.Program.RealMain(String[] args)
+
+   at ApiUpdater.MovedFromOptimizer.Program.Main(String[] args)
+[ 16/160    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.DeviceSimulatorModule.dll_D5674B0178A550A2.mvfrm
+##### CommandLine
+"C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe" "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Tools/BuildPipeline/Compilation/ApiUpdater/ApiUpdater.MovedFromExtractor.dll" "Library\Bee\artifacts\mvdfrm\UnityEditor.DeviceSimulatorModule.dll_D5674B0178A550A2.mvfrm" "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Managed\UnityEngine\UnityEditor.DeviceSimulatorModule.dll"
+##### ExitCode
+1
+##### Output
+System.IO.FileNotFoundException: Could not find file 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.DeviceSimulatorModule.dll_D5674B0178A550A2.mvfrm'.
+
+File name: 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEditor.DeviceSimulatorModule.dll_D5674B0178A550A2.mvfrm'
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.StreamWriter.ValidateArgsAndOpenPath(String path, Boolean append, Encoding encoding, Int32 bufferSize)
+
+   at System.IO.File.CreateText(String path)
+
+   at ApiUpdater.MovedFromOptimizer.Program.RealMain(String[] args)
+
+   at ApiUpdater.MovedFromOptimizer.Program.Main(String[] args)
+[ 17/160    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.NVIDIAModule.dll_07A74066459E3A26.mvfrm
+##### CommandLine
+"C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe" "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Tools/BuildPipeline/Compilation/ApiUpdater/ApiUpdater.MovedFromExtractor.dll" "Library\Bee\artifacts\mvdfrm\UnityEngine.NVIDIAModule.dll_07A74066459E3A26.mvfrm" "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Managed\UnityEngine\UnityEngine.NVIDIAModule.dll"
+##### ExitCode
+1
+##### Output
+System.IO.FileNotFoundException: Could not find file 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEngine.NVIDIAModule.dll_07A74066459E3A26.mvfrm'.
+
+File name: 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEngine.NVIDIAModule.dll_07A74066459E3A26.mvfrm'
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.StreamWriter.ValidateArgsAndOpenPath(String path, Boolean append, Encoding encoding, Int32 bufferSize)
+
+   at System.IO.File.CreateText(String path)
+
+   at ApiUpdater.MovedFromOptimizer.Program.RealMain(String[] args)
+
+   at ApiUpdater.MovedFromOptimizer.Program.Main(String[] args)
+[ 18/160    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.HierarchyModule.dll_D3097C4611C6B0EE.mvfrm
+##### CommandLine
+"C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\netcorerun\netcorerun.exe" "C:/Program Files/Unity/Hub/Editor/6000.4.9f1/Editor/Data/Tools/BuildPipeline/Compilation/ApiUpdater/ApiUpdater.MovedFromExtractor.dll" "Library\Bee\artifacts\mvdfrm\UnityEngine.HierarchyModule.dll_D3097C4611C6B0EE.mvfrm" "C:\Program Files\Unity\Hub\Editor\6000.4.9f1\Editor\Data\Managed\UnityEngine\UnityEngine.HierarchyModule.dll"
+##### ExitCode
+1
+##### Output
+System.IO.FileNotFoundException: Could not find file 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEngine.HierarchyModule.dll_D3097C4611C6B0EE.mvfrm'.
+
+File name: 'D:\documents\GitHub\WasteLandForge\apps\WastelandForge.App\Library\Bee\artifacts\mvdfrm\UnityEngine.HierarchyModule.dll_D3097C4611C6B0EE.mvfrm'
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.CreateFile(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options)
+
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize, Nullable`1 unixCreateMode)
+
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategyCore(String path, FileMode mode, FileAccess access, FileSh
+Internal build system error. Read the full binlog without getting a BuildFinishedMessage.
+The backend process appears to still be running.
+Total cache size 33559392
+Total cache size after purge 33559392, took 00:00:00.0574191
+AssetDatabase: script compilation time: 5.475034s
+Scripts have compiler errors.
+Exiting without the bug reporter. Application will terminate with return code 1

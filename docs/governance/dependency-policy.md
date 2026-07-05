@@ -1366,3 +1366,16 @@ APIs. They do not add command runners, package validators, publishing clients,
 repository API clients, signing or attestation dependencies, external tool
 integrations, network calls, runtime probes, MO2 or GECK automation, or AI
 requirements.
+
+Gate 310 adds no package dependency. Doctor export release dry-run evidence
+remediation handoff projection reuses existing Doctor, release readiness,
+JSON, Markdown, archive, and checksum code paths. It does not add command
+runners, package validators, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, MO2 or GECK automation, or AI requirements.
+
+Gate 311 adds no package dependency. Release dry-run remediation handoff lane
+closeout is documentation and prompt-routing only. It does not add command
+runners, package validators, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, MO2 or GECK automation, or AI requirements.

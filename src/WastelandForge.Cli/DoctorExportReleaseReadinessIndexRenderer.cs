@@ -24,6 +24,7 @@ internal sealed record DoctorExportReleaseReadiness(
     int SatisfiedChecks,
     int BlockingChecks,
     IReadOnlyList<string> BlockingCheckIds,
+    DoctorExportReleaseDryRunEvidenceRemediation DryRunEvidenceRemediation,
     IReadOnlyList<DoctorExportReleaseReadinessEvidence> Evidence,
     IReadOnlyList<string> Boundaries);
 
@@ -34,9 +35,35 @@ internal sealed record DoctorExportReleaseReadinessEvidence(
     string Status,
     bool Required);
 
+internal sealed record DoctorExportReleaseDryRunEvidenceRemediation(
+    string Status,
+    bool CheckedInCurrentGate,
+    bool RequiresOperatorAction,
+    string SourceStatus,
+    int ActionItems,
+    int CommandHints,
+    int AffectedPaths,
+    int BlockingIssues,
+    string RecommendedCommand,
+    string Detail,
+    IReadOnlyList<string> TargetPaths,
+    IReadOnlyList<DoctorExportReleaseDryRunEvidenceRemediationItem> Items);
+
+internal sealed record DoctorExportReleaseDryRunEvidenceRemediationItem(
+    string Id,
+    string Priority,
+    string Category,
+    string Status,
+    string Reason,
+    string CommandHint,
+    string Execution,
+    bool BlocksPublishReadiness,
+    IReadOnlyList<string> TargetPaths);
+
 internal static class DoctorExportReleaseReadinessProjection
 {
     private const string SourceCommand = "forge release publish <project-root> --dry-run --format json --no-input";
+    private const string ReleaseVerifyEvidenceCommandHint = "forge release verify <project-root> --format json --no-input";
 
     public static DoctorExportReleaseReadiness NotIncluded() =>
         new(
@@ -59,6 +86,19 @@ internal static class DoctorExportReleaseReadinessProjection
             SatisfiedChecks: 0,
             BlockingChecks: 0,
             BlockingCheckIds: [],
+            DryRunEvidenceRemediation: new DoctorExportReleaseDryRunEvidenceRemediation(
+                "not-included",
+                CheckedInCurrentGate: false,
+                RequiresOperatorAction: false,
+                SourceStatus: "not-included",
+                ActionItems: 0,
+                CommandHints: 0,
+                AffectedPaths: 0,
+                BlockingIssues: 0,
+                RecommendedCommand: ReleaseVerifyEvidenceCommandHint,
+                Detail: "project-root-not-provided",
+                TargetPaths: [],
+                Items: []),
             Evidence: [],
             Boundaries:
             [
@@ -100,6 +140,7 @@ internal static class DoctorExportReleaseReadinessProjection
             preflight.PublishReadiness.SatisfiedChecks,
             preflight.PublishReadiness.BlockingChecks,
             preflight.PublishReadiness.BlockingCheckIds,
+            CreateDryRunEvidenceRemediation(preflight.DryRunEvidenceRemediation),
             preflight.RequiredEvidence
                 .Select(evidence => new DoctorExportReleaseReadinessEvidence(
                     evidence.Id,
@@ -110,6 +151,33 @@ internal static class DoctorExportReleaseReadinessProjection
                 .ToArray(),
             preflight.Boundaries);
     }
+
+    private static DoctorExportReleaseDryRunEvidenceRemediation CreateDryRunEvidenceRemediation(
+        ReleasePublishDryRunEvidenceRemediation remediation) =>
+        new(
+            remediation.Status,
+            remediation.CheckedInCurrentGate,
+            remediation.RequiresOperatorAction,
+            remediation.SourceStatus,
+            remediation.ActionItems,
+            remediation.CommandHints,
+            remediation.AffectedPaths,
+            remediation.BlockingIssues,
+            remediation.RecommendedCommand,
+            remediation.Detail,
+            remediation.TargetPaths,
+            remediation.Items
+                .Select(item => new DoctorExportReleaseDryRunEvidenceRemediationItem(
+                    item.Id,
+                    item.Priority,
+                    item.Category,
+                    item.Status,
+                    item.Reason,
+                    item.CommandHint,
+                    item.Execution,
+                    item.BlocksPublishReadiness,
+                    item.TargetPaths))
+                .ToArray());
 }
 
 internal static class DoctorExportReleaseReadinessIndexRenderer
@@ -162,6 +230,7 @@ internal static class DoctorExportReleaseReadinessIndexRenderer
             ["satisfiedChecks"] = readiness.SatisfiedChecks,
             ["blockingChecks"] = readiness.BlockingChecks,
             ["blockingCheckIds"] = ToStringArray(readiness.BlockingCheckIds),
+            ["dryRunEvidenceRemediation"] = ToDryRunEvidenceRemediation(readiness.DryRunEvidenceRemediation),
             ["evidence"] = ToEvidenceArray(readiness.Evidence),
             ["boundaries"] = ToStringArray(readiness.Boundaries)
         };
@@ -186,6 +255,7 @@ internal static class DoctorExportReleaseReadinessIndexRenderer
         builder.AppendLine($"  ready for real publish: {readiness.ReadyForRealPublish.ToString().ToLowerInvariant()}");
         builder.AppendLine($"  checks: {readiness.SatisfiedChecks}/{readiness.RequiredChecks} satisfied; {readiness.BlockingChecks} blocking");
         builder.AppendLine($"  detail: {readiness.Detail}");
+        AppendTextDryRunEvidenceRemediation(builder, readiness.DryRunEvidenceRemediation);
         foreach (var evidence in readiness.Evidence)
         {
             builder.AppendLine($"  {evidence.Id}: {evidence.Status} ({evidence.Source})");
@@ -226,6 +296,13 @@ internal static class DoctorExportReleaseReadinessIndexRenderer
         builder.AppendLine($"- Detail: `{EscapeInline(readiness.Detail)}`");
         builder.AppendLine();
 
+        AppendMarkdownDryRunEvidenceRemediation(
+            builder,
+            readiness.DryRunEvidenceRemediation,
+            StringComparer.Ordinal.Equals(heading, "# WastelandForge Doctor Release Readiness")
+                ? "## Dry-Run Evidence Remediation"
+                : "### Dry-Run Evidence Remediation");
+
         if (readiness.Evidence.Count == 0)
         {
             builder.AppendLine("No release-readiness evidence is included.");
@@ -260,6 +337,47 @@ internal static class DoctorExportReleaseReadinessIndexRenderer
         }
     }
 
+    private static JsonObject ToDryRunEvidenceRemediation(
+        DoctorExportReleaseDryRunEvidenceRemediation remediation) =>
+        new()
+        {
+            ["status"] = remediation.Status,
+            ["checkedInCurrentGate"] = remediation.CheckedInCurrentGate,
+            ["requiresOperatorAction"] = remediation.RequiresOperatorAction,
+            ["sourceStatus"] = remediation.SourceStatus,
+            ["actionItems"] = remediation.ActionItems,
+            ["commandHints"] = remediation.CommandHints,
+            ["affectedPaths"] = remediation.AffectedPaths,
+            ["blockingIssues"] = remediation.BlockingIssues,
+            ["recommendedCommand"] = remediation.RecommendedCommand,
+            ["detail"] = remediation.Detail,
+            ["targetPaths"] = ToStringArray(remediation.TargetPaths),
+            ["items"] = ToDryRunEvidenceRemediationItems(remediation.Items)
+        };
+
+    private static JsonArray ToDryRunEvidenceRemediationItems(
+        IReadOnlyList<DoctorExportReleaseDryRunEvidenceRemediationItem> items)
+    {
+        var array = new JsonArray();
+        foreach (var item in items)
+        {
+            array.Add(new JsonObject
+            {
+                ["id"] = item.Id,
+                ["priority"] = item.Priority,
+                ["category"] = item.Category,
+                ["status"] = item.Status,
+                ["reason"] = item.Reason,
+                ["commandHint"] = item.CommandHint,
+                ["execution"] = item.Execution,
+                ["blocksPublishReadiness"] = item.BlocksPublishReadiness,
+                ["targetPaths"] = ToStringArray(item.TargetPaths)
+            });
+        }
+
+        return array;
+    }
+
     private static JsonArray ToEvidenceArray(IReadOnlyList<DoctorExportReleaseReadinessEvidence> evidence)
     {
         var array = new JsonArray();
@@ -278,6 +396,77 @@ internal static class DoctorExportReleaseReadinessIndexRenderer
         return array;
     }
 
+    private static void AppendTextDryRunEvidenceRemediation(
+        StringBuilder builder,
+        DoctorExportReleaseDryRunEvidenceRemediation remediation)
+    {
+        builder.AppendLine("  dry-run evidence remediation:");
+        builder.AppendLine($"    status: {remediation.Status}");
+        builder.AppendLine($"    checked in current gate: {remediation.CheckedInCurrentGate.ToString().ToLowerInvariant()}");
+        builder.AppendLine($"    requires operator action: {remediation.RequiresOperatorAction.ToString().ToLowerInvariant()}");
+        builder.AppendLine($"    source status: {remediation.SourceStatus}");
+        builder.AppendLine($"    action items: {remediation.ActionItems}");
+        builder.AppendLine($"    command hints: {remediation.CommandHints}");
+        builder.AppendLine($"    affected paths: {remediation.AffectedPaths}");
+        builder.AppendLine($"    blocking issues: {remediation.BlockingIssues}");
+        builder.AppendLine($"    recommended command: {remediation.RecommendedCommand}");
+        builder.AppendLine($"    detail: {remediation.Detail}");
+        foreach (var item in remediation.Items)
+        {
+            builder.AppendLine($"    [{item.Priority}] {item.Id} ({item.Category}, {item.Execution}): {Normalize(item.Reason)}");
+            builder.AppendLine($"      command: {item.CommandHint}");
+            builder.AppendLine($"      paths: {string.Join(", ", item.TargetPaths)}");
+        }
+    }
+
+    private static void AppendMarkdownDryRunEvidenceRemediation(
+        StringBuilder builder,
+        DoctorExportReleaseDryRunEvidenceRemediation remediation,
+        string heading)
+    {
+        builder.AppendLine(heading);
+        builder.AppendLine();
+        builder.AppendLine($"- Status: `{EscapeInline(remediation.Status)}`");
+        builder.AppendLine($"- Checked in current gate: `{remediation.CheckedInCurrentGate.ToString().ToLowerInvariant()}`");
+        builder.AppendLine($"- Requires operator action: `{remediation.RequiresOperatorAction.ToString().ToLowerInvariant()}`");
+        builder.AppendLine($"- Source status: `{EscapeInline(remediation.SourceStatus)}`");
+        builder.AppendLine($"- Action items: {remediation.ActionItems}");
+        builder.AppendLine($"- Command hints: {remediation.CommandHints}");
+        builder.AppendLine($"- Affected paths: {remediation.AffectedPaths}");
+        builder.AppendLine($"- Blocking issues: {remediation.BlockingIssues}");
+        builder.AppendLine($"- Recommended command: `{EscapeInline(remediation.RecommendedCommand)}`");
+        builder.AppendLine($"- Detail: `{EscapeInline(remediation.Detail)}`");
+        builder.AppendLine();
+
+        if (remediation.Items.Count == 0)
+        {
+            builder.AppendLine("No release dry-run evidence remediation items.");
+            builder.AppendLine();
+            return;
+        }
+
+        builder.AppendLine("| Item | Priority | Category | Execution | Blocks publish | Command |");
+        builder.AppendLine("|---|---|---|---|---|---|");
+        foreach (var item in remediation.Items)
+        {
+            builder.Append("| `");
+            builder.Append(EscapeInline(item.Id));
+            builder.Append("` | `");
+            builder.Append(EscapeInline(item.Priority));
+            builder.Append("` | `");
+            builder.Append(EscapeInline(item.Category));
+            builder.Append("` | `");
+            builder.Append(EscapeInline(item.Execution));
+            builder.Append("` | `");
+            builder.Append(item.BlocksPublishReadiness.ToString().ToLowerInvariant());
+            builder.Append("` | `");
+            builder.Append(EscapeInline(item.CommandHint));
+            builder.AppendLine("` |");
+        }
+
+        builder.AppendLine();
+    }
+
     private static JsonArray ToStringArray(IReadOnlyList<string> values) =>
         new(values.Select(value => JsonValue.Create(value)).ToArray());
 
@@ -289,4 +478,7 @@ internal static class DoctorExportReleaseReadinessIndexRenderer
             .Replace("\r\n", " ", StringComparison.Ordinal)
             .Replace('\r', ' ')
             .Replace('\n', ' ');
+
+    private static string Normalize(string text) =>
+        EscapeParagraph(text);
 }
