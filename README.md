@@ -2,7 +2,7 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 277 extends the
+The project is currently in gated v0.1 implementation. Gate 280 extends the
 guarded `forge release publish` lane after Gate 269 closes the current
 `forge release prepare` lane. The release-prepare lane includes the Gate 260
 planning skeleton, Gate 261 release-plan emission, Gate 262 release-summary
@@ -36,17 +36,24 @@ local evidence paths and checksum sidecar paths, and recomputes SHA-256
 digests for expected local build-manifest outputs. It also cross-references
 `release-archive-evidence.json` output metadata to local evidence paths,
 checksum sidecar entries, and build-manifest outputs without reopening the
-archive or accepting evidence. Normal execution refuses publish
+archive. It now recomputes the archive SHA-256 and length metadata recorded
+in `release-archive-evidence.json` for the expected local archive file only,
+then reopens that expected local archive to compare entry names, entry order,
+deterministic timestamps, and stored compression metadata only. It now
+validates local release evidence semantics for kind/status contracts, output
+path maps, release-summary counters, archive-plan inputs, archive-evidence
+checks, build-manifest output sets, and no-publish execution boundaries.
+Normal execution refuses publish
 with exit code 6; `--dry-run` reports the same preflight with exit code 0.
 The preflight lists required local evidence, governance checks, explicit human
 approval, per-artifact present/missing status, well-formed/malformed shape
 status, checksum sidecar entry coverage, and build-manifest output
 cross-reference and digest status, and release-archive-evidence metadata
-cross-reference status for local release-prepare evidence. It does not
-semantically validate artifact contents, revalidate release-archive-evidence
-digests independently, reopen archives, publish releases, call remote
-repositories, upload assets, sign/attest artifacts, execute external tools,
-mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.
+cross-reference, archive digest metadata status, archive entry metadata
+status, and semantic release-evidence status for local release-prepare
+evidence. It does not validate archive payload contents, publish releases, call
+remote repositories, upload assets, sign/attest artifacts, execute external
+tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.
 Gate 258 added active build/cache lock safety for `forge clean` beside the
 existing generated, dist, cache, and manifest-confirmed all clean behavior.
 Explicit `forge clean --generated`, `forge clean --dist`,
@@ -1016,15 +1023,24 @@ cross-reference against local evidence, checksum sidecar paths, and
 build-manifest outputs. Gate 276 adds checksum sidecar digest revalidation for
 expected local release-prepare evidence files only. Gate 277 adds
 build-manifest output digest revalidation for expected local release-prepare
-evidence files only. Normal execution refuses publish until local evidence
-validation and explicit human approval exist; `--dry-run` reports the same
+evidence files only. Gate 278 adds release-archive-evidence archive SHA-256
+and length metadata revalidation for the expected local archive file only.
+Gate 279 adds release archive reopening/revalidation for entry names, entry
+order, deterministic timestamps, and stored compression metadata only.
+Gate 280 adds semantic release-evidence validation for local evidence
+kind/status contracts, output path maps, release-summary counters,
+archive-plan inputs, archive-evidence checks, build-manifest output sets, and
+no-publish execution boundaries.
+Normal execution refuses publish until local evidence
+validation, governance checks, and explicit human approval exist; `--dry-run` reports the same
 preflight with exit code 0. It reports required evidence, governance checks,
 approval requirements, per-artifact present/missing status, shape status,
 checksum sidecar coverage and digest status, build-manifest cross-reference
-and digest status, release-archive-evidence cross-reference status, and false
+and digest status, release-archive-evidence cross-reference and archive
+digest metadata status, archive entry metadata status, semantic
+release-evidence status, and false
 publish/remote/upload/signing/tool/runtime/AI execution flags. It does not
-revalidate release-archive-evidence digests independently, reopen archives,
-semantically accept release evidence, or write publish outputs.
+validate archive payload contents or write publish outputs.
 
 Gate 61 adds `forge generate --target reports` and `forge build --target
 reports`. `forge generate` writes deterministic metadata reports under

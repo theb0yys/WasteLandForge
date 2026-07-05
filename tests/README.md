@@ -1405,10 +1405,36 @@ build-manifest output digest revalidation. Tests verify expected local
 build-manifest outputs are recomputed, matched outputs report
 `matched-revalidated`, edited build-manifest output digest values report
 `mismatched-revalidated`, cross-reference mismatches remain classified
-separately, enabled build-manifest digest revalidation, and disabled
-release-archive-evidence digest revalidation, semantic evidence validation,
-archive revalidation, publish, remote, upload, signing, external-tool,
-runtime-probe, and AI execution.
+separately, enabled build-manifest digest revalidation, and disabled semantic
+evidence validation, archive revalidation, publish, remote, upload, signing,
+external-tool, runtime-probe, and AI execution.
+
+Gate 278 extends golden CLI coverage for `forge release publish`
+release-archive-evidence archive digest metadata revalidation. Tests verify
+the expected local archive file SHA-256 and length metadata are recomputed,
+matched archive metadata reports `complete-digest-revalidated`, edited
+archive SHA metadata reports `mismatch-digest-revalidated`, cross-reference
+mismatches remain classified separately, enabled archive-evidence digest
+revalidation, and disabled semantic evidence validation, archive payload
+validation, publish, remote, upload, signing, external-tool, runtime-probe,
+and AI execution.
+
+Gate 279 extends golden CLI coverage for `forge release publish` archive
+reopening/revalidation. Tests verify the expected local release archive is
+opened only after lower-layer cross-reference and digest metadata checks pass,
+entry names, entry order, deterministic timestamps, and stored compression
+metadata are reported, unexpected archive entries report
+`mismatch-archive-revalidated`, and semantic evidence validation, archive
+payload validation, publish, remote, upload, signing, external-tool,
+runtime-probe, and AI execution remain disabled.
+
+Gate 280 extends golden CLI coverage for `forge release publish` semantic
+release-evidence validation. Tests verify clean local release-prepare evidence
+reports `complete-semantic-validated`, all 15 semantic checks pass, tampered
+release-summary counters report `semantic-evidence-mismatch-validated` while
+lower checksum, build-manifest, and archive checks remain complete, and
+archive payload validation, publish, remote, upload, signing, external-tool,
+runtime-probe, and AI execution remain disabled.
 
 Run the full local suite serially:
 

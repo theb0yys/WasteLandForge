@@ -1218,9 +1218,33 @@ Gate 277 adds no new diagnostic rule ID. Release-publish build-manifest output
 digest revalidation reports matched and mismatched build-manifest output
 digests as command status fields, not diagnostics. It does not run the
 diagnostic pipeline, emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics,
-independently revalidate release-archive-evidence digests, semantically
-accept release evidence, reopen archives, inspect provider evidence, execute
+independently revalidate release-archive-evidence archive digest metadata,
+semantically accept release evidence, reopen archives, inspect provider
+evidence, execute external tools, run runtime probes, or use AI.
+
+Gate 278 adds no new diagnostic rule ID. Release-publish
+release-archive-evidence archive digest metadata revalidation reports matched
+and mismatched archive SHA-256/length metadata as command status fields, not
+diagnostics. It does not run the diagnostic pipeline, emit `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` diagnostics, semantically accept release evidence,
+reopen archives, inspect archive entries, inspect provider evidence, execute
 external tools, run runtime probes, or use AI.
+
+Gate 279 adds no new diagnostic rule ID. Release-publish archive
+reopening/revalidation reports local archive entry counts, names, ordering,
+deterministic timestamp checks, and stored compression metadata as command
+status fields, not diagnostics. It does not run the diagnostic pipeline, emit
+`WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, semantically accept
+release evidence, validate archive payload contents, inspect provider
+evidence, execute external tools, run runtime probes, or use AI.
+
+Gate 280 adds no new diagnostic rule ID. Release-publish semantic
+release-evidence validation reports local evidence contract, output map,
+summary counter, archive-plan, archive-evidence, build-manifest, and
+no-publish boundary checks as command status fields, not diagnostics. It does
+not run the diagnostic pipeline, emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*`
+diagnostics, validate archive payload contents, inspect provider evidence,
+execute external tools, run runtime probes, or use AI.
 
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

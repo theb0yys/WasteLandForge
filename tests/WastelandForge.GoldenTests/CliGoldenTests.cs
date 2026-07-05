@@ -7116,7 +7116,7 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["approval"]?["required"]);
         Assert.Equal(false, (bool?)json["approval"]?["provided"]);
         Assert.Equal("missing", (string?)json["approval"]?["status"]);
-        Assert.Equal("Release publish requires validated local governance preflight evidence and explicit human approval; Gate 277 does not publish releases.", (string?)json["refusalReason"]);
+        Assert.Equal("Release publish requires validated local governance preflight evidence and explicit human approval; Gate 280 does not publish releases.", (string?)json["refusalReason"]);
         Assert.Equal(false, (bool?)json["reportContract"]?["mutatesFilesystemInCurrentGate"]);
         Assert.Equal(true, (bool?)execution["releasePublishPreflightPlanning"]);
         Assert.Equal(false, (bool?)execution["releasePublishExecution"]);
@@ -7131,9 +7131,9 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)execution["checksumRevalidation"]);
         Assert.Equal(true, (bool?)execution["checksumDigestRevalidation"]);
         Assert.Equal(true, (bool?)execution["buildManifestDigestRevalidation"]);
-        Assert.Equal(false, (bool?)execution["archiveEvidenceDigestRevalidation"]);
-        Assert.Equal(false, (bool?)execution["semanticEvidenceValidation"]);
-        Assert.Equal(false, (bool?)execution["archiveRevalidation"]);
+        Assert.Equal(true, (bool?)execution["archiveEvidenceDigestRevalidation"]);
+        Assert.Equal(true, (bool?)execution["semanticEvidenceValidation"]);
+        Assert.Equal(true, (bool?)execution["archiveRevalidation"]);
         Assert.Equal(false, (bool?)execution["governanceCheckExecution"]);
         Assert.Equal(false, (bool?)execution["filesystemMutation"]);
         Assert.Equal(false, (bool?)execution["outputWrites"]);
@@ -7202,8 +7202,8 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["execution"]?["checksumRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["checksumDigestRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["buildManifestDigestRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["archiveRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveRevalidation"]);
         Assert.Equal(false, (bool?)json["execution"]?["filesystemMutation"]);
         Assert.Equal(false, (bool?)json["execution"]?["outputWrites"]);
         Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
@@ -7230,11 +7230,17 @@ public sealed class CliGoldenTests
         var archiveEvidenceCrossReference = json["archiveEvidenceCrossReference"] ?? throw new InvalidOperationException("Release publish JSON did not include archive evidence cross-reference.");
         var archiveEvidencePaths = archiveEvidenceCrossReference["paths"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include archive evidence paths.");
         var archiveEvidenceExpectedPaths = archiveEvidenceCrossReference["expectedPaths"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include archive evidence expected paths.");
+        var semanticEvidenceValidation = json["semanticEvidenceValidation"] ?? throw new InvalidOperationException("Release publish JSON did not include semantic evidence validation.");
+        var semanticChecks = semanticEvidenceValidation["checks"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include semantic evidence checks.");
 
         Assert.Equal(0, prepare.ExitCode);
         Assert.Equal(0, result.ExitCode);
         Assert.Equal("planned", (string?)json["status"]);
-        Assert.Equal("complete-build-manifest-digest-revalidated", (string?)json["releasePrepareEvidence"]?["status"]);
+        var plannedArchivePath = Path.Combine(projectRoot, "dist", "release-prepare", "archives", "release.zip");
+        var expectedArchiveSha256 = ComputeSha256(plannedArchivePath);
+        var expectedArchiveLength = new FileInfo(plannedArchivePath).Length;
+
+        Assert.Equal("complete-semantic-validated", (string?)json["releasePrepareEvidence"]?["status"]);
         Assert.Equal(8, (int?)json["releasePrepareEvidence"]?["expectedArtifacts"]);
         Assert.Equal(8, (int?)json["releasePrepareEvidence"]?["presentArtifacts"]);
         Assert.Equal(0, (int?)json["releasePrepareEvidence"]?["missingArtifacts"]);
@@ -7273,6 +7279,21 @@ public sealed class CliGoldenTests
         Assert.Equal(0, (int?)json["releasePrepareEvidence"]?["archiveEvidenceUnexpectedPaths"]);
         Assert.Equal(0, (int?)json["releasePrepareEvidence"]?["archiveEvidenceMalformedPaths"]);
         Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceArchivePathMatchesOutput"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceArchiveSha256MatchesLocal"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceArchiveLengthMatchesLocal"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceArchiveOpenedInCurrentGate"]);
+        Assert.Equal(4, (int?)json["releasePrepareEvidence"]?["archiveEvidenceExpectedArchiveEntries"]);
+        Assert.Equal(4, (int?)json["releasePrepareEvidence"]?["archiveEvidenceActualArchiveEntries"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceArchiveEntryCountMatchesMetadata"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceArchiveEntryNamesMatchLocal"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceArchiveEntryOrderingMatchesLocal"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceArchiveDeterministicTimestampsMatchLocal"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceArchiveStoredCompressionMatchesLocal"]);
+        Assert.Equal("complete-semantic-validated", (string?)json["releasePrepareEvidence"]?["semanticEvidenceStatus"]);
+        Assert.Equal(15, (int?)json["releasePrepareEvidence"]?["semanticEvidenceExpectedChecks"]);
+        Assert.Equal(15, (int?)json["releasePrepareEvidence"]?["semanticEvidencePassedChecks"]);
+        Assert.Equal(0, (int?)json["releasePrepareEvidence"]?["semanticEvidenceFailedChecks"]);
+        Assert.Equal(0, (int?)json["releasePrepareEvidence"]?["semanticEvidenceSkippedChecks"]);
         Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["artifactPathChecksInCurrentGate"]);
         Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["artifactReadsInCurrentGate"]);
         Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["contentShapeClassificationInCurrentGate"]);
@@ -7281,6 +7302,9 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["buildManifestOutputCrossReferenceInCurrentGate"]);
         Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["buildManifestDigestRevalidationInCurrentGate"]);
         Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceMetadataCrossReferenceInCurrentGate"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceDigestRevalidationInCurrentGate"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceArchiveRevalidationInCurrentGate"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["semanticEvidenceValidationInCurrentGate"]);
         Assert.Equal("dist/release-prepare/checksums.sha256", (string?)checksumSidecar["path"]);
         Assert.Equal(true, (bool?)checksumSidecar["exists"]);
         Assert.Equal("complete-digest-revalidated", (string?)checksumSidecar["status"]);
@@ -7303,7 +7327,7 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)checksumExpectedPaths[0]?["entryPresent"]);
         Assert.Equal(true, (bool?)checksumExpectedPaths[0]?["localFilePresent"]);
         Assert.Equal(true, (bool?)checksumExpectedPaths[0]?["digestRevalidatedInCurrentGate"]);
-        Assert.Equal(ComputeSha256(Path.Combine(projectRoot, "dist", "release-prepare", "archives", "release.zip")), (string?)checksumExpectedPaths[0]?["expectedSha256"]);
+        Assert.Equal(expectedArchiveSha256, (string?)checksumExpectedPaths[0]?["expectedSha256"]);
         Assert.Equal((string?)checksumExpectedPaths[0]?["expectedSha256"], (string?)checksumExpectedPaths[0]?["actualSha256"]);
         Assert.Equal(7, checksumEntries.Count);
         Assert.Equal("archives/release.zip", (string?)checksumEntries[0]?["path"]);
@@ -7340,7 +7364,7 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)buildManifestExpectedPaths[0]?["localArtifactPresent"]);
         Assert.Equal(true, (bool?)buildManifestExpectedPaths[0]?["checksumEntryPresent"]);
         Assert.Equal(true, (bool?)buildManifestExpectedPaths[0]?["digestRevalidatedInCurrentGate"]);
-        Assert.Equal(ComputeSha256(Path.Combine(projectRoot, "dist", "release-prepare", "archives", "release.zip")), (string?)buildManifestExpectedPaths[0]?["expectedSha256"]);
+        Assert.Equal(expectedArchiveSha256, (string?)buildManifestExpectedPaths[0]?["expectedSha256"]);
         Assert.Equal((string?)buildManifestExpectedPaths[0]?["expectedSha256"], (string?)buildManifestExpectedPaths[0]?["actualSha256"]);
         Assert.Equal(6, buildManifestOutputs.Count);
         Assert.Equal("dist/release-prepare/archives/release.zip", (string?)buildManifestOutputs[0]?["path"]);
@@ -7354,11 +7378,13 @@ public sealed class CliGoldenTests
         Assert.Equal((string?)buildManifestOutputs[0]?["sha256"], (string?)buildManifestOutputs[0]?["actualSha256"]);
         Assert.Equal("dist/release-prepare/release-archive-evidence.json", (string?)archiveEvidenceCrossReference["path"]);
         Assert.Equal(true, (bool?)archiveEvidenceCrossReference["exists"]);
-        Assert.Equal("complete-cross-referenced-not-revalidated", (string?)archiveEvidenceCrossReference["status"]);
+        var archiveEntries = archiveEvidenceCrossReference["archiveEntries"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include archive entries.");
+
+        Assert.Equal("complete-archive-revalidated", (string?)archiveEvidenceCrossReference["status"]);
         Assert.Equal(true, (bool?)archiveEvidenceCrossReference["metadataCrossReferenceInCurrentGate"]);
         Assert.Equal(true, (bool?)archiveEvidenceCrossReference["contentReadInCurrentGate"]);
-        Assert.Equal(false, (bool?)archiveEvidenceCrossReference["digestRevalidationInCurrentGate"]);
-        Assert.Equal(false, (bool?)archiveEvidenceCrossReference["archiveRevalidationInCurrentGate"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["digestRevalidationInCurrentGate"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveRevalidationInCurrentGate"]);
         Assert.Equal(6, (int?)archiveEvidenceCrossReference["expectedPathCount"]);
         Assert.Equal(6, (int?)archiveEvidenceCrossReference["parsedPaths"]);
         Assert.Equal(6, (int?)archiveEvidenceCrossReference["coveredExpectedPaths"]);
@@ -7371,6 +7397,32 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archivePathMatchesOutput"]);
         Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveSha256MetadataPresent"]);
         Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveLengthMetadataPresent"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveSha256MatchesLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveLengthMatchesLocal"]);
+        Assert.Equal(expectedArchiveSha256, (string?)archiveEvidenceCrossReference["expectedArchiveSha256"]);
+        Assert.Equal(expectedArchiveSha256, (string?)archiveEvidenceCrossReference["actualArchiveSha256"]);
+        Assert.Equal(expectedArchiveLength, (long?)archiveEvidenceCrossReference["expectedArchiveLength"]);
+        Assert.Equal(expectedArchiveLength, (long?)archiveEvidenceCrossReference["actualArchiveLength"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveOpenedInCurrentGate"]);
+        Assert.Equal(4, (int?)archiveEvidenceCrossReference["expectedArchiveEntries"]);
+        Assert.Equal(4, (int?)archiveEvidenceCrossReference["evidenceActualArchiveEntries"]);
+        Assert.Equal(4, (int?)archiveEvidenceCrossReference["actualArchiveEntries"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveEntryCountMatchesMetadata"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveEntryNamesMatchLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveEvidenceActualEntryNamesMatchLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveEntryOrderingMatchesLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveDeterministicTimestampsMatchLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveStoredCompressionMatchesLocal"]);
+        Assert.Equal("zip-archive-opened-and-entry-metadata-revalidated", (string?)archiveEvidenceCrossReference["archiveRevalidationDetail"]);
+        Assert.Equal(4, archiveEntries.Count);
+        Assert.Equal(0, (int?)archiveEntries[0]?["index"]);
+        Assert.Equal("release-archive-plan.json", (string?)archiveEntries[0]?["path"]);
+        Assert.Equal("matched-revalidated", (string?)archiveEntries[0]?["status"]);
+        Assert.Equal(true, (bool?)archiveEntries[0]?["expectedPath"]);
+        Assert.Equal(true, (bool?)archiveEntries[0]?["expectedAtIndex"]);
+        Assert.Equal(true, (bool?)archiveEntries[0]?["evidenceActualAtIndex"]);
+        Assert.Equal(true, (bool?)archiveEntries[0]?["timestampMatches"]);
+        Assert.Equal(true, (bool?)archiveEntries[0]?["stored"]);
         Assert.Equal(6, archiveEvidenceExpectedPaths.Count);
         Assert.Equal("releaseArchive", (string?)archiveEvidenceExpectedPaths[0]?["role"]);
         Assert.Equal("dist/release-prepare/archives/release.zip", (string?)archiveEvidenceExpectedPaths[0]?["path"]);
@@ -7391,6 +7443,18 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)archiveEvidencePaths[0]?["buildManifestOutputPresent"]);
         Assert.Equal(false, (bool?)archiveEvidencePaths[0]?["digestRevalidatedInCurrentGate"]);
         Assert.Equal(false, (bool?)archiveEvidencePaths[0]?["archiveRevalidatedInCurrentGate"]);
+        Assert.Equal("complete-semantic-validated", (string?)semanticEvidenceValidation["status"]);
+        Assert.Equal(true, (bool?)semanticEvidenceValidation["validationInCurrentGate"]);
+        Assert.Equal(true, (bool?)semanticEvidenceValidation["contentReadInCurrentGate"]);
+        Assert.Equal(15, (int?)semanticEvidenceValidation["expectedChecks"]);
+        Assert.Equal(15, (int?)semanticEvidenceValidation["passedChecks"]);
+        Assert.Equal(0, (int?)semanticEvidenceValidation["failedChecks"]);
+        Assert.Equal(0, (int?)semanticEvidenceValidation["skippedChecks"]);
+        Assert.Equal("semantic-release-evidence-validated", (string?)semanticEvidenceValidation["detail"]);
+        Assert.Equal(15, semanticChecks.Count);
+        Assert.All(semanticChecks, check => Assert.Equal("passed", (string?)check?["status"]));
+        Assert.Equal("release-summary-counts", (string?)semanticChecks[8]?["id"]);
+        Assert.Equal("release-summary-counts-validated", (string?)semanticChecks[8]?["detail"]);
         Assert.Equal(8, artifacts.Count);
         Assert.Equal("release-prepare-staging-payload", (string?)artifacts[0]?["id"]);
         Assert.Equal("json", (string?)artifacts[0]?["contentKind"]);
@@ -7413,9 +7477,11 @@ public sealed class CliGoldenTests
         Assert.Equal("sha256", (string?)artifacts[7]?["contentKind"]);
         Assert.Equal("well-formed-not-validated", (string?)artifacts[7]?["status"]);
         Assert.Equal("sha256-lines", (string?)artifacts[7]?["shapeDetail"]);
+        Assert.Equal("complete-semantic-validated", (string?)json["requiredEvidence"]?[1]?["status"]);
+        Assert.Equal(true, (bool?)json["requiredEvidence"]?[1]?["checkedInCurrentGate"]);
         Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[5]?["status"]);
         Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[6]?["status"]);
-        Assert.Equal("complete-cross-referenced-not-revalidated", (string?)json["requiredEvidence"]?[7]?["status"]);
+        Assert.Equal("complete-archive-revalidated", (string?)json["requiredEvidence"]?[7]?["status"]);
         Assert.Equal(true, (bool?)json["execution"]?["evidenceArtifactPathCheck"]);
         Assert.Equal(true, (bool?)json["execution"]?["evidenceArtifactRead"]);
         Assert.Equal(true, (bool?)json["execution"]?["artifactExistenceCheck"]);
@@ -7426,9 +7492,71 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["execution"]?["checksumRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["checksumDigestRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["buildManifestDigestRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["semanticEvidenceValidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["archiveRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["semanticEvidenceValidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveRevalidation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunReportsSemanticEvidenceMismatchWithoutPublishing()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-publish-preflight");
+        Directory.CreateDirectory(projectRoot);
+        var prepare = RunCli("release", "prepare", projectRoot, "--format", "json", "--no-input");
+        var releaseSummaryPath = Path.Combine(projectRoot, "dist", "release-prepare", "release-summary.json");
+        var buildManifestPath = Path.Combine(projectRoot, "dist", "release-prepare", "build-manifest.json");
+        var checksumsPath = Path.Combine(projectRoot, "dist", "release-prepare", "checksums.sha256");
+        var releaseSummary = JsonNode.Parse(File.ReadAllText(releaseSummaryPath)) as JsonObject
+            ?? throw new InvalidOperationException("Release summary did not parse.");
+        var summary = releaseSummary["summary"] as JsonObject
+            ?? throw new InvalidOperationException("Release summary counters did not parse.");
+        summary["writtenOutputs"] = 7;
+        File.WriteAllText(releaseSummaryPath, releaseSummary.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        RefreshBuildManifestOutputDigest(
+            buildManifestPath,
+            "dist/release-prepare/release-summary.json",
+            releaseSummaryPath);
+        RefreshChecksumEntrySha256(
+            checksumsPath,
+            "release-summary.json",
+            releaseSummaryPath);
+        RefreshChecksumEntrySha256(
+            checksumsPath,
+            "build-manifest.json",
+            buildManifestPath);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var semanticEvidenceValidation = json["semanticEvidenceValidation"] ?? throw new InvalidOperationException("Release publish JSON did not include semantic evidence validation.");
+        var semanticChecks = semanticEvidenceValidation["checks"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include semantic evidence checks.");
+        var releaseSummaryCounts = semanticChecks.Single(check => StringComparer.Ordinal.Equals("release-summary-counts", (string?)check?["id"]));
+
+        Assert.Equal(0, prepare.ExitCode);
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("semantic-evidence-mismatch-validated", (string?)json["releasePrepareEvidence"]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["checksumSidecar"]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["buildManifestCrossReference"]?["status"]);
+        Assert.Equal("complete-archive-revalidated", (string?)json["archiveEvidenceCrossReference"]?["status"]);
+        Assert.Equal("mismatch-semantic-validated", (string?)semanticEvidenceValidation["status"]);
+        Assert.Equal(true, (bool?)semanticEvidenceValidation["validationInCurrentGate"]);
+        Assert.Equal(true, (bool?)semanticEvidenceValidation["contentReadInCurrentGate"]);
+        Assert.Equal(15, (int?)semanticEvidenceValidation["expectedChecks"]);
+        Assert.Equal(14, (int?)semanticEvidenceValidation["passedChecks"]);
+        Assert.Equal(1, (int?)semanticEvidenceValidation["failedChecks"]);
+        Assert.Equal(0, (int?)semanticEvidenceValidation["skippedChecks"]);
+        Assert.Equal("semantic-release-evidence-mismatch", (string?)semanticEvidenceValidation["detail"]);
+        Assert.Equal("failed", (string?)releaseSummaryCounts?["status"]);
+        Assert.Equal("release-summary-counts-mismatch", (string?)releaseSummaryCounts?["detail"]);
+        Assert.Equal("mismatch-semantic-validated", (string?)json["requiredEvidence"]?[1]?["status"]);
+        Assert.Equal(true, (bool?)json["requiredEvidence"]?[1]?["checkedInCurrentGate"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[5]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[6]?["status"]);
+        Assert.Equal("complete-archive-revalidated", (string?)json["requiredEvidence"]?[7]?["status"]);
+        Assert.Equal(true, (bool?)json["execution"]?["semanticEvidenceValidation"]);
         Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
         Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
         Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
@@ -7462,8 +7590,8 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["execution"]?["checksumRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["checksumDigestRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["buildManifestDigestRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["semanticEvidenceValidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["archiveRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["semanticEvidenceValidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveRevalidation"]);
         Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
@@ -7561,9 +7689,143 @@ public sealed class CliGoldenTests
         Assert.Equal("mismatch-digest-revalidated", (string?)json["requiredEvidence"]?[5]?["status"]);
         Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[6]?["status"]);
         Assert.Equal(true, (bool?)json["execution"]?["buildManifestDigestRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["archiveRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["semanticEvidenceValidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["semanticEvidenceValidation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunRevalidatesArchiveEvidenceDigestMismatchWithoutPublishing()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-publish-preflight");
+        Directory.CreateDirectory(projectRoot);
+        var prepare = RunCli("release", "prepare", projectRoot, "--format", "json", "--no-input");
+        var archiveEvidencePath = Path.Combine(projectRoot, "dist", "release-prepare", "release-archive-evidence.json");
+        var buildManifestPath = Path.Combine(projectRoot, "dist", "release-prepare", "build-manifest.json");
+        var checksumsPath = Path.Combine(projectRoot, "dist", "release-prepare", "checksums.sha256");
+        var archivePath = Path.Combine(projectRoot, "dist", "release-prepare", "archives", "release.zip");
+        var expectedArchiveSha256 = ComputeSha256(archivePath);
+        var expectedArchiveLength = new FileInfo(archivePath).Length;
+        RewriteArchiveSha256(archiveEvidencePath, new string('0', 64));
+        RefreshBuildManifestOutputDigest(
+            buildManifestPath,
+            "dist/release-prepare/release-archive-evidence.json",
+            archiveEvidencePath);
+        RefreshChecksumEntrySha256(
+            checksumsPath,
+            "release-archive-evidence.json",
+            archiveEvidencePath);
+        RefreshChecksumEntrySha256(
+            checksumsPath,
+            "build-manifest.json",
+            buildManifestPath);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var archiveEvidenceCrossReference = json["archiveEvidenceCrossReference"] ?? throw new InvalidOperationException("Release publish JSON did not include archive evidence cross-reference.");
+
+        Assert.Equal(0, prepare.ExitCode);
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("release-archive-evidence-digest-mismatch-revalidated", (string?)json["releasePrepareEvidence"]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["checksumSidecar"]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["buildManifestCrossReference"]?["status"]);
+        Assert.Equal("mismatch-digest-revalidated", (string?)archiveEvidenceCrossReference["status"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["digestRevalidationInCurrentGate"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveRevalidationInCurrentGate"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archivePathMatchesOutput"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveSha256MetadataPresent"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveLengthMetadataPresent"]);
+        Assert.Equal(false, (bool?)archiveEvidenceCrossReference["archiveSha256MatchesLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveLengthMatchesLocal"]);
+        Assert.Equal(new string('0', 64), (string?)archiveEvidenceCrossReference["expectedArchiveSha256"]);
+        Assert.Equal(expectedArchiveSha256, (string?)archiveEvidenceCrossReference["actualArchiveSha256"]);
+        Assert.Equal(expectedArchiveLength, (long?)archiveEvidenceCrossReference["expectedArchiveLength"]);
+        Assert.Equal(expectedArchiveLength, (long?)archiveEvidenceCrossReference["actualArchiveLength"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[5]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[6]?["status"]);
+        Assert.Equal("mismatch-digest-revalidated", (string?)json["requiredEvidence"]?[7]?["status"]);
+        Assert.Equal(true, (bool?)json["execution"]?["checksumDigestRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["buildManifestDigestRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["semanticEvidenceValidation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunRevalidatesArchiveEntryMismatchWithoutPublishing()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-publish-preflight");
+        Directory.CreateDirectory(projectRoot);
+        var prepare = RunCli("release", "prepare", projectRoot, "--format", "json", "--no-input");
+        var archivePath = Path.Combine(projectRoot, "dist", "release-prepare", "archives", "release.zip");
+        var archiveEvidencePath = Path.Combine(projectRoot, "dist", "release-prepare", "release-archive-evidence.json");
+        var buildManifestPath = Path.Combine(projectRoot, "dist", "release-prepare", "build-manifest.json");
+        var checksumsPath = Path.Combine(projectRoot, "dist", "release-prepare", "checksums.sha256");
+        AddUnexpectedReleaseArchiveEntry(archivePath);
+        RefreshArchiveEvidenceArchiveMetadata(archiveEvidencePath, archivePath);
+        RefreshBuildManifestOutputDigest(
+            buildManifestPath,
+            "dist/release-prepare/archives/release.zip",
+            archivePath);
+        RefreshBuildManifestOutputDigest(
+            buildManifestPath,
+            "dist/release-prepare/release-archive-evidence.json",
+            archiveEvidencePath);
+        RefreshChecksumEntrySha256(
+            checksumsPath,
+            "archives/release.zip",
+            archivePath);
+        RefreshChecksumEntrySha256(
+            checksumsPath,
+            "release-archive-evidence.json",
+            archiveEvidencePath);
+        RefreshChecksumEntrySha256(
+            checksumsPath,
+            "build-manifest.json",
+            buildManifestPath);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var archiveEvidenceCrossReference = json["archiveEvidenceCrossReference"] ?? throw new InvalidOperationException("Release publish JSON did not include archive evidence cross-reference.");
+        var archiveEntries = archiveEvidenceCrossReference["archiveEntries"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include archive entries.");
+        var unexpectedEntry = archiveEntries.Single(entry => StringComparer.Ordinal.Equals("unexpected-release-note.txt", (string?)entry?["path"]));
+
+        Assert.Equal(0, prepare.ExitCode);
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("release-archive-evidence-archive-mismatch-revalidated", (string?)json["releasePrepareEvidence"]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["checksumSidecar"]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["buildManifestCrossReference"]?["status"]);
+        Assert.Equal("mismatch-archive-revalidated", (string?)archiveEvidenceCrossReference["status"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveSha256MatchesLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveLengthMatchesLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveRevalidationInCurrentGate"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveOpenedInCurrentGate"]);
+        Assert.Equal(4, (int?)archiveEvidenceCrossReference["expectedArchiveEntries"]);
+        Assert.Equal(4, (int?)archiveEvidenceCrossReference["evidenceActualArchiveEntries"]);
+        Assert.Equal(5, (int?)archiveEvidenceCrossReference["actualArchiveEntries"]);
+        Assert.Equal(false, (bool?)archiveEvidenceCrossReference["archiveEntryCountMatchesMetadata"]);
+        Assert.Equal(false, (bool?)archiveEvidenceCrossReference["archiveEntryNamesMatchLocal"]);
+        Assert.Equal(false, (bool?)archiveEvidenceCrossReference["archiveEvidenceActualEntryNamesMatchLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveEntryOrderingMatchesLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveDeterministicTimestampsMatchLocal"]);
+        Assert.Equal(true, (bool?)archiveEvidenceCrossReference["archiveStoredCompressionMatchesLocal"]);
+        Assert.Equal(5, archiveEntries.Count);
+        Assert.Equal("unexpected-not-revalidated", (string?)unexpectedEntry?["status"]);
+        Assert.Equal(false, (bool?)unexpectedEntry?["expectedPath"]);
+        Assert.Equal(false, (bool?)unexpectedEntry?["expectedAtIndex"]);
+        Assert.Equal(false, (bool?)unexpectedEntry?["evidenceActualAtIndex"]);
+        Assert.Equal(true, (bool?)unexpectedEntry?["timestampMatches"]);
+        Assert.Equal(true, (bool?)unexpectedEntry?["stored"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[5]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[6]?["status"]);
+        Assert.Equal("mismatch-archive-revalidated", (string?)json["requiredEvidence"]?[7]?["status"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["semanticEvidenceValidation"]);
         Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
@@ -7674,7 +7936,7 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["execution"]?["buildManifestOutputCrossReference"]);
         Assert.Equal(true, (bool?)json["execution"]?["buildManifestDigestRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["checksumDigestRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["semanticEvidenceValidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["semanticEvidenceValidation"]);
         Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
@@ -7749,9 +8011,9 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["execution"]?["archiveEvidenceMetadataCrossReference"]);
         Assert.Equal(true, (bool?)json["execution"]?["checksumDigestRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["buildManifestDigestRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["archiveRevalidation"]);
-        Assert.Equal(false, (bool?)json["execution"]?["semanticEvidenceValidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["archiveRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["semanticEvidenceValidation"]);
         Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
@@ -7763,12 +8025,12 @@ public sealed class CliGoldenTests
 
         Assert.Equal(0, result.ExitCode);
         Assert.Contains("forge release publish", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Gate 277 reports a no-publish governance preflight with local release-prepare evidence shape classification, checksum sidecar entry coverage and digest revalidation, build-manifest output cross-reference and digest revalidation, and release-archive-evidence metadata cross-reference.", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("It checks expected release-prepare evidence path existence, parses JSON evidence for well-formed shape, parses checksums.sha256 entries for expected-path coverage, recomputes SHA-256 for expected local checksum entries, cross-references build-manifest outputs to local evidence and checksum sidecar paths, recomputes SHA-256 for expected local build-manifest outputs, and cross-references release-archive-evidence output metadata to local evidence, checksum sidecar paths, and build-manifest outputs only:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Gate 280 reports a no-publish governance preflight with local release-prepare evidence shape classification, checksum sidecar entry coverage and digest revalidation, build-manifest output cross-reference and digest revalidation, release-archive-evidence metadata cross-reference, archive digest metadata revalidation, archive entry metadata revalidation, and semantic release-evidence validation.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("It checks expected release-prepare evidence path existence, parses JSON evidence for well-formed shape, parses checksums.sha256 entries for expected-path coverage, recomputes SHA-256 for expected local checksum entries, cross-references build-manifest outputs to local evidence and checksum sidecar paths, recomputes SHA-256 for expected local build-manifest outputs, cross-references release-archive-evidence output metadata, recomputes archive sha256 and length metadata, reopens the expected local archive to compare entry names, entry order, deterministic timestamps, and stored compression metadata, and validates local evidence kind/status contracts, output path maps, release-summary counters, archive-plan inputs, archive-evidence checks, build-manifest output sets, and no-publish execution boundaries:", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("release-archive-evidence.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("schema validation, semantic validation, capability/environment validation, package validation, release verification", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("dist/release-prepare/", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("It does not recompute or revalidate release-archive-evidence digests independently, semantically accept release evidence, reopen or validate release archives, publish releases, call remote repositories, upload assets, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("It does not validate archive payload contents, publish releases, call remote repositories, upload assets, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -9208,6 +9470,27 @@ public sealed class CliGoldenTests
             ?? throw new InvalidOperationException($"Archive evidence '{path}' did not include archive metadata.");
         archive["sha256"] = sha256;
         File.WriteAllText(path, json.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static void RefreshArchiveEvidenceArchiveMetadata(string archiveEvidencePath, string archivePath)
+    {
+        var json = JsonNode.Parse(File.ReadAllText(archiveEvidencePath)) as JsonObject
+            ?? throw new InvalidOperationException($"Archive evidence '{archiveEvidencePath}' did not parse.");
+        var archive = json["archive"] as JsonObject
+            ?? throw new InvalidOperationException($"Archive evidence '{archiveEvidencePath}' did not include archive metadata.");
+        archive["sha256"] = ComputeSha256(archivePath);
+        archive["length"] = new FileInfo(archivePath).Length;
+        File.WriteAllText(archiveEvidencePath, json.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static void AddUnexpectedReleaseArchiveEntry(string archivePath)
+    {
+        using var archive = ZipFile.Open(archivePath, ZipArchiveMode.Update);
+        var entry = archive.CreateEntry("unexpected-release-note.txt", CompressionLevel.NoCompression);
+        entry.LastWriteTime = new DateTimeOffset(1980, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        using var stream = entry.Open();
+        using var writer = new StreamWriter(stream);
+        writer.Write("unexpected release archive entry");
     }
 
     private static void RewriteArchiveEvidenceAsNotCreated(string path, bool includeValidation)

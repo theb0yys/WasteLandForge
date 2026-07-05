@@ -729,6 +729,32 @@ build-manifest output digest revalidation reports expected local
 build-manifest outputs whose SHA-256 values match or mismatch in command
 output only and does not emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*`
 diagnostics, semantically validate release evidence, independently revalidate
-release-archive-evidence digests, reopen archives, execute external tools,
+release-archive-evidence archive digest metadata, reopen archives, execute
+external tools, run runtime probes, call remote repositories, upload release
+assets, or use AI.
+
+Gate 278 adds no new rule family or diagnostic ID. Release-publish
+release-archive-evidence archive digest metadata revalidation reports whether
+the expected local archive SHA-256 and length match release-archive-evidence
+metadata in command output only and does not emit `WF-REL-*`, `WF-GOV-*`, or
+`WF-SEC-*` diagnostics, semantically validate release evidence, reopen
+archives, inspect archive entries, execute external tools, run runtime probes,
+call remote repositories, upload release assets, or use AI.
+
+Gate 279 adds no new rule family or diagnostic ID. Release-publish archive
+reopening/revalidation reports whether the expected local archive entry
+names, entry order, deterministic timestamps, and stored compression metadata
+match release-archive-evidence metadata in command output only and does not
+emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, semantically validate
+release evidence, validate archive payload contents, execute external tools,
 run runtime probes, call remote repositories, upload release assets, or use
 AI.
+
+Gate 280 adds no new rule family or diagnostic ID. Release-publish semantic
+release-evidence validation reports local evidence contract checks, output map
+checks, release-summary counter checks, archive-plan checks,
+archive-evidence checks, build-manifest output set checks, and no-publish
+execution-boundary checks in command output only and does not emit
+`WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, validate archive payload
+contents, execute external tools, run runtime probes, call remote
+repositories, upload release assets, or use AI.

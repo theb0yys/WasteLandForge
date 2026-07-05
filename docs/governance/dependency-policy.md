@@ -1150,3 +1150,24 @@ digest revalidation uses built-in .NET file and SHA-256 APIs already available
 to the CLI. It does not add archive validation dependencies, publishing
 clients, repository API clients, signing or attestation dependencies, external
 tool integrations, network calls, runtime probes, or AI requirements.
+
+Gate 278 adds no package dependency. Release-publish release-archive-evidence
+archive digest metadata revalidation uses built-in .NET file, file length, and
+SHA-256 APIs already available to the CLI. It does not add archive validation
+dependencies, publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, or AI requirements.
+
+Gate 279 adds no package dependency. Release-publish archive
+reopening/revalidation uses built-in .NET ZIP, file, and JSON APIs already
+available to the CLI. It does not add archive validation dependencies,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, or
+AI requirements.
+
+Gate 280 adds no package dependency. Release-publish semantic
+release-evidence validation uses built-in .NET JSON and file APIs already
+available to the CLI. It does not add schema validators, archive payload
+validation dependencies, publishing clients, repository API clients, signing
+or attestation dependencies, external tool integrations, network calls,
+runtime probes, or AI requirements.

@@ -918,9 +918,14 @@ governance preflight skeleton, Gate 271 implements local release-publish
 evidence path discovery, and Gate 272 implements local evidence content-shape
 classification, Gate 273 implements checksum sidecar entry classification,
 Gate 274 implements build-manifest output cross-reference, and Gate 275
-implements release-archive-evidence metadata cross-reference. Route the next
-implementation slice to Gate 276: forge release publish checksum sidecar
-digest revalidation, still with no publish behavior.
+implements release-archive-evidence metadata cross-reference, Gate 276
+implements checksum sidecar digest revalidation, Gate 277 implements
+build-manifest output digest revalidation, Gate 278 implements
+release-archive-evidence archive digest metadata revalidation, Gate 279
+implements release archive reopening/revalidation, and Gate 280 implements
+semantic release-evidence validation. Route the next implementation slice to
+Gate 281: forge release publish governance-check evaluation skeleton, still
+with no publish behavior.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -972,9 +977,14 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   implements local evidence content-shape classification, Gate 273 implements
   checksum sidecar entry classification, Gate 274 implements build-manifest
   output cross-reference, and Gate 275 implements release-archive-evidence
-  metadata cross-reference. Route the next implementation slice to Gate 276:
-  forge release publish checksum sidecar digest revalidation, still with no
-  publish behavior.
+  metadata cross-reference, Gate 276 implements checksum sidecar digest
+  revalidation, Gate 277 implements build-manifest output digest
+  revalidation, Gate 278 implements release-archive-evidence archive digest
+  metadata revalidation, Gate 279 implements release archive
+  reopening/revalidation, and Gate 280 implements semantic release-evidence
+  validation. Route the next implementation slice to Gate 281: forge release
+  publish governance-check evaluation skeleton, still with no publish
+  behavior.
 
 ## Required output
 

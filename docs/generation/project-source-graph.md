@@ -214,7 +214,27 @@ artifacts, call external tools, run runtime probes, or use AI.
 Gate 275 adds release-publish release-archive-evidence metadata
 cross-reference, but `forge graph` still does not execute release prepare,
 execute release publish, revalidate checksum digests, revalidate
-build-manifest digests, revalidate release-archive-evidence digests, reopen
-archives, assemble FOMOD payloads, publish releases, call remote repositories,
-upload assets, sign or attest artifacts, call external tools, run runtime
-probes, or use AI.
+build-manifest digests, revalidate release-archive-evidence archive digest
+metadata, reopen archives, assemble FOMOD payloads, publish releases, call
+remote repositories, upload assets, sign or attest artifacts, call external
+tools, run runtime probes, or use AI.
+
+Gate 278 adds release-publish release-archive-evidence archive digest metadata
+revalidation, but `forge graph` still does not execute release prepare,
+execute release publish, semantically validate release evidence, reopen
+archives, inspect archive entries, assemble FOMOD payloads, publish releases,
+call remote repositories, upload assets, sign or attest artifacts, call
+external tools, run runtime probes, or use AI.
+
+Gate 279 adds release-publish archive reopening/revalidation, but `forge
+graph` still does not execute release prepare, execute release publish,
+semantically validate release evidence, validate archive payload contents,
+assemble FOMOD payloads, publish releases, call remote repositories, upload
+assets, sign or attest artifacts, call external tools, run runtime probes, or
+use AI.
+
+Gate 280 adds release-publish semantic release-evidence validation, but
+`forge graph` still does not execute release prepare, execute release publish,
+validate archive payload contents, assemble FOMOD payloads, publish releases,
+call remote repositories, upload assets, sign or attest artifacts, call
+external tools, run runtime probes, or use AI.

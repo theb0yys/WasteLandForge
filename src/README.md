@@ -1620,16 +1620,24 @@ cross-reference against local evidence, checksum sidecar paths, and
 build-manifest outputs without archive or digest revalidation. Gate 276 adds
 checksum sidecar digest revalidation for expected local release-prepare
 evidence files only. Gate 277 adds build-manifest output digest revalidation
-for expected local release-prepare evidence files only. Normal execution
-refuses publish with exit code 6, `--dry-run` reports the preflight with exit
-code 0, and JSON/text output lists required
+for expected local release-prepare evidence files only. Gate 278 adds
+release-archive-evidence archive SHA-256 and length metadata revalidation for
+the expected local archive file only. Gate 279 adds release archive
+reopening/revalidation for entry names, entry order, deterministic timestamps,
+and stored compression metadata only. Gate 280 adds semantic release-evidence
+validation for local evidence kind/status contracts, output path maps,
+release-summary counters, archive-plan inputs, archive-evidence checks,
+build-manifest output sets, and no-publish execution boundaries. Normal
+execution refuses publish with
+exit code 6, `--dry-run` reports the preflight with exit code 0, and JSON/text output lists required
 local evidence, per-artifact present/missing status,
 well-formed/malformed/unclassified shape status, checksum sidecar coverage and
 digest status, build-manifest cross-reference and digest status,
-release-archive-evidence cross-reference status, governance checks, missing
-human approval, and false publish/remote/upload/signing/tool/runtime/AI
-execution flags.
+release-archive-evidence cross-reference, archive digest metadata status, and
+archive entry metadata status, semantic release-evidence status, governance
+checks, missing human approval, and false
+publish/remote/upload/signing/tool/runtime/AI execution flags.
 Release-prepare backlog items such as real payload staging, FOMOD installer
-assembly, semantic evidence validation, checksum revalidation,
-signing/attestation material, external tools, MO2/GECK automation, runtime
-probes, and AI remain parked unless explicitly reopened.
+assembly, archive payload validation, signing/attestation material, external
+tools, MO2/GECK automation, runtime probes, and AI remain parked unless
+explicitly reopened.

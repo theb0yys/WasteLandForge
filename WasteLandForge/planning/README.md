@@ -280,9 +280,14 @@ Gate status:
 - `gates/gate-273-forge-release-publish-checksum-sidecar-entry-classification.md` - Gate 273, `forge release publish` checksum sidecar entry classification and expected-path coverage, still no-publish and no digest revalidation.
 - `gates/gate-274-forge-release-publish-build-manifest-cross-reference.md` - Gate 274, `forge release publish` build-manifest output cross-reference against local evidence and checksum sidecar paths, still no-publish and no digest revalidation.
 - `gates/gate-275-forge-release-publish-archive-evidence-cross-reference.md` - Gate 275, `forge release publish` release-archive-evidence metadata cross-reference against local evidence, checksum sidecar paths, and build-manifest outputs, still no-publish and no digest or archive revalidation.
+- `gates/gate-276-forge-release-publish-checksum-digest-revalidation.md` - Gate 276, `forge release publish` checksum sidecar digest revalidation for expected local release-prepare evidence files, still no-publish.
+- `gates/gate-277-forge-release-publish-build-manifest-digest-revalidation.md` - Gate 277, `forge release publish` build-manifest output digest revalidation for expected local release-prepare evidence files, still no-publish.
+- `gates/gate-278-forge-release-publish-archive-evidence-digest-metadata-revalidation.md` - Gate 278, `forge release publish` release-archive-evidence archive SHA-256 and length metadata revalidation for the expected local archive file, still no-publish and no archive reopening.
+- `gates/gate-279-forge-release-publish-archive-revalidation.md` - Gate 279, `forge release publish` release archive reopening/revalidation for entry names, entry order, deterministic timestamps, and stored compression metadata, still no-publish and no payload content validation.
+- `gates/gate-280-forge-release-publish-semantic-evidence-validation.md` - Gate 280, `forge release publish` semantic release-evidence validation for local release-prepare evidence contracts, output maps, counters, archive-plan inputs, archive-evidence checks, build-manifest output sets, and no-publish execution boundaries, still no-publish and no archive payload validation.
 
 Next gate:
 
-- Gate 276 - `forge release publish` checksum sidecar digest revalidation skeleton, still no-publish by default, stopping before build-manifest digest revalidation, archive reopening/revalidation, semantic evidence validation, remote repository calls, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 281 - `forge release publish` governance check evaluation skeleton, still no-publish by default, stopping before remote repository calls, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

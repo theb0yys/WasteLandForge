@@ -96,7 +96,35 @@ Gate 277 adds build-manifest output digest revalidation to the same no-publish
 preflight. It recomputes SHA-256 for expected `build-manifest.json` output
 entries whose local release-prepare evidence files exist, reports matched and
 mismatched build-manifest output digests, and still refuses real publish. It
-does not independently revalidate `release-archive-evidence.json` digest
-metadata, semantically validate evidence, reopen archives, call remote
+does not independently revalidate `release-archive-evidence.json` archive
+digest metadata, semantically validate evidence, reopen archives, call remote
 repositories, upload releases, sign or attest artifacts, execute external
 tools, run runtime probes, or use AI.
+
+Gate 278 adds release-archive-evidence archive digest metadata revalidation to
+the same no-publish preflight. It recomputes SHA-256 and length for the
+expected local `dist/release-prepare/archives/release.zip` file and compares
+those values to `release-archive-evidence.json` archive metadata. It still
+refuses real publish and does not semantically validate evidence, reopen
+archives, inspect archive entries, call remote repositories, upload releases,
+sign or attest artifacts, execute external tools, run runtime probes, or use
+AI.
+
+Gate 279 adds release archive reopening/revalidation to the same no-publish
+preflight. After lower-layer path, checksum, build-manifest, and archive
+digest metadata checks are clean, it reopens the expected local
+`dist/release-prepare/archives/release.zip` file and compares entry names,
+entry order, deterministic timestamps, and stored compression metadata against
+`release-archive-evidence.json`. It still refuses real publish and does not
+semantically validate release evidence, validate archive payload contents,
+call remote repositories, upload releases, sign or attest artifacts, execute
+external tools, run runtime probes, or use AI.
+
+Gate 280 adds semantic release-evidence validation to the same no-publish
+preflight. After lower-layer evidence checks are clean, it validates local
+release-prepare evidence kind/status contracts, project and output path maps,
+release-summary counters, staging payload boundaries, archive-plan metadata
+and inputs, archive-evidence checks, build-manifest output sets, and no-publish
+execution flags. It still refuses real publish and does not validate archive
+payload contents, call remote repositories, upload releases, sign or attest
+artifacts, execute external tools, run runtime probes, or use AI.

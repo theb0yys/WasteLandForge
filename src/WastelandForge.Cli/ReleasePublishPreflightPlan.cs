@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -144,8 +145,33 @@ internal sealed record ReleasePublishArchiveEvidenceCrossReference(
     string? ActualArchiveSha256,
     long? ExpectedArchiveLength,
     long? ActualArchiveLength,
+    bool ArchiveOpenedInCurrentGate,
+    int ExpectedArchiveEntryCount,
+    int EvidenceActualArchiveEntryCount,
+    int ActualArchiveEntryCount,
+    bool ArchiveEntryCountMatchesMetadata,
+    bool ArchiveEntryNamesMatchLocal,
+    bool ArchiveEvidenceActualEntryNamesMatchLocal,
+    bool ArchiveEntryOrderingMatchesLocal,
+    bool ArchiveDeterministicTimestampsMatchLocal,
+    bool ArchiveStoredCompressionMatchesLocal,
+    string ArchiveRevalidationDetail,
+    IReadOnlyList<ReleasePublishArchiveEntryRevalidation> ArchiveEntries,
     IReadOnlyList<ReleasePublishArchiveEvidenceExpectedPath> ExpectedPaths,
     IReadOnlyList<ReleasePublishArchiveEvidencePath> Paths);
+
+internal sealed record ReleasePublishArchiveEntryRevalidation(
+    int Index,
+    string Path,
+    long Length,
+    long CompressedLength,
+    string LastWriteTimeUtc,
+    string Status,
+    bool ExpectedPath,
+    bool ExpectedAtIndex,
+    bool EvidenceActualAtIndex,
+    bool TimestampMatches,
+    bool Stored);
 
 internal sealed record ReleasePublishArchiveEvidenceExpectedPath(
     string Role,
@@ -169,6 +195,24 @@ internal sealed record ReleasePublishArchiveEvidencePath(
     bool DigestRevalidatedInCurrentGate,
     bool ArchiveRevalidatedInCurrentGate,
     string ShapeDetail);
+
+internal sealed record ReleasePublishSemanticEvidenceValidation(
+    string Status,
+    bool ValidationInCurrentGate,
+    bool ContentReadInCurrentGate,
+    int ExpectedChecks,
+    int PassedChecks,
+    int FailedChecks,
+    int SkippedChecks,
+    string Detail,
+    IReadOnlyList<ReleasePublishSemanticEvidenceCheck> Checks);
+
+internal sealed record ReleasePublishSemanticEvidenceCheck(
+    string Id,
+    string Title,
+    string Path,
+    string Status,
+    string Detail);
 
 internal sealed record ReleasePublishGovernanceCheck(
     string Id,
@@ -200,6 +244,7 @@ internal sealed record ReleasePublishPreflightResult(
     ReleasePublishChecksumSidecar ChecksumSidecar,
     ReleasePublishBuildManifestCrossReference BuildManifestCrossReference,
     ReleasePublishArchiveEvidenceCrossReference ArchiveEvidenceCrossReference,
+    ReleasePublishSemanticEvidenceValidation SemanticEvidenceValidation,
     string? RefusalReason,
     IReadOnlyList<ReleasePublishEvidenceRequirement> RequiredEvidence,
     IReadOnlyList<ReleasePublishEvidenceArtifact> LocalEvidenceArtifacts,
@@ -212,15 +257,31 @@ internal sealed record ReleasePublishPreflightResult(
 
 internal static class ReleasePublishPreflightPlanner
 {
+    private sealed record ArchiveRevalidationResult(
+        bool Opened,
+        int ExpectedEntryCount,
+        int EvidenceActualEntryCount,
+        int ActualEntryCount,
+        bool EntryCountMatchesMetadata,
+        bool EntryNamesMatchLocal,
+        bool EvidenceActualEntryNamesMatchLocal,
+        bool EntryOrderingMatchesLocal,
+        bool DeterministicTimestampsMatchLocal,
+        bool StoredCompressionMatchesLocal,
+        string Detail,
+        IReadOnlyList<ReleasePublishArchiveEntryRevalidation> Entries);
+
     private static readonly string[] BoundaryLines =
     [
-        "Gate 278 revalidates release-archive-evidence archive digest metadata for release publish preflight.",
+        "Gate 280 validates local release-prepare evidence semantics for release publish preflight.",
         "JSON evidence is parsed for well-formed shape only; checksum sidecar entries are parsed for expected-path coverage only.",
         "Build-manifest outputs and release-archive-evidence metadata are cross-referenced to local evidence paths, checksum sidecar paths, and existing build-manifest output paths only.",
         "Checksum sidecar digests are recomputed for expected local evidence files only.",
         "Build-manifest output digests are recomputed for expected local evidence files only.",
         "Release-archive-evidence archive sha256 and length metadata are recomputed for the expected local archive file only.",
-        "Release archives are not opened or revalidated.",
+        "The expected local release archive is reopened only to compare entry names, entry order, deterministic timestamps, and stored compression metadata.",
+        "Release archive entries are inspected as metadata only; payload contents are not semantically validated.",
+        "Semantic release-evidence validation checks local evidence kind/status contracts, output path maps, release-summary counters, archive-plan inputs, archive-evidence checks, build-manifest output sets, and no-publish execution boundaries.",
         "No release is published.",
         "Remote repositories are not called.",
         "Release assets are not uploaded.",
@@ -259,6 +320,69 @@ internal static class ReleasePublishPreflightPlanner
         ("stagingPayload", "dist/release-prepare/staging/release-payload.json")
     ];
 
+    private static readonly (string Key, string Path)[] ExpectedSemanticOutputPaths =
+    [
+        ("root", "dist/release-prepare"),
+        ("stagingRoot", "dist/release-prepare/staging"),
+        ("stagingPayload", "dist/release-prepare/staging/release-payload.json"),
+        ("releaseArchivePlan", "dist/release-prepare/release-archive-plan.json"),
+        ("releaseArchive", "dist/release-prepare/archives/release.zip"),
+        ("plannedArchive", "dist/release-prepare/archives/release.zip"),
+        ("releaseArchiveEvidence", "dist/release-prepare/release-archive-evidence.json"),
+        ("releasePlan", "dist/release-prepare/release-plan.json"),
+        ("releaseSummary", "dist/release-prepare/release-summary.json"),
+        ("buildManifest", "dist/release-prepare/build-manifest.json"),
+        ("checksums", "dist/release-prepare/checksums.sha256")
+    ];
+
+    private static readonly (string Kind, string Path)[] ExpectedReleasePlanOutputs =
+    [
+        ("staging-root", "dist/release-prepare/staging/"),
+        ("staging-payload", "dist/release-prepare/staging/release-payload.json"),
+        ("release-archive-plan", "dist/release-prepare/release-archive-plan.json"),
+        ("release-archive", "dist/release-prepare/archives/release.zip"),
+        ("release-archive-evidence", "dist/release-prepare/release-archive-evidence.json"),
+        ("release-plan", "dist/release-prepare/release-plan.json"),
+        ("release-summary", "dist/release-prepare/release-summary.json"),
+        ("build-manifest", "dist/release-prepare/build-manifest.json"),
+        ("checksums", "dist/release-prepare/checksums.sha256")
+    ];
+
+    private static readonly (string Kind, string Path)[] ExpectedArchivePlanInputs =
+    [
+        ("release-archive-plan", "dist/release-prepare/release-archive-plan.json"),
+        ("release-plan", "dist/release-prepare/release-plan.json"),
+        ("release-summary", "dist/release-prepare/release-summary.json"),
+        ("staging-payload", "dist/release-prepare/staging/release-payload.json")
+    ];
+
+    private static readonly string[] ExpectedArchiveEntryPaths =
+    [
+        "release-archive-plan.json",
+        "release-plan.json",
+        "release-summary.json",
+        "staging/release-payload.json"
+    ];
+
+    private static readonly (string Id, string Title, string Path)[] SemanticCheckTemplates =
+    [
+        ("release-plan-contract", "release-plan contract fields are consistent", "dist/release-prepare/release-plan.json"),
+        ("release-summary-contract", "release-summary contract fields are consistent", "dist/release-prepare/release-summary.json"),
+        ("staging-payload-contract", "staging payload contract fields are consistent", "dist/release-prepare/staging/release-payload.json"),
+        ("release-archive-plan-contract", "release-archive-plan contract fields are consistent", "dist/release-prepare/release-archive-plan.json"),
+        ("release-archive-evidence-contract", "release-archive-evidence contract fields are consistent", "dist/release-prepare/release-archive-evidence.json"),
+        ("build-manifest-contract", "build-manifest contract fields are consistent", "dist/release-prepare/build-manifest.json"),
+        ("project-output-map-consistency", "release evidence project roots and output maps are consistent", "dist/release-prepare"),
+        ("release-plan-planned-output-consistency", "release-plan planned outputs match release-prepare evidence outputs", "dist/release-prepare/release-plan.json"),
+        ("release-summary-counts", "release-summary counters match prepared release evidence", "dist/release-prepare/release-summary.json"),
+        ("staging-payload-boundary", "staging payload remains skeleton-only and non-mutating", "dist/release-prepare/staging/release-payload.json"),
+        ("release-archive-plan-metadata", "release-archive-plan metadata matches deterministic local archive policy", "dist/release-prepare/release-archive-plan.json"),
+        ("release-archive-plan-inputs", "release-archive-plan inputs match deterministic archive entries", "dist/release-prepare/release-archive-plan.json"),
+        ("release-archive-evidence-checks", "release-archive-evidence checks report deterministic archive metadata", "dist/release-prepare/release-archive-evidence.json"),
+        ("build-manifest-output-set", "build-manifest output set matches release-prepare evidence outputs", "dist/release-prepare/build-manifest.json"),
+        ("non-publish-execution-boundary", "release evidence execution flags remain no-publish and local-only", "dist/release-prepare")
+    ];
+
     public static ReleasePublishPreflightResult Plan(ReleasePublishPreflightOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -271,16 +395,17 @@ internal static class ReleasePublishPreflightPlanner
         var checksumSidecar = CreateChecksumSidecar(projectRoot, releasePrepareEvidenceRootPath);
         var buildManifestCrossReference = CreateBuildManifestCrossReference(projectRoot, releasePrepareEvidenceRootPath, localEvidenceArtifacts, checksumSidecar);
         var archiveEvidenceCrossReference = CreateArchiveEvidenceCrossReference(projectRoot, releasePrepareEvidenceRootPath, localEvidenceArtifacts, checksumSidecar, buildManifestCrossReference);
+        var semanticEvidenceValidation = CreateSemanticEvidenceValidation(projectRoot, releasePrepareEvidenceRootPath, localEvidenceArtifacts, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference);
         var presentArtifacts = localEvidenceArtifacts.Count(artifact => artifact.Exists);
         var missingArtifacts = localEvidenceArtifacts.Count - presentArtifacts;
         var wellFormedArtifacts = localEvidenceArtifacts.Count(artifact => StringComparer.Ordinal.Equals(artifact.Status, "well-formed-not-validated"));
         var malformedArtifacts = localEvidenceArtifacts.Count(artifact => StringComparer.Ordinal.Equals(artifact.Status, "malformed"));
         var unclassifiedArtifacts = localEvidenceArtifacts.Count(artifact => StringComparer.Ordinal.Equals(artifact.Status, "present-not-classified"));
-        var releasePrepareEvidenceStatus = ReleasePrepareEvidenceStatus(presentArtifacts, missingArtifacts, malformedArtifacts, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference);
+        var releasePrepareEvidenceStatus = ReleasePrepareEvidenceStatus(presentArtifacts, missingArtifacts, malformedArtifacts, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference, semanticEvidenceValidation);
         var status = options.DryRun ? "planned" : "refused";
         var refusalReason = options.DryRun
             ? null
-            : "Release publish requires validated local governance preflight evidence and explicit human approval; Gate 278 does not publish releases.";
+            : "Release publish requires validated local governance preflight evidence and explicit human approval; Gate 280 does not publish releases.";
 
         return new ReleasePublishPreflightResult(
             status,
@@ -299,8 +424,9 @@ internal static class ReleasePublishPreflightPlanner
             checksumSidecar,
             buildManifestCrossReference,
             archiveEvidenceCrossReference,
+            semanticEvidenceValidation,
             refusalReason,
-            CreateRequiredEvidence(localEvidenceArtifacts, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference),
+            CreateRequiredEvidence(localEvidenceArtifacts, semanticEvidenceValidation, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference),
             localEvidenceArtifacts,
             CreateGovernanceChecks(),
             new ReleasePublishApprovalRequirement(
@@ -313,12 +439,13 @@ internal static class ReleasePublishPreflightPlanner
 
     private static IReadOnlyList<ReleasePublishEvidenceRequirement> CreateRequiredEvidence(
         IReadOnlyList<ReleasePublishEvidenceArtifact> localEvidenceArtifacts,
+        ReleasePublishSemanticEvidenceValidation semanticEvidenceValidation,
         ReleasePublishChecksumSidecar checksumSidecar,
         ReleasePublishBuildManifestCrossReference buildManifestCrossReference,
         ReleasePublishArchiveEvidenceCrossReference archiveEvidenceCrossReference) =>
     [
         Evidence("schema-validation", "Schema validation passed", "ADR-011 layered validation"),
-        Evidence("semantic-validation", "Semantic validation passed", "ADR-011 layered validation"),
+        Evidence("semantic-validation", "Semantic validation passed", "ADR-011 layered validation", semanticEvidenceValidation.Status, checkedInCurrentGate: true),
         Evidence("capability-environment-validation", "Capability and environment validation passed", "ADR-008 and ADR-011"),
         Evidence("package-validation", "Package validation passed", "ADR-011 release validation"),
         Evidence("release-verification", "Release verification passed", "forge release verify"),
@@ -866,8 +993,8 @@ internal static class ReleasePublishPreflightPlanner
                 Status: "missing",
                 MetadataCrossReferenceInCurrentGate: true,
                 ContentReadInCurrentGate: false,
-                DigestRevalidationInCurrentGate: false,
-                ArchiveRevalidationInCurrentGate: false,
+                DigestRevalidationInCurrentGate: true,
+                ArchiveRevalidationInCurrentGate: true,
                 ExpectedPathCount: ExpectedArchiveEvidencePaths.Length,
                 ParsedPathCount: 0,
                 CoveredExpectedPathCount: 0,
@@ -880,6 +1007,24 @@ internal static class ReleasePublishPreflightPlanner
                 ArchivePathMatchesOutput: false,
                 ArchiveSha256MetadataPresent: false,
                 ArchiveLengthMetadataPresent: false,
+                ArchiveSha256MatchesLocal: false,
+                ArchiveLengthMatchesLocal: false,
+                ExpectedArchiveSha256: null,
+                ActualArchiveSha256: null,
+                ExpectedArchiveLength: null,
+                ActualArchiveLength: null,
+                ArchiveOpenedInCurrentGate: false,
+                ExpectedArchiveEntryCount: 0,
+                EvidenceActualArchiveEntryCount: 0,
+                ActualArchiveEntryCount: 0,
+                ArchiveEntryCountMatchesMetadata: false,
+                ArchiveEntryNamesMatchLocal: false,
+                ArchiveEvidenceActualEntryNamesMatchLocal: false,
+                ArchiveEntryOrderingMatchesLocal: false,
+                ArchiveDeterministicTimestampsMatchLocal: false,
+                ArchiveStoredCompressionMatchesLocal: false,
+                ArchiveRevalidationDetail: "release-archive-evidence-missing",
+                ArchiveEntries: [],
                 ExpectedPaths: CreateArchiveEvidenceExpectedPathCoverage(new HashSet<string>(StringComparer.Ordinal), localEvidenceArtifacts, checksumSidecar, buildManifestCrossReference),
                 Paths: []);
         }
@@ -946,17 +1091,84 @@ internal static class ReleasePublishPreflightPlanner
                     ShapeDetail: "release-archive-evidence-output-path"));
             }
 
-            var archive = root?["archive"] as JsonObject;
-            var archivePathMatchesOutput = TryGetStringProperty(archive, "path", out var archivePath) &&
-                TryGetStringProperty(output, "releaseArchive", out var releaseArchivePath) &&
-                StringComparer.Ordinal.Equals(archivePath, releaseArchivePath);
-            var archiveSha256MetadataPresent = TryGetStringProperty(archive, "sha256", out _);
-            var archiveLengthMetadataPresent = TryGetInt64Property(archive, "length", out _);
             var expectedPathCoverage = CreateArchiveEvidenceExpectedPathCoverage(coveredExpectedRoles, localEvidenceArtifacts, checksumSidecar, buildManifestCrossReference);
             var missingExpectedPaths = ExpectedArchiveEvidencePaths.Length - coveredExpectedRoles.Count;
             var missingLocalPaths = expectedPathCoverage.Count(path => !path.LocalArtifactPresent);
             var missingChecksumPaths = expectedPathCoverage.Count(path => !path.ChecksumEntryPresent);
             var missingBuildManifestOutputPaths = expectedPathCoverage.Count(path => !path.BuildManifestOutputPresent);
+            var archive = root?["archive"] as JsonObject;
+            var releaseArchivePathPresent = TryGetStringProperty(output, "releaseArchive", out var releaseArchivePath);
+            var archivePathMatchesOutput = TryGetStringProperty(archive, "path", out var archivePath) &&
+                releaseArchivePathPresent &&
+                StringComparer.Ordinal.Equals(archivePath, releaseArchivePath);
+            var archiveSha256MetadataPresent = TryGetSha256Property(archive, out var expectedArchiveSha256);
+            var archiveLengthMetadataPresent = TryGetInt64Property(archive, "length", out var parsedExpectedArchiveLength) &&
+                parsedExpectedArchiveLength >= 0;
+            long? expectedArchiveLength = archiveLengthMetadataPresent ? parsedExpectedArchiveLength : null;
+            string? actualArchiveSha256 = null;
+            long? actualArchiveLength = null;
+            var archiveDigestRevalidated = false;
+            if (archivePathMatchesOutput &&
+                archiveSha256MetadataPresent &&
+                archiveLengthMetadataPresent &&
+                StringComparer.Ordinal.Equals(releaseArchivePath, ExpectedArchiveEvidencePaths[0].Path) &&
+                LocalArtifactExists(localEvidenceArtifacts, releaseArchivePath))
+            {
+                var localArchivePath = Path.Combine(projectRoot, releaseArchivePath);
+                if (File.Exists(localArchivePath))
+                {
+                    actualArchiveSha256 = ComputeSha256(localArchivePath);
+                    actualArchiveLength = new FileInfo(localArchivePath).Length;
+                    archiveDigestRevalidated = true;
+                }
+            }
+
+            var archiveSha256MatchesLocal = archiveDigestRevalidated &&
+                StringComparer.Ordinal.Equals(expectedArchiveSha256, actualArchiveSha256);
+            var archiveLengthMatchesLocal = archiveDigestRevalidated &&
+                expectedArchiveLength == actualArchiveLength;
+            var expectedArchiveObject = root?["expected"] as JsonObject;
+            var actualArchiveObject = root?["actual"] as JsonObject;
+            var archiveEntryMetadataPresent = TryGetInt32Property(archive, "entries", out var archiveEntryMetadataCount) &&
+                archiveEntryMetadataCount >= 0;
+            var expectedEntriesPresent = TryGetStringArrayProperty(expectedArchiveObject, "entries", out var expectedArchiveEntries);
+            var expectedTimestampPresent = TryGetStringProperty(expectedArchiveObject, "timestampUtc", out var expectedTimestampUtc);
+            var expectedCompressionPresent = TryGetStringProperty(expectedArchiveObject, "compression", out var expectedCompression);
+            var evidenceActualEntriesPresent = TryGetStringArrayProperty(actualArchiveObject, "entries", out var evidenceActualArchiveEntries);
+            var archiveRevalidationMetadataPresent = archiveEntryMetadataPresent &&
+                expectedEntriesPresent &&
+                expectedTimestampPresent &&
+                expectedCompressionPresent &&
+                evidenceActualEntriesPresent;
+            var archiveRevalidation = SkippedArchiveRevalidation(
+                expectedEntriesPresent ? expectedArchiveEntries.Length : 0,
+                evidenceActualEntriesPresent ? evidenceActualArchiveEntries.Length : 0,
+                archiveRevalidationMetadataPresent
+                    ? "archive-revalidation-prerequisites-not-met"
+                    : "release-archive-evidence-archive-metadata-missing");
+            if (archiveDigestRevalidated &&
+                archiveSha256MatchesLocal &&
+                archiveLengthMatchesLocal &&
+                archiveRevalidationMetadataPresent &&
+                missingExpectedPaths == 0 &&
+                missingLocalPaths == 0 &&
+                missingChecksumPaths == 0 &&
+                missingBuildManifestOutputPaths == 0 &&
+                unexpectedPaths == 0 &&
+                malformedPaths == 0 &&
+                archivePathMatchesOutput &&
+                StringComparer.Ordinal.Equals(releaseArchivePath, ExpectedArchiveEvidencePaths[0].Path) &&
+                LocalArtifactExists(localEvidenceArtifacts, releaseArchivePath))
+            {
+                archiveRevalidation = RevalidateArchive(
+                    Path.Combine(projectRoot, releaseArchivePath),
+                    archiveEntryMetadataCount,
+                    expectedArchiveEntries,
+                    evidenceActualArchiveEntries,
+                    expectedTimestampUtc,
+                    expectedCompression);
+            }
+
             var status = ArchiveEvidenceCrossReferenceStatus(
                 paths.Count,
                 missingExpectedPaths,
@@ -967,7 +1179,13 @@ internal static class ReleasePublishPreflightPlanner
                 malformedPaths,
                 archivePathMatchesOutput,
                 archiveSha256MetadataPresent,
-                archiveLengthMetadataPresent);
+                archiveLengthMetadataPresent,
+                archiveDigestRevalidated,
+                archiveSha256MatchesLocal,
+                archiveLengthMatchesLocal,
+                archiveRevalidationMetadataPresent,
+                archiveRevalidation.Opened,
+                ArchiveRevalidationMatches(archiveRevalidation));
 
             return new ReleasePublishArchiveEvidenceCrossReference(
                 displayPath,
@@ -975,8 +1193,8 @@ internal static class ReleasePublishPreflightPlanner
                 Status: status,
                 MetadataCrossReferenceInCurrentGate: true,
                 ContentReadInCurrentGate: true,
-                DigestRevalidationInCurrentGate: false,
-                ArchiveRevalidationInCurrentGate: false,
+                DigestRevalidationInCurrentGate: true,
+                ArchiveRevalidationInCurrentGate: true,
                 ExpectedPathCount: ExpectedArchiveEvidencePaths.Length,
                 ParsedPathCount: paths.Count,
                 CoveredExpectedPathCount: coveredExpectedRoles.Count,
@@ -989,6 +1207,24 @@ internal static class ReleasePublishPreflightPlanner
                 ArchivePathMatchesOutput: archivePathMatchesOutput,
                 ArchiveSha256MetadataPresent: archiveSha256MetadataPresent,
                 ArchiveLengthMetadataPresent: archiveLengthMetadataPresent,
+                ArchiveSha256MatchesLocal: archiveSha256MatchesLocal,
+                ArchiveLengthMatchesLocal: archiveLengthMatchesLocal,
+                ExpectedArchiveSha256: archiveSha256MetadataPresent ? expectedArchiveSha256 : null,
+                ActualArchiveSha256: actualArchiveSha256,
+                ExpectedArchiveLength: expectedArchiveLength,
+                ActualArchiveLength: actualArchiveLength,
+                ArchiveOpenedInCurrentGate: archiveRevalidation.Opened,
+                ExpectedArchiveEntryCount: archiveRevalidation.ExpectedEntryCount,
+                EvidenceActualArchiveEntryCount: archiveRevalidation.EvidenceActualEntryCount,
+                ActualArchiveEntryCount: archiveRevalidation.ActualEntryCount,
+                ArchiveEntryCountMatchesMetadata: archiveRevalidation.EntryCountMatchesMetadata,
+                ArchiveEntryNamesMatchLocal: archiveRevalidation.EntryNamesMatchLocal,
+                ArchiveEvidenceActualEntryNamesMatchLocal: archiveRevalidation.EvidenceActualEntryNamesMatchLocal,
+                ArchiveEntryOrderingMatchesLocal: archiveRevalidation.EntryOrderingMatchesLocal,
+                ArchiveDeterministicTimestampsMatchLocal: archiveRevalidation.DeterministicTimestampsMatchLocal,
+                ArchiveStoredCompressionMatchesLocal: archiveRevalidation.StoredCompressionMatchesLocal,
+                ArchiveRevalidationDetail: archiveRevalidation.Detail,
+                ArchiveEntries: archiveRevalidation.Entries,
                 ExpectedPaths: expectedPathCoverage,
                 Paths: paths);
         }
@@ -1014,8 +1250,8 @@ internal static class ReleasePublishPreflightPlanner
             Status: "malformed-not-validated",
             MetadataCrossReferenceInCurrentGate: true,
             ContentReadInCurrentGate: contentRead,
-            DigestRevalidationInCurrentGate: false,
-            ArchiveRevalidationInCurrentGate: false,
+            DigestRevalidationInCurrentGate: true,
+            ArchiveRevalidationInCurrentGate: true,
             ExpectedPathCount: ExpectedArchiveEvidencePaths.Length,
             ParsedPathCount: 0,
             CoveredExpectedPathCount: 0,
@@ -1028,6 +1264,24 @@ internal static class ReleasePublishPreflightPlanner
             ArchivePathMatchesOutput: false,
             ArchiveSha256MetadataPresent: false,
             ArchiveLengthMetadataPresent: false,
+            ArchiveSha256MatchesLocal: false,
+            ArchiveLengthMatchesLocal: false,
+            ExpectedArchiveSha256: null,
+            ActualArchiveSha256: null,
+            ExpectedArchiveLength: null,
+            ActualArchiveLength: null,
+            ArchiveOpenedInCurrentGate: false,
+            ExpectedArchiveEntryCount: 0,
+            EvidenceActualArchiveEntryCount: 0,
+            ActualArchiveEntryCount: 0,
+            ArchiveEntryCountMatchesMetadata: false,
+            ArchiveEntryNamesMatchLocal: false,
+            ArchiveEvidenceActualEntryNamesMatchLocal: false,
+            ArchiveEntryOrderingMatchesLocal: false,
+            ArchiveDeterministicTimestampsMatchLocal: false,
+            ArchiveStoredCompressionMatchesLocal: false,
+            ArchiveRevalidationDetail: "release-archive-evidence-malformed",
+            ArchiveEntries: [],
             ExpectedPaths: expectedPathCoverage,
             Paths: []);
     }
@@ -1056,6 +1310,137 @@ internal static class ReleasePublishPreflightPlanner
                     buildManifestOutputPresent);
             })
             .ToArray();
+
+    private static ArchiveRevalidationResult SkippedArchiveRevalidation(
+        int expectedEntryCount,
+        int evidenceActualEntryCount,
+        string detail) =>
+        new(
+            Opened: false,
+            ExpectedEntryCount: expectedEntryCount,
+            EvidenceActualEntryCount: evidenceActualEntryCount,
+            ActualEntryCount: 0,
+            EntryCountMatchesMetadata: false,
+            EntryNamesMatchLocal: false,
+            EvidenceActualEntryNamesMatchLocal: false,
+            EntryOrderingMatchesLocal: false,
+            DeterministicTimestampsMatchLocal: false,
+            StoredCompressionMatchesLocal: false,
+            Detail: detail,
+            Entries: []);
+
+    private static ArchiveRevalidationResult RevalidateArchive(
+        string archivePath,
+        int archiveEntryMetadataCount,
+        IReadOnlyList<string> expectedEntries,
+        IReadOnlyList<string> evidenceActualEntries,
+        string expectedTimestampUtc,
+        string expectedCompression)
+    {
+        try
+        {
+            using var archive = ZipFile.OpenRead(archivePath);
+            var entries = archive.Entries
+                .Select((entry, index) =>
+                {
+                    var lastWriteTimeUtc = entry.LastWriteTime.UtcDateTime.ToString("O");
+                    var expectedAtIndex = index < expectedEntries.Count &&
+                        StringComparer.Ordinal.Equals(expectedEntries[index], entry.FullName);
+                    var evidenceActualAtIndex = index < evidenceActualEntries.Count &&
+                        StringComparer.Ordinal.Equals(evidenceActualEntries[index], entry.FullName);
+                    var expectedPath = expectedEntries.Contains(entry.FullName, StringComparer.Ordinal);
+                    var timestampMatches = StringComparer.Ordinal.Equals(lastWriteTimeUtc, expectedTimestampUtc);
+                    var stored = entry.Length == entry.CompressedLength;
+                    return new ReleasePublishArchiveEntryRevalidation(
+                        Index: index,
+                        Path: entry.FullName,
+                        Length: entry.Length,
+                        CompressedLength: entry.CompressedLength,
+                        LastWriteTimeUtc: lastWriteTimeUtc,
+                        Status: ArchiveEntryRevalidationStatus(
+                            expectedPath,
+                            expectedAtIndex,
+                            evidenceActualAtIndex,
+                            timestampMatches,
+                            stored),
+                        ExpectedPath: expectedPath,
+                        ExpectedAtIndex: expectedAtIndex,
+                        EvidenceActualAtIndex: evidenceActualAtIndex,
+                        TimestampMatches: timestampMatches,
+                        Stored: stored);
+                })
+                .ToArray();
+            var actualEntryNames = entries.Select(entry => entry.Path).ToArray();
+            var entryCountMatchesMetadata = archiveEntryMetadataCount == actualEntryNames.Length &&
+                expectedEntries.Count == actualEntryNames.Length &&
+                evidenceActualEntries.Count == actualEntryNames.Length;
+            var entryNamesMatchLocal = expectedEntries.SequenceEqual(actualEntryNames, StringComparer.Ordinal);
+            var evidenceActualEntryNamesMatchLocal = evidenceActualEntries.SequenceEqual(actualEntryNames, StringComparer.Ordinal);
+            var entryOrderingMatchesLocal = actualEntryNames.SequenceEqual(actualEntryNames.OrderBy(entry => entry, StringComparer.Ordinal), StringComparer.Ordinal);
+            var deterministicTimestampsMatchLocal = entries.All(entry => entry.TimestampMatches);
+            var storedCompressionMatchesLocal = StringComparer.Ordinal.Equals(expectedCompression, "stored") &&
+                entries.All(entry => entry.Stored);
+
+            return new ArchiveRevalidationResult(
+                Opened: true,
+                ExpectedEntryCount: expectedEntries.Count,
+                EvidenceActualEntryCount: evidenceActualEntries.Count,
+                ActualEntryCount: actualEntryNames.Length,
+                EntryCountMatchesMetadata: entryCountMatchesMetadata,
+                EntryNamesMatchLocal: entryNamesMatchLocal,
+                EvidenceActualEntryNamesMatchLocal: evidenceActualEntryNamesMatchLocal,
+                EntryOrderingMatchesLocal: entryOrderingMatchesLocal,
+                DeterministicTimestampsMatchLocal: deterministicTimestampsMatchLocal,
+                StoredCompressionMatchesLocal: storedCompressionMatchesLocal,
+                Detail: "zip-archive-opened-and-entry-metadata-revalidated",
+                Entries: entries);
+        }
+        catch (InvalidDataException)
+        {
+            return SkippedArchiveRevalidation(expectedEntries.Count, evidenceActualEntries.Count, "zip-archive-invalid-data");
+        }
+        catch (IOException)
+        {
+            return SkippedArchiveRevalidation(expectedEntries.Count, evidenceActualEntries.Count, "zip-archive-io-error");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return SkippedArchiveRevalidation(expectedEntries.Count, evidenceActualEntries.Count, "zip-archive-access-denied");
+        }
+    }
+
+    private static bool ArchiveRevalidationMatches(ArchiveRevalidationResult result) =>
+        result.EntryCountMatchesMetadata &&
+        result.EntryNamesMatchLocal &&
+        result.EvidenceActualEntryNamesMatchLocal &&
+        result.EntryOrderingMatchesLocal &&
+        result.DeterministicTimestampsMatchLocal &&
+        result.StoredCompressionMatchesLocal;
+
+    private static string ArchiveEntryRevalidationStatus(
+        bool expectedPath,
+        bool expectedAtIndex,
+        bool evidenceActualAtIndex,
+        bool timestampMatches,
+        bool stored)
+    {
+        if (!expectedPath)
+        {
+            return "unexpected-not-revalidated";
+        }
+
+        if (!expectedAtIndex || !evidenceActualAtIndex)
+        {
+            return "mismatched-entry-revalidated";
+        }
+
+        if (!timestampMatches || !stored)
+        {
+            return "metadata-mismatched-revalidated";
+        }
+
+        return "matched-revalidated";
+    }
 
     private static ReleasePublishEvidenceArtifact BinaryArtifact(string projectRoot, string releasePrepareEvidenceRoot, string id, string kind, string relativePath)
     {
@@ -1092,6 +1477,381 @@ internal static class ReleasePublishPreflightPlanner
             ShapeCheckedInCurrentGate: false,
             ContentReadInCurrentGate: false,
             ShapeDetail: null);
+
+    private static ReleasePublishSemanticEvidenceValidation CreateSemanticEvidenceValidation(
+        string projectRoot,
+        string releasePrepareEvidenceRoot,
+        IReadOnlyList<ReleasePublishEvidenceArtifact> localEvidenceArtifacts,
+        ReleasePublishChecksumSidecar checksumSidecar,
+        ReleasePublishBuildManifestCrossReference buildManifestCrossReference,
+        ReleasePublishArchiveEvidenceCrossReference archiveEvidenceCrossReference)
+    {
+        if (!SemanticValidationPrerequisitesMet(localEvidenceArtifacts, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference))
+        {
+            return SkippedSemanticEvidenceValidation("lower-layer-release-evidence-not-complete");
+        }
+
+        var documents = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
+        foreach (var (id, relativePath) in SemanticJsonArtifacts())
+        {
+            var fullPath = Path.Combine(releasePrepareEvidenceRoot, relativePath);
+            try
+            {
+                if (JsonNode.Parse(File.ReadAllText(fullPath)) is not JsonObject root)
+                {
+                    return SkippedSemanticEvidenceValidation("semantic-evidence-json-root-not-object", status: "malformed-not-validated");
+                }
+
+                documents[id] = root;
+            }
+            catch (JsonException)
+            {
+                return SkippedSemanticEvidenceValidation("semantic-evidence-json-malformed", status: "malformed-not-validated");
+            }
+            catch (IOException)
+            {
+                return SkippedSemanticEvidenceValidation("semantic-evidence-json-unreadable", status: "blocked-not-validated");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return SkippedSemanticEvidenceValidation("semantic-evidence-json-unreadable", status: "blocked-not-validated");
+            }
+        }
+
+        var checks = new List<ReleasePublishSemanticEvidenceCheck>
+        {
+            SemanticCheck("release-plan-contract", ContractMatches(documents["release-plan"], "wastelandforge.release-plan", "planned"), "release-plan-contract-validated"),
+            SemanticCheck("release-summary-contract", ContractMatches(documents["release-summary"], "wastelandforge.release-summary", "prepared"), "release-summary-contract-validated"),
+            SemanticCheck("staging-payload-contract", ContractMatches(documents["staging-payload"], "wastelandforge.release-staging-payload", "skeleton"), "staging-payload-contract-validated"),
+            SemanticCheck("release-archive-plan-contract", ContractMatches(documents["release-archive-plan"], "wastelandforge.release-archive-plan", "created"), "release-archive-plan-contract-validated"),
+            SemanticCheck("release-archive-evidence-contract", ContractMatches(documents["release-archive-evidence"], "wastelandforge.release-archive-evidence", "passed"), "release-archive-evidence-contract-validated"),
+            SemanticCheck("build-manifest-contract", BuildManifestContractMatches(documents["build-manifest"]), "build-manifest-contract-validated"),
+            SemanticCheck("project-output-map-consistency", DocumentsShareExpectedProjectAndOutputs(documents.Values, projectRoot), "project-output-map-consistency-validated"),
+            SemanticCheck("release-plan-planned-output-consistency", ReleasePlanOutputsMatch(documents["release-plan"]), "release-plan-planned-output-consistency-validated"),
+            SemanticCheck("release-summary-counts", ReleaseSummaryCountsMatch(documents["release-summary"]), "release-summary-counts-validated"),
+            SemanticCheck("staging-payload-boundary", StagingPayloadBoundaryMatches(documents["staging-payload"]), "staging-payload-boundary-validated"),
+            SemanticCheck("release-archive-plan-metadata", ReleaseArchivePlanMetadataMatches(documents["release-archive-plan"]), "release-archive-plan-metadata-validated"),
+            SemanticCheck("release-archive-plan-inputs", ReleaseArchivePlanInputsMatch(documents["release-archive-plan"]), "release-archive-plan-inputs-validated"),
+            SemanticCheck("release-archive-evidence-checks", ReleaseArchiveEvidenceChecksMatch(documents["release-archive-evidence"]), "release-archive-evidence-checks-validated"),
+            SemanticCheck("build-manifest-output-set", BuildManifestOutputSetMatches(documents["build-manifest"]), "build-manifest-output-set-validated"),
+            SemanticCheck("non-publish-execution-boundary", NonPublishExecutionBoundariesMatch(documents.Values), "non-publish-execution-boundary-validated")
+        };
+
+        var failedChecks = checks.Count(check => StringComparer.Ordinal.Equals(check.Status, "failed"));
+        var passedChecks = checks.Count - failedChecks;
+        return new ReleasePublishSemanticEvidenceValidation(
+            Status: failedChecks == 0 ? "complete-semantic-validated" : "mismatch-semantic-validated",
+            ValidationInCurrentGate: true,
+            ContentReadInCurrentGate: true,
+            ExpectedChecks: SemanticCheckTemplates.Length,
+            PassedChecks: passedChecks,
+            FailedChecks: failedChecks,
+            SkippedChecks: 0,
+            Detail: failedChecks == 0 ? "semantic-release-evidence-validated" : "semantic-release-evidence-mismatch",
+            Checks: checks);
+    }
+
+    private static bool SemanticValidationPrerequisitesMet(
+        IReadOnlyList<ReleasePublishEvidenceArtifact> localEvidenceArtifacts,
+        ReleasePublishChecksumSidecar checksumSidecar,
+        ReleasePublishBuildManifestCrossReference buildManifestCrossReference,
+        ReleasePublishArchiveEvidenceCrossReference archiveEvidenceCrossReference) =>
+        localEvidenceArtifacts.All(artifact =>
+            artifact.Exists &&
+            !StringComparer.Ordinal.Equals(artifact.Status, "missing") &&
+            !StringComparer.Ordinal.Equals(artifact.Status, "malformed")) &&
+        StringComparer.Ordinal.Equals(checksumSidecar.Status, "complete-digest-revalidated") &&
+        StringComparer.Ordinal.Equals(buildManifestCrossReference.Status, "complete-digest-revalidated") &&
+        StringComparer.Ordinal.Equals(archiveEvidenceCrossReference.Status, "complete-archive-revalidated");
+
+    private static ReleasePublishSemanticEvidenceValidation SkippedSemanticEvidenceValidation(string detail, string status = "blocked-not-validated") =>
+        new(
+            Status: status,
+            ValidationInCurrentGate: true,
+            ContentReadInCurrentGate: false,
+            ExpectedChecks: SemanticCheckTemplates.Length,
+            PassedChecks: 0,
+            FailedChecks: 0,
+            SkippedChecks: SemanticCheckTemplates.Length,
+            Detail: detail,
+            Checks: SemanticCheckTemplates
+                .Select(template => new ReleasePublishSemanticEvidenceCheck(
+                    template.Id,
+                    template.Title,
+                    template.Path,
+                    Status: "skipped",
+                    Detail: detail))
+                .ToArray());
+
+    private static IEnumerable<(string Id, string RelativePath)> SemanticJsonArtifacts()
+    {
+        yield return ("staging-payload", "staging/release-payload.json");
+        yield return ("release-archive-plan", "release-archive-plan.json");
+        yield return ("release-archive-evidence", "release-archive-evidence.json");
+        yield return ("release-plan", "release-plan.json");
+        yield return ("release-summary", "release-summary.json");
+        yield return ("build-manifest", "build-manifest.json");
+    }
+
+    private static ReleasePublishSemanticEvidenceCheck SemanticCheck(string id, bool passed, string passedDetail)
+    {
+        var template = SemanticCheckTemplates.Single(item => StringComparer.Ordinal.Equals(item.Id, id));
+        return new ReleasePublishSemanticEvidenceCheck(
+            template.Id,
+            template.Title,
+            template.Path,
+            passed ? "passed" : "failed",
+            passed ? passedDetail : $"{id}-mismatch");
+    }
+
+    private static bool ContractMatches(JsonObject root, string expectedKind, string expectedStatus) =>
+        TryGetStringProperty(root, "formatVersion", out _) &&
+        TryGetStringProperty(root, "kind", out var kind) &&
+        StringComparer.Ordinal.Equals(kind, expectedKind) &&
+        TryGetStringProperty(root, "command", out var command) &&
+        StringComparer.Ordinal.Equals(command, "release prepare") &&
+        TryGetStringProperty(root, "status", out var status) &&
+        StringComparer.Ordinal.Equals(status, expectedStatus) &&
+        ToolMetadataMatches(root);
+
+    private static bool BuildManifestContractMatches(JsonObject root) =>
+        ContractMatches(root, "wastelandforge.build-manifest", "prepared") &&
+        TryGetStringProperty(root, "buildType", out var buildType) &&
+        StringComparer.Ordinal.Equals(buildType, "wastelandforge/release-prepare/v1") &&
+        TryGetBooleanProperty(root, "dryRun", out var dryRun) &&
+        !dryRun &&
+        root["validation"] is JsonObject validation &&
+        TryGetStringProperty(validation, "status", out var validationStatus) &&
+        StringComparer.Ordinal.Equals(validationStatus, "not-run") &&
+        TryGetInt32Property(validation, "errors", out var errors) &&
+        errors == 0 &&
+        TryGetInt32Property(validation, "warnings", out var warnings) &&
+        warnings == 0 &&
+        TryGetInt32Property(validation, "notes", out var notes) &&
+        notes == 0 &&
+        root["capabilities"] is JsonObject capabilities &&
+        TryGetStringProperty(capabilities, "status", out var capabilitiesStatus) &&
+        StringComparer.Ordinal.Equals(capabilitiesStatus, "not-evaluated") &&
+        capabilities["resolved"] is JsonArray resolved &&
+        resolved.Count == 0 &&
+        root["sources"] is JsonArray sources &&
+        sources.Count == 0 &&
+        root["generators"] is JsonArray generators &&
+        generators.Count == 1 &&
+        generators[0] is JsonObject generator &&
+        TryGetStringProperty(generator, "id", out var generatorId) &&
+        StringComparer.Ordinal.Equals(generatorId, "wf.release.prepare") &&
+        TryGetStringProperty(generator, "target", out var generatorTarget) &&
+        StringComparer.Ordinal.Equals(generatorTarget, "release-prepare");
+
+    private static bool ToolMetadataMatches(JsonObject root) =>
+        root["tool"] is JsonObject tool &&
+        TryGetStringProperty(tool, "name", out var toolName) &&
+        StringComparer.Ordinal.Equals(toolName, CliConstants.ToolName) &&
+        TryGetStringProperty(tool, "version", out var toolVersion) &&
+        StringComparer.Ordinal.Equals(toolVersion, CliConstants.Version);
+
+    private static bool DocumentsShareExpectedProjectAndOutputs(IEnumerable<JsonObject> documents, string projectRoot) =>
+        documents.All(document =>
+            document["project"] is JsonObject project &&
+            TryGetStringProperty(project, "root", out var root) &&
+            StringComparer.Ordinal.Equals(root, projectRoot) &&
+            OutputMapMatches(document));
+
+    private static bool OutputMapMatches(JsonObject root)
+    {
+        if (root["output"] is not JsonObject output)
+        {
+            return false;
+        }
+
+        foreach (var (key, path) in ExpectedSemanticOutputPaths)
+        {
+            if (!TryGetStringProperty(output, key, out var actual) ||
+                !StringComparer.Ordinal.Equals(actual, path))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ReleasePlanOutputsMatch(JsonObject releasePlan)
+    {
+        if (releasePlan["plannedOutputs"] is not JsonArray outputs ||
+            outputs.Count != ExpectedReleasePlanOutputs.Length)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < ExpectedReleasePlanOutputs.Length; index++)
+        {
+            if (outputs[index] is not JsonObject output ||
+                !TryGetStringProperty(output, "kind", out var kind) ||
+                !StringComparer.Ordinal.Equals(kind, ExpectedReleasePlanOutputs[index].Kind) ||
+                !TryGetStringProperty(output, "path", out var path) ||
+                !StringComparer.Ordinal.Equals(path, ExpectedReleasePlanOutputs[index].Path) ||
+                !TryGetBooleanProperty(output, "wouldWriteInCurrentGate", out var wouldWrite) ||
+                !wouldWrite)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ReleaseSummaryCountsMatch(JsonObject releaseSummary) =>
+        releaseSummary["summary"] is JsonObject summary &&
+        TryGetInt32Property(summary, "plannedOutputs", out var plannedOutputs) &&
+        plannedOutputs == ExpectedReleasePlanOutputs.Length &&
+        TryGetInt32Property(summary, "writtenOutputs", out var writtenOutputs) &&
+        writtenOutputs == 8 &&
+        BooleanPropertyEquals(summary, "buildManifestWritten", expected: true) &&
+        BooleanPropertyEquals(summary, "checksumsWritten", expected: true) &&
+        BooleanPropertyEquals(summary, "stagingPayloadWritten", expected: true) &&
+        BooleanPropertyEquals(summary, "archivePlanWritten", expected: true) &&
+        BooleanPropertyEquals(summary, "archiveEvidenceWritten", expected: true) &&
+        BooleanPropertyEquals(summary, "archiveCreated", expected: true) &&
+        BooleanPropertyEquals(summary, "releasePublished", expected: false);
+
+    private static bool StagingPayloadBoundaryMatches(JsonObject stagingPayload) =>
+        stagingPayload["payload"] is JsonObject payload &&
+        StringPropertyEquals(payload, "status", "skeleton") &&
+        TryGetInt32Property(payload, "modPayloadFiles", out var modPayloadFiles) &&
+        modPayloadFiles == 0 &&
+        BooleanPropertyEquals(payload, "writesToGameData", expected: false) &&
+        BooleanPropertyEquals(payload, "writesToMo2Profile", expected: false) &&
+        BooleanPropertyEquals(payload, "pluginMutation", expected: false) &&
+        BooleanPropertyEquals(payload, "archiveCreated", expected: false) &&
+        BooleanPropertyEquals(payload, "installerCreated", expected: false);
+
+    private static bool ReleaseArchivePlanMetadataMatches(JsonObject archivePlan) =>
+        archivePlan["archive"] is JsonObject archive &&
+        StringPropertyEquals(archive, "status", "created") &&
+        StringPropertyEquals(archive, "path", "dist/release-prepare/archives/release.zip") &&
+        StringPropertyEquals(archive, "format", "zip") &&
+        StringPropertyEquals(archive, "mediaType", "application/zip") &&
+        BooleanPropertyEquals(archive, "created", expected: true) &&
+        TryGetInt32Property(archive, "entries", out var entries) &&
+        entries == ExpectedArchiveEntryPaths.Length &&
+        archivePlan["determinism"] is JsonObject determinism &&
+        StringPropertyEquals(determinism, "entryOrdering", "ordinal-path-order") &&
+        StringPropertyEquals(determinism, "timestampSource", "SOURCE_DATE_EPOCH-clamped-to-zip-range-or-1980-epoch") &&
+        StringPropertyEquals(determinism, "compression", "stored") &&
+        StringPropertyEquals(determinism, "fomodAssembly", "not-planned-in-current-gate");
+
+    private static bool ReleaseArchivePlanInputsMatch(JsonObject archivePlan)
+    {
+        if (archivePlan["inputs"] is not JsonArray inputs ||
+            inputs.Count != ExpectedArchivePlanInputs.Length)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < ExpectedArchivePlanInputs.Length; index++)
+        {
+            if (inputs[index] is not JsonObject input ||
+                !StringPropertyEquals(input, "kind", ExpectedArchivePlanInputs[index].Kind) ||
+                !StringPropertyEquals(input, "path", ExpectedArchivePlanInputs[index].Path) ||
+                !StringPropertyEquals(input, "status", "planned-local-evidence"))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ReleaseArchiveEvidenceChecksMatch(JsonObject archiveEvidence) =>
+        archiveEvidence["archive"] is JsonObject archive &&
+        StringPropertyEquals(archive, "path", "dist/release-prepare/archives/release.zip") &&
+        StringPropertyEquals(archive, "format", "zip") &&
+        StringPropertyEquals(archive, "mediaType", "application/zip") &&
+        TryGetSha256Property(archive, out _) &&
+        TryGetInt64Property(archive, "length", out var length) &&
+        length > 0 &&
+        TryGetInt32Property(archive, "entries", out var entries) &&
+        entries == ExpectedArchiveEntryPaths.Length &&
+        archiveEvidence["expected"] is JsonObject expected &&
+        SequenceMatchesStringArray(expected["entries"] as JsonArray, ExpectedArchiveEntryPaths) &&
+        StringPropertyEquals(expected, "compression", "stored") &&
+        archiveEvidence["actual"] is JsonObject actual &&
+        SequenceMatchesStringArray(actual["entries"] as JsonArray, ExpectedArchiveEntryPaths) &&
+        TryGetInt32Property(actual, "storedEntries", out var storedEntries) &&
+        storedEntries == ExpectedArchiveEntryPaths.Length &&
+        archiveEvidence["checks"] is JsonObject checks &&
+        BooleanPropertyEquals(checks, "archiveDigestRecomputed", expected: true) &&
+        BooleanPropertyEquals(checks, "entryNamesMatch", expected: true) &&
+        BooleanPropertyEquals(checks, "entryOrderingMatch", expected: true) &&
+        BooleanPropertyEquals(checks, "deterministicTimestampsMatch", expected: true) &&
+        BooleanPropertyEquals(checks, "storedCompressionMatch", expected: true);
+
+    private static bool BuildManifestOutputSetMatches(JsonObject buildManifest)
+    {
+        if (buildManifest["outputs"] is not JsonArray outputs ||
+            outputs.Count != ExpectedBuildManifestOutputPaths.Length)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < ExpectedBuildManifestOutputPaths.Length; index++)
+        {
+            if (outputs[index] is not JsonObject output ||
+                !StringPropertyEquals(output, "path", ExpectedBuildManifestOutputPaths[index]) ||
+                !TryGetSha256Property(output, out _) ||
+                !TryGetInt64Property(output, "length", out var length) ||
+                length <= 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool NonPublishExecutionBoundariesMatch(IEnumerable<JsonObject> documents) =>
+        documents.All(document =>
+            document["execution"] is JsonObject execution &&
+            BooleanPropertyEquals(execution, "releasePrepareExecution", expected: true) &&
+            BooleanPropertyEquals(execution, "releasePublishing", expected: false) &&
+            BooleanPropertyEquals(execution, "remoteRepositoryCall", expected: false) &&
+            BooleanPropertyEquals(execution, "attestationSigning", expected: false) &&
+            BooleanPropertyEquals(execution, "externalToolExecution", expected: false) &&
+            BooleanPropertyEquals(execution, "pluginMutation", expected: false) &&
+            BooleanPropertyEquals(execution, "mo2Automation", expected: false) &&
+            BooleanPropertyEquals(execution, "geckAutomation", expected: false) &&
+            BooleanPropertyEquals(execution, "runtimeProbe", expected: false) &&
+            BooleanPropertyEquals(execution, "aiRequired", expected: false));
+
+    private static bool SequenceMatchesStringArray(JsonArray? actualValues, IReadOnlyList<string> expectedValues)
+    {
+        if (actualValues is null || actualValues.Count != expectedValues.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < expectedValues.Count; index++)
+        {
+            if (actualValues[index] is not JsonValue value ||
+                !value.TryGetValue<string>(out var actual) ||
+                !StringComparer.Ordinal.Equals(actual, expectedValues[index]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool StringPropertyEquals(JsonObject source, string propertyName, string expected) =>
+        TryGetStringProperty(source, propertyName, out var actual) &&
+        StringComparer.Ordinal.Equals(actual, expected);
+
+    private static bool BooleanPropertyEquals(JsonObject source, string propertyName, bool expected) =>
+        TryGetBooleanProperty(source, propertyName, out var actual) &&
+        actual == expected;
 
     private static bool IsChecksumLineShape(string line)
     {
@@ -1162,11 +1922,50 @@ internal static class ReleasePublishPreflightPlanner
         return true;
     }
 
+    private static bool TryGetStringArrayProperty(JsonObject? source, string propertyName, out string[] values)
+    {
+        values = [];
+        if (source?[propertyName] is not JsonArray array)
+        {
+            return false;
+        }
+
+        var parsedValues = new List<string>();
+        foreach (var item in array)
+        {
+            if (item is not JsonValue value ||
+                !value.TryGetValue<string>(out var stringValue) ||
+                string.IsNullOrWhiteSpace(stringValue))
+            {
+                return false;
+            }
+
+            parsedValues.Add(stringValue);
+        }
+
+        values = parsedValues.ToArray();
+        return true;
+    }
+
+    private static bool TryGetInt32Property(JsonObject? source, string propertyName, out int value)
+    {
+        value = 0;
+        return source?[propertyName] is JsonValue jsonValue &&
+            jsonValue.TryGetValue<int>(out value);
+    }
+
     private static bool TryGetInt64Property(JsonObject? source, string propertyName, out long value)
     {
         value = 0;
         return source?[propertyName] is JsonValue jsonValue &&
             jsonValue.TryGetValue<long>(out value);
+    }
+
+    private static bool TryGetBooleanProperty(JsonObject? source, string propertyName, out bool value)
+    {
+        value = false;
+        return source?[propertyName] is JsonValue jsonValue &&
+            jsonValue.TryGetValue<bool>(out value);
     }
 
     private static string ReleasePrepareEvidenceStatus(
@@ -1175,7 +1974,8 @@ internal static class ReleasePublishPreflightPlanner
         int malformedArtifacts,
         ReleasePublishChecksumSidecar checksumSidecar,
         ReleasePublishBuildManifestCrossReference buildManifestCrossReference,
-        ReleasePublishArchiveEvidenceCrossReference archiveEvidenceCrossReference)
+        ReleasePublishArchiveEvidenceCrossReference archiveEvidenceCrossReference,
+        ReleasePublishSemanticEvidenceValidation semanticEvidenceValidation)
     {
         if (presentArtifacts == 0)
         {
@@ -1185,7 +1985,8 @@ internal static class ReleasePublishPreflightPlanner
         if (malformedArtifacts > 0 ||
             StringComparer.Ordinal.Equals(checksumSidecar.Status, "malformed-not-validated") ||
             StringComparer.Ordinal.Equals(buildManifestCrossReference.Status, "malformed-not-validated") ||
-            StringComparer.Ordinal.Equals(archiveEvidenceCrossReference.Status, "malformed-not-validated"))
+            StringComparer.Ordinal.Equals(archiveEvidenceCrossReference.Status, "malformed-not-validated") ||
+            StringComparer.Ordinal.Equals(semanticEvidenceValidation.Status, "malformed-not-validated"))
         {
             return "malformed-not-validated";
         }
@@ -1215,9 +2016,24 @@ internal static class ReleasePublishPreflightPlanner
             return "release-archive-evidence-cross-reference-mismatch-not-revalidated";
         }
 
+        if (StringComparer.Ordinal.Equals(archiveEvidenceCrossReference.Status, "mismatch-digest-revalidated"))
+        {
+            return "release-archive-evidence-digest-mismatch-revalidated";
+        }
+
+        if (StringComparer.Ordinal.Equals(archiveEvidenceCrossReference.Status, "mismatch-archive-revalidated"))
+        {
+            return "release-archive-evidence-archive-mismatch-revalidated";
+        }
+
+        if (StringComparer.Ordinal.Equals(semanticEvidenceValidation.Status, "mismatch-semantic-validated"))
+        {
+            return "semantic-evidence-mismatch-validated";
+        }
+
         return missingArtifacts == 0
-            ? "complete-build-manifest-digest-revalidated"
-            : "partial-build-manifest-digest-revalidated";
+            ? "complete-semantic-validated"
+            : "partial-semantic-not-validated";
     }
 
     private static string ChecksumSidecarStatus(
@@ -1348,12 +2164,19 @@ internal static class ReleasePublishPreflightPlanner
         int malformedPaths,
         bool archivePathMatchesOutput,
         bool archiveSha256MetadataPresent,
-        bool archiveLengthMetadataPresent)
+        bool archiveLengthMetadataPresent,
+        bool archiveDigestRevalidated,
+        bool archiveSha256MatchesLocal,
+        bool archiveLengthMatchesLocal,
+        bool archiveRevalidationMetadataPresent,
+        bool archiveOpened,
+        bool archiveRevalidationMatched)
     {
         if (malformedPaths > 0 ||
             parsedPaths == 0 ||
             !archiveSha256MetadataPresent ||
-            !archiveLengthMetadataPresent)
+            !archiveLengthMetadataPresent ||
+            !archiveRevalidationMetadataPresent)
         {
             return "malformed-not-validated";
         }
@@ -1365,7 +2188,14 @@ internal static class ReleasePublishPreflightPlanner
             unexpectedPaths == 0 &&
             archivePathMatchesOutput)
         {
-            return "complete-cross-referenced-not-revalidated";
+            if (!archiveDigestRevalidated || !archiveSha256MatchesLocal || !archiveLengthMatchesLocal)
+            {
+                return "mismatch-digest-revalidated";
+            }
+
+            return archiveOpened && archiveRevalidationMatched
+                ? "complete-archive-revalidated"
+                : "mismatch-archive-revalidated";
         }
 
         return "mismatch-cross-referenced-not-revalidated";
@@ -1535,18 +2365,37 @@ internal static class ReleasePublishPreflightJsonSerializer
                 ["archiveEvidenceUnexpectedPaths"] = result.ArchiveEvidenceCrossReference.UnexpectedPathCount,
                 ["archiveEvidenceMalformedPaths"] = result.ArchiveEvidenceCrossReference.MalformedPathCount,
                 ["archiveEvidenceArchivePathMatchesOutput"] = result.ArchiveEvidenceCrossReference.ArchivePathMatchesOutput,
+                ["archiveEvidenceArchiveSha256MatchesLocal"] = result.ArchiveEvidenceCrossReference.ArchiveSha256MatchesLocal,
+                ["archiveEvidenceArchiveLengthMatchesLocal"] = result.ArchiveEvidenceCrossReference.ArchiveLengthMatchesLocal,
+                ["archiveEvidenceArchiveOpenedInCurrentGate"] = result.ArchiveEvidenceCrossReference.ArchiveOpenedInCurrentGate,
+                ["archiveEvidenceExpectedArchiveEntries"] = result.ArchiveEvidenceCrossReference.ExpectedArchiveEntryCount,
+                ["archiveEvidenceActualArchiveEntries"] = result.ArchiveEvidenceCrossReference.ActualArchiveEntryCount,
+                ["archiveEvidenceArchiveEntryCountMatchesMetadata"] = result.ArchiveEvidenceCrossReference.ArchiveEntryCountMatchesMetadata,
+                ["archiveEvidenceArchiveEntryNamesMatchLocal"] = result.ArchiveEvidenceCrossReference.ArchiveEntryNamesMatchLocal,
+                ["archiveEvidenceArchiveEntryOrderingMatchesLocal"] = result.ArchiveEvidenceCrossReference.ArchiveEntryOrderingMatchesLocal,
+                ["archiveEvidenceArchiveDeterministicTimestampsMatchLocal"] = result.ArchiveEvidenceCrossReference.ArchiveDeterministicTimestampsMatchLocal,
+                ["archiveEvidenceArchiveStoredCompressionMatchesLocal"] = result.ArchiveEvidenceCrossReference.ArchiveStoredCompressionMatchesLocal,
+                ["semanticEvidenceStatus"] = result.SemanticEvidenceValidation.Status,
+                ["semanticEvidenceExpectedChecks"] = result.SemanticEvidenceValidation.ExpectedChecks,
+                ["semanticEvidencePassedChecks"] = result.SemanticEvidenceValidation.PassedChecks,
+                ["semanticEvidenceFailedChecks"] = result.SemanticEvidenceValidation.FailedChecks,
+                ["semanticEvidenceSkippedChecks"] = result.SemanticEvidenceValidation.SkippedChecks,
                 ["artifactPathChecksInCurrentGate"] = true,
                 ["artifactReadsInCurrentGate"] = result.LocalEvidenceArtifacts.Any(artifact => artifact.ContentReadInCurrentGate),
-            ["contentShapeClassificationInCurrentGate"] = true,
-            ["checksumEntryClassificationInCurrentGate"] = result.ChecksumSidecar.EntryClassificationInCurrentGate,
-            ["checksumDigestRevalidationInCurrentGate"] = result.ChecksumSidecar.DigestRevalidationInCurrentGate,
-            ["buildManifestOutputCrossReferenceInCurrentGate"] = result.BuildManifestCrossReference.OutputCrossReferenceInCurrentGate,
-            ["buildManifestDigestRevalidationInCurrentGate"] = result.BuildManifestCrossReference.DigestRevalidationInCurrentGate,
-            ["archiveEvidenceMetadataCrossReferenceInCurrentGate"] = result.ArchiveEvidenceCrossReference.MetadataCrossReferenceInCurrentGate
+                ["contentShapeClassificationInCurrentGate"] = true,
+                ["checksumEntryClassificationInCurrentGate"] = result.ChecksumSidecar.EntryClassificationInCurrentGate,
+                ["checksumDigestRevalidationInCurrentGate"] = result.ChecksumSidecar.DigestRevalidationInCurrentGate,
+                ["buildManifestOutputCrossReferenceInCurrentGate"] = result.BuildManifestCrossReference.OutputCrossReferenceInCurrentGate,
+                ["buildManifestDigestRevalidationInCurrentGate"] = result.BuildManifestCrossReference.DigestRevalidationInCurrentGate,
+                ["archiveEvidenceMetadataCrossReferenceInCurrentGate"] = result.ArchiveEvidenceCrossReference.MetadataCrossReferenceInCurrentGate,
+                ["archiveEvidenceDigestRevalidationInCurrentGate"] = result.ArchiveEvidenceCrossReference.DigestRevalidationInCurrentGate,
+                ["archiveEvidenceArchiveRevalidationInCurrentGate"] = result.ArchiveEvidenceCrossReference.ArchiveRevalidationInCurrentGate,
+                ["semanticEvidenceValidationInCurrentGate"] = result.SemanticEvidenceValidation.ValidationInCurrentGate
             },
             ["checksumSidecar"] = ToChecksumSidecar(result.ChecksumSidecar),
             ["buildManifestCrossReference"] = ToBuildManifestCrossReference(result.BuildManifestCrossReference),
             ["archiveEvidenceCrossReference"] = ToArchiveEvidenceCrossReference(result.ArchiveEvidenceCrossReference),
+            ["semanticEvidenceValidation"] = ToSemanticEvidenceValidation(result.SemanticEvidenceValidation),
             ["requiredEvidence"] = ToEvidenceArray(result.RequiredEvidence),
             ["localEvidenceArtifacts"] = ToArtifactArray(result.LocalEvidenceArtifacts),
             ["governanceChecks"] = ToGovernanceCheckArray(result.GovernanceChecks),
@@ -1562,7 +2411,7 @@ internal static class ReleasePublishPreflightJsonSerializer
                 ["status"] = result.Status,
                 ["canonicalFormat"] = "json",
                 ["mutatesFilesystemInCurrentGate"] = false,
-                ["summary"] = "Release publish reports governance preflight requirements and refuses publish until local evidence checks and explicit human approval are implemented."
+                ["summary"] = "Release publish reports governance preflight requirements and refuses publish until remaining governance checks and explicit human approval are implemented."
             },
             ["execution"] = ToExecution(result),
             ["boundaries"] = ToStringArray(result.Boundaries)
@@ -1736,9 +2585,51 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["archivePathMatchesOutput"] = crossReference.ArchivePathMatchesOutput,
             ["archiveSha256MetadataPresent"] = crossReference.ArchiveSha256MetadataPresent,
             ["archiveLengthMetadataPresent"] = crossReference.ArchiveLengthMetadataPresent,
+            ["archiveSha256MatchesLocal"] = crossReference.ArchiveSha256MatchesLocal,
+            ["archiveLengthMatchesLocal"] = crossReference.ArchiveLengthMatchesLocal,
+            ["expectedArchiveSha256"] = crossReference.ExpectedArchiveSha256,
+            ["actualArchiveSha256"] = crossReference.ActualArchiveSha256,
+            ["expectedArchiveLength"] = crossReference.ExpectedArchiveLength,
+            ["actualArchiveLength"] = crossReference.ActualArchiveLength,
+            ["archiveOpenedInCurrentGate"] = crossReference.ArchiveOpenedInCurrentGate,
+            ["expectedArchiveEntries"] = crossReference.ExpectedArchiveEntryCount,
+            ["evidenceActualArchiveEntries"] = crossReference.EvidenceActualArchiveEntryCount,
+            ["actualArchiveEntries"] = crossReference.ActualArchiveEntryCount,
+            ["archiveEntryCountMatchesMetadata"] = crossReference.ArchiveEntryCountMatchesMetadata,
+            ["archiveEntryNamesMatchLocal"] = crossReference.ArchiveEntryNamesMatchLocal,
+            ["archiveEvidenceActualEntryNamesMatchLocal"] = crossReference.ArchiveEvidenceActualEntryNamesMatchLocal,
+            ["archiveEntryOrderingMatchesLocal"] = crossReference.ArchiveEntryOrderingMatchesLocal,
+            ["archiveDeterministicTimestampsMatchLocal"] = crossReference.ArchiveDeterministicTimestampsMatchLocal,
+            ["archiveStoredCompressionMatchesLocal"] = crossReference.ArchiveStoredCompressionMatchesLocal,
+            ["archiveRevalidationDetail"] = crossReference.ArchiveRevalidationDetail,
+            ["archiveEntries"] = ToArchiveEntryRevalidationArray(crossReference.ArchiveEntries),
             ["expectedPaths"] = ToArchiveEvidenceExpectedPathArray(crossReference.ExpectedPaths),
             ["paths"] = ToArchiveEvidencePathArray(crossReference.Paths)
         };
+
+    private static JsonArray ToArchiveEntryRevalidationArray(IReadOnlyList<ReleasePublishArchiveEntryRevalidation> entries)
+    {
+        var array = new JsonArray();
+        foreach (var entry in entries)
+        {
+            array.Add(new JsonObject
+            {
+                ["index"] = entry.Index,
+                ["path"] = entry.Path,
+                ["length"] = entry.Length,
+                ["compressedLength"] = entry.CompressedLength,
+                ["lastWriteTimeUtc"] = entry.LastWriteTimeUtc,
+                ["status"] = entry.Status,
+                ["expectedPath"] = entry.ExpectedPath,
+                ["expectedAtIndex"] = entry.ExpectedAtIndex,
+                ["evidenceActualAtIndex"] = entry.EvidenceActualAtIndex,
+                ["timestampMatches"] = entry.TimestampMatches,
+                ["stored"] = entry.Stored
+            });
+        }
+
+        return array;
+    }
 
     private static JsonArray ToArchiveEvidenceExpectedPathArray(IReadOnlyList<ReleasePublishArchiveEvidenceExpectedPath> expectedPaths)
     {
@@ -1779,6 +2670,38 @@ internal static class ReleasePublishPreflightJsonSerializer
                 ["digestRevalidatedInCurrentGate"] = path.DigestRevalidatedInCurrentGate,
                 ["archiveRevalidatedInCurrentGate"] = path.ArchiveRevalidatedInCurrentGate,
                 ["shapeDetail"] = path.ShapeDetail
+            });
+        }
+
+        return array;
+    }
+
+    private static JsonObject ToSemanticEvidenceValidation(ReleasePublishSemanticEvidenceValidation validation) =>
+        new()
+        {
+            ["status"] = validation.Status,
+            ["validationInCurrentGate"] = validation.ValidationInCurrentGate,
+            ["contentReadInCurrentGate"] = validation.ContentReadInCurrentGate,
+            ["expectedChecks"] = validation.ExpectedChecks,
+            ["passedChecks"] = validation.PassedChecks,
+            ["failedChecks"] = validation.FailedChecks,
+            ["skippedChecks"] = validation.SkippedChecks,
+            ["detail"] = validation.Detail,
+            ["checks"] = ToSemanticEvidenceCheckArray(validation.Checks)
+        };
+
+    private static JsonArray ToSemanticEvidenceCheckArray(IReadOnlyList<ReleasePublishSemanticEvidenceCheck> checks)
+    {
+        var array = new JsonArray();
+        foreach (var check in checks)
+        {
+            array.Add(new JsonObject
+            {
+                ["id"] = check.Id,
+                ["title"] = check.Title,
+                ["path"] = check.Path,
+                ["status"] = check.Status,
+                ["detail"] = check.Detail
             });
         }
 
@@ -1863,9 +2786,9 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["archiveEvidenceMetadataCrossReference"] = true,
             ["checksumRevalidation"] = result.ChecksumSidecar.DigestRevalidationInCurrentGate,
             ["buildManifestDigestRevalidation"] = result.BuildManifestCrossReference.DigestRevalidationInCurrentGate,
-            ["archiveEvidenceDigestRevalidation"] = false,
-            ["semanticEvidenceValidation"] = false,
-            ["archiveRevalidation"] = false,
+            ["archiveEvidenceDigestRevalidation"] = result.ArchiveEvidenceCrossReference.DigestRevalidationInCurrentGate,
+            ["semanticEvidenceValidation"] = result.SemanticEvidenceValidation.ValidationInCurrentGate,
+            ["archiveRevalidation"] = result.ArchiveEvidenceCrossReference.ArchiveRevalidationInCurrentGate,
             ["governanceCheckExecution"] = false,
             ["humanApprovalProvided"] = result.Approval.Provided,
             ["filesystemMutation"] = false,
@@ -1967,7 +2890,17 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.Append(result.ArchiveEvidenceCrossReference.UnexpectedPathCount);
         builder.Append(" unexpected, ");
         builder.Append(result.ArchiveEvidenceCrossReference.MalformedPathCount);
-        builder.AppendLine(" malformed)");
+        builder.Append(" malformed, archive sha256 match: ");
+        builder.Append(result.ArchiveEvidenceCrossReference.ArchiveSha256MatchesLocal.ToString().ToLowerInvariant());
+        builder.Append(", archive length match: ");
+        builder.Append(result.ArchiveEvidenceCrossReference.ArchiveLengthMatchesLocal.ToString().ToLowerInvariant());
+        builder.Append(", archive entries: ");
+        builder.Append(result.ArchiveEvidenceCrossReference.ActualArchiveEntryCount);
+        builder.Append('/');
+        builder.Append(result.ArchiveEvidenceCrossReference.ExpectedArchiveEntryCount);
+        builder.Append(", archive entry names match: ");
+        builder.Append(result.ArchiveEvidenceCrossReference.ArchiveEntryNamesMatchLocal.ToString().ToLowerInvariant());
+        builder.AppendLine(")");
         builder.Append("Mode: ");
         builder.AppendLine(result.DryRun ? "dry-run-preflight" : "no-publish-refusal");
         builder.Append("Publish ready: ");
@@ -2096,6 +3029,32 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine(result.ArchiveEvidenceCrossReference.Status);
         builder.Append("  archive path matches output: ");
         builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchivePathMatchesOutput.ToString().ToLowerInvariant());
+        builder.Append("  archive digest revalidation: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.DigestRevalidationInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  archive sha256 matches local: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveSha256MatchesLocal.ToString().ToLowerInvariant());
+        builder.Append("  archive length matches local: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveLengthMatchesLocal.ToString().ToLowerInvariant());
+        builder.Append("  archive revalidation: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveRevalidationInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  archive opened: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveOpenedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  archive entries: ");
+        builder.Append(result.ArchiveEvidenceCrossReference.ActualArchiveEntryCount);
+        builder.Append('/');
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ExpectedArchiveEntryCount.ToString());
+        builder.Append("  archive entry count matches metadata: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveEntryCountMatchesMetadata.ToString().ToLowerInvariant());
+        builder.Append("  archive entry names match local: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveEntryNamesMatchLocal.ToString().ToLowerInvariant());
+        builder.Append("  archive entry ordering matches local: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveEntryOrderingMatchesLocal.ToString().ToLowerInvariant());
+        builder.Append("  archive deterministic timestamps match local: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveDeterministicTimestampsMatchLocal.ToString().ToLowerInvariant());
+        builder.Append("  archive stored compression matches local: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveStoredCompressionMatchesLocal.ToString().ToLowerInvariant());
+        builder.Append("  archive revalidation detail: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveRevalidationDetail);
         builder.AppendLine("  expected path coverage");
         foreach (var expectedPath in result.ArchiveEvidenceCrossReference.ExpectedPaths)
         {
@@ -2117,6 +3076,47 @@ internal static class ReleasePublishPreflightTextRenderer
             builder.Append(path.Path ?? "<unparsed>");
             builder.Append(" (");
             builder.Append(path.Status);
+            builder.AppendLine(")");
+        }
+
+        builder.AppendLine("  archive entries");
+        foreach (var entry in result.ArchiveEvidenceCrossReference.ArchiveEntries)
+        {
+            builder.Append("    entry ");
+            builder.Append(entry.Index);
+            builder.Append(": ");
+            builder.Append(entry.Path);
+            builder.Append(" (");
+            builder.Append(entry.Status);
+            builder.AppendLine(")");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("Semantic release evidence validation");
+        builder.Append("  status: ");
+        builder.AppendLine(result.SemanticEvidenceValidation.Status);
+        builder.Append("  validation in current gate: ");
+        builder.AppendLine(result.SemanticEvidenceValidation.ValidationInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  content read in current gate: ");
+        builder.AppendLine(result.SemanticEvidenceValidation.ContentReadInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  checks: ");
+        builder.Append(result.SemanticEvidenceValidation.PassedChecks);
+        builder.Append(" passed, ");
+        builder.Append(result.SemanticEvidenceValidation.FailedChecks);
+        builder.Append(" failed, ");
+        builder.Append(result.SemanticEvidenceValidation.SkippedChecks);
+        builder.AppendLine(" skipped");
+        builder.Append("  detail: ");
+        builder.AppendLine(result.SemanticEvidenceValidation.Detail);
+        builder.AppendLine("  checks");
+        foreach (var check in result.SemanticEvidenceValidation.Checks)
+        {
+            builder.Append("    ");
+            builder.Append(check.Id);
+            builder.Append(": ");
+            builder.Append(check.Status);
+            builder.Append(" (");
+            builder.Append(check.Detail);
             builder.AppendLine(")");
         }
 
@@ -2158,9 +3158,12 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine("  release archive evidence metadata cross-reference: true");
         builder.AppendLine("  checksum revalidation: true");
         builder.AppendLine("  build manifest digest revalidation: true");
-        builder.AppendLine("  release archive evidence digest revalidation: false");
-        builder.AppendLine("  semantic evidence validation: false");
-        builder.AppendLine("  archive revalidation: false");
+        builder.Append("  release archive evidence digest revalidation: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.DigestRevalidationInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  semantic evidence validation: ");
+        builder.AppendLine(result.SemanticEvidenceValidation.ValidationInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  archive revalidation: ");
+        builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveRevalidationInCurrentGate.ToString().ToLowerInvariant());
         builder.AppendLine("  governance check execution: false");
         builder.AppendLine("  filesystem mutation: false");
         builder.AppendLine("  output writes: false");
