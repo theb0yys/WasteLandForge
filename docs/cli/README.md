@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 307 forge release publish collection-plan evidence
+Status: Gate 309 forge release publish release dry-run evidence remediation
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -947,22 +947,29 @@ package-validation evidence evaluation from
 evaluation from `dist/release-dry-run/release-verify.json`, and
 collection-plan evidence evaluation from
 `dist/release-dry-run/release-evidence-collection-plan.json`, plus explicit
-human-approval evaluation through `--yes --confirm <project-id>`, and
-publish-readiness aggregation. Gate 288 also reports `laneCloseout` metadata
-that closes the no-publish lane and routes Gate 289 to `forge doctor export`
-release-readiness handoff work. Normal execution refuses publish with exit
-code 6 even when local readiness is satisfied.
+human-approval evaluation through `--yes --confirm <project-id>`, release
+dry-run evidence cross-link evaluation across `release-evidence-index.json`,
+`release-evidence-status.json`, `release-evidence-actions.json`,
+`release-evidence-collection-plan.json`, and `release-evidence-handoff.md`,
+release dry-run evidence remediation summaries for missing, malformed, or
+cross-link-mismatched evidence, and publish-readiness aggregation. Gate 288
+also reports `laneCloseout` metadata that closes the no-publish lane and
+routes Gate 289 to `forge doctor export` release-readiness handoff work.
+Normal execution refuses publish with exit code 6 even when local readiness is
+satisfied.
 `--dry-run` reports the same preflight with exit code 0. The preflight reports
 required local evidence, release-prepare artifact status, checksum/build
 manifest/archive evidence status, governance check evidence path/detail/status,
 schema-validation evidence path/detail/status, capability/environment evidence
 path/detail/status, package-validation evidence path/detail/status,
 release-verification evidence path/detail/status, collection-plan evidence
-path/detail/status, explicit human-approval confirmation value/match status,
-`publishReadiness` satisfied/blocking checks, `laneCloseout` next-slice
-routing, and false execution flags for release publishing, remote repository
-calls, release uploads, attestation/signing, external tools, plugin mutation,
-MO2/GECK automation, runtime probes, and AI.
+path/detail/status, dry-run cross-link evidence path/detail/status,
+dry-run evidence remediation status/action items, explicit human-approval
+confirmation value/match status, `publishReadiness` satisfied/blocking
+checks, `laneCloseout` next-slice routing, and false execution flags for
+release publishing, remote repository calls, release uploads,
+attestation/signing, external tools, plugin mutation, MO2/GECK automation,
+runtime probes, and AI.
 It does not accept archive payload contents or write publish outputs.
 
 Gate 289 adds a local release-readiness handoff projection to
@@ -1201,8 +1208,40 @@ ID `release-dry-run-collection-plan`. The gate still does not run collection
 steps, run capability scans, run package verification, publish releases, call
 remote repositories, sign or attest artifacts, execute external tools, mutate
 plugins, automate MO2/GECK, run runtime probes, use real third-party fixtures,
-or use AI. The next implementation route is Gate 308 local release dry-run
-evidence cross-link consistency evaluation.
+or use AI.
+
+Gate 308 adds local release-publish release dry-run evidence cross-link
+consistency evaluation. `forge release publish` now reads
+`release-evidence-index.json`, `release-evidence-status.json`,
+`release-evidence-actions.json`, `release-evidence-collection-plan.json`, and
+`release-evidence-handoff.md` under `dist/release-dry-run`, checks JSON
+identity, expected link fields, handoff references, required evidence
+entries, action references, collection-step references, summary counters, and
+no-execution boundaries. JSON output includes `dryRunCrossLinkEvidence`,
+`releasePrepareEvidence.dryRunCrossLinkEvidenceStatus`, file/link counters,
+`execution.dryRunCrossLinkEvidenceEvaluation`, and required evidence ID
+`release-dry-run-cross-links`. The gate still does not run collection steps,
+run capability scans, run package verification, publish releases, call remote
+repositories, sign or attest artifacts, execute external tools, mutate
+plugins, automate MO2/GECK, run runtime probes, use real third-party fixtures,
+or use AI.
+
+Gate 309 adds local release-publish release dry-run evidence remediation
+summaries. `forge release publish` now derives `dryRunEvidenceRemediation`
+from `dryRunCrossLinkEvidence`, reports `no-action-required` when cross-links
+are complete, and reports manual blocker action items for missing, malformed,
+or cross-link-mismatched dry-run evidence. JSON output includes
+`dryRunEvidenceRemediation`,
+`releasePrepareEvidence.dryRunEvidenceRemediationStatus`,
+`releasePrepareEvidence.dryRunEvidenceRemediationActions`, and
+`execution.dryRunEvidenceRemediationEvaluation`. Plain output includes a
+release dry-run evidence remediation section with manual command hints. The
+gate still does not run those hints, run collection steps, run capability
+scans, run package verification, publish releases, call remote repositories,
+sign or attest artifacts, execute external tools, mutate plugins, automate
+MO2/GECK, run runtime probes, use real third-party fixtures, or use AI. The
+next implementation route is Gate 310 `forge doctor export` release dry-run
+evidence remediation handoff projection.
 
 ## Docs Evidence
 

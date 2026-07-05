@@ -1185,6 +1185,18 @@ through temporary copies and read
 `dist/release-dry-run/release-evidence-collection-plan.json` only from temp
 test directories after local release-verify dry-run generation.
 
+Gate 308 adds no public fixture, private fixture, committed generated
+evidence payload, or real provider sample. Release publish cross-link tests
+reuse the synthetic `fixtures/projects/ExampleMod` project through temporary
+copies and read the local release dry-run evidence files only from temp test
+directories after local release-verify dry-run generation.
+
+Gate 309 adds no public fixture, private fixture, committed generated
+evidence payload, or real provider sample. Release publish remediation tests
+reuse the synthetic `fixtures/projects/ExampleMod` project through temporary
+copies, mutate generated temp-only release dry-run evidence to exercise
+malformed and mismatched states, and commit no generated evidence.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

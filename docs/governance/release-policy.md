@@ -377,3 +377,24 @@ run those steps, run capability scans, run package verification, publish
 releases, call remote repositories, upload assets, sign or attest artifacts,
 execute external tools, mutate plugins, automate MO2 or GECK, run runtime
 probes, or use AI.
+
+Gate 308 adds local release-publish evaluation for cross-links across the
+release dry-run evidence set. `forge release publish` now reads
+`release-evidence-index.json`, `release-evidence-status.json`,
+`release-evidence-actions.json`, `release-evidence-collection-plan.json`, and
+`release-evidence-handoff.md`, checks identity, links, required evidence
+rows, actions, collection steps, summary counters, handoff references, and
+no-execution flags, and adds `release-dry-run-cross-links` to
+publish-readiness evidence. It does not run those steps, run capability
+scans, run package verification, publish releases, call remote repositories,
+upload assets, sign or attest artifacts, execute external tools, mutate
+plugins, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 309 adds local release-publish remediation summaries for failed release
+dry-run evidence states. `forge release publish` now reports manual blocker
+items for missing, malformed, or cross-link-mismatched dry-run evidence and
+points operators back to the release verify dry-run command. It does not
+execute that command, remediate automatically, run
+capability scans, run package verification, publish releases, call remote
+repositories, upload assets, sign or attest artifacts, execute external
+tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.

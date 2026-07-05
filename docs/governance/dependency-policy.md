@@ -1352,3 +1352,17 @@ evaluation uses existing .NET JSON and file APIs. It does not add command
 runners, package validators, publishing clients, repository API clients,
 signing or attestation dependencies, external tool integrations, network
 calls, runtime probes, MO2 or GECK automation, or AI requirements.
+
+Gate 308 adds no package dependency. Release publish dry-run cross-link
+evidence evaluation uses existing .NET JSON, Markdown text, and file APIs. It
+does not add command runners, package validators, publishing clients,
+repository API clients, signing or attestation dependencies, external tool
+integrations, network calls, runtime probes, MO2 or GECK automation, or AI
+requirements.
+
+Gate 309 adds no package dependency. Release publish dry-run evidence
+remediation summaries use existing .NET collection and JSON serialization
+APIs. They do not add command runners, package validators, publishing clients,
+repository API clients, signing or attestation dependencies, external tool
+integrations, network calls, runtime probes, MO2 or GECK automation, or AI
+requirements.

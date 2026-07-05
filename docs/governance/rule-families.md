@@ -968,3 +968,21 @@ add `WF-BUILD-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, command fan-out
 diagnostics, package verifier rules, external tool diagnostics, runtime probe
 diagnostics, repository publish diagnostics, signing/attestation diagnostics,
 or AI requirements.
+
+Gate 308 adds no new rule family or diagnostic ID. Release publish dry-run
+cross-link evidence evaluation is a local readiness evidence check over the
+Gate 302 through Gate 306 release dry-run evidence projections and keeps using
+existing release dry-run provenance outputs and `WF-REL-001` output
+containment behavior. It does not add `WF-BUILD-*`, `WF-GOV-*`, or
+`WF-SEC-*` diagnostics, command fan-out diagnostics, package verifier rules,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, or AI requirements.
+
+Gate 309 adds no new rule family or diagnostic ID. Release publish dry-run
+evidence remediation is a local operator summary derived from existing release
+dry-run evidence statuses and keeps using existing release dry-run provenance
+outputs and `WF-REL-001` output containment behavior. It does not add
+`WF-BUILD-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, automatic remediation
+rules, command fan-out diagnostics, package verifier rules, external tool
+diagnostics, runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, or AI requirements.

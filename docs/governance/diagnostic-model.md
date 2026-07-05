@@ -1465,5 +1465,24 @@ capability execution diagnostics, external tool diagnostics, runtime probe
 diagnostics, repository publish diagnostics, signing/attestation diagnostics,
 or AI requirements.
 
+Gate 308 adds no new diagnostic rule ID. `forge release publish` treats the
+release dry-run evidence cross-links as local evidence for publish readiness
+and reports status through `dryRunCrossLinkEvidence`, not as a new diagnostic
+report. Missing, malformed, or mismatched cross-links become blocking
+readiness evidence statuses while continuing to reuse existing `WF-REL-*`
+release diagnostics. The gate does not add package verification diagnostics,
+capability execution diagnostics, external tool diagnostics, runtime probe
+diagnostics, repository publish diagnostics, signing/attestation diagnostics,
+or AI requirements.
+
+Gate 309 adds no new diagnostic rule ID. `forge release publish` treats
+dry-run evidence remediation as an operator summary derived from
+`dryRunCrossLinkEvidence`, not as a new diagnostic report. Remediation items
+remain manual blocker actions while continuing to reuse existing `WF-REL-*`
+release diagnostics. The gate does not add automatic remediation diagnostics,
+package verification diagnostics, capability execution diagnostics, external
+tool diagnostics, runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, or AI requirements.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

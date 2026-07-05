@@ -1529,6 +1529,24 @@ adds `release-dry-run-collection-plan` to required evidence/readiness, and
 keeps release publishing, uploads, external tools, runtime probes, and AI
 disabled.
 
+Gate 308 extends golden CLI coverage for `forge release publish` release
+dry-run evidence cross-links. Tests verify publish dry-run reads the local
+`release-evidence-index.json`, `release-evidence-status.json`,
+`release-evidence-actions.json`, `release-evidence-collection-plan.json`, and
+`release-evidence-handoff.md` files from temp-copied synthetic fixtures,
+validates identity, links, required evidence rows, actions, collection steps,
+summary counters, handoff references, and no-execution flags, surfaces
+`dryRunCrossLinkEvidence`, adds `release-dry-run-cross-links` to required
+evidence/readiness, updates Doctor release-readiness counts, and keeps release
+publishing, uploads, external tools, runtime probes, and AI disabled.
+
+Gate 309 extends golden CLI coverage for `forge release publish` release
+dry-run evidence remediation. Tests verify missing, malformed,
+cross-link-mismatched, and complete dry-run evidence states, surface
+`dryRunEvidenceRemediation`, assert manual action items and command hints,
+assert summary and execution fields, and keep release publishing, uploads,
+external tools, runtime probes, and AI disabled.
+
 Run the full local suite serially:
 
 ```text

@@ -1740,3 +1740,25 @@ does not run collection steps, run command fan-out, capability scans, package
 verification, publish releases, call remote repositories, sign or attest
 artifacts, execute external tools, mutate plugins, automate MO2/GECK, run
 runtime probes, or use AI.
+
+Gate 308 extends `forge release publish` with local release dry-run evidence
+cross-link evaluation. The preflight now reads the local
+`release-evidence-index.json`, `release-evidence-status.json`,
+`release-evidence-actions.json`, `release-evidence-collection-plan.json`, and
+`release-evidence-handoff.md` files, validates identity, links, required
+evidence, actions, collection steps, summary counters, handoff references, and
+no-execution flags, reports `dryRunCrossLinkEvidence`, and adds
+`release-dry-run-cross-links` to required evidence/readiness. It does not run
+collection steps, run command fan-out, capability scans, package
+verification, publish releases, call remote repositories, sign or attest
+artifacts, execute external tools, mutate plugins, automate MO2/GECK, run
+runtime probes, or use AI.
+
+Gate 309 extends `forge release publish` with local release dry-run evidence
+remediation summaries. The preflight now derives `dryRunEvidenceRemediation`
+from cross-link evidence, reports no action for complete evidence, and reports
+manual blocker action items for missing, malformed, or cross-link-mismatched
+dry-run evidence. It does not run those command hints, run command fan-out,
+capability scans, package verification, publish releases, call remote
+repositories, sign or attest artifacts, execute external tools, mutate
+plugins, automate MO2/GECK, run runtime probes, or use AI.

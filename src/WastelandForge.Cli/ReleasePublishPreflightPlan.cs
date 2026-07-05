@@ -337,6 +337,31 @@ internal sealed record ReleasePublishDryRunCrossLinkEvidence(
     bool HandoffReferencesConsistent,
     string Detail);
 
+internal sealed record ReleasePublishDryRunEvidenceRemediation(
+    string Status,
+    bool CheckedInCurrentGate,
+    bool RequiresOperatorAction,
+    string SourceStatus,
+    int ActionItems,
+    int CommandHints,
+    int AffectedPaths,
+    int BlockingIssues,
+    string RecommendedCommand,
+    string Detail,
+    IReadOnlyList<string> TargetPaths,
+    IReadOnlyList<ReleasePublishDryRunEvidenceRemediationItem> Items);
+
+internal sealed record ReleasePublishDryRunEvidenceRemediationItem(
+    string Id,
+    string Priority,
+    string Category,
+    string Status,
+    string Reason,
+    string CommandHint,
+    string Execution,
+    bool BlocksPublishReadiness,
+    IReadOnlyList<string> TargetPaths);
+
 internal sealed record ReleasePublishGovernanceCheck(
     string Id,
     string Title,
@@ -424,6 +449,7 @@ internal sealed record ReleasePublishPreflightResult(
     ReleasePublishReleaseVerificationEvidence ReleaseVerificationEvidence,
     ReleasePublishCollectionPlanEvidence CollectionPlanEvidence,
     ReleasePublishDryRunCrossLinkEvidence DryRunCrossLinkEvidence,
+    ReleasePublishDryRunEvidenceRemediation DryRunEvidenceRemediation,
     ReleasePublishReadiness PublishReadiness,
     ReleasePublishLaneCloseout LaneCloseout,
     string? RefusalReason,
@@ -460,6 +486,36 @@ internal static class ReleasePublishPreflightPlanner
         bool IdentityValid,
         JsonObject? Root,
         string Detail);
+
+    private sealed record ReleaseDryRunEvidenceEntryShape(
+        string Id,
+        string Path,
+        bool Exists,
+        string Status);
+
+    private sealed record ReleaseDryRunEvidenceActionShape(
+        string Id,
+        string EvidenceId,
+        string TargetPath);
+
+    private sealed record ReleaseDryRunEvidenceCollectionStepShape(
+        int Order,
+        string Id,
+        string EvidenceId,
+        string TargetPath,
+        string Status,
+        string CollectionMode,
+        string Execution,
+        string? ActionId);
+
+    private sealed record ReleaseDryRunEvidenceSummaryShape(
+        int Total,
+        int Present,
+        int Missing,
+        int Actions,
+        int? Steps,
+        int? ManualSteps,
+        int? AvailableSteps);
 
     private static readonly string[] BoundaryLines =
     [
@@ -605,6 +661,16 @@ internal static class ReleasePublishPreflightPlanner
     private const string ReleaseEvidenceActionsRelativePath = "dist/release-dry-run/release-evidence-actions.json";
     private const string CollectionPlanEvidenceRelativePath = "dist/release-dry-run/release-evidence-collection-plan.json";
     private const string ReleaseEvidenceHandoffRelativePath = "dist/release-dry-run/release-evidence-handoff.md";
+    private const string ReleaseVerifyEvidenceCommandHint = "forge release verify <project-root> --format json --no-input";
+
+    private static readonly string[] ReleaseDryRunEvidenceRelativePaths =
+    [
+        ReleaseEvidenceIndexRelativePath,
+        ReleaseEvidenceStatusRelativePath,
+        ReleaseEvidenceActionsRelativePath,
+        CollectionPlanEvidenceRelativePath,
+        ReleaseEvidenceHandoffRelativePath
+    ];
 
     private static readonly (int Order, string Id, string EvidenceId, string TargetPath)[] CollectionPlanExpectedSteps =
     [
@@ -633,6 +699,7 @@ internal static class ReleasePublishPreflightPlanner
         var releaseVerificationEvidence = CreateReleaseVerificationEvidence(projectRoot);
         var collectionPlanEvidence = CreateCollectionPlanEvidence(projectRoot);
         var dryRunCrossLinkEvidence = CreateDryRunCrossLinkEvidence(projectRoot);
+        var dryRunEvidenceRemediation = CreateDryRunEvidenceRemediation(dryRunCrossLinkEvidence);
         var governanceChecks = CreateGovernanceChecks(projectRoot);
         var approval = CreateApprovalRequirement(projectRoot, options.Yes, options.Confirm);
         var presentArtifacts = localEvidenceArtifacts.Count(artifact => artifact.Exists);
@@ -671,6 +738,7 @@ internal static class ReleasePublishPreflightPlanner
             releaseVerificationEvidence,
             collectionPlanEvidence,
             dryRunCrossLinkEvidence,
+            dryRunEvidenceRemediation,
             publishReadiness,
             laneCloseout,
             refusalReason,
@@ -1772,6 +1840,733 @@ internal static class ReleasePublishPreflightPlanner
         BooleanPropertyEquals(execution, "runtimeProbes", expected: false) &&
         BooleanPropertyEquals(execution, "realThirdPartyPluginFixtures", expected: false) &&
         BooleanPropertyEquals(execution, "ai", expected: false);
+
+    private static ReleasePublishDryRunCrossLinkEvidence CreateDryRunCrossLinkEvidence(string projectRoot)
+    {
+        var index = ReadReleaseDryRunEvidenceJson(
+            projectRoot,
+            ReleaseEvidenceIndexRelativePath,
+            "wastelandforge.release-dry-run-evidence-index",
+            "planned");
+        var status = ReadReleaseDryRunEvidenceJson(
+            projectRoot,
+            ReleaseEvidenceStatusRelativePath,
+            "wastelandforge.release-dry-run-evidence-status",
+            "projected");
+        var actions = ReadReleaseDryRunEvidenceJson(
+            projectRoot,
+            ReleaseEvidenceActionsRelativePath,
+            "wastelandforge.release-dry-run-missing-evidence-actions",
+            "planned");
+        var collectionPlan = ReadReleaseDryRunEvidenceJson(
+            projectRoot,
+            CollectionPlanEvidenceRelativePath,
+            "wastelandforge.release-dry-run-evidence-collection-plan",
+            "planned");
+        var reads = new[] { index, status, actions, collectionPlan };
+
+        var handoffPath = Path.Combine(projectRoot, ReleaseEvidenceHandoffRelativePath.Replace('/', Path.DirectorySeparatorChar));
+        var handoffExists = File.Exists(handoffPath);
+        var handoffContentRead = false;
+        var handoffContent = string.Empty;
+        if (handoffExists)
+        {
+            try
+            {
+                handoffContent = File.ReadAllText(handoffPath);
+                handoffContentRead = true;
+            }
+            catch (IOException)
+            {
+                handoffContentRead = false;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                handoffContentRead = false;
+            }
+        }
+
+        var presentFiles = reads.Count(read => read.Exists) + (handoffExists ? 1 : 0);
+        var missingFiles = reads.Count(read => !read.Exists) + (handoffExists ? 0 : 1);
+        var malformedFiles = reads.Count(read => read.Exists && (!read.Parsed || !read.IdentityValid)) +
+            (handoffExists && !handoffContentRead ? 1 : 0);
+        var contentRead = reads.Any(read => read.ContentRead) || handoffContentRead;
+
+        if (missingFiles > 0)
+        {
+            return DryRunCrossLinkEvidence(
+                "missing",
+                contentRead,
+                presentFiles,
+                missingFiles,
+                malformedFiles,
+                "release-dry-run-cross-link-files-missing");
+        }
+
+        if (malformedFiles > 0 ||
+            index.Root is null ||
+            status.Root is null ||
+            actions.Root is null ||
+            collectionPlan.Root is null)
+        {
+            return DryRunCrossLinkEvidence(
+                "malformed",
+                contentRead,
+                presentFiles,
+                missingFiles,
+                malformedFiles,
+                "release-dry-run-cross-link-files-malformed");
+        }
+
+        var expectedLinks = 20;
+        var validLinks = CountValidDryRunEvidenceLinks(index.Root, status.Root, actions.Root, collectionPlan.Root, handoffContent);
+        var mismatchedLinks = expectedLinks - validLinks;
+        var identityConsistent = reads.All(read => read.IdentityValid);
+        var indexEntriesRead = TryReadRequiredEvidence(index.Root, out var indexEntries);
+        var statusEntriesRead = TryReadRequiredEvidence(status.Root, out var statusEntries);
+        var requiredEvidenceConsistent = indexEntriesRead &&
+            statusEntriesRead &&
+            RequiredEvidenceEntriesConsistent(indexEntries, statusEntries) &&
+            ReleasePublishConsumesConsistent(index.Root, indexEntries) &&
+            ReleasePublishConsumesConsistent(collectionPlan.Root, indexEntries);
+        var statusEntryCount = statusEntries?.Count ?? 0;
+        var requiredEvidenceEntryCount = indexEntries?.Count ?? 0;
+        var actionsRead = TryReadActions(actions.Root, out var actionShapes);
+        var actionReferencesConsistent = actionsRead &&
+            indexEntries is not null &&
+            ActionsConsistentWithEvidence(actionShapes, indexEntries);
+        var actionCount = actionShapes?.Count ?? 0;
+        var collectionStepsRead = TryReadCollectionSteps(collectionPlan.Root, out var stepShapes);
+        var collectionStepsConsistent = collectionStepsRead &&
+            indexEntries is not null &&
+            actionShapes is not null &&
+            CollectionStepsConsistentWithEvidence(stepShapes, indexEntries, actionShapes);
+        var collectionStepCount = stepShapes?.Count ?? 0;
+        var indexSummaryRead = TryReadEvidenceSummary(index.Root, stepsRequired: true, out var indexSummary);
+        var statusSummaryRead = TryReadEvidenceSummary(status.Root, stepsRequired: false, out var statusSummary);
+        var actionsSummaryRead = TryReadEvidenceSummary(actions.Root, stepsRequired: false, out var actionsSummary);
+        var planSummaryRead = TryReadEvidenceSummary(collectionPlan.Root, stepsRequired: true, out var planSummary);
+        var summaryCountersConsistent = indexSummaryRead &&
+            statusSummaryRead &&
+            actionsSummaryRead &&
+            planSummaryRead &&
+            indexEntries is not null &&
+            actionShapes is not null &&
+            stepShapes is not null &&
+            EvidenceSummariesConsistent(indexSummary, statusSummary, actionsSummary, planSummary, indexEntries, actionShapes, stepShapes);
+        var executionBoundariesConsistent =
+            index.Root["execution"] is JsonObject indexExecution &&
+            status.Root["execution"] is JsonObject statusExecution &&
+            actions.Root["execution"] is JsonObject actionsExecution &&
+            collectionPlan.Root["execution"] is JsonObject planExecution &&
+            HasCollectionPlanNoExecutionBoundary(indexExecution) &&
+            HasCollectionPlanNoExecutionBoundary(statusExecution) &&
+            HasCollectionPlanNoExecutionBoundary(actionsExecution) &&
+            HasCollectionPlanNoExecutionBoundary(planExecution);
+        var handoffReferencesConsistent = HandoffReferencesConsistent(handoffContent, indexEntries, actionShapes, stepShapes);
+        var statusText = ResolveDryRunCrossLinkEvidenceStatus(
+            mismatchedLinks,
+            identityConsistent,
+            summaryCountersConsistent,
+            requiredEvidenceConsistent,
+            actionReferencesConsistent,
+            collectionStepsConsistent,
+            executionBoundariesConsistent,
+            handoffReferencesConsistent);
+        var detail = ResolveDryRunCrossLinkEvidenceDetail(statusText);
+
+        return new ReleasePublishDryRunCrossLinkEvidence(
+            statusText,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: contentRead,
+            ExpectedFiles: 5,
+            presentFiles,
+            missingFiles,
+            malformedFiles,
+            expectedLinks,
+            validLinks,
+            mismatchedLinks,
+            requiredEvidenceEntryCount,
+            statusEntryCount,
+            actionCount,
+            collectionStepCount,
+            identityConsistent,
+            summaryCountersConsistent,
+            requiredEvidenceConsistent,
+            actionReferencesConsistent,
+            collectionStepsConsistent,
+            executionBoundariesConsistent,
+            handoffReferencesConsistent,
+            detail);
+    }
+
+    private static ReleasePublishDryRunCrossLinkEvidence DryRunCrossLinkEvidence(
+        string status,
+        bool contentRead,
+        int presentFiles,
+        int missingFiles,
+        int malformedFiles,
+        string detail) =>
+        new(
+            status,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: contentRead,
+            ExpectedFiles: 5,
+            presentFiles,
+            missingFiles,
+            malformedFiles,
+            ExpectedLinks: 20,
+            ValidLinks: 0,
+            MismatchedLinks: 20,
+            RequiredEvidenceEntries: 0,
+            StatusEntries: 0,
+            ActionItems: 0,
+            CollectionSteps: 0,
+            IdentityConsistent: false,
+            SummaryCountersConsistent: false,
+            RequiredEvidenceConsistent: false,
+            ActionReferencesConsistent: false,
+            CollectionStepsConsistent: false,
+            ExecutionBoundariesConsistent: false,
+            HandoffReferencesConsistent: false,
+            detail);
+
+    private static ReleasePublishDryRunEvidenceRemediation CreateDryRunEvidenceRemediation(
+        ReleasePublishDryRunCrossLinkEvidence evidence)
+    {
+        var items = new List<ReleasePublishDryRunEvidenceRemediationItem>();
+        if (StringComparer.Ordinal.Equals(evidence.Status, "missing") || evidence.MissingFiles > 0)
+        {
+            items.Add(DryRunEvidenceRemediationItem(
+                "restore-release-dry-run-evidence-files",
+                "missing-files",
+                "Generate the missing release dry-run evidence files before reviewing publish readiness."));
+        }
+
+        if (StringComparer.Ordinal.Equals(evidence.Status, "malformed") || evidence.MalformedFiles > 0)
+        {
+            items.Add(DryRunEvidenceRemediationItem(
+                "regenerate-malformed-release-dry-run-evidence",
+                "malformed-files",
+                "Regenerate malformed release dry-run evidence files before reviewing publish readiness."));
+        }
+
+        var filesReadable = evidence.MissingFiles == 0 && evidence.MalformedFiles == 0;
+        if (StringComparer.Ordinal.Equals(evidence.Status, "cross-link-mismatch") ||
+            (filesReadable && evidence.MismatchedLinks > 0))
+        {
+            items.Add(DryRunEvidenceRemediationItem(
+                "regenerate-release-dry-run-evidence-cross-links",
+                "cross-link-mismatch",
+                "Regenerate release dry-run evidence so index, status, actions, collection plan, and handoff agree."));
+        }
+
+        if (!StringComparer.Ordinal.Equals(evidence.Status, "complete-cross-links-validated") && items.Count == 0)
+        {
+            items.Add(DryRunEvidenceRemediationItem(
+                "review-release-dry-run-evidence",
+                "unknown",
+                "Review release dry-run evidence status before reviewing publish readiness."));
+        }
+
+        var requiresOperatorAction = items.Count > 0;
+        var targetPaths = requiresOperatorAction ? ReleaseDryRunEvidenceRelativePaths : Array.Empty<string>();
+        return new ReleasePublishDryRunEvidenceRemediation(
+            Status: requiresOperatorAction ? "action-required" : "no-action-required",
+            CheckedInCurrentGate: true,
+            RequiresOperatorAction: requiresOperatorAction,
+            SourceStatus: evidence.Status,
+            ActionItems: items.Count,
+            CommandHints: items.Select(item => item.CommandHint).Distinct(StringComparer.Ordinal).Count(),
+            AffectedPaths: targetPaths.Length,
+            BlockingIssues: items.Count(item => item.BlocksPublishReadiness),
+            RecommendedCommand: ReleaseVerifyEvidenceCommandHint,
+            Detail: requiresOperatorAction
+                ? "release-dry-run-evidence-remediation-required"
+                : "release-dry-run-evidence-remediation-not-required",
+            TargetPaths: targetPaths,
+            Items: items);
+    }
+
+    private static ReleasePublishDryRunEvidenceRemediationItem DryRunEvidenceRemediationItem(
+        string id,
+        string category,
+        string reason) =>
+        new(
+            Id: id,
+            Priority: "blocker",
+            Category: category,
+            Status: "open",
+            Reason: reason,
+            CommandHint: ReleaseVerifyEvidenceCommandHint,
+            Execution: "manual",
+            BlocksPublishReadiness: true,
+            TargetPaths: ReleaseDryRunEvidenceRelativePaths);
+
+    private static ReleaseDryRunEvidenceJsonRead ReadReleaseDryRunEvidenceJson(
+        string projectRoot,
+        string relativePath,
+        string expectedKind,
+        string expectedStatus)
+    {
+        var fullPath = Path.Combine(projectRoot, relativePath.Replace('/', Path.DirectorySeparatorChar));
+        var displayPath = ToDisplayPath(projectRoot, fullPath);
+        if (!File.Exists(fullPath))
+        {
+            return new ReleaseDryRunEvidenceJsonRead(displayPath, Exists: false, ContentRead: false, Parsed: false, IdentityValid: false, Root: null, "missing");
+        }
+
+        JsonObject? root;
+        try
+        {
+            root = JsonNode.Parse(File.ReadAllText(fullPath)) as JsonObject;
+        }
+        catch (JsonException ex)
+        {
+            return new ReleaseDryRunEvidenceJsonRead(displayPath, Exists: true, ContentRead: true, Parsed: false, IdentityValid: false, Root: null, $"json-parse-error:{ex.Message}");
+        }
+        catch (IOException)
+        {
+            return new ReleaseDryRunEvidenceJsonRead(displayPath, Exists: true, ContentRead: false, Parsed: false, IdentityValid: false, Root: null, "unreadable");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return new ReleaseDryRunEvidenceJsonRead(displayPath, Exists: true, ContentRead: false, Parsed: false, IdentityValid: false, Root: null, "unreadable");
+        }
+
+        if (root is null)
+        {
+            return new ReleaseDryRunEvidenceJsonRead(displayPath, Exists: true, ContentRead: true, Parsed: false, IdentityValid: false, Root: null, "not-json-object");
+        }
+
+        var identityValid =
+            StringPropertyEquals(root, "formatVersion", "0.1") &&
+            StringPropertyEquals(root, "kind", expectedKind) &&
+            StringPropertyEquals(root, "command", "release verify") &&
+            BooleanPropertyEquals(root, "dryRun", expected: true) &&
+            StringPropertyEquals(root, "status", expectedStatus) &&
+            StringPropertyEquals(root, "outputRoot", "dist/release-dry-run");
+
+        return new ReleaseDryRunEvidenceJsonRead(
+            displayPath,
+            Exists: true,
+            ContentRead: true,
+            Parsed: true,
+            identityValid,
+            root,
+            identityValid ? "identity-valid" : "identity-mismatch");
+    }
+
+    private static int CountValidDryRunEvidenceLinks(
+        JsonObject index,
+        JsonObject status,
+        JsonObject actions,
+        JsonObject collectionPlan,
+        string handoffContent)
+    {
+        var valid = 0;
+        valid += CountLink(index, "statusProjection", ReleaseEvidenceStatusRelativePath);
+        valid += CountLink(index, "actionChecklist", ReleaseEvidenceActionsRelativePath);
+        valid += CountLink(index, "collectionPlan", CollectionPlanEvidenceRelativePath);
+        valid += CountLink(index, "handoffSummary", ReleaseEvidenceHandoffRelativePath);
+        valid += CountLink(status, "evidenceIndex", ReleaseEvidenceIndexRelativePath);
+        valid += CountLink(status, "actionChecklist", ReleaseEvidenceActionsRelativePath);
+        valid += CountLink(status, "collectionPlan", CollectionPlanEvidenceRelativePath);
+        valid += CountLink(status, "handoffSummary", ReleaseEvidenceHandoffRelativePath);
+        valid += CountLink(actions, "evidenceIndex", ReleaseEvidenceIndexRelativePath);
+        valid += CountLink(actions, "evidenceStatus", ReleaseEvidenceStatusRelativePath);
+        valid += CountLink(actions, "collectionPlan", CollectionPlanEvidenceRelativePath);
+        valid += CountLink(actions, "handoffSummary", ReleaseEvidenceHandoffRelativePath);
+        valid += CountLink(collectionPlan, "evidenceIndex", ReleaseEvidenceIndexRelativePath);
+        valid += CountLink(collectionPlan, "evidenceStatus", ReleaseEvidenceStatusRelativePath);
+        valid += CountLink(collectionPlan, "actionChecklist", ReleaseEvidenceActionsRelativePath);
+        valid += CountLink(collectionPlan, "handoffSummary", ReleaseEvidenceHandoffRelativePath);
+        valid += handoffContent.Contains($"Evidence index: `{ReleaseEvidenceIndexRelativePath}`", StringComparison.Ordinal) ? 1 : 0;
+        valid += handoffContent.Contains($"Evidence status: `{ReleaseEvidenceStatusRelativePath}`", StringComparison.Ordinal) ? 1 : 0;
+        valid += handoffContent.Contains($"Action checklist: `{ReleaseEvidenceActionsRelativePath}`", StringComparison.Ordinal) ? 1 : 0;
+        valid += handoffContent.Contains($"Collection plan: `{CollectionPlanEvidenceRelativePath}`", StringComparison.Ordinal) ? 1 : 0;
+        return valid;
+    }
+
+    private static int CountLink(JsonObject source, string propertyName, string expectedPath) =>
+        StringPropertyEquals(source, propertyName, expectedPath) ? 1 : 0;
+
+    private static bool TryReadRequiredEvidence(JsonObject root, out IReadOnlyList<ReleaseDryRunEvidenceEntryShape> entries)
+    {
+        entries = [];
+        if (root["requiredEvidence"] is not JsonArray array)
+        {
+            return false;
+        }
+
+        var parsedEntries = new List<ReleaseDryRunEvidenceEntryShape>();
+        foreach (var node in array)
+        {
+            if (node is not JsonObject entry ||
+                !TryGetStringProperty(entry, "id", out var id) ||
+                !TryGetStringProperty(entry, "path", out var path) ||
+                !TryGetBooleanProperty(entry, "exists", out var exists) ||
+                !TryGetStringProperty(entry, "status", out var status))
+            {
+                entries = [];
+                return false;
+            }
+
+            parsedEntries.Add(new ReleaseDryRunEvidenceEntryShape(id, path, exists, status));
+        }
+
+        entries = parsedEntries;
+        return true;
+    }
+
+    private static bool RequiredEvidenceEntriesConsistent(
+        IReadOnlyList<ReleaseDryRunEvidenceEntryShape> indexEntries,
+        IReadOnlyList<ReleaseDryRunEvidenceEntryShape> statusEntries)
+    {
+        if (HasDuplicateStrings(indexEntries.Select(entry => entry.Id)) ||
+            HasDuplicateStrings(statusEntries.Select(entry => entry.Id)))
+        {
+            return false;
+        }
+
+        var expectedPathsByEvidenceId = CollectionPlanExpectedSteps.ToDictionary(step => step.EvidenceId, step => step.TargetPath, StringComparer.Ordinal);
+        var indexMap = indexEntries.ToDictionary(entry => entry.Id, StringComparer.Ordinal);
+        var statusMap = statusEntries.ToDictionary(entry => entry.Id, StringComparer.Ordinal);
+        if (indexMap.Count != expectedPathsByEvidenceId.Count || statusMap.Count != expectedPathsByEvidenceId.Count)
+        {
+            return false;
+        }
+
+        foreach (var (evidenceId, expectedPath) in expectedPathsByEvidenceId)
+        {
+            if (!indexMap.TryGetValue(evidenceId, out var indexEntry) ||
+                !statusMap.TryGetValue(evidenceId, out var statusEntry) ||
+                !StringComparer.Ordinal.Equals(indexEntry.Path, expectedPath) ||
+                !StringComparer.Ordinal.Equals(statusEntry.Path, expectedPath) ||
+                indexEntry.Exists != statusEntry.Exists ||
+                !StringComparer.Ordinal.Equals(indexEntry.Status, statusEntry.Status))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ReleasePublishConsumesConsistent(JsonObject root, IReadOnlyList<ReleaseDryRunEvidenceEntryShape> entries)
+    {
+        if (root["releasePublishPreflight"] is not JsonObject preflight ||
+            !StringPropertyEquals(preflight, "commandHint", "forge release publish <project-root> --dry-run --format json --no-input") ||
+            !TryGetStringArrayProperty(preflight, "consumes", out var consumes))
+        {
+            return false;
+        }
+
+        return SameStringSet(consumes, entries.Select(entry => entry.Path));
+    }
+
+    private static bool TryReadActions(JsonObject root, out IReadOnlyList<ReleaseDryRunEvidenceActionShape> actions)
+    {
+        actions = [];
+        if (root["actions"] is not JsonArray array)
+        {
+            return false;
+        }
+
+        var parsedActions = new List<ReleaseDryRunEvidenceActionShape>();
+        foreach (var node in array)
+        {
+            if (node is not JsonObject action ||
+                !TryGetStringProperty(action, "id", out var id) ||
+                !TryGetStringProperty(action, "evidenceId", out var evidenceId) ||
+                !TryGetStringProperty(action, "targetPath", out var targetPath) ||
+                !StringPropertyEquals(action, "status", "open") ||
+                !StringPropertyEquals(action, "execution", "manual"))
+            {
+                actions = [];
+                return false;
+            }
+
+            parsedActions.Add(new ReleaseDryRunEvidenceActionShape(id, evidenceId, targetPath));
+        }
+
+        actions = parsedActions;
+        return true;
+    }
+
+    private static bool ActionsConsistentWithEvidence(
+        IReadOnlyList<ReleaseDryRunEvidenceActionShape> actions,
+        IReadOnlyList<ReleaseDryRunEvidenceEntryShape> entries)
+    {
+        if (HasDuplicateStrings(actions.Select(action => action.Id)) ||
+            HasDuplicateStrings(entries.Select(entry => entry.Id)))
+        {
+            return false;
+        }
+
+        var entriesById = entries.ToDictionary(entry => entry.Id, StringComparer.Ordinal);
+        var missingEntries = entries
+            .Where(entry => !entry.Exists && StringComparer.Ordinal.Equals(entry.Status, "missing"))
+            .ToDictionary(entry => entry.Id, StringComparer.Ordinal);
+        if (actions.Count != missingEntries.Count)
+        {
+            return false;
+        }
+
+        foreach (var action in actions)
+        {
+            if (!entriesById.TryGetValue(action.EvidenceId, out var entry) ||
+                !missingEntries.ContainsKey(action.EvidenceId) ||
+                !StringComparer.Ordinal.Equals(action.Id, $"produce-{action.EvidenceId}") ||
+                !StringComparer.Ordinal.Equals(action.TargetPath, entry.Path))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryReadCollectionSteps(JsonObject root, out IReadOnlyList<ReleaseDryRunEvidenceCollectionStepShape> steps)
+    {
+        steps = [];
+        if (root["steps"] is not JsonArray array)
+        {
+            return false;
+        }
+
+        var parsedSteps = new List<ReleaseDryRunEvidenceCollectionStepShape>();
+        foreach (var node in array)
+        {
+            if (node is not JsonObject step ||
+                !TryGetInt32Property(step, "order", out var order) ||
+                !TryGetStringProperty(step, "id", out var id) ||
+                !TryGetStringProperty(step, "evidenceId", out var evidenceId) ||
+                !TryGetStringProperty(step, "targetPath", out var targetPath) ||
+                !TryGetStringProperty(step, "status", out var status) ||
+                !TryGetStringProperty(step, "collectionMode", out var collectionMode) ||
+                !TryGetStringProperty(step, "execution", out var execution))
+            {
+                steps = [];
+                return false;
+            }
+
+            var actionId = TryGetStringProperty(step, "actionId", out var parsedActionId)
+                ? parsedActionId
+                : null;
+            parsedSteps.Add(new ReleaseDryRunEvidenceCollectionStepShape(order, id, evidenceId, targetPath, status, collectionMode, execution, actionId));
+        }
+
+        steps = parsedSteps.OrderBy(step => step.Order).ThenBy(step => step.Id, StringComparer.Ordinal).ToArray();
+        return true;
+    }
+
+    private static bool CollectionStepsConsistentWithEvidence(
+        IReadOnlyList<ReleaseDryRunEvidenceCollectionStepShape> steps,
+        IReadOnlyList<ReleaseDryRunEvidenceEntryShape> entries,
+        IReadOnlyList<ReleaseDryRunEvidenceActionShape> actions)
+    {
+        if (steps.Count != CollectionPlanExpectedSteps.Length)
+        {
+            return false;
+        }
+
+        if (HasDuplicateStrings(steps.Select(step => step.Id)) ||
+            HasDuplicateInts(steps.Select(step => step.Order)) ||
+            HasDuplicateStrings(entries.Select(entry => entry.Id)) ||
+            HasDuplicateStrings(actions.Select(action => action.Id)))
+        {
+            return false;
+        }
+
+        var entriesById = entries.ToDictionary(entry => entry.Id, StringComparer.Ordinal);
+        var actionsById = actions.ToDictionary(action => action.Id, StringComparer.Ordinal);
+        foreach (var expectedStep in CollectionPlanExpectedSteps)
+        {
+            var step = steps.FirstOrDefault(candidate => candidate.Order == expectedStep.Order);
+            if (step is null ||
+                !StringComparer.Ordinal.Equals(step.Id, expectedStep.Id) ||
+                !StringComparer.Ordinal.Equals(step.EvidenceId, expectedStep.EvidenceId) ||
+                !StringComparer.Ordinal.Equals(step.TargetPath, expectedStep.TargetPath) ||
+                !entriesById.TryGetValue(step.EvidenceId, out var entry) ||
+                !StringComparer.Ordinal.Equals(step.TargetPath, entry.Path))
+            {
+                return false;
+            }
+
+            if (StringComparer.Ordinal.Equals(step.Execution, "manual"))
+            {
+                if (!StringComparer.Ordinal.Equals(step.Status, "manual-required") ||
+                    !StringComparer.Ordinal.Equals(step.CollectionMode, "manual-command-hint") ||
+                    step.ActionId is null ||
+                    !actionsById.TryGetValue(step.ActionId, out var action) ||
+                    !StringComparer.Ordinal.Equals(action.EvidenceId, step.EvidenceId))
+                {
+                    return false;
+                }
+            }
+            else if (!StringComparer.Ordinal.Equals(step.Execution, "none") ||
+                step.ActionId is not null ||
+                StringComparer.Ordinal.Equals(step.Status, "manual-required"))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryReadEvidenceSummary(JsonObject root, bool stepsRequired, out ReleaseDryRunEvidenceSummaryShape summary)
+    {
+        summary = new ReleaseDryRunEvidenceSummaryShape(0, 0, 0, 0, null, null, null);
+        if (root["summary"] is not JsonObject summaryRoot ||
+            !TryGetInt32Property(summaryRoot, "total", out var total) ||
+            !TryGetInt32Property(summaryRoot, "present", out var present) ||
+            !TryGetInt32Property(summaryRoot, "missing", out var missing) ||
+            !TryGetInt32Property(summaryRoot, "actions", out var actions))
+        {
+            return false;
+        }
+
+        int? steps = null;
+        int? manualSteps = null;
+        int? availableSteps = null;
+        if (stepsRequired)
+        {
+            if (!TryGetInt32Property(summaryRoot, "steps", out var parsedSteps) ||
+                !TryGetInt32Property(summaryRoot, "manualSteps", out var parsedManualSteps) ||
+                !TryGetInt32Property(summaryRoot, "availableSteps", out var parsedAvailableSteps))
+            {
+                return false;
+            }
+
+            steps = parsedSteps;
+            manualSteps = parsedManualSteps;
+            availableSteps = parsedAvailableSteps;
+        }
+
+        summary = new ReleaseDryRunEvidenceSummaryShape(total, present, missing, actions, steps, manualSteps, availableSteps);
+        return true;
+    }
+
+    private static bool EvidenceSummariesConsistent(
+        ReleaseDryRunEvidenceSummaryShape indexSummary,
+        ReleaseDryRunEvidenceSummaryShape statusSummary,
+        ReleaseDryRunEvidenceSummaryShape actionsSummary,
+        ReleaseDryRunEvidenceSummaryShape planSummary,
+        IReadOnlyList<ReleaseDryRunEvidenceEntryShape> entries,
+        IReadOnlyList<ReleaseDryRunEvidenceActionShape> actions,
+        IReadOnlyList<ReleaseDryRunEvidenceCollectionStepShape> steps)
+    {
+        var expectedTotal = entries.Count;
+        var expectedPresent = entries.Count(entry => entry.Exists);
+        var expectedMissing = entries.Count(entry => !entry.Exists);
+        var expectedActions = actions.Count;
+        var commonSummaries = new[] { indexSummary, statusSummary, actionsSummary, planSummary };
+        if (commonSummaries.Any(summary =>
+                summary.Total != expectedTotal ||
+                summary.Present != expectedPresent ||
+                summary.Missing != expectedMissing ||
+                summary.Actions != expectedActions))
+        {
+            return false;
+        }
+
+        return indexSummary.Steps == steps.Count &&
+            planSummary.Steps == steps.Count &&
+            indexSummary.ManualSteps == steps.Count(step => StringComparer.Ordinal.Equals(step.Execution, "manual")) &&
+            planSummary.ManualSteps == steps.Count(step => StringComparer.Ordinal.Equals(step.Execution, "manual")) &&
+            indexSummary.AvailableSteps == steps.Count(step => StringComparer.Ordinal.Equals(step.Status, "available")) &&
+            planSummary.AvailableSteps == steps.Count(step => StringComparer.Ordinal.Equals(step.Status, "available"));
+    }
+
+    private static bool HandoffReferencesConsistent(
+        string handoffContent,
+        IReadOnlyList<ReleaseDryRunEvidenceEntryShape>? entries,
+        IReadOnlyList<ReleaseDryRunEvidenceActionShape>? actions,
+        IReadOnlyList<ReleaseDryRunEvidenceCollectionStepShape>? steps)
+    {
+        if (entries is null || actions is null || steps is null)
+        {
+            return false;
+        }
+
+        if (!handoffContent.Contains($"Evidence index: `{ReleaseEvidenceIndexRelativePath}`", StringComparison.Ordinal) ||
+            !handoffContent.Contains($"Evidence status: `{ReleaseEvidenceStatusRelativePath}`", StringComparison.Ordinal) ||
+            !handoffContent.Contains($"Action checklist: `{ReleaseEvidenceActionsRelativePath}`", StringComparison.Ordinal) ||
+            !handoffContent.Contains($"Collection plan: `{CollectionPlanEvidenceRelativePath}`", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        return entries.All(entry => handoffContent.Contains($"| `{entry.Id}` | `{entry.Status}` | `{entry.Path}` |", StringComparison.Ordinal)) &&
+            actions.All(action => handoffContent.Contains($"| `{action.Id}` | `{action.TargetPath}` |", StringComparison.Ordinal)) &&
+            steps.All(step => handoffContent.Contains($"| {step.Order} | `{step.Id}` | `{step.Status}` | `{step.CollectionMode}` | `{step.Execution}` | `{step.TargetPath}` |", StringComparison.Ordinal));
+    }
+
+    private static string ResolveDryRunCrossLinkEvidenceStatus(
+        int mismatchedLinks,
+        bool identityConsistent,
+        bool summaryCountersConsistent,
+        bool requiredEvidenceConsistent,
+        bool actionReferencesConsistent,
+        bool collectionStepsConsistent,
+        bool executionBoundariesConsistent,
+        bool handoffReferencesConsistent) =>
+        mismatchedLinks == 0 &&
+        identityConsistent &&
+        summaryCountersConsistent &&
+        requiredEvidenceConsistent &&
+        actionReferencesConsistent &&
+        collectionStepsConsistent &&
+        executionBoundariesConsistent &&
+        handoffReferencesConsistent
+            ? "complete-cross-links-validated"
+            : "cross-link-mismatch";
+
+    private static string ResolveDryRunCrossLinkEvidenceDetail(string status) => status switch
+    {
+        "complete-cross-links-validated" => "release-dry-run-evidence-cross-links-consistent",
+        "cross-link-mismatch" => "release-dry-run-evidence-cross-links-mismatch",
+        "missing" => "release-dry-run-cross-link-files-missing",
+        "malformed" => "release-dry-run-cross-link-files-malformed",
+        _ => status
+    };
+
+    private static bool SameStringSet(IEnumerable<string> left, IEnumerable<string> right)
+    {
+        var leftSet = new HashSet<string>(left, StringComparer.Ordinal);
+        var rightSet = new HashSet<string>(right, StringComparer.Ordinal);
+        return leftSet.SetEquals(rightSet);
+    }
+
+    private static bool HasDuplicateStrings(IEnumerable<string> values)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var value in values)
+        {
+            if (!seen.Add(value))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasDuplicateInts(IEnumerable<int> values)
+    {
+        var seen = new HashSet<int>();
+        foreach (var value in values)
+        {
+            if (!seen.Add(value))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private static ReleasePublishApprovalRequirement CreateApprovalRequirement(
         string projectRoot,
@@ -4164,6 +4959,11 @@ internal static class ReleasePublishPreflightJsonSerializer
                 ["collectionPlanEvidenceStatus"] = result.CollectionPlanEvidence.Status,
                 ["collectionPlanEvidenceSteps"] = result.CollectionPlanEvidence.Steps,
                 ["collectionPlanEvidenceMalformedSteps"] = result.CollectionPlanEvidence.MalformedSteps,
+                ["dryRunCrossLinkEvidenceStatus"] = result.DryRunCrossLinkEvidence.Status,
+                ["dryRunCrossLinkEvidenceFiles"] = result.DryRunCrossLinkEvidence.PresentFiles,
+                ["dryRunCrossLinkEvidenceMismatchedLinks"] = result.DryRunCrossLinkEvidence.MismatchedLinks,
+                ["dryRunEvidenceRemediationStatus"] = result.DryRunEvidenceRemediation.Status,
+                ["dryRunEvidenceRemediationActions"] = result.DryRunEvidenceRemediation.ActionItems,
                 ["publishReadinessStatus"] = result.PublishReadiness.Status,
                 ["publishReadinessLocalPreconditionsSatisfied"] = result.PublishReadiness.LocalPreconditionsSatisfied,
                 ["publishReadinessBlockingChecks"] = result.PublishReadiness.BlockingChecks,
@@ -4188,6 +4988,8 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["packageValidationEvidence"] = ToPackageValidationEvidence(result.PackageValidationEvidence),
             ["releaseVerificationEvidence"] = ToReleaseVerificationEvidence(result.ReleaseVerificationEvidence),
             ["collectionPlanEvidence"] = ToCollectionPlanEvidence(result.CollectionPlanEvidence),
+            ["dryRunCrossLinkEvidence"] = ToDryRunCrossLinkEvidence(result.DryRunCrossLinkEvidence),
+            ["dryRunEvidenceRemediation"] = ToDryRunEvidenceRemediation(result.DryRunEvidenceRemediation),
             ["requiredEvidence"] = ToEvidenceArray(result.RequiredEvidence),
             ["localEvidenceArtifacts"] = ToArtifactArray(result.LocalEvidenceArtifacts),
             ["governanceChecks"] = ToGovernanceCheckArray(result.GovernanceChecks),
@@ -4619,6 +5421,72 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["detail"] = evidence.Detail
         };
 
+    private static JsonObject ToDryRunCrossLinkEvidence(ReleasePublishDryRunCrossLinkEvidence evidence) =>
+        new()
+        {
+            ["status"] = evidence.Status,
+            ["checkedInCurrentGate"] = evidence.CheckedInCurrentGate,
+            ["contentReadInCurrentGate"] = evidence.ContentReadInCurrentGate,
+            ["expectedFiles"] = evidence.ExpectedFiles,
+            ["presentFiles"] = evidence.PresentFiles,
+            ["missingFiles"] = evidence.MissingFiles,
+            ["malformedFiles"] = evidence.MalformedFiles,
+            ["expectedLinks"] = evidence.ExpectedLinks,
+            ["validLinks"] = evidence.ValidLinks,
+            ["mismatchedLinks"] = evidence.MismatchedLinks,
+            ["requiredEvidenceEntries"] = evidence.RequiredEvidenceEntries,
+            ["statusEntries"] = evidence.StatusEntries,
+            ["actionItems"] = evidence.ActionItems,
+            ["collectionSteps"] = evidence.CollectionSteps,
+            ["identityConsistent"] = evidence.IdentityConsistent,
+            ["summaryCountersConsistent"] = evidence.SummaryCountersConsistent,
+            ["requiredEvidenceConsistent"] = evidence.RequiredEvidenceConsistent,
+            ["actionReferencesConsistent"] = evidence.ActionReferencesConsistent,
+            ["collectionStepsConsistent"] = evidence.CollectionStepsConsistent,
+            ["executionBoundariesConsistent"] = evidence.ExecutionBoundariesConsistent,
+            ["handoffReferencesConsistent"] = evidence.HandoffReferencesConsistent,
+            ["detail"] = evidence.Detail
+        };
+
+    private static JsonObject ToDryRunEvidenceRemediation(ReleasePublishDryRunEvidenceRemediation remediation) =>
+        new()
+        {
+            ["status"] = remediation.Status,
+            ["checkedInCurrentGate"] = remediation.CheckedInCurrentGate,
+            ["requiresOperatorAction"] = remediation.RequiresOperatorAction,
+            ["sourceStatus"] = remediation.SourceStatus,
+            ["actionItems"] = remediation.ActionItems,
+            ["commandHints"] = remediation.CommandHints,
+            ["affectedPaths"] = remediation.AffectedPaths,
+            ["blockingIssues"] = remediation.BlockingIssues,
+            ["recommendedCommand"] = remediation.RecommendedCommand,
+            ["detail"] = remediation.Detail,
+            ["targetPaths"] = ToStringArray(remediation.TargetPaths),
+            ["items"] = ToDryRunEvidenceRemediationItems(remediation.Items)
+        };
+
+    private static JsonArray ToDryRunEvidenceRemediationItems(IReadOnlyList<ReleasePublishDryRunEvidenceRemediationItem> items)
+    {
+        var array = new JsonArray();
+        foreach (var item in items)
+        {
+            array.Add(new JsonObject
+            {
+                ["id"] = item.Id,
+                ["priority"] = item.Priority,
+                ["category"] = item.Category,
+                ["status"] = item.Status,
+                ["reason"] = item.Reason,
+                ["commandHint"] = item.CommandHint,
+                ["execution"] = item.Execution,
+                ["blocksPublishReadiness"] = item.BlocksPublishReadiness,
+                ["targetPaths"] = ToStringArray(item.TargetPaths)
+            });
+        }
+
+        return array;
+    }
+
     private static JsonArray ToArtifactArray(IReadOnlyList<ReleasePublishEvidenceArtifact> artifacts)
     {
         var array = new JsonArray();
@@ -4764,6 +5632,8 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["packageValidationEvidenceEvaluation"] = result.PackageValidationEvidence.CheckedInCurrentGate,
             ["releaseVerificationEvidenceEvaluation"] = result.ReleaseVerificationEvidence.CheckedInCurrentGate,
             ["collectionPlanEvidenceEvaluation"] = result.CollectionPlanEvidence.CheckedInCurrentGate,
+            ["dryRunCrossLinkEvidenceEvaluation"] = result.DryRunCrossLinkEvidence.CheckedInCurrentGate,
+            ["dryRunEvidenceRemediationEvaluation"] = result.DryRunEvidenceRemediation.CheckedInCurrentGate,
             ["humanApprovalEvaluation"] = true,
             ["humanApprovalConfirmationValidated"] = result.Approval.ConfirmationValidated,
             ["governanceCheckExecution"] = true,
@@ -4889,6 +5759,23 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.Append(" available, ");
         builder.Append(result.CollectionPlanEvidence.MalformedSteps);
         builder.AppendLine(" malformed)");
+        builder.Append("Release dry-run cross-links: ");
+        builder.Append(result.DryRunCrossLinkEvidence.Status);
+        builder.Append(" (");
+        builder.Append(result.DryRunCrossLinkEvidence.ValidLinks);
+        builder.Append('/');
+        builder.Append(result.DryRunCrossLinkEvidence.ExpectedLinks);
+        builder.Append(" links valid, ");
+        builder.Append(result.DryRunCrossLinkEvidence.MismatchedLinks);
+        builder.AppendLine(" mismatched)");
+        builder.Append("Release dry-run evidence remediation: ");
+        builder.Append(result.DryRunEvidenceRemediation.Status);
+        builder.Append(" (");
+        builder.Append(result.DryRunEvidenceRemediation.ActionItems);
+        builder.Append(" action item(s), ");
+        builder.Append(result.DryRunEvidenceRemediation.CommandHints);
+        builder.Append(" command hint(s))");
+        builder.AppendLine();
         builder.Append("Mode: ");
         builder.AppendLine(result.DryRun ? "dry-run-preflight" : "no-publish-refusal");
         builder.Append("Publish ready: ");
@@ -5350,6 +6237,95 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine(result.CollectionPlanEvidence.Detail);
 
         builder.AppendLine();
+        builder.AppendLine("Release dry-run cross-link evidence");
+        builder.Append("  status: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.Status);
+        builder.Append("  checked in current gate: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  content read in current gate: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.ContentReadInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  files: ");
+        builder.Append(result.DryRunCrossLinkEvidence.PresentFiles);
+        builder.Append('/');
+        builder.Append(result.DryRunCrossLinkEvidence.ExpectedFiles);
+        builder.Append(" present, ");
+        builder.Append(result.DryRunCrossLinkEvidence.MissingFiles);
+        builder.Append(" missing, ");
+        builder.Append(result.DryRunCrossLinkEvidence.MalformedFiles);
+        builder.AppendLine(" malformed");
+        builder.Append("  links: ");
+        builder.Append(result.DryRunCrossLinkEvidence.ValidLinks);
+        builder.Append('/');
+        builder.Append(result.DryRunCrossLinkEvidence.ExpectedLinks);
+        builder.Append(" valid, ");
+        builder.Append(result.DryRunCrossLinkEvidence.MismatchedLinks);
+        builder.AppendLine(" mismatched");
+        builder.Append("  required evidence entries: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.RequiredEvidenceEntries.ToString());
+        builder.Append("  status entries: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.StatusEntries.ToString());
+        builder.Append("  action items: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.ActionItems.ToString());
+        builder.Append("  collection steps: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.CollectionSteps.ToString());
+        builder.Append("  identity consistent: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.IdentityConsistent.ToString().ToLowerInvariant());
+        builder.Append("  summary counters consistent: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.SummaryCountersConsistent.ToString().ToLowerInvariant());
+        builder.Append("  required evidence consistent: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.RequiredEvidenceConsistent.ToString().ToLowerInvariant());
+        builder.Append("  action references consistent: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.ActionReferencesConsistent.ToString().ToLowerInvariant());
+        builder.Append("  collection steps consistent: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.CollectionStepsConsistent.ToString().ToLowerInvariant());
+        builder.Append("  execution boundaries consistent: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.ExecutionBoundariesConsistent.ToString().ToLowerInvariant());
+        builder.Append("  handoff references consistent: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.HandoffReferencesConsistent.ToString().ToLowerInvariant());
+        builder.Append("  detail: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.Detail);
+
+        builder.AppendLine();
+        builder.AppendLine("Release dry-run evidence remediation");
+        builder.Append("  status: ");
+        builder.AppendLine(result.DryRunEvidenceRemediation.Status);
+        builder.Append("  checked in current gate: ");
+        builder.AppendLine(result.DryRunEvidenceRemediation.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  requires operator action: ");
+        builder.AppendLine(result.DryRunEvidenceRemediation.RequiresOperatorAction.ToString().ToLowerInvariant());
+        builder.Append("  source status: ");
+        builder.AppendLine(result.DryRunEvidenceRemediation.SourceStatus);
+        builder.Append("  action items: ");
+        builder.AppendLine(result.DryRunEvidenceRemediation.ActionItems.ToString());
+        builder.Append("  command hints: ");
+        builder.AppendLine(result.DryRunEvidenceRemediation.CommandHints.ToString());
+        builder.Append("  affected paths: ");
+        builder.AppendLine(result.DryRunEvidenceRemediation.AffectedPaths.ToString());
+        builder.Append("  blocking issues: ");
+        builder.AppendLine(result.DryRunEvidenceRemediation.BlockingIssues.ToString());
+        builder.Append("  recommended command: ");
+        builder.AppendLine(result.DryRunEvidenceRemediation.RecommendedCommand);
+        builder.Append("  detail: ");
+        builder.AppendLine(result.DryRunEvidenceRemediation.Detail);
+        foreach (var item in result.DryRunEvidenceRemediation.Items)
+        {
+            builder.Append("  [");
+            builder.Append(item.Priority);
+            builder.Append("] ");
+            builder.Append(item.Id);
+            builder.Append(" (");
+            builder.Append(item.Category);
+            builder.Append(", ");
+            builder.Append(item.Execution);
+            builder.Append("): ");
+            builder.AppendLine(item.Reason);
+            builder.Append("    command: ");
+            builder.AppendLine(item.CommandHint);
+            builder.Append("    paths: ");
+            builder.AppendLine(string.Join(", ", item.TargetPaths));
+        }
+
+        builder.AppendLine();
         builder.AppendLine("Governance checks");
         foreach (var check in result.GovernanceChecks)
         {
@@ -5430,6 +6406,8 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine(result.ReleaseVerificationEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
         builder.Append("  collection plan evidence evaluation: ");
         builder.AppendLine(result.CollectionPlanEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  release dry-run cross-link evidence evaluation: ");
+        builder.AppendLine(result.DryRunCrossLinkEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
         builder.AppendLine("  human approval evaluation: true");
         builder.Append("  human approval confirmation validated: ");
         builder.AppendLine(result.Approval.ConfirmationValidated.ToString().ToLowerInvariant());

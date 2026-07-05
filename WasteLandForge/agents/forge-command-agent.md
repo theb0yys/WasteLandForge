@@ -958,11 +958,17 @@ local missing-evidence action checklist under
 local evidence collection plan under
 `dist/release-dry-run/release-evidence-collection-plan.json`. Gate 307
 implements release-publish collection-plan evidence evaluation from
-`dist/release-dry-run/release-evidence-collection-plan.json`. Route the next
-implementation slice to Gate 308: release dry-run evidence cross-link
-consistency evaluation, still with no command fan-out, capability scan
-execution, package verify execution, publish behavior, external tool
-execution, runtime probes, or AI behavior.
+`dist/release-dry-run/release-evidence-collection-plan.json`. Gate 308
+implements release-publish release dry-run evidence cross-link consistency
+evaluation across `release-evidence-index.json`,
+`release-evidence-status.json`, `release-evidence-actions.json`,
+`release-evidence-collection-plan.json`, and `release-evidence-handoff.md`.
+Gate 309 implements release-publish local evidence remediation summaries for
+missing, malformed, or cross-link-mismatched dry-run evidence. Route the next
+implementation slice to Gate 310: forge doctor export release dry-run evidence
+remediation handoff projection, still with no command fan-out, automatic
+remediation, capability scan execution, package verify execution, publish
+behavior, external tool execution, runtime probes, or AI behavior.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -1055,11 +1061,17 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   local evidence collection plan under
   `dist/release-dry-run/release-evidence-collection-plan.json`. Gate 307
   implements release-publish collection-plan evidence evaluation from
-  `dist/release-dry-run/release-evidence-collection-plan.json`. Route the next
-  implementation slice to Gate 308: release dry-run evidence cross-link
-  consistency evaluation, still with no command fan-out, capability scan
-  execution, package verify execution, publish behavior, external tool
-  execution, runtime probes, or AI behavior.
+  `dist/release-dry-run/release-evidence-collection-plan.json`. Gate 308
+  implements release-publish release dry-run evidence cross-link consistency
+  evaluation across `release-evidence-index.json`,
+  `release-evidence-status.json`, `release-evidence-actions.json`,
+  `release-evidence-collection-plan.json`, and `release-evidence-handoff.md`.
+  Gate 309 implements release-publish local evidence remediation summaries for
+  missing, malformed, or cross-link-mismatched dry-run evidence. Route the next
+  implementation slice to Gate 310: forge doctor export release dry-run evidence
+  remediation handoff projection, still with no command fan-out, automatic
+  remediation, capability scan execution, package verify execution, publish
+  behavior, external tool execution, runtime probes, or AI behavior.
 
 ## Required output
 
