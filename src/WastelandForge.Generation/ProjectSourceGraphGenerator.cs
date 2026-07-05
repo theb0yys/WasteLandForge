@@ -794,13 +794,17 @@ public sealed class ProjectSourceGraphGenerator
                 new("generated-generation-manifest", "Generated reports manifest", "generated/reports/generation-manifest.json", "generated"),
                 new("dist-report-json", "Distribution metadata report JSON", "dist/build/*-report.json", "dist"),
                 new("dist-validation-json", "Distribution validation report JSON", "dist/build/validation.json", "dist"),
+                new("dist-build-plan", "Distribution build plan skeleton", "dist/build/build-plan.json", "dist"),
+                new("dist-build-plan-markdown", "Distribution build plan Markdown summary", "dist/build/build-plan.md", "dist"),
+                new("dist-build-report-index", "Distribution build report index", "dist/build/build-report-index.json", "dist"),
+                new("dist-build-report-index-markdown", "Distribution build report index Markdown summary", "dist/build/build-report-index.md", "dist"),
                 new("dist-build-manifest", "Distribution build manifest", "dist/build/build-manifest.json", "dist"),
                 new("dist-checksums", "Distribution checksum sidecar", "dist/build/checksums.sha256", "dist")
             ],
             ManifestProvenanceReferences:
             [
                 new("generated-generation-manifest", "Generated reports generation manifest provenance", "generated/reports/generation-manifest.json", "generated", ["generated-report-json", "generated-validation-json"]),
-                new("dist-build-manifest", "Distribution reports build manifest provenance", "dist/build/build-manifest.json", "dist", ["dist-report-json", "dist-validation-json"])
+                new("dist-build-manifest", "Distribution reports build manifest provenance", "dist/build/build-manifest.json", "dist", ["dist-report-json", "dist-validation-json", "dist-build-plan", "dist-build-plan-markdown", "dist-build-report-index", "dist-build-report-index-markdown"])
             ]),
         new(
             McmJsonGenerator.Target,

@@ -1233,3 +1233,76 @@ serialization, and existing ZIP bundle writer. It does not add release
 publishing clients, repository API clients, signing or attestation
 dependencies, external tool integrations, network calls, runtime probes, MO2
 or GECK automation, or AI requirements.
+
+Gate 290 adds no package dependency. Doctor export release-readiness
+triage/worklist integration uses existing in-memory Doctor export and
+release-readiness records plus existing JSON/Markdown renderers. It does not
+add release publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.
+
+Gate 291 adds no package dependency. Doctor export release-readiness lane
+closeout updates planning, routing, and documentation only. It does not add
+release publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.
+
+Gate 292 adds no package dependency. Build-plan and build-report-index
+evidence uses existing JSON serialization, manifest digest, checksum, help,
+explain-output, and graph metadata code paths. It does not add release
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.
+
+Gate 293 adds no package dependency. Build-plan and build-report-index
+Markdown summaries use existing string rendering, manifest digest, checksum,
+help, explain-output, and graph metadata code paths. It does not add release
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.
+
+Gate 294 adds no package dependency. Reports build-evidence closeout updates
+planning, routing, and documentation only. It does not add release publishing
+clients, repository API clients, signing or attestation dependencies,
+external tool integrations, network calls, runtime probes, MO2 or GECK
+automation, package execution dependencies, or AI requirements.
+
+Gate 295 adds no package dependency. Reports package-plan and staging-layout
+evidence uses built-in .NET JSON, hashing, and file APIs already available to
+the CLI. It does not add package validators, archive libraries beyond the
+existing platform, publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, MO2 or GECK automation, or AI requirements.
+
+Gate 296 adds no package dependency. Reports package input discovery uses
+built-in .NET file-existence APIs and existing JSON renderers. It does not
+add package validators, archive libraries, publishing clients, repository API
+clients, signing or attestation dependencies, external tool integrations,
+network calls, runtime probes, MO2 or GECK automation, or AI requirements.
+
+Gate 297 adds no package dependency. Reports package staging copy uses
+built-in .NET file and hashing APIs already used by the CLI. It does not add
+package validators, archive libraries, publishing clients, repository API
+clients, signing or attestation dependencies, external tool integrations,
+network calls, runtime probes, MO2 or GECK automation, or AI requirements.
+
+Gate 298 adds no package dependency. Reports package archive creation uses
+the built-in .NET ZIP APIs already used by existing package/release archive
+paths. It does not add package validators, external archive libraries,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.
+
+Gate 299 adds no package dependency. Reports package archive evidence
+revalidation reuses built-in .NET ZIP, hashing, and JSON APIs already used by
+the CLI. It does not add package validators, external archive libraries,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.
+
+Gate 300 adds no package dependency. Reports package lane closeout and
+release-verify routing are documentation and prompt-routing changes only. The
+next route stays on existing .NET JSON, hashing, and file APIs and does not
+add package validators, publishing clients, repository API clients, signing
+or attestation dependencies, external tool integrations, network calls,
+runtime probes, MO2 or GECK automation, or AI requirements.

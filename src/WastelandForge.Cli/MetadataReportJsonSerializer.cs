@@ -78,6 +78,26 @@ internal static class MetadataReportJsonSerializer
             ["runReport"] = outputs.RunReport,
             ["manifest"] = outputs.Manifest
         };
+        if (outputs.BuildPlan is not null)
+        {
+            json["buildPlan"] = outputs.BuildPlan;
+        }
+
+        if (outputs.BuildPlanMarkdown is not null)
+        {
+            json["buildPlanMarkdown"] = outputs.BuildPlanMarkdown;
+        }
+
+        if (outputs.ReportIndex is not null)
+        {
+            json["reportIndex"] = outputs.ReportIndex;
+        }
+
+        if (outputs.ReportIndexMarkdown is not null)
+        {
+            json["reportIndexMarkdown"] = outputs.ReportIndexMarkdown;
+        }
+
         if (outputs.Checksums is not null)
         {
             json["checksums"] = outputs.Checksums;

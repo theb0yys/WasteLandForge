@@ -1079,6 +1079,68 @@ payload, or real provider sample. Doctor export release-readiness handoff
 tests reuse the synthetic `fixtures/projects/ExampleMod` project and
 temporary Doctor export output/archive paths only.
 
+Gate 290 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Doctor export release-readiness
+triage/worklist tests reuse the synthetic `fixtures/projects/ExampleMod`
+project, temp-only synthetic capability marker layouts, and temporary Doctor
+export output/archive paths only.
+
+Gate 291 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Doctor export release-readiness lane
+closeout is planning, routing, and documentation only.
+
+Gate 292 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Build-plan and build-report-index tests
+reuse the synthetic `fixtures/projects/ExampleMod` project and temporary
+generated/dist output paths only.
+
+Gate 293 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Build-plan and build-report-index Markdown
+tests reuse the synthetic `fixtures/projects/ExampleMod` project and
+temporary generated/dist output paths only.
+
+Gate 294 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Reports build-evidence closeout is
+planning, routing, and documentation only.
+
+Gate 295 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Reports package tests reuse the synthetic
+`fixtures/projects/ExampleMod` project through temporary copies and commit no
+`dist/reports-package` outputs, staged package payloads, archives, provider
+DLLs, Bethesda assets, third-party mod files, local install snapshots, MO2
+profiles, GECK outputs, external tool fixtures, or generated evidence
+fixtures.
+
+Gate 296 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Reports package input-discovery tests reuse
+the synthetic `fixtures/projects/ExampleMod` project through temporary copies
+and create any `dist/build` and `dist/reports-package` evidence only in temp
+test directories.
+
+Gate 297 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Reports package staging-copy tests reuse the
+synthetic `fixtures/projects/ExampleMod` project through temporary copies and
+create/copy any `dist/build` and `dist/reports-package` evidence only in temp
+test directories.
+
+Gate 298 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Reports package archive tests reuse the
+synthetic `fixtures/projects/ExampleMod` project through temporary copies and
+create any `dist/build`, `dist/reports-package`, and `package.zip` archive
+evidence only in temp test directories.
+
+Gate 299 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Reports package archive-evidence tests
+reuse the synthetic `fixtures/projects/ExampleMod` project through temporary
+copies and create any `dist/build`, `dist/reports-package`, `package.zip`, and
+`package-archive-evidence.json` evidence only in temp test directories.
+
+Gate 300 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. It is a planning/routing closeout and uses
+no Bethesda assets, third-party mod files, local install snapshots, MO2
+profiles, GECK outputs, external tool fixtures, or generated evidence
+fixtures.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install

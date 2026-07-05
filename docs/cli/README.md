@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 289 forge doctor export release-readiness handoff skeleton
+Status: Gate 300 forge package reports lane closeout and release verify routing
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -360,7 +360,9 @@ forge --version
 - `forge generate --target reports` writes deterministic metadata reports
   under project `generated/reports`.
 - `forge build --target reports` writes deterministic metadata reports, a
-  build manifest, and checksums under project `dist/build`.
+  build-plan skeleton, build-plan Markdown summary, build-report index,
+  build-report-index Markdown summary, a build manifest, and checksums under
+  project `dist/build`.
 - `forge generate --target xedit-audit` writes non-executing xEdit audit
   script scaffolds, a scaffold manifest, and checksum evidence under project
   `generated/xedit-audit`.
@@ -473,6 +475,18 @@ forge --version
   `install-preview.md`, schema-validated `install-plan.json`,
   `install-plan.md`, schema-validated `package-verification.json`,
   `package-verification.md`, and `package.zip` under project `dist/mcm-json`.
+- `forge package --target reports` writes deterministic local package-plan,
+  staging-layout, package archive, package archive evidence, build-manifest,
+  and checksum evidence under project `dist/reports-package`. It plans around
+  the accepted `dist/build` reports evidence set, classifies each expected
+  input as present or missing, and copies only expected present report evidence into
+  `dist/reports-package/staging/reports`. It also writes deterministic
+  `dist/reports-package/package.zip` containing package plan/layout evidence
+  and staged `reports/*` payload entries, then reopens that archive to write
+  `dist/reports-package/package-archive-evidence.json`. It does not parse
+  existing build manifests, revalidate checksum digests, install to a game
+  Data tree, automate MO2 or GECK, run runtime probes, execute external tools,
+  publish releases, or use AI.
 - `forge generate|build|package --target mcm-json` cross-checks
   package-verification evidence against the package manifest, install-preview
   report, payload digest count, archive evidence, and Markdown summary before
@@ -718,10 +732,19 @@ digest, and output digest evidence. Custom `--output` values must stay under
 - `--format github` for verify-existing diagnostics only
 - `--summary <path>` for verify-existing diagnostics only
 - `--project <path>`
-- `--target mcm-json|jip-scripts`
+- `--target reports|mcm-json|jip-scripts`
 - `--output <path>`
 - `--dry-run`
 - `--verify-existing`
+
+For `--target reports`, `forge package` writes to `dist/reports-package` by
+default and reports package-plan, staging-layout, staged reports payload,
+package archive, package archive evidence, build-manifest, checksum,
+diagnostic, input-discovery, source digest, and output digest evidence.
+Expected present `dist/build` report inputs are copied into
+`dist/reports-package/staging/reports`, missing expected inputs are skipped,
+and `package.zip` is revalidated through local archive evidence. Custom
+`--output` values must stay under `dist/`.
 
 For `--target jip-scripts`, `forge package` writes to `dist/jip-scripts` by
 default and stages scripts under
@@ -927,6 +950,133 @@ It still does not publish releases, call remote repositories, upload assets,
 sign or attest artifacts, execute external tools, mutate plugins, automate MO2
 or GECK, run runtime probes, or use AI.
 
+Gate 290 integrates that release-readiness projection into Doctor triage.
+When a project export includes blocking release-readiness checks, triage
+reports `blocked`, adds `release-readiness-blocking-checks`, records
+`releaseReadinessBlockingChecks`, and creates one
+`resolve-release-readiness-*` blocker work item per blocking check. Primary
+triage sections point to `releaseReadiness`; bundle triage paths point to
+`release-readiness/index.md`. Command hints remain local dry-run handoffs:
+`forge release publish <project-root> --dry-run --format json --no-input` and
+`forge release publish <project-root> --dry-run --yes --confirm <project-id> --format json --no-input`.
+It still does not publish releases, call remote repositories, upload assets,
+sign or attest artifacts, execute external tools, mutate plugins, automate MO2
+or GECK, run runtime probes, or use AI.
+
+Gate 291 closes the current Doctor export release-readiness lane. Gates 289
+and 290 now represent the complete current local handoff slice: release
+readiness is visible in Doctor export, bundle evidence, triage, review
+targets, and worklists, with dry-run command hints back to
+`forge release publish`. Further Doctor release-readiness edge cases are
+parked unless explicitly reopened. The next implementation slice moves back
+to `forge build --target reports` build-plan/report-index evidence so build
+planning, capability roles, generator targets, planned outputs, manifests, and
+checksums become easier to inspect locally.
+It still does not publish releases, call remote repositories, upload assets,
+sign or attest artifacts, execute external tools, mutate plugins, automate MO2
+or GECK, run runtime probes, or use AI.
+
+Gate 292 returns to local build evidence. `forge build --target reports` now
+writes `build-plan.json` and `build-report-index.json` beside the existing
+validation, dependency, capability, build-report, build-manifest, and checksum
+files under `dist/build`. The build plan summarizes local phases, declared
+capability roles, the scheduled `wf.metadata_reports` generator, planned
+outputs, and false external execution flags. The report index points at the
+local report/provenance files that make up the reports build evidence set.
+Those files are included in CLI JSON output, human/plain output,
+`build-manifest.json`, `checksums.sha256`, `forge help build`,
+`forge explain output`, and `forge graph` artifact expectations.
+It still does not call remote repositories, upload assets, sign or attest
+artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run
+runtime probes, publish releases, or use AI.
+
+Gate 293 adds human-readable Markdown companions for that local build
+evidence. `forge build --target reports` now writes `build-plan.md` and
+`build-report-index.md` beside the Gate 292 JSON files. The Markdown build
+plan summarizes phases, generator target, planned outputs, capability counts,
+validation counts, and false execution flags. The Markdown report index
+summarizes the local report/provenance file set for operator review. Both
+files are included in CLI JSON output, human/plain output,
+`build-manifest.json`, `checksums.sha256`, `forge help build`,
+`forge explain output`, and `forge graph` artifact expectations.
+It still does not call remote repositories, upload assets, sign or attest
+artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run
+runtime probes, publish releases, or use AI.
+
+Gate 294 closes the current `forge build --target reports` build-evidence
+lane. The accepted local reports build evidence set is the validation,
+dependency, capability, build-plan JSON/Markdown, build-report,
+build-report-index JSON/Markdown, build-manifest, and checksum files under
+`dist/build`. The next implementation route moves to
+`forge package --target reports` package-plan and staging evidence.
+Gate 294 itself adds no runtime CLI behavior, schemas, diagnostics, package
+execution, release execution, external tools, plugin mutation, MO2 or GECK
+automation, runtime probes, publishing, or AI behavior.
+
+Gate 295 implements `forge package --target reports` package-plan and
+staging-layout skeleton evidence under `dist/reports-package`, with a local
+build manifest and checksum sidecar. It writes no staged copies of the
+`dist/build` evidence, reads no existing build manifests, revalidates no
+checksum digests, creates no archive, and adds no release upload, attestation,
+signing, external tool execution, plugin mutation, MO2/GECK automation,
+runtime probe, real third-party fixture, or AI behavior. The next
+implementation route is Gate 296 reports package input discovery and
+missing-input classification.
+
+Gate 296 adds reports package input discovery. `forge package --target
+reports` now checks each expected local `dist/build` input path for existence
+and records `sourceExists`, `inputStatus`, `presentInputs`, and
+`missingInputs` in the CLI JSON, package plan, staging layout, and package
+build manifest. The gate does not read package input contents, parse existing
+build manifests, copy inputs into staging, revalidate checksum digests, create
+archives, execute external tools, mutate plugins, automate MO2/GECK, run
+runtime probes, publish releases, or use AI. The next implementation route is
+Gate 297 reports package staging copy for present build evidence.
+
+Gate 297 adds reports package staging copy. `forge package --target reports`
+now copies only expected present local `dist/build` inputs into
+`dist/reports-package/staging/reports`, records `staged`, `stageStatus`,
+`stagedInputs`, and `unstagedInputs` in CLI JSON and package evidence, and
+includes staged payloads in the package build-manifest and checksum sidecar.
+Missing expected inputs remain classified and skipped. Copied inputs are read
+only for file-copy bytes, not content validation. The gate does not parse
+existing build manifests, revalidate checksum digests, create archives,
+execute external tools, mutate plugins, automate MO2/GECK, run runtime
+probes, publish releases, or use AI. The next implementation route is Gate
+298 reports package deterministic archive creation.
+
+Gate 298 adds deterministic reports package archive creation. `forge package
+--target reports` now writes `dist/reports-package/package.zip` with sorted
+stored ZIP entries and deterministic timestamps, reports the path as
+`outputs.packageArchive`, and includes `package.zip` in the package
+build-manifest and checksum sidecar. The archive contains package plan/layout
+evidence plus staged `reports/*` payload entries when present. The gate does
+not emit an archive-evidence sidecar, revalidate archive digests or entries,
+execute external tools, mutate plugins, automate MO2/GECK, run runtime probes,
+publish releases, or use AI. The next implementation route is Gate 299
+reports package archive evidence revalidation.
+
+Gate 299 adds reports package archive evidence revalidation. `forge package
+--target reports` now writes
+`dist/reports-package/package-archive-evidence.json`, reports the path as
+`outputs.packageArchiveEvidence`, recomputes package archive SHA-256 and byte
+length, compares expected and actual ZIP entry names, verifies ordinal entry
+ordering, verifies stored compression, and verifies deterministic ZIP
+timestamps. The gate does not add `reports` package verify-existing behavior,
+execute external tools, mutate plugins, automate MO2/GECK, run runtime probes,
+publish releases, or use AI. The next implementation route is Gate 300
+reports package lane closeout and next-value routing.
+
+Gate 300 closes the current reports package lane. The accepted reports
+package evidence set is package planning, input discovery, staging copy,
+deterministic archive creation, archive evidence revalidation, local
+build-manifest coverage, and checksum coverage under `dist/reports-package`.
+The gate does not add runtime behavior, `reports` package verify-existing
+behavior, external tool execution, plugin mutation, MO2/GECK automation,
+runtime probes, publish behavior, or AI behavior. The next implementation
+route is Gate 301 local `forge release verify` release-verification
+self-report evidence under `dist/release-dry-run/release-verify.json`.
+
 ## Docs Evidence
 
 `forge docs` writes:
@@ -1129,9 +1279,24 @@ generated/reports/generation-manifest.json
 dist/build/validation.json
 dist/build/dependency-report.json
 dist/build/capability-report.json
+dist/build/build-plan.json
+dist/build/build-plan.md
 dist/build/build-report.json
+dist/build/build-report-index.json
+dist/build/build-report-index.md
 dist/build/build-manifest.json
 dist/build/checksums.sha256
+```
+
+`forge package --target reports` writes:
+
+```text
+dist/reports-package/package-plan.json
+dist/reports-package/staging/package-layout.json
+dist/reports-package/package.zip
+dist/reports-package/package-archive-evidence.json
+dist/reports-package/build-manifest.json
+dist/reports-package/checksums.sha256
 ```
 
 `--output` is accepted for `forge generate` only when the resolved path stays
@@ -1139,8 +1304,7 @@ under project `generated/`. `--output` is accepted for `forge build` and
 `forge package` only when the resolved path stays under project `dist/`.
 
 The current `reports` target does not emit MCM Extender JSON, JIP text
-scripts, xEdit audit scaffolds, package archives, plugin records, or external
-tool output.
+scripts, xEdit audit scaffolds, plugin records, or external tool output.
 
 `forge generate --target xedit-audit` writes:
 

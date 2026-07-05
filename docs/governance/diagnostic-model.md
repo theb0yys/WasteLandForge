@@ -1317,5 +1317,91 @@ and bundle metadata, not new diagnostics. It does not emit `WF-GOV-*`,
 probes, automate MO2 or GECK, call remote repositories, upload releases, sign
 or attest artifacts, or use AI.
 
+Gate 290 adds no new diagnostic rule ID. Doctor export release-readiness
+triage/worklist integration maps existing release-readiness blocking checks
+to triage metadata and operator work items, not new diagnostics. It does not
+emit `WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, execute external
+tools, run runtime probes, automate MO2 or GECK, call remote repositories,
+upload releases, sign or attest artifacts, or use AI.
+
+Gate 291 adds no new diagnostic rule ID. Doctor export release-readiness lane
+closeout records current lane scope and next routing only. It does not emit
+`WF-GOV-*`, `WF-REL-*`, `WF-SEC-*`, or `WF-BUILD-*` diagnostics, execute
+external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload releases, sign or attest artifacts, or use AI.
+
+Gate 292 adds no new diagnostic rule ID. `forge build --target reports`
+build-plan and build-report-index evidence is emitted only after existing
+validation succeeds and reuses existing `WF-BUILD-001` output-containment
+behavior. It does not add new `WF-BUILD-*` diagnostics, execute external
+tools, run runtime probes, automate MO2 or GECK, call remote repositories,
+upload releases, sign or attest artifacts, or use AI.
+
+Gate 293 adds no new diagnostic rule ID. `forge build --target reports`
+build-plan and build-report-index Markdown summaries are emitted only after
+existing validation succeeds and reuse existing `WF-BUILD-001`
+output-containment behavior. It does not add new `WF-BUILD-*` diagnostics,
+execute external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload releases, sign or attest artifacts, or use AI.
+
+Gate 294 adds no new diagnostic rule ID. Reports build-evidence closeout is
+planning, routing, and documentation only. It does not add new `WF-BUILD-*`,
+`WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, execute package behavior,
+execute external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload releases, sign or attest artifacts, or use AI.
+
+Gate 295 adds no new diagnostic rule ID. `forge package --target reports`
+reuses existing validation diagnostics and `WF-BUILD-001` for package output
+containment. It does not add new `WF-BUILD-*`, `WF-GOV-*`, `WF-REL-*`, or
+`WF-SEC-*` diagnostics, copy package inputs, create archives, execute external
+tools, run runtime probes, automate MO2 or GECK, call remote repositories,
+upload releases, sign or attest artifacts, or use AI.
+
+Gate 296 adds no new diagnostic rule ID. Reports package missing-input
+information is emitted as package input-discovery classification data
+(`sourceExists`, `inputStatus`, `presentInputs`, and `missingInputs`), not as
+a new blocking diagnostic. The command still reuses existing validation
+diagnostics and `WF-BUILD-001` for output containment, and does not copy
+package inputs, create archives, execute external tools, run runtime probes,
+automate MO2 or GECK, call remote repositories, upload releases, sign or
+attest artifacts, or use AI.
+
+Gate 297 adds no new diagnostic rule ID. Reports package staged/unstaged
+information is emitted as package classification data (`staged`,
+`stageStatus`, `stagedInputs`, and `unstagedInputs`), not as a new blocking
+diagnostic. The command still reuses existing validation diagnostics and
+`WF-BUILD-001` for output containment, copies only expected present
+`dist/build` report inputs into staging, and does not create archives, execute
+external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload releases, sign or attest artifacts, or use AI.
+
+Gate 298 adds no new diagnostic rule ID. Reports package archive creation
+information is emitted as package evidence (`archive`, `archivePath`,
+`archiveCreation`, and `outputs.packageArchive`), not as a new blocking
+diagnostic. The command still reuses existing validation diagnostics and
+`WF-BUILD-001` for output containment, creates a deterministic local
+`package.zip`, and does not perform archive digest/entry revalidation, execute
+external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload releases, sign or attest artifacts, or use AI.
+
+Gate 299 adds no new diagnostic rule ID. Reports package archive evidence
+revalidation information is emitted as package evidence
+(`package-archive-evidence.json`, `archiveDigestRecomputed`,
+`entryNamesMatch`, `entryOrderingMatch`, `deterministicTimestampsMatch`, and
+`storedCompressionMatch`), not as a new blocking diagnostic. The command still
+reuses existing validation diagnostics and `WF-BUILD-001` for output
+containment, and does not execute external tools, run runtime probes,
+automate MO2 or GECK, call remote repositories, upload releases, sign or
+attest artifacts, or use AI.
+
+Gate 300 adds no new diagnostic rule ID. Reports package lane closeout is
+planning and routing evidence only, and the next route to `forge release
+verify` self-report evidence should reuse existing `WF-REL-*` release
+diagnostics and release dry-run output containment rather than introduce a
+new diagnostic family. It does not add `reports` package verify-existing
+diagnostics, execute external tools, run runtime probes, automate MO2 or
+GECK, call remote repositories, upload release assets, sign or attest
+artifacts, or use AI.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

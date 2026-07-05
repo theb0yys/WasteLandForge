@@ -71,16 +71,16 @@ Use this routing:
 | `/forge capabilities scan` | local-first deterministic provider detection and Doctor readiness reporting |
 | `/forge capabilities explain` | capability/provider diagnostics, explanation, and target actions |
 | `/forge generate` | deterministic generator planning and execution through the capability-aware build graph |
-| `/forge build` | validation-first build graph execution or implementation |
+| `/forge build` | validation-first build graph execution with reports build-plan/report-index evidence |
 | `/forge package` | deterministic staging, package manifest, checksums, and distribution preparation |
 | `/forge release verify` | release gates, local build manifests, checksums, schema immutability, SemVer streams, governance checks |
 | `/forge release prepare` | release dry-run, package preparation, reports, and provenance-ready outputs |
-| `/forge release publish` | closed no-publish governance preflight and routing toward local Doctor export release-readiness handoff |
+| `/forge release publish` | closed no-publish governance preflight with local Doctor export release-readiness handoff completed |
 | `/forge docs` | deterministic documentation generation from canonical source truth |
 | `/forge graph` | build, capability, contract, registry, or provider graph explanation |
 | `/forge explain` | diagnostic, validation, build, capability, or planning explanation |
 | `/forge clean` | generated/dist cleanup only unless the user explicitly authorizes more |
-| `/forge doctor export` | offline-first diagnostic export boundary with local release-readiness handoff projection |
+| `/forge doctor export` | offline-first diagnostic export boundary with local release-readiness handoff, triage, worklist projection, and lane closeout |
 | `/forge help` | canonical command list and research-bound operating rules |
 | `/forge --version` | actual CLI version if implemented; otherwise planned version state and open implementation status |
 
@@ -724,8 +724,23 @@ release-verification evidence evaluation, and Gate 286 implements explicit
 human-approval preflight, Gate 287 implements publish-readiness aggregation,
 Gate 288 closes the no-publish lane and routes the next local value slice, and
 Gate 289 implements the forge doctor export release-readiness handoff
-skeleton. Route the next implementation slice to Gate 290: forge doctor export
-release-readiness triage/worklist integration, still with no publish behavior.
+skeleton, and Gate 290 integrates release-readiness blockers into Doctor
+export triage and worklists, Gate 291 closes the current Doctor
+release-readiness lane, Gate 292 implements the forge build reports
+build-plan/report-index JSON skeleton, Gate 293 implements the forge build
+reports build-plan/report-index Markdown summaries, Gate 294 closes the
+reports build-evidence lane, and Gate 295 implements forge package --target
+reports package-plan and staging-layout skeleton evidence, and Gate 296 adds
+reports package build-evidence input discovery and missing-input
+classification, and Gate 297 implements forge package --target reports
+staging copy for present build evidence, and Gate 298 implements forge
+package --target reports deterministic local archive creation, and Gate 299
+implements forge package --target reports archive evidence revalidation, and
+Gate 300 closes the reports package lane. Route the next implementation slice
+to Gate 301: forge release verify local release-verification self-report
+evidence under `dist/release-dry-run/release-verify.json`, still with no
+reports package verify-existing behavior, publish behavior, external tool
+execution, runtime probes, or AI behavior.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -790,9 +805,24 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   human-approval preflight, Gate 287 implements publish-readiness
   aggregation, Gate 288 closes the no-publish lane and routes the next local
   value slice, and Gate 289 implements the forge doctor export
-  release-readiness handoff skeleton. Route the next implementation slice to
-  Gate 290: forge doctor export release-readiness triage/worklist integration,
-  still with no publish behavior.
+  release-readiness handoff skeleton, and Gate 290 integrates
+  release-readiness blockers into Doctor export triage and worklists, and
+  Gate 291 closes the current Doctor release-readiness lane, Gate 292
+  implements the forge build reports build-plan/report-index JSON skeleton,
+  Gate 293 implements the forge build reports build-plan/report-index
+  Markdown summaries, Gate 294 closes the reports build-evidence lane, and
+  Gate 295 implements forge package --target reports package-plan and
+  staging-layout skeleton evidence, and Gate 296 adds reports package
+  build-evidence input discovery and missing-input classification, and Gate
+  297 implements forge package --target reports staging copy for present
+  build evidence, and Gate 298 implements forge package --target reports
+  deterministic local archive creation, and Gate 299 implements forge package
+  --target reports archive evidence revalidation, and Gate 300 closes the
+  reports package lane. Route the next implementation slice to Gate 301: forge
+  release verify local release-verification self-report evidence under
+  `dist/release-dry-run/release-verify.json`, still with no reports package
+  verify-existing behavior, publish behavior, external tool execution,
+  runtime probes, or AI behavior.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider

@@ -44,7 +44,27 @@ internal static class MetadataReportTextRenderer
             builder.AppendLine(result.DryRun ? "  PLAN metadata reports" : "  OK   validation.json written");
             builder.AppendLine(result.DryRun ? "  PLAN dependency-report.json" : "  OK   dependency-report.json written");
             builder.AppendLine(result.DryRun ? "  PLAN capability-report.json" : "  OK   capability-report.json written");
+            if (result.Outputs.BuildPlan is not null)
+            {
+                builder.AppendLine(result.DryRun ? "  PLAN build-plan.json" : "  OK   build-plan.json written");
+            }
+
+            if (result.Outputs.BuildPlanMarkdown is not null)
+            {
+                builder.AppendLine(result.DryRun ? "  PLAN build-plan.md" : "  OK   build-plan.md written");
+            }
+
             builder.AppendLine(result.DryRun ? $"  PLAN {result.Command}-report.json" : $"  OK   {result.Command}-report.json written");
+            if (result.Outputs.ReportIndex is not null)
+            {
+                builder.AppendLine(result.DryRun ? "  PLAN build-report-index.json" : "  OK   build-report-index.json written");
+            }
+
+            if (result.Outputs.ReportIndexMarkdown is not null)
+            {
+                builder.AppendLine(result.DryRun ? "  PLAN build-report-index.md" : "  OK   build-report-index.md written");
+            }
+
             builder.AppendLine(result.DryRun ? "  PLAN manifest" : "  OK   manifest written");
             if (result.Outputs.Checksums is not null)
             {

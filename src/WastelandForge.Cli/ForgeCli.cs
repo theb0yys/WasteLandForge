@@ -489,6 +489,23 @@ internal static class ForgeCli
             return RunPackageVerifyExisting(parse);
         }
 
+        if (StringComparer.Ordinal.Equals(parse.Target, ReportsPackageEmitter.Target))
+        {
+            var reportsResult = new ReportsPackageEmitter().Package(new ReportsPackageOptions(
+                parse.ProjectPath,
+                parse.OutputDirectory,
+                CliConstants.Version,
+                parse.DryRun));
+            var reportsPayload = CliConstants.IsMachineFormat(parse.Format)
+                ? ReportsPackageJsonSerializer.Serialize(reportsResult)
+                : ReportsPackageTextRenderer.Render(reportsResult);
+            Console.Write(reportsPayload);
+
+            return reportsResult.HasErrors
+                ? (int)CliExitCode.BlockingDiagnostics
+                : (int)CliExitCode.Success;
+        }
+
         if (StringComparer.Ordinal.Equals(parse.Target, JipScriptPackageEmitter.Target))
         {
             var jipResult = new JipScriptPackageEmitter().Package(new JipScriptPackageOptions(
@@ -1737,9 +1754,10 @@ internal static class ForgeCli
                 }
 
                 if (!StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target) &&
+                    !StringComparer.Ordinal.Equals(target, ReportsPackageEmitter.Target) &&
                     !StringComparer.Ordinal.Equals(target, JipScriptPackageEmitter.Target))
                 {
-                    return PackageParseResult.Fail(format, $"Only targets '{McmJsonGenerator.Target}' and '{JipScriptPackageEmitter.Target}' are implemented for forge package in the current gate.");
+                    return PackageParseResult.Fail(format, $"Only targets '{ReportsPackageEmitter.Target}', '{McmJsonGenerator.Target}', and '{JipScriptPackageEmitter.Target}' are implemented for forge package in the current gate.");
                 }
 
                 continue;

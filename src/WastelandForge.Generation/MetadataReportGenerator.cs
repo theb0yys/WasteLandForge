@@ -75,19 +75,91 @@ public sealed class MetadataReportGenerator
             capabilityReportPath,
             CreateCapabilityReportJson(options, projectId, requirementRead.Requirements).ToJsonString(JsonOptions) + Environment.NewLine);
 
+        string? buildPlanPath = null;
+        string? buildPlanMarkdownPath = null;
+        if (StringComparer.Ordinal.Equals(options.Command, "build"))
+        {
+            buildPlanPath = Path.Combine(outputRoot, "build-plan.json");
+            WriteUtf8NoBom(
+                buildPlanPath,
+                CreateBuildPlanJson(
+                    options,
+                    projectRoot,
+                    outputRoot,
+                    projectId,
+                    validationReport,
+                    requirementRead.Requirements,
+                    sourceDigests).ToJsonString(JsonOptions) + Environment.NewLine);
+            buildPlanMarkdownPath = Path.Combine(outputRoot, "build-plan.md");
+            WriteUtf8NoBom(
+                buildPlanMarkdownPath,
+                CreateBuildPlanMarkdown(
+                    options,
+                    projectRoot,
+                    outputRoot,
+                    projectId,
+                    validationReport,
+                    requirementRead.Requirements,
+                    sourceDigests));
+        }
+
         var runReportPath = Path.Combine(outputRoot, $"{options.Command}-report.json");
         var reportFiles = new[]
         {
             validationReportPath,
             dependencyReportPath,
-            capabilityReportPath
-        };
+            capabilityReportPath,
+            buildPlanPath,
+            buildPlanMarkdownPath
+        }.OfType<string>().ToArray();
         WriteUtf8NoBom(
             runReportPath,
             CreateRunReportJson(options, projectRoot, outputRoot, projectId, issues, reportFiles).ToJsonString(JsonOptions) + Environment.NewLine);
 
+        string? reportIndexPath = null;
+        string? reportIndexMarkdownPath = null;
+        if (StringComparer.Ordinal.Equals(options.Command, "build"))
+        {
+            reportIndexPath = Path.Combine(outputRoot, "build-report-index.json");
+            reportIndexMarkdownPath = Path.Combine(outputRoot, "build-report-index.md");
+            WriteUtf8NoBom(
+                reportIndexPath,
+                CreateBuildReportIndexJson(
+                    options,
+                    projectRoot,
+                    outputRoot,
+                    projectId,
+                    [
+                        validationReportPath,
+                        dependencyReportPath,
+                        capabilityReportPath,
+                        buildPlanPath ?? throw new InvalidOperationException("Build plan path was not created."),
+                        buildPlanMarkdownPath ?? throw new InvalidOperationException("Build plan Markdown path was not created."),
+                        runReportPath,
+                        reportIndexMarkdownPath
+                    ]).ToJsonString(JsonOptions) + Environment.NewLine);
+            WriteUtf8NoBom(
+                reportIndexMarkdownPath,
+                CreateBuildReportIndexMarkdown(
+                    options,
+                    projectRoot,
+                    outputRoot,
+                    projectId,
+                    [
+                        validationReportPath,
+                        dependencyReportPath,
+                        capabilityReportPath,
+                        buildPlanPath,
+                        buildPlanMarkdownPath,
+                        runReportPath,
+                        reportIndexMarkdownPath
+                    ]));
+        }
+
         var outputFilesBeforeManifest = reportFiles
             .Append(runReportPath)
+            .Concat(reportIndexPath is null ? [] : [reportIndexPath])
+            .Concat(reportIndexMarkdownPath is null ? [] : [reportIndexMarkdownPath])
             .OrderBy(path => ToDisplayPath(projectRoot, path), StringComparer.Ordinal)
             .ToArray();
         var outputDigestsBeforeManifest = outputFilesBeforeManifest
@@ -165,6 +237,18 @@ public sealed class MetadataReportGenerator
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "dependency-report.json")),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, "capability-report.json")),
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, $"{command}-report.json")),
+            StringComparer.Ordinal.Equals(command, "build")
+                ? ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-plan.json"))
+                : null,
+            StringComparer.Ordinal.Equals(command, "build")
+                ? ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-plan.md"))
+                : null,
+            StringComparer.Ordinal.Equals(command, "build")
+                ? ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-report-index.json"))
+                : null,
+            StringComparer.Ordinal.Equals(command, "build")
+                ? ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-report-index.md"))
+                : null,
             ToDisplayPath(projectRoot, Path.Combine(outputRoot, manifestFileName)),
             checksums ? ToDisplayPath(projectRoot, Path.Combine(outputRoot, "checksums.sha256")) : null);
     }
@@ -274,6 +358,246 @@ public sealed class MetadataReportGenerator
         };
     }
 
+    private static JsonObject CreateBuildPlanJson(
+        MetadataReportOptions options,
+        string projectRoot,
+        string outputRoot,
+        LogicalId? projectId,
+        DiagnosticReport validationReport,
+        IReadOnlyList<CapabilityRequirementDefinition> requirements,
+        IReadOnlyList<FileDigest> sourceDigests)
+    {
+        var plannedOutputs = CreateBuildEvidenceOutputs(projectRoot, outputRoot)
+            .Select(output => new JsonObject
+            {
+                ["path"] = output.Path,
+                ["role"] = output.Role,
+                ["boundary"] = "dist",
+                ["provenance"] = output.Provenance
+            })
+            .ToArray();
+
+        return new JsonObject
+        {
+            ["formatVersion"] = "0.1",
+            ["tool"] = CreateToolJson(options.ToolVersion),
+            ["command"] = options.Command,
+            ["kind"] = "wastelandforge.build-plan",
+            ["target"] = options.Target,
+            ["dryRun"] = options.DryRun,
+            ["project"] = CreateProjectJson(projectId),
+            ["outputRoot"] = ToDisplayPath(projectRoot, outputRoot),
+            ["summary"] = new JsonObject
+            {
+                ["status"] = "planned-local",
+                ["phases"] = 6,
+                ["generatorTargets"] = 1,
+                ["plannedOutputs"] = plannedOutputs.Length,
+                ["sourceDocuments"] = sourceDigests.Count,
+                ["requiredCapabilities"] = requirements.Count(requirement => !requirement.Optional),
+                ["optionalCapabilities"] = requirements.Count(requirement => requirement.Optional),
+                ["validationErrors"] = validationReport.ErrorCount,
+                ["validationWarnings"] = validationReport.WarningCount
+            },
+            ["phases"] = new JsonArray(
+                Phase("load", "complete", "Load canonical project manifest and registries."),
+                Phase("schema-validation", "complete", "Validate source contracts against embedded JSON Schemas."),
+                Phase("semantic-validation", "complete", "Run deterministic semantic validators."),
+                Phase("capability-resolution", "declared-only", "Summarize declared capability requirements without runtime probes."),
+                Phase("build-planning", "planned", "Plan reports target outputs under dist/build."),
+                Phase("provenance", "planned", "Record source and output digests in build-manifest.json and checksums.sha256.")),
+            ["generatorTargets"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["id"] = options.Target,
+                    ["generator"] = "wf.metadata_reports",
+                    ["version"] = options.ToolVersion,
+                    ["status"] = "scheduled",
+                    ["deterministic"] = true,
+                    ["requiredCapabilities"] = new JsonArray(requirements.Where(requirement => !requirement.Optional).Select(requirement => JsonValue.Create(requirement.Id)).ToArray()),
+                    ["optionalCapabilities"] = new JsonArray(requirements.Where(requirement => requirement.Optional).Select(requirement => JsonValue.Create(requirement.Id)).ToArray())
+                }
+            },
+            ["plannedOutputs"] = new JsonArray(plannedOutputs),
+            ["execution"] = CreateNoExternalExecutionJson()
+        };
+    }
+
+    private static string CreateBuildPlanMarkdown(
+        MetadataReportOptions options,
+        string projectRoot,
+        string outputRoot,
+        LogicalId? projectId,
+        DiagnosticReport validationReport,
+        IReadOnlyList<CapabilityRequirementDefinition> requirements,
+        IReadOnlyList<FileDigest> sourceDigests)
+    {
+        var plannedOutputs = CreateBuildEvidenceOutputs(projectRoot, outputRoot);
+        var phases = new[]
+        {
+            ("load", "complete", "Load canonical project manifest and registries."),
+            ("schema-validation", "complete", "Validate source contracts against embedded JSON Schemas."),
+            ("semantic-validation", "complete", "Run deterministic semantic validators."),
+            ("capability-resolution", "declared-only", "Summarize declared capability requirements without runtime probes."),
+            ("build-planning", "planned", "Plan reports target outputs under dist/build."),
+            ("provenance", "planned", "Record source and output digests in build-manifest.json and checksums.sha256.")
+        };
+
+        var builder = new StringBuilder();
+        builder.AppendLine("# WastelandForge Build Plan");
+        builder.AppendLine();
+        builder.AppendLine($"- Command: `{options.Command}`");
+        builder.AppendLine($"- Target: `{options.Target}`");
+        builder.AppendLine("- Status: `planned-local`");
+        builder.AppendLine($"- Project: `{projectId?.ToString() ?? "unknown"}`");
+        builder.AppendLine($"- Output root: `{ToDisplayPath(projectRoot, outputRoot)}`");
+        builder.AppendLine($"- Planned outputs: `{plannedOutputs.Count}`");
+        builder.AppendLine($"- Source documents: `{sourceDigests.Count}`");
+        builder.AppendLine($"- Required capabilities: `{requirements.Count(requirement => !requirement.Optional)}`");
+        builder.AppendLine($"- Optional capabilities: `{requirements.Count(requirement => requirement.Optional)}`");
+        builder.AppendLine($"- Validation errors: `{validationReport.ErrorCount}`");
+        builder.AppendLine($"- Validation warnings: `{validationReport.WarningCount}`");
+        builder.AppendLine();
+        builder.AppendLine("## Phases");
+        builder.AppendLine();
+        builder.AppendLine("| Phase | Status | Detail |");
+        builder.AppendLine("|---|---|---|");
+        foreach (var phase in phases)
+        {
+            builder.AppendLine($"| `{phase.Item1}` | `{phase.Item2}` | {phase.Item3} |");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("## Generator Targets");
+        builder.AppendLine();
+        builder.AppendLine("| Target | Generator | Status | Deterministic |");
+        builder.AppendLine("|---|---|---|---|");
+        builder.AppendLine($"| `{options.Target}` | `wf.metadata_reports` | `scheduled` | `true` |");
+        builder.AppendLine();
+        builder.AppendLine("## Planned Outputs");
+        builder.AppendLine();
+        builder.AppendLine("| Path | Role | Provenance |");
+        builder.AppendLine("|---|---|---|");
+        foreach (var output in plannedOutputs)
+        {
+            builder.AppendLine($"| `{output.Path}` | `{output.Role}` | `{output.Provenance}` |");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("## Execution Boundary");
+        builder.AppendLine();
+        builder.AppendLine("- External tool execution: `false`");
+        builder.AppendLine("- Plugin mutation: `false`");
+        builder.AppendLine("- MO2 automation: `false`");
+        builder.AppendLine("- GECK automation: `false`");
+        builder.AppendLine("- Runtime probes: `false`");
+        builder.AppendLine("- Release publishing: `false`");
+        builder.AppendLine("- Remote repository calls: `false`");
+        builder.AppendLine("- AI required: `false`");
+        return builder.ToString();
+    }
+
+    private static JsonObject CreateBuildReportIndexJson(
+        MetadataReportOptions options,
+        string projectRoot,
+        string outputRoot,
+        LogicalId? projectId,
+        IReadOnlyList<string> reportFiles)
+    {
+        var reportEntries = CreateBuildReportEntries(projectRoot, outputRoot, reportFiles);
+
+        return new JsonObject
+        {
+            ["formatVersion"] = "0.1",
+            ["tool"] = CreateToolJson(options.ToolVersion),
+            ["command"] = options.Command,
+            ["kind"] = "wastelandforge.build-report-index",
+            ["target"] = options.Target,
+            ["project"] = CreateProjectJson(projectId),
+            ["outputRoot"] = ToDisplayPath(projectRoot, outputRoot),
+            ["summary"] = new JsonObject
+            {
+                ["reports"] = reportEntries.Length,
+                ["validationReports"] = reportEntries.Count(entry => StringComparer.Ordinal.Equals("validation", (string?)entry["id"])),
+                ["capabilityReports"] = reportEntries.Count(entry => StringComparer.Ordinal.Equals("capability-report", (string?)entry["id"])),
+                ["planReports"] = reportEntries.Count(entry => StringComparer.Ordinal.Equals("build-plan", (string?)entry["id"])),
+                ["manifestReports"] = reportEntries.Count(entry => StringComparer.Ordinal.Equals("build-manifest", (string?)entry["id"])),
+                ["checksumReports"] = reportEntries.Count(entry => StringComparer.Ordinal.Equals("checksums", (string?)entry["id"])),
+                ["markdownReports"] = reportEntries.Count(entry => ((string?)entry["id"])?.EndsWith("-markdown", StringComparison.Ordinal) == true)
+            },
+            ["reports"] = new JsonArray(reportEntries),
+            ["execution"] = CreateNoExternalExecutionJson()
+        };
+    }
+
+    private static string CreateBuildReportIndexMarkdown(
+        MetadataReportOptions options,
+        string projectRoot,
+        string outputRoot,
+        LogicalId? projectId,
+        IReadOnlyList<string> reportFiles)
+    {
+        var reportEntries = CreateBuildReportEntries(projectRoot, outputRoot, reportFiles);
+
+        var builder = new StringBuilder();
+        builder.AppendLine("# WastelandForge Build Report Index");
+        builder.AppendLine();
+        builder.AppendLine($"- Command: `{options.Command}`");
+        builder.AppendLine($"- Target: `{options.Target}`");
+        builder.AppendLine($"- Project: `{projectId?.ToString() ?? "unknown"}`");
+        builder.AppendLine($"- Output root: `{ToDisplayPath(projectRoot, outputRoot)}`");
+        builder.AppendLine($"- Reports: `{reportEntries.Length}`");
+        builder.AppendLine($"- Markdown reports: `{reportEntries.Count(entry => ((string?)entry["id"])?.EndsWith("-markdown", StringComparison.Ordinal) == true)}`");
+        builder.AppendLine();
+        builder.AppendLine("## Reports");
+        builder.AppendLine();
+        builder.AppendLine("| ID | Path | Role | Required for |");
+        builder.AppendLine("|---|---|---|---|");
+        foreach (var entry in reportEntries)
+        {
+            builder.AppendLine($"| `{(string?)entry["id"]}` | `{(string?)entry["path"]}` | `{(string?)entry["role"]}` | `{(string?)entry["requiredFor"]}` |");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("## Execution Boundary");
+        builder.AppendLine();
+        builder.AppendLine("- External tool execution: `false`");
+        builder.AppendLine("- Plugin mutation: `false`");
+        builder.AppendLine("- MO2 automation: `false`");
+        builder.AppendLine("- GECK automation: `false`");
+        builder.AppendLine("- Runtime probes: `false`");
+        builder.AppendLine("- Release publishing: `false`");
+        builder.AppendLine("- Remote repository calls: `false`");
+        builder.AppendLine("- AI required: `false`");
+        return builder.ToString();
+    }
+
+    private static JsonObject[] CreateBuildReportEntries(
+        string projectRoot,
+        string outputRoot,
+        IReadOnlyList<string> reportFiles) =>
+        reportFiles
+            .Select(path => ReportEntry(projectRoot, path))
+            .Concat(
+            [
+                new JsonObject
+                {
+                    ["id"] = "build-manifest",
+                    ["path"] = ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-manifest.json")),
+                    ["role"] = "provenance-manifest",
+                    ["requiredFor"] = "build-provenance"
+                },
+                new JsonObject
+                {
+                    ["id"] = "checksums",
+                    ["path"] = ToDisplayPath(projectRoot, Path.Combine(outputRoot, "checksums.sha256")),
+                    ["role"] = "checksum-sidecar",
+                    ["requiredFor"] = "build-provenance"
+                }
+            ])
+            .ToArray();
+
     private static JsonObject CreateManifestJson(
         MetadataReportOptions options,
         LogicalId? projectId,
@@ -325,6 +649,77 @@ public sealed class MetadataReportGenerator
             ["outputs"] = ToDigestArray(outputDigests)
         };
     }
+
+    private static JsonObject CreateNoExternalExecutionJson() =>
+        new()
+        {
+            ["externalToolExecution"] = false,
+            ["pluginMutation"] = false,
+            ["mo2Automation"] = false,
+            ["geckAutomation"] = false,
+            ["runtimeProbes"] = false,
+            ["releasePublishing"] = false,
+            ["remoteRepositoryCalls"] = false,
+            ["aiRequired"] = false
+        };
+
+    private static JsonObject Phase(string id, string status, string detail) =>
+        new()
+        {
+            ["id"] = id,
+            ["status"] = status,
+            ["detail"] = detail
+        };
+
+    private static JsonObject ReportEntry(string projectRoot, string path)
+    {
+        var fileName = Path.GetFileName(path);
+        var id = fileName switch
+        {
+            "validation.json" => "validation",
+            "dependency-report.json" => "dependency-report",
+            "capability-report.json" => "capability-report",
+            "build-plan.json" => "build-plan",
+            "build-plan.md" => "build-plan-markdown",
+            "build-report.json" => "build-report",
+            "build-report-index.md" => "build-report-index-markdown",
+            _ => Path.GetFileNameWithoutExtension(fileName)
+        };
+
+        var role = id switch
+        {
+            "validation" => "layered-validation-report",
+            "dependency-report" => "declared-dependency-report",
+            "capability-report" => "declared-capability-report",
+            "build-plan" => "build-plan-skeleton",
+            "build-plan-markdown" => "human-build-plan-summary",
+            "build-report" => "build-run-summary",
+            "build-report-index-markdown" => "human-build-report-index",
+            _ => "report"
+        };
+
+        return new JsonObject
+        {
+            ["id"] = id,
+            ["path"] = ToDisplayPath(projectRoot, path),
+            ["role"] = role,
+            ["requiredFor"] = "build-report-index"
+        };
+    }
+
+    private static IReadOnlyList<BuildEvidenceOutput> CreateBuildEvidenceOutputs(string projectRoot, string outputRoot) =>
+    [
+        new(ToDisplayPath(projectRoot, Path.Combine(outputRoot, "validation.json")), "layered-validation-report", "recorded-in-build-manifest"),
+        new(ToDisplayPath(projectRoot, Path.Combine(outputRoot, "dependency-report.json")), "declared-dependency-report", "recorded-in-build-manifest"),
+        new(ToDisplayPath(projectRoot, Path.Combine(outputRoot, "capability-report.json")), "declared-capability-report", "recorded-in-build-manifest"),
+        new(ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-plan.json")), "build-plan-skeleton", "recorded-in-build-manifest"),
+        new(ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-plan.md")), "human-build-plan-summary", "recorded-in-build-manifest"),
+        new(ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-report.json")), "build-run-summary", "recorded-in-build-manifest"),
+        new(ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-report-index.json")), "build-report-index", "recorded-in-build-manifest"),
+        new(ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-report-index.md")), "human-build-report-index", "recorded-in-build-manifest"),
+        new(ToDisplayPath(projectRoot, Path.Combine(outputRoot, "build-manifest.json")), "provenance-manifest", "self-describing-output-digests"),
+        new(ToDisplayPath(projectRoot, Path.Combine(outputRoot, "checksums.sha256")), "checksum-sidecar", "sha256-sidecar")
+    ];
 
     private static JsonObject ToRequirementJson(CapabilityRequirementDefinition requirement)
     {
@@ -503,4 +898,6 @@ public sealed class MetadataReportGenerator
     }
 
     private sealed record ReproducibleTimestamp(string Source, long UnixTime, string Utc);
+
+    private sealed record BuildEvidenceOutput(string Path, string Role, string Provenance);
 }

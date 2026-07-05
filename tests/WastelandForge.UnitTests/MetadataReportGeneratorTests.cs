@@ -28,14 +28,18 @@ public sealed class MetadataReportGeneratorTests
 
             Assert.False(result.HasErrors);
             Assert.Equal("passed", result.Status);
-            Assert.NotNull(result.Outputs);
-            Assert.Equal("generated/reports", result.Outputs!.Root);
-            Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.ValidationReport)));
-            Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.DependencyReport)));
-            Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.CapabilityReport)));
-            Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.RunReport)));
-            Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.Manifest)));
-            Assert.Null(result.Outputs.Checksums);
+        Assert.NotNull(result.Outputs);
+        Assert.Equal("generated/reports", result.Outputs!.Root);
+        Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.ValidationReport)));
+        Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.DependencyReport)));
+        Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.CapabilityReport)));
+        Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.RunReport)));
+        Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.Manifest)));
+        Assert.Null(result.Outputs.BuildPlan);
+        Assert.Null(result.Outputs.BuildPlanMarkdown);
+        Assert.Null(result.Outputs.ReportIndex);
+        Assert.Null(result.Outputs.ReportIndexMarkdown);
+        Assert.Null(result.Outputs.Checksums);
 
             var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, result.Outputs.Manifest)))
                 ?? throw new InvalidOperationException("Generation manifest did not parse.");
@@ -68,16 +72,73 @@ public sealed class MetadataReportGeneratorTests
         Assert.Equal("passed", result.Status);
         Assert.NotNull(result.Outputs);
         Assert.Equal("dist/build", result.Outputs!.Root);
+        var buildPlanPath = Assert.IsType<string>(result.Outputs.BuildPlan);
+        var buildPlanMarkdownPath = Assert.IsType<string>(result.Outputs.BuildPlanMarkdown);
+        var reportIndexPath = Assert.IsType<string>(result.Outputs.ReportIndex);
+        var reportIndexMarkdownPath = Assert.IsType<string>(result.Outputs.ReportIndexMarkdown);
+        Assert.Equal("dist/build/build-plan.json", buildPlanPath);
+        Assert.Equal("dist/build/build-plan.md", buildPlanMarkdownPath);
+        Assert.Equal("dist/build/build-report-index.json", reportIndexPath);
+        Assert.Equal("dist/build/build-report-index.md", reportIndexMarkdownPath);
+        Assert.True(File.Exists(Path.Combine(projectRoot, buildPlanPath)));
+        Assert.True(File.Exists(Path.Combine(projectRoot, buildPlanMarkdownPath)));
+        Assert.True(File.Exists(Path.Combine(projectRoot, reportIndexPath)));
+        Assert.True(File.Exists(Path.Combine(projectRoot, reportIndexMarkdownPath)));
         Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.Manifest)));
         Assert.True(File.Exists(Path.Combine(projectRoot, result.Outputs.Checksums!)));
+
+        var buildPlan = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, buildPlanPath)))
+            ?? throw new InvalidOperationException("Build plan did not parse.");
+        Assert.Equal("wastelandforge.build-plan", (string?)buildPlan["kind"]);
+        Assert.Equal("planned-local", (string?)buildPlan["summary"]?["status"]);
+        Assert.Equal(10, (int?)buildPlan["summary"]?["plannedOutputs"]);
+        Assert.Equal("wf.metadata_reports", (string?)buildPlan["generatorTargets"]?[0]?["generator"]);
+        Assert.Equal(false, (bool?)buildPlan["execution"]?["externalToolExecution"]);
+
+        var buildPlanMarkdown = File.ReadAllText(Path.Combine(projectRoot, buildPlanMarkdownPath));
+        Assert.Contains("# WastelandForge Build Plan", buildPlanMarkdown, StringComparison.Ordinal);
+        Assert.Contains("| `dist/build/build-plan.md` | `human-build-plan-summary` |", buildPlanMarkdown, StringComparison.Ordinal);
+
+        var reportIndex = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, reportIndexPath)))
+            ?? throw new InvalidOperationException("Build report index did not parse.");
+        Assert.Equal("wastelandforge.build-report-index", (string?)reportIndex["kind"]);
+        Assert.Equal(9, (int?)reportIndex["summary"]?["reports"]);
+        Assert.Equal(1, (int?)reportIndex["summary"]?["planReports"]);
+        Assert.Equal(2, (int?)reportIndex["summary"]?["markdownReports"]);
+        Assert.Contains(
+            reportIndex["reports"]?.AsArray() ?? throw new InvalidOperationException("Build report index reports missing."),
+            report => StringComparer.Ordinal.Equals("dist/build/build-plan.json", (string?)report?["path"]));
+        Assert.Contains(
+            reportIndex["reports"]?.AsArray() ?? throw new InvalidOperationException("Build report index reports missing."),
+            report => StringComparer.Ordinal.Equals("dist/build/build-report-index.md", (string?)report?["path"]));
+
+        var reportIndexMarkdown = File.ReadAllText(Path.Combine(projectRoot, reportIndexMarkdownPath));
+        Assert.Contains("# WastelandForge Build Report Index", reportIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("| `build-plan-markdown` | `dist/build/build-plan.md` |", reportIndexMarkdown, StringComparison.Ordinal);
 
         var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, result.Outputs.Manifest)))
             ?? throw new InvalidOperationException("Build manifest did not parse.");
         Assert.Equal("wastelandforge/build/v1", (string?)manifest["buildType"]);
         Assert.Equal("wf.metadata_reports", (string?)manifest["generators"]?[0]?["id"]);
+        Assert.Contains(
+            manifest["outputs"]?.AsArray() ?? throw new InvalidOperationException("Build manifest outputs missing."),
+            output => StringComparer.Ordinal.Equals("dist/build/build-plan.json", (string?)output?["path"]));
+        Assert.Contains(
+            manifest["outputs"]?.AsArray() ?? throw new InvalidOperationException("Build manifest outputs missing."),
+            output => StringComparer.Ordinal.Equals("dist/build/build-plan.md", (string?)output?["path"]));
+        Assert.Contains(
+            manifest["outputs"]?.AsArray() ?? throw new InvalidOperationException("Build manifest outputs missing."),
+            output => StringComparer.Ordinal.Equals("dist/build/build-report-index.json", (string?)output?["path"]));
+        Assert.Contains(
+            manifest["outputs"]?.AsArray() ?? throw new InvalidOperationException("Build manifest outputs missing."),
+            output => StringComparer.Ordinal.Equals("dist/build/build-report-index.md", (string?)output?["path"]));
 
         var checksums = File.ReadAllText(Path.Combine(projectRoot, result.Outputs.Checksums!));
         Assert.Contains("build-manifest.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("build-plan.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("build-plan.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("build-report-index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("build-report-index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("dependency-report.json", checksums, StringComparison.Ordinal);
         Assert.Contains("capability-report.json", checksums, StringComparison.Ordinal);
     }

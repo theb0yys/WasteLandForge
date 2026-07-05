@@ -294,9 +294,20 @@ Gate status:
 - `gates/gate-287-forge-release-publish-readiness-aggregation.md` - Gate 287, `forge release publish` publish-readiness aggregation from local evidence, governance, and approval states, still no-publish.
 - `gates/gate-288-forge-release-publish-no-publish-lane-closeout.md` - Gate 288, `forge release publish` no-publish lane closeout metadata and next-value routing to a local Doctor export release-readiness handoff, still no-publish.
 - `gates/gate-289-forge-doctor-export-release-readiness-handoff-skeleton.md` - Gate 289, `forge doctor export` local release-readiness handoff projection from release-publish dry-run preflight evidence, with JSON, plain, Markdown, archive, bundle index, summary index, README, and checksum coverage and still no publish behavior.
+- `gates/gate-290-forge-doctor-export-release-readiness-triage-worklist.md` - Gate 290, `forge doctor export` release-readiness triage/worklist integration that turns local blocking release-readiness checks into operator handoff items, command hints, review targets, and bundle triage paths while still no-publish.
+- `gates/gate-291-forge-doctor-export-release-readiness-lane-closeout.md` - Gate 291, `forge doctor export` release-readiness lane closeout and next-value routing toward local build plan/report index work while still no-publish.
+- `gates/gate-292-forge-build-reports-build-plan-index-skeleton.md` - Gate 292, `forge build --target reports` local build-plan and build-report-index JSON evidence under `dist/build`, with manifest, checksum, graph, explain, help, and test coverage.
+- `gates/gate-293-forge-build-reports-build-plan-index-markdown.md` - Gate 293, `forge build --target reports` human-readable build-plan and build-report-index Markdown summaries under `dist/build`, with manifest, checksum, graph, explain, help, and test coverage.
+- `gates/gate-294-forge-build-reports-build-evidence-closeout.md` - Gate 294, `forge build --target reports` build-evidence lane closeout and routing to the next local package value slice.
+- `gates/gate-295-forge-package-reports-package-plan-staging-skeleton.md` - Gate 295, `forge package --target reports` package-plan and staging-layout skeleton under `dist/reports-package`, with build-manifest, checksum, CLI, help, and test coverage.
+- `gates/gate-296-forge-package-reports-input-discovery.md` - Gate 296, `forge package --target reports` local `dist/build` input discovery and present/missing classification without file copying or archive creation.
+- `gates/gate-297-forge-package-reports-staging-copy.md` - Gate 297, `forge package --target reports` staging-copy behavior for expected present reports build evidence without archive creation or release behavior.
+- `gates/gate-298-forge-package-reports-archive-creation.md` - Gate 298, `forge package --target reports` deterministic local archive creation from staged reports payload and package plan/layout evidence.
+- `gates/gate-299-forge-package-reports-archive-evidence-revalidation.md` - Gate 299, `forge package --target reports` local archive evidence revalidation for archive digest, entry names, entry ordering, deterministic timestamps, and stored compression metadata.
+- `gates/gate-300-forge-package-reports-lane-closeout-release-verify-routing.md` - Gate 300, `forge package --target reports` lane closeout and next-value routing to local `forge release verify` release-verification self-report evidence.
 
 Next gate:
 
-- Gate 290 - `forge doctor export` release-readiness triage/worklist integration, turning blocking release-readiness checks into local operator handoff items while still stopping before remote repository calls, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 301 - add local `forge release verify` release-verification self-report emission under `dist/release-dry-run/release-verify.json`, with build-manifest and checksum coverage, while still stopping before `reports` package verify-existing behavior, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

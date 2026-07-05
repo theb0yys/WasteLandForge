@@ -829,3 +829,83 @@ readiness status into Doctor export JSON, Markdown, and bundle indexes only
 and does not emit `WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, execute
 external tools, run runtime probes, automate MO2 or GECK, call remote
 repositories, upload release assets, sign or attest artifacts, or use AI.
+
+Gate 290 adds no new rule family or diagnostic ID. Doctor export
+release-readiness triage/worklist integration reports existing blocking
+release-readiness checks as Doctor triage and worklist metadata only and does
+not emit `WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, execute external
+tools, run runtime probes, automate MO2 or GECK, call remote repositories,
+upload release assets, sign or attest artifacts, or use AI.
+
+Gate 291 adds no new rule family or diagnostic ID. Doctor export
+release-readiness lane closeout is planning and routing only and does not emit
+`WF-GOV-*`, `WF-REL-*`, `WF-SEC-*`, or `WF-BUILD-*` diagnostics, execute
+external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload release assets, sign or attest artifacts, or use AI.
+
+Gate 292 adds no new rule family or diagnostic ID. Build-plan and
+build-report-index evidence for `forge build --target reports` reuses
+existing `WF-BUILD-001` output containment and does not emit new `WF-BUILD-*`,
+`WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, execute external tools, run
+runtime probes, automate MO2 or GECK, call remote repositories, upload release
+assets, sign or attest artifacts, or use AI.
+
+Gate 293 adds no new rule family or diagnostic ID. Build-plan and
+build-report-index Markdown summaries for `forge build --target reports`
+reuse existing `WF-BUILD-001` output containment and do not emit new
+`WF-BUILD-*`, `WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, execute
+external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload release assets, sign or attest artifacts, or use AI.
+
+Gate 294 adds no new rule family or diagnostic ID. Reports build-evidence
+closeout is planning, routing, and documentation only and does not emit new
+`WF-BUILD-*`, `WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, execute
+package behavior, execute external tools, run runtime probes, automate MO2 or
+GECK, call remote repositories, upload release assets, sign or attest
+artifacts, or use AI.
+
+Gate 295 adds no new rule family or diagnostic ID. Reports package-plan and
+staging-layout evidence reuses existing validation diagnostics and
+`WF-BUILD-001` for output containment. It does not emit new `WF-BUILD-*`,
+`WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, copy package inputs,
+create archives, execute external tools, run runtime probes, automate MO2 or
+GECK, call remote repositories, upload release assets, sign or attest
+artifacts, or use AI.
+
+Gate 296 adds no new rule family or diagnostic ID. Reports package
+present/missing input discovery is package classification data, not a new
+`WF-BUILD-*` diagnostic. The command still reuses existing validation
+diagnostics and `WF-BUILD-001` for output containment, and does not copy
+package inputs, create archives, execute external tools, run runtime probes,
+automate MO2 or GECK, call remote repositories, upload release assets, sign or
+attest artifacts, or use AI.
+
+Gate 297 adds no new rule family or diagnostic ID. Reports package staged and
+unstaged input state is package classification data, not a new `WF-BUILD-*`
+diagnostic. The command still reuses existing validation diagnostics and
+`WF-BUILD-001` for output containment, copies only expected present
+`dist/build` report files into package staging, and does not create archives,
+execute external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload release assets, sign or attest artifacts, or use AI.
+
+Gate 298 adds no new rule family or diagnostic ID. Reports package archive
+creation metadata is package evidence, not a new `WF-BUILD-*` diagnostic. The
+command still reuses existing validation diagnostics and `WF-BUILD-001` for
+output containment, writes a deterministic local `package.zip`, and does not
+perform archive revalidation, execute external tools, run runtime probes,
+automate MO2 or GECK, call remote repositories, upload release assets, sign or
+attest artifacts, or use AI.
+
+Gate 299 adds no new rule family or diagnostic ID. Reports package archive
+evidence revalidation is package evidence, not a new `WF-BUILD-*` diagnostic.
+The command still reuses existing validation diagnostics and `WF-BUILD-001`
+for output containment, writes `package-archive-evidence.json`, and does not
+execute external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload release assets, sign or attest artifacts, or use AI.
+
+Gate 300 adds no new rule family or diagnostic ID. Reports package lane
+closeout and release-verify routing are planning evidence only. The next
+route should continue to use existing `WF-REL-*` release diagnostics for
+`forge release verify` and must not add `reports` package verify-existing
+rules, external tool diagnostics, runtime probe diagnostics, repository
+publish diagnostics, signing/attestation diagnostics, or AI requirements.

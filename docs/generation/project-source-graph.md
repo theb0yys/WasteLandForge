@@ -1,6 +1,6 @@
 # Project Source Graph Output
 
-Status: Gate 289 doctor export release-readiness handoff boundary
+Status: Gate 293 build reports build-plan/report-index Markdown boundary
 Research classification: Documented
 Source: R004, R006, ADR-007, ADR-009, ADR-010, ADR-011
 
@@ -296,3 +296,41 @@ handoff metadata, validate archive payload contents, assemble FOMOD payloads,
 publish releases, call remote repositories, upload assets, sign or attest
 artifacts, call external tools, automate MO2 or GECK, run runtime probes, or
 use AI.
+
+Gate 290 adds Doctor export release-readiness triage/worklist integration, but
+`forge graph` still does not execute Doctor export, execute release prepare,
+execute release publish, evaluate publish readiness, evaluate
+release-readiness handoff metadata, evaluate release-readiness triage
+worklists, validate archive payload contents, assemble FOMOD payloads, publish
+releases, call remote repositories, upload assets, sign or attest artifacts,
+call external tools, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 291 closes the Doctor export release-readiness lane and routes the next
+implementation slice toward local `forge build --target reports`
+build-plan/report-index evidence, but `forge graph` still does not execute
+Doctor export, execute build planning, execute release prepare, execute
+release publish, evaluate publish readiness, evaluate release-readiness
+handoff metadata, evaluate release-readiness triage worklists, validate
+archive payload contents, assemble FOMOD payloads, publish releases, call
+remote repositories, upload assets, sign or attest artifacts, call external
+tools, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 292 updates the reports-target graph metadata to declare
+`dist/build/build-plan.json` and `dist/build/build-report-index.json` as
+expected local build evidence and to record that `dist/build/build-manifest.json`
+provides provenance for those outputs. `forge graph` still does not execute
+build planning, run `forge build`, check artifact existence, read generated
+manifests, validate build-plan/report-index contents, execute release prepare,
+execute release publish, publish releases, call remote repositories, upload
+assets, sign or attest artifacts, call external tools, automate MO2 or GECK,
+run runtime probes, or use AI.
+
+Gate 293 updates the reports-target graph metadata to declare
+`dist/build/build-plan.md` and `dist/build/build-report-index.md` as expected
+local human-readable build evidence and to record that
+`dist/build/build-manifest.json` provides provenance for those outputs.
+`forge graph` still does not execute build planning, run `forge build`, check
+artifact existence, read generated manifests, validate build-plan/report-index
+contents, execute release prepare, execute release publish, publish releases,
+call remote repositories, upload assets, sign or attest artifacts, call
+external tools, automate MO2 or GECK, run runtime probes, or use AI.

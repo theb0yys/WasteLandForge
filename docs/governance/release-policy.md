@@ -220,3 +220,86 @@ status in JSON, plain, Markdown, and bundle archive indexes. It does not
 publish releases, call remote repositories, upload assets, sign or attest
 artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run
 runtime probes, or use AI.
+
+Gate 290 integrates local release-readiness blockers into Doctor export
+triage and worklists. Blocking release-readiness checks are reported as
+Doctor triage blockers and one local work item per blocking check, with
+command hints limited to `forge release publish --dry-run` preflight forms.
+It does not publish releases, call remote repositories, upload assets, sign
+or attest artifacts, execute external tools, mutate plugins, automate MO2 or
+GECK, run runtime probes, or use AI.
+
+Gate 291 closes the current local Doctor export release-readiness lane and
+parks further Doctor release-readiness edge cases unless explicitly reopened.
+The next implementation slice routes back to local `forge build --target
+reports` build-plan/report-index evidence. It does not publish releases, call
+remote repositories, upload assets, sign or attest artifacts, execute external
+tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 292 adds build-plan and build-report-index evidence to
+`forge build --target reports`. This is local build evidence only. It does not
+publish releases, call remote repositories, upload assets, sign or attest
+artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run
+runtime probes, or use AI.
+
+Gate 293 adds build-plan and build-report-index Markdown summaries to
+`forge build --target reports`. This is local human-readable build evidence
+only. It does not publish releases, call remote repositories, upload assets,
+sign or attest artifacts, execute external tools, mutate plugins, automate MO2
+or GECK, run runtime probes, or use AI.
+
+Gate 294 closes the local `forge build --target reports` build-evidence lane
+and routes the next implementation slice to local `forge package --target
+reports` package planning/staging evidence. It does not publish releases, call
+remote repositories, upload assets, sign or attest artifacts, execute external
+tools, mutate plugins, automate MO2 or GECK, run runtime probes, execute
+package behavior, or use AI.
+
+Gate 295 implements local `forge package --target reports` package-plan and
+staging-layout evidence under `dist/reports-package`. This is local package
+planning evidence only. It does not copy package inputs, create archives,
+publish releases, call remote repositories, upload assets, sign or attest
+artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run
+runtime probes, or use AI.
+
+Gate 296 adds local present/missing input discovery to
+`forge package --target reports`. This is package planning evidence only. It
+does not read package input contents, copy package inputs, create archives,
+publish releases, call remote repositories, upload assets, sign or attest
+artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run
+runtime probes, or use AI.
+
+Gate 297 adds local staging-copy behavior to `forge package --target
+reports`. This is still local package evidence only: expected present
+`dist/build` report files are copied into
+`dist/reports-package/staging/reports`, missing expected inputs are skipped,
+and staged payloads are included in local package manifest/checksum evidence.
+It does not create archives, publish releases, call remote repositories,
+upload assets, sign or attest artifacts, execute external tools, mutate
+plugins, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 298 adds deterministic local archive creation to `forge package --target
+reports`. This is still local package evidence only: package runs create
+`dist/reports-package/package.zip` from package plan/layout evidence and
+staged `reports/*` payload entries, then cover the archive in local
+build-manifest/checksum evidence. It does not publish releases, call remote
+repositories, upload assets, sign or attest artifacts, execute external
+tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 299 adds local archive evidence revalidation to `forge package --target
+reports`. This is still local package evidence only: package runs reopen
+`dist/reports-package/package.zip`, write
+`dist/reports-package/package-archive-evidence.json`, and cover that sidecar
+in local build-manifest/checksum evidence. It does not publish releases, call
+remote repositories, upload assets, sign or attest artifacts, execute external
+tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 300 closes the current reports package lane and parks further reports
+package edge cases unless explicitly reopened. The next local value route is
+`forge release verify` self-report evidence under
+`dist/release-dry-run/release-verify.json`, so existing release-publish
+preflight release-verification evidence checks have a first-class local
+producer. It does not add `reports` package verify-existing behavior, publish
+releases, call remote repositories, upload assets, sign or attest artifacts,
+execute external tools, mutate plugins, automate MO2 or GECK, run runtime
+probes, or use AI.

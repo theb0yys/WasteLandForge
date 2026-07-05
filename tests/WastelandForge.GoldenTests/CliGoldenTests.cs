@@ -2568,20 +2568,21 @@ public sealed class CliGoldenTests
         Assert.Equal(0, result.ExitCode);
         Assert.Equal("wastelandforge/doctor-triage/v1", (string?)triage["kind"]);
         Assert.Equal("blocked", (string?)triage["summary"]?["status"]);
-        Assert.Equal(2, (int?)triage["summary"]?["blockingItems"]);
+        Assert.Equal(3, (int?)triage["summary"]?["blockingItems"]);
         Assert.Equal(2, (int?)triage["summary"]?["reviewItems"]);
         Assert.Equal(18, (int?)triage["summary"]?["actions"]);
-        Assert.Equal(6, (int?)triage["summary"]?["commandHints"]);
-        Assert.Equal(6, (int?)triage["summary"]?["workItems"]);
+        Assert.Equal(8, (int?)triage["summary"]?["commandHints"]);
+        Assert.Equal(16, (int?)triage["summary"]?["workItems"]);
         Assert.Equal(2, (int?)triage["summary"]?["worklistPriorityGroups"]);
-        Assert.Equal(5, (int?)triage["summary"]?["worklistSourceGroups"]);
-        Assert.Equal(14, (int?)triage["summary"]?["reviewSections"]);
+        Assert.Equal(6, (int?)triage["summary"]?["worklistSourceGroups"]);
+        Assert.Equal(15, (int?)triage["summary"]?["reviewSections"]);
         Assert.Equal(2, (int?)triage["summary"]?["requiredUnavailable"]);
         Assert.Equal(2, (int?)triage["summary"]?["diagnosticErrors"]);
+        Assert.Equal(10, (int?)triage["summary"]?["releaseReadinessBlockingChecks"]);
         Assert.Equal("blocked", (string?)remediation["status"]);
-        Assert.Equal("Blocked: 4 blocker item(s) and 2 review item(s) need operator action.", (string?)remediation["headline"]);
-        Assert.Equal(6, (int?)remediation["workItems"]);
-        Assert.Equal(4, (int?)remediation["blockerItems"]);
+        Assert.Equal("Blocked: 14 blocker item(s) and 2 review item(s) need operator action.", (string?)remediation["headline"]);
+        Assert.Equal(16, (int?)remediation["workItems"]);
+        Assert.Equal(14, (int?)remediation["blockerItems"]);
         Assert.Equal(2, (int?)remediation["reviewItems"]);
         Assert.Equal("refresh-capability-evidence", (string?)remediation["firstWorkItem"]);
         Assert.Equal("rescan-capabilities", (string?)remediation["firstCommandHint"]);
@@ -2589,19 +2590,24 @@ public sealed class CliGoldenTests
             "forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json",
             (string?)remediation["firstCommand"]);
         Assert.Equal("capabilities", (string?)remediation["section"]);
-        Assert.Equal(2, blocking.Count);
+        Assert.Equal(3, blocking.Count);
         Assert.Equal(2, review.Count);
         Assert.Equal(18, actions.Count);
-        Assert.Equal(6, commands.Count);
-        Assert.Equal(6, worklist.Count);
+        Assert.Equal(8, commands.Count);
+        Assert.Equal(16, worklist.Count);
         Assert.Equal(2, worklistPrioritySummary.Count);
-        Assert.Equal(5, worklistSourceSummary.Count);
+        Assert.Equal(6, worklistSourceSummary.Count);
         Assert.Contains(
             requiredUnavailable?["sections"]?.AsArray() ?? throw new InvalidOperationException("Requirement triage sections missing."),
             section => StringComparer.Ordinal.Equals("index.requirements", (string?)section));
         Assert.Contains(
             diagnosticErrors?["sections"]?.AsArray() ?? throw new InvalidOperationException("Diagnostic triage sections missing."),
             section => StringComparer.Ordinal.Equals("index.diagnostics", (string?)section));
+        Assert.Contains(
+            blocking,
+            item =>
+                StringComparer.Ordinal.Equals("release-readiness-blocking-checks", (string?)item?["id"]) &&
+                (int?)item?["count"] == 10);
         Assert.Equal("index.actions", (string?)actions[0]?["section"]);
         Assert.Equal(
             "forge capabilities explain runtime.scripting.xnvse --project <project-root> --game-root <game-root> --tool-path <tool-path> --format plain",
@@ -2617,10 +2623,13 @@ public sealed class CliGoldenTests
         Assert.Equal("explain-requirement-runtime-scripting-xnvse", (string?)xnvseWorkItem?["commandHint"]);
         Assert.Equal("index.requirements", (string?)xnvseWorkItem?["section"]);
         Assert.Contains("current scan does not have enough evidence", (string?)xnvseWorkItem?["reason"], StringComparison.Ordinal);
-        Assert.Equal(4, (int?)blockerWorklistSummary?["count"]);
+        Assert.Equal(14, (int?)blockerWorklistSummary?["count"]);
         Assert.Contains(
             blockerWorklistSummary?["workItems"]?.AsArray() ?? throw new InvalidOperationException("Blocker worklist summary items missing."),
             item => StringComparer.Ordinal.Equals("resolve-requirement-runtime-scripting-xnvse", (string?)item));
+        Assert.Contains(
+            blockerWorklistSummary?["workItems"]?.AsArray() ?? throw new InvalidOperationException("Blocker worklist summary items missing."),
+            item => StringComparer.Ordinal.Equals("resolve-release-readiness-human-approval", (string?)item));
         Assert.Equal(2, (int?)requirementWorklistSummary?["count"]);
         Assert.Contains(
             requirementWorklistSummary?["workItems"]?.AsArray() ?? throw new InvalidOperationException("Requirement worklist summary items missing."),
@@ -2633,6 +2642,12 @@ public sealed class CliGoldenTests
             item => StringComparer.Ordinal.Equals("review-actions", (string?)item?["id"]));
         Assert.Contains(
             commands,
+            item => StringComparer.Ordinal.Equals("review-release-readiness", (string?)item?["id"]));
+        Assert.Contains(
+            commands,
+            item => StringComparer.Ordinal.Equals("confirm-release-approval-dry-run", (string?)item?["id"]));
+        Assert.Contains(
+            commands,
             item => StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["id"]));
         Assert.Contains(
             reviewSections,
@@ -2640,6 +2655,9 @@ public sealed class CliGoldenTests
         Assert.Contains(
             reviewSections,
             section => StringComparer.Ordinal.Equals("redaction", (string?)section?["section"]));
+        Assert.Contains(
+            reviewSections,
+            section => StringComparer.Ordinal.Equals("releaseReadiness", (string?)section?["section"]));
         Assert.DoesNotContain("requirements/index.md", triage.ToJsonString(), StringComparison.Ordinal);
         Assert.DoesNotContain("requirement-explanations/runtime.scripting.xnvse.md", triage.ToJsonString(), StringComparison.Ordinal);
         Assert.DoesNotContain(projectRoot, result.Stdout, StringComparison.OrdinalIgnoreCase);
@@ -2680,33 +2698,42 @@ public sealed class CliGoldenTests
         Assert.Contains("checks: 0/10 satisfied; 10 blocking", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("schema-validation: missing (ADR-011 layered validation)", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Triage:", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Status: review", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Command hints: 2", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Work items: 1", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Remediation: review; 1 work item(s); 0 blocker(s); 1 review item(s)", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Headline: Review: 1 work item(s) need operator review.", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("First work item: review-catalogue-policy", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("First command: forge capabilities list --format json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Status: blocked", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Command hints: 4", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Work items: 11", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Remediation: blocked; 11 work item(s); 10 blocker(s); 1 review item(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Headline: Blocked: 10 blocker item(s) and 1 review item(s) need operator action.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("First work item: resolve-release-readiness-schema-validation", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("First command: forge release publish <project-root> --dry-run --format json --no-input", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Operator handoff:", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Priorities: review=1", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Sources: index.openQuestionDetails=1", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("[ ] review-catalogue-policy (review): Review catalogue-policy open questions", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Command: forge capabilities list --format json", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Section: index.openQuestionDetails", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Priorities: blocker=10, review=1", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Sources: releaseReadiness=10, index.openQuestionDetails=1", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("[ ] resolve-release-readiness-schema-validation (blocker): Resolve release-readiness check schema-validation", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Command: forge release publish <project-root> --dry-run --format json --no-input", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Section: releaseReadiness", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Worklist summary:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Priority blocker: 10 item(s) - resolve-release-readiness-schema-validation", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Priority review: 1 item(s) - review-catalogue-policy", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Section releaseReadiness: 10 item(s) - resolve-release-readiness-schema-validation", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Section index.openQuestionDetails: 1 item(s) - review-catalogue-policy", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Worklist:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(
+            "resolve-release-readiness-human-approval (blocker): Resolve release-readiness check human-approval",
+            result.Stdout,
+            StringComparison.Ordinal);
         Assert.Contains(
             "review-catalogue-policy (review): Review catalogue-policy open questions",
             result.Stdout,
             StringComparison.Ordinal);
-        Assert.Contains("Command hint: review-catalogue-policy", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Command hint: confirm-release-approval-dry-run", result.Stdout, StringComparison.Ordinal);
         Assert.Contains(
             "rescan-capabilities: forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json",
             result.Stdout,
             StringComparison.Ordinal);
+        Assert.Contains("review-release-readiness: forge release publish <project-root> --dry-run --format json --no-input", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("confirm-release-approval-dry-run: forge release publish <project-root> --dry-run --yes --confirm <project-id> --format json --no-input", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("review-catalogue-policy: forge capabilities list --format json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("release-readiness-blocking-checks (error, 10): Release-readiness checks are blocking local publish readiness.", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("open-questions (note, 2): Catalogue-policy questions remain unresolved.", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Sections: index.openQuestionDetails, index.cataloguePolicy", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Doctor index:", result.Stdout, StringComparison.Ordinal);
@@ -3059,37 +3086,46 @@ public sealed class CliGoldenTests
         Assert.Contains("- Ready for real publish: `false`", markdown, StringComparison.Ordinal);
         Assert.Contains("| `schema-validation` | `missing` | `ADR-011 layered validation` | `true` |", markdown, StringComparison.Ordinal);
         Assert.Contains("## Triage", markdown, StringComparison.Ordinal);
-        Assert.Contains("- Status: `review`", markdown, StringComparison.Ordinal);
-        Assert.Contains("- Command hints: 2", markdown, StringComparison.Ordinal);
-        Assert.Contains("- Work items: 1", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Status: `blocked`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Command hints: 4", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Work items: 11", markdown, StringComparison.Ordinal);
         Assert.Contains("### Remediation", markdown, StringComparison.Ordinal);
-        Assert.Contains("- Headline: Review: 1 work item(s) need operator review.", markdown, StringComparison.Ordinal);
-        Assert.Contains("- First work item: `review-catalogue-policy`", markdown, StringComparison.Ordinal);
-        Assert.Contains("- First command: `forge capabilities list --format json`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Headline: Blocked: 10 blocker item(s) and 1 review item(s) need operator action.", markdown, StringComparison.Ordinal);
+        Assert.Contains("- First work item: `resolve-release-readiness-schema-validation`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- First command: `forge release publish <project-root> --dry-run --format json --no-input`", markdown, StringComparison.Ordinal);
         Assert.Contains("### Operator Handoff", markdown, StringComparison.Ordinal);
-        Assert.Contains("- Priorities: review=1", markdown, StringComparison.Ordinal);
-        Assert.Contains("- Sources: index.openQuestionDetails=1", markdown, StringComparison.Ordinal);
-        Assert.Contains("- [ ] `review-catalogue-policy` (review): Review catalogue-policy open questions", markdown, StringComparison.Ordinal);
-        Assert.Contains("Command: `forge capabilities list --format json`", markdown, StringComparison.Ordinal);
-        Assert.Contains("Section: `index.openQuestionDetails`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: blocker=10, review=1", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Sources: releaseReadiness=10, index.openQuestionDetails=1", markdown, StringComparison.Ordinal);
+        Assert.Contains("- [ ] `resolve-release-readiness-schema-validation` (blocker): Resolve release-readiness check schema-validation", markdown, StringComparison.Ordinal);
+        Assert.Contains("Command: `forge release publish <project-root> --dry-run --format json --no-input`", markdown, StringComparison.Ordinal);
+        Assert.Contains("Section: `releaseReadiness`", markdown, StringComparison.Ordinal);
         Assert.Contains("### Worklist Summary", markdown, StringComparison.Ordinal);
         Assert.Contains("Priorities:", markdown, StringComparison.Ordinal);
+        Assert.Contains("- `blocker`: 10 item(s) - `resolve-release-readiness-schema-validation`", markdown, StringComparison.Ordinal);
         Assert.Contains("- `review`: 1 item(s) - `review-catalogue-policy`", markdown, StringComparison.Ordinal);
         Assert.Contains("Sources:", markdown, StringComparison.Ordinal);
+        Assert.Contains("- `releaseReadiness`: 10 item(s) - `resolve-release-readiness-schema-validation`", markdown, StringComparison.Ordinal);
         Assert.Contains("- `index.openQuestionDetails`: 1 item(s) - `review-catalogue-policy`", markdown, StringComparison.Ordinal);
         Assert.Contains("### Worklist", markdown, StringComparison.Ordinal);
+        Assert.Contains(
+            "`resolve-release-readiness-human-approval` (blocker): Resolve release-readiness check human-approval",
+            markdown,
+            StringComparison.Ordinal);
         Assert.Contains(
             "`review-catalogue-policy` (review): Review catalogue-policy open questions",
             markdown,
             StringComparison.Ordinal);
-        Assert.Contains("Command hint: `review-catalogue-policy`", markdown, StringComparison.Ordinal);
+        Assert.Contains("Command hint: `confirm-release-approval-dry-run`", markdown, StringComparison.Ordinal);
         Assert.Contains("### Command Hints", markdown, StringComparison.Ordinal);
         Assert.Contains(
             "`rescan-capabilities`: `forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json`",
             markdown,
             StringComparison.Ordinal);
+        Assert.Contains("`review-release-readiness`: `forge release publish <project-root> --dry-run --format json --no-input`", markdown, StringComparison.Ordinal);
+        Assert.Contains("`confirm-release-approval-dry-run`: `forge release publish <project-root> --dry-run --yes --confirm <project-id> --format json --no-input`", markdown, StringComparison.Ordinal);
         Assert.Contains("`review-catalogue-policy`: `forge capabilities list --format json`", markdown, StringComparison.Ordinal);
         Assert.Contains("### Review Sections", markdown, StringComparison.Ordinal);
+        Assert.Contains("`releaseReadiness`", markdown, StringComparison.Ordinal);
         Assert.Contains("`index.openQuestionDetails`", markdown, StringComparison.Ordinal);
         Assert.Contains("## Doctor Areas", markdown, StringComparison.Ordinal);
         Assert.Contains("| `project-requirements` | `ready` | 2 | 0 | 0 |", markdown, StringComparison.Ordinal);
@@ -3291,10 +3327,14 @@ public sealed class CliGoldenTests
         Assert.Contains("`handoff-summary.md`", bundleIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("`checksums.sha256`", bundleIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("# WastelandForge Doctor Handoff Summary", handoffSummary, StringComparison.Ordinal);
-        Assert.Contains("Status: `review`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("Status: `blocked`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("## Immediate Worklist", handoffSummary, StringComparison.Ordinal);
-        Assert.Contains("Command: `forge capabilities list --format json`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: blocker=10, review=1", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("Command: `forge release publish <project-root> --dry-run --format json --no-input`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("- [ ] Review 6 additional work item(s) in `triage/index.md`.", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("## Command Hints", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`review-release-readiness`: `forge release publish <project-root> --dry-run --format json --no-input`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`confirm-release-approval-dry-run`: `forge release publish <project-root> --dry-run --yes --confirm <project-id> --format json --no-input`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`review-catalogue-policy`: `forge capabilities list --format json`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("## Key Archive Paths", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`release-readiness/index.md`", handoffSummary, StringComparison.Ordinal);
@@ -3311,19 +3351,25 @@ public sealed class CliGoldenTests
         Assert.Contains("- Status: `blocked-by-preconditions`", releaseReadinessIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("| `schema-validation` | `missing` | `ADR-011 layered validation` | `true` |", releaseReadinessIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-triage-index/v1", (string?)triageIndexJson["kind"]);
-        Assert.Equal("review", (string?)triageIndexJson["summary"]?["status"]);
-        Assert.Equal(0, (int?)triageIndexJson["summary"]?["blockingItems"]);
+        Assert.Equal("blocked", (string?)triageIndexJson["summary"]?["status"]);
+        Assert.Equal(1, (int?)triageIndexJson["summary"]?["blockingItems"]);
         Assert.Equal(1, (int?)triageIndexJson["summary"]?["reviewItems"]);
         Assert.Equal(0, (int?)triageIndexJson["summary"]?["actions"]);
-        Assert.Equal(2, (int?)triageIndexJson["summary"]?["commandHints"]);
-        Assert.Equal(1, (int?)triageIndexJson["summary"]?["workItems"]);
-        Assert.Equal(1, (int?)triageIndexJson["summary"]?["worklistPriorityGroups"]);
-        Assert.Equal(1, (int?)triageIndexJson["summary"]?["worklistSourceGroups"]);
-        Assert.Equal("review", (string?)triageIndexJson["remediation"]?["status"]);
-        Assert.Equal("review-catalogue-policy", (string?)triageIndexJson["remediation"]?["firstWorkItem"]);
-        Assert.Equal("review-catalogue-policy", (string?)triageIndexJson["remediation"]?["firstCommandHint"]);
-        Assert.Equal("forge capabilities list --format json", (string?)triageIndexJson["remediation"]?["firstCommand"]);
-        Assert.Equal("open-questions/index.md", (string?)triageIndexJson["remediation"]?["path"]);
+        Assert.Equal(4, (int?)triageIndexJson["summary"]?["commandHints"]);
+        Assert.Equal(11, (int?)triageIndexJson["summary"]?["workItems"]);
+        Assert.Equal(2, (int?)triageIndexJson["summary"]?["worklistPriorityGroups"]);
+        Assert.Equal(2, (int?)triageIndexJson["summary"]?["worklistSourceGroups"]);
+        Assert.Equal(10, (int?)triageIndexJson["summary"]?["releaseReadinessBlockingChecks"]);
+        Assert.Equal("blocked", (string?)triageIndexJson["remediation"]?["status"]);
+        Assert.Equal("resolve-release-readiness-schema-validation", (string?)triageIndexJson["remediation"]?["firstWorkItem"]);
+        Assert.Equal("review-release-readiness", (string?)triageIndexJson["remediation"]?["firstCommandHint"]);
+        Assert.Equal("forge release publish <project-root> --dry-run --format json --no-input", (string?)triageIndexJson["remediation"]?["firstCommand"]);
+        Assert.Equal("release-readiness/index.md", (string?)triageIndexJson["remediation"]?["path"]);
+        Assert.Contains(
+            triageIndexJson["blocking"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage blocking array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("release-readiness-blocking-checks", (string?)item?["id"]) &&
+                (int?)item?["count"] == 10);
         Assert.Contains(
             triageIndexJson["review"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage review array missing."),
             item => StringComparer.Ordinal.Equals("open-questions", (string?)item?["id"]));
@@ -3333,37 +3379,53 @@ public sealed class CliGoldenTests
                 StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["id"]) &&
                 StringComparer.Ordinal.Equals("open-questions/index.md", (string?)item?["path"]));
         Assert.Contains(
+            triageIndexJson["commands"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage commands array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("review-release-readiness", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("release-readiness/index.md", (string?)item?["path"]));
+        Assert.Contains(
             triageIndexJson["worklist"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage worklist array missing."),
             item =>
                 StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["id"]) &&
                 StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["commandHint"]) &&
                 StringComparer.Ordinal.Equals("open-questions/index.md", (string?)item?["path"]));
         Assert.Contains(
+            triageIndexJson["worklist"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage worklist array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("resolve-release-readiness-human-approval", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("confirm-release-approval-dry-run", (string?)item?["commandHint"]) &&
+                StringComparer.Ordinal.Equals("release-readiness/index.md", (string?)item?["path"]));
+        Assert.Contains(
             triageIndexJson["worklistSummary"]?["priorities"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage priority summary array missing."),
             item =>
-                StringComparer.Ordinal.Equals("review", (string?)item?["priority"]) &&
-                (int?)item?["count"] == 1);
+                StringComparer.Ordinal.Equals("blocker", (string?)item?["priority"]) &&
+                (int?)item?["count"] == 10);
         Assert.Contains(
             triageIndexJson["worklistSummary"]?["sources"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage source summary array missing."),
             item =>
-                StringComparer.Ordinal.Equals("open-questions/index.md", (string?)item?["path"]) &&
-                (int?)item?["count"] == 1);
+                StringComparer.Ordinal.Equals("release-readiness/index.md", (string?)item?["path"]) &&
+                (int?)item?["count"] == 10);
         Assert.Contains("# WastelandForge Doctor Triage", triageIndexMarkdown, StringComparison.Ordinal);
-        Assert.Contains("Status: `review`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Status: `blocked`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("## Command Hints", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`review-release-readiness`: `forge release publish <project-root> --dry-run --format json --no-input`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`confirm-release-approval-dry-run`: `forge release publish <project-root> --dry-run --yes --confirm <project-id> --format json --no-input`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("`review-catalogue-policy`: `forge capabilities list --format json`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("## Remediation", triageIndexMarkdown, StringComparison.Ordinal);
-        Assert.Contains("- First command: `forge capabilities list --format json`", triageIndexMarkdown, StringComparison.Ordinal);
-        Assert.Contains("- Path: `open-questions/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- First command: `forge release publish <project-root> --dry-run --format json --no-input`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Path: `release-readiness/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("## Operator Handoff", triageIndexMarkdown, StringComparison.Ordinal);
-        Assert.Contains("- Priorities: review=1", triageIndexMarkdown, StringComparison.Ordinal);
-        Assert.Contains("- Sources: open-questions/index.md=1", triageIndexMarkdown, StringComparison.Ordinal);
-        Assert.Contains("- [ ] `review-catalogue-policy` (review): Review catalogue-policy open questions", triageIndexMarkdown, StringComparison.Ordinal);
-        Assert.Contains("Path: `open-questions/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: blocker=10, review=1", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Sources: release-readiness/index.md=10, open-questions/index.md=1", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- [ ] `resolve-release-readiness-schema-validation` (blocker): Resolve release-readiness check schema-validation", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Path: `release-readiness/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("## Worklist Summary", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- `blocker`: 10 item(s) - `resolve-release-readiness-schema-validation`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("- `review`: 1 item(s) - `review-catalogue-policy`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- `release-readiness/index.md`: 10 item(s) - `resolve-release-readiness-schema-validation`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("- `open-questions/index.md`: 1 item(s) - `review-catalogue-policy`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("## Worklist", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`resolve-release-readiness-human-approval` (blocker): Resolve release-readiness check human-approval", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("`review-catalogue-policy` (review): Review catalogue-policy open questions", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("`open-questions/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-capability-index/v1", (string?)capabilityIndexJson["kind"]);
@@ -3674,11 +3736,13 @@ public sealed class CliGoldenTests
         Assert.Contains("# WastelandForge Doctor Handoff Summary", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("Status: `blocked`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("## Immediate Worklist", handoffSummary, StringComparison.Ordinal);
-        Assert.Contains("- Priorities: blocker=4, review=2", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: blocker=14, review=2", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("Command: `forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json`", handoffSummary, StringComparison.Ordinal);
-        Assert.Contains("- [ ] Review 1 additional work item(s) in `triage/index.md`.", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("- [ ] Review 11 additional work item(s) in `triage/index.md`.", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("## Command Hints", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`explain-requirement-runtime-scripting-xnvse`: `forge capabilities explain runtime.scripting.xnvse --project <project-root> --game-root <game-root> --tool-path <tool-path> --format plain`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`review-release-readiness`: `forge release publish <project-root> --dry-run --format json --no-input`", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`confirm-release-approval-dry-run`: `forge release publish <project-root> --dry-run --yes --confirm <project-id> --format json --no-input`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("## Key Archive Paths", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`release-readiness/index.md`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`requirement-explanations/index.md`", handoffSummary, StringComparison.Ordinal);
@@ -3692,16 +3756,17 @@ public sealed class CliGoldenTests
         Assert.Contains("- Status: `blocked-by-preconditions`", releaseReadinessIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-triage-index/v1", (string?)triageIndexJson["kind"]);
         Assert.Equal("blocked", (string?)triageIndexJson["summary"]?["status"]);
-        Assert.Equal(2, (int?)triageIndexJson["summary"]?["blockingItems"]);
+        Assert.Equal(3, (int?)triageIndexJson["summary"]?["blockingItems"]);
         Assert.True((int?)triageIndexJson["summary"]?["actions"] > 0);
-        Assert.Equal(6, (int?)triageIndexJson["summary"]?["commandHints"]);
-        Assert.Equal(6, (int?)triageIndexJson["summary"]?["workItems"]);
+        Assert.Equal(8, (int?)triageIndexJson["summary"]?["commandHints"]);
+        Assert.Equal(16, (int?)triageIndexJson["summary"]?["workItems"]);
         Assert.Equal(2, (int?)triageIndexJson["summary"]?["worklistPriorityGroups"]);
-        Assert.Equal(6, (int?)triageIndexJson["summary"]?["worklistSourceGroups"]);
+        Assert.Equal(7, (int?)triageIndexJson["summary"]?["worklistSourceGroups"]);
+        Assert.Equal(10, (int?)triageIndexJson["summary"]?["releaseReadinessBlockingChecks"]);
         Assert.Equal("blocked", (string?)triageIndexJson["remediation"]?["status"]);
-        Assert.Equal("Blocked: 4 blocker item(s) and 2 review item(s) need operator action.", (string?)triageIndexJson["remediation"]?["headline"]);
-        Assert.Equal(6, (int?)triageIndexJson["remediation"]?["workItems"]);
-        Assert.Equal(4, (int?)triageIndexJson["remediation"]?["blockerItems"]);
+        Assert.Equal("Blocked: 14 blocker item(s) and 2 review item(s) need operator action.", (string?)triageIndexJson["remediation"]?["headline"]);
+        Assert.Equal(16, (int?)triageIndexJson["remediation"]?["workItems"]);
+        Assert.Equal(14, (int?)triageIndexJson["remediation"]?["blockerItems"]);
         Assert.Equal(2, (int?)triageIndexJson["remediation"]?["reviewItems"]);
         Assert.Equal("refresh-capability-evidence", (string?)triageIndexJson["remediation"]?["firstWorkItem"]);
         Assert.Equal("rescan-capabilities", (string?)triageIndexJson["remediation"]?["firstCommandHint"]);
@@ -3713,10 +3778,20 @@ public sealed class CliGoldenTests
             triageIndexJson["blocking"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage blocking array missing."),
             item => StringComparer.Ordinal.Equals("required-requirements-unavailable", (string?)item?["id"]));
         Assert.Contains(
+            triageIndexJson["blocking"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage blocking array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("release-readiness-blocking-checks", (string?)item?["id"]) &&
+                (int?)item?["count"] == 10);
+        Assert.Contains(
             triageIndexJson["commands"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage commands array missing."),
             item =>
                 StringComparer.Ordinal.Equals("explain-requirement-runtime-scripting-xnvse", (string?)item?["id"]) &&
                 StringComparer.Ordinal.Equals("requirement-explanations/runtime.scripting.xnvse.md", (string?)item?["path"]));
+        Assert.Contains(
+            triageIndexJson["commands"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage commands array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("review-release-readiness", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("release-readiness/index.md", (string?)item?["path"]));
         Assert.Contains(
             triageIndexJson["worklist"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage worklist array missing."),
             item =>
@@ -3724,15 +3799,26 @@ public sealed class CliGoldenTests
                 StringComparer.Ordinal.Equals("explain-requirement-runtime-scripting-xnvse", (string?)item?["commandHint"]) &&
                 StringComparer.Ordinal.Equals("requirement-explanations/runtime.scripting.xnvse.md", (string?)item?["path"]));
         Assert.Contains(
+            triageIndexJson["worklist"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage worklist array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("resolve-release-readiness-human-approval", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("confirm-release-approval-dry-run", (string?)item?["commandHint"]) &&
+                StringComparer.Ordinal.Equals("release-readiness/index.md", (string?)item?["path"]));
+        Assert.Contains(
             triageIndexJson["worklistSummary"]?["priorities"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage priority summary array missing."),
             item =>
                 StringComparer.Ordinal.Equals("blocker", (string?)item?["priority"]) &&
-                (int?)item?["count"] == 4);
+                (int?)item?["count"] == 14);
         Assert.Contains(
             triageIndexJson["worklistSummary"]?["sources"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage source summary array missing."),
             item =>
                 StringComparer.Ordinal.Equals("requirement-explanations/runtime.scripting.xnvse.md", (string?)item?["path"]) &&
                 (int?)item?["count"] == 1);
+        Assert.Contains(
+            triageIndexJson["worklistSummary"]?["sources"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage source summary array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("release-readiness/index.md", (string?)item?["path"]) &&
+                (int?)item?["count"] == 10);
         Assert.Contains(
             triageIndexJson["reviewPaths"]?.AsArray() ?? throw new InvalidOperationException("Doctor triage review paths array missing."),
             item => StringComparer.Ordinal.Equals("requirement-explanations/index.md", (string?)item?["path"]));
@@ -3744,20 +3830,25 @@ public sealed class CliGoldenTests
         Assert.Contains("- First work item: `refresh-capability-evidence`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("- Path: `scan-inputs/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("## Operator Handoff", triageIndexMarkdown, StringComparison.Ordinal);
-        Assert.Contains("- Priorities: blocker=4, review=2", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Priorities: blocker=14, review=2", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("scan-inputs/index.md=1", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("release-readiness/index.md=10", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("- [ ] `refresh-capability-evidence` (blocker): Refresh capability evidence", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("Command: `forge capabilities scan --project <project-root> --game-root <game-root> --tool-path <tool-path> --format json`", triageIndexMarkdown, StringComparison.Ordinal);
-        Assert.Contains("- [ ] Review 1 additional work item(s) in the full worklist.", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- [ ] Review 11 additional work item(s) in the full worklist.", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("## Worklist Summary", triageIndexMarkdown, StringComparison.Ordinal);
-        Assert.Contains("- `blocker`: 4 item(s) - `refresh-capability-evidence`, `resolve-requirement-runtime-scripting-xnvse`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- `blocker`: 14 item(s) - `refresh-capability-evidence`, `resolve-requirement-runtime-scripting-xnvse`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("- `requirement-explanations/runtime.scripting.xnvse.md`: 1 item(s) - `resolve-requirement-runtime-scripting-xnvse`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- `release-readiness/index.md`: 10 item(s) - `resolve-release-readiness-schema-validation`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("`resolve-requirement-runtime-scripting-xnvse` (blocker): Resolve required project requirement runtime.scripting.xnvse", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`resolve-release-readiness-schema-validation` (blocker): Resolve release-readiness check schema-validation", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains(
             "`explain-requirement-runtime-scripting-xnvse`: `forge capabilities explain runtime.scripting.xnvse --project <project-root> --game-root <game-root> --tool-path <tool-path> --format plain`",
             triageIndexMarkdown,
             StringComparison.Ordinal);
+        Assert.Contains("`review-release-readiness`: `forge release publish <project-root> --dry-run --format json --no-input`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("`requirement-explanations/runtime.scripting.xnvse.md`", triageIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("`release-readiness/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("`requirement-explanations/index.md`", triageIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-capability-index/v1", (string?)capabilityIndexJson["kind"]);
         Assert.Equal(19, (int?)capabilityIndexJson["summary"]?["capabilities"]);
@@ -4028,11 +4119,120 @@ public sealed class CliGoldenTests
         Assert.Equal("build", (string?)json["command"]);
         Assert.Equal("passed", (string?)json["status"]);
         Assert.Equal("dist/build", (string?)json["outputs"]?["root"]);
+        Assert.Equal("dist/build/build-plan.json", (string?)json["outputs"]?["buildPlan"]);
+        Assert.Equal("dist/build/build-plan.md", (string?)json["outputs"]?["buildPlanMarkdown"]);
+        Assert.Equal("dist/build/build-report-index.json", (string?)json["outputs"]?["reportIndex"]);
+        Assert.Equal("dist/build/build-report-index.md", (string?)json["outputs"]?["reportIndexMarkdown"]);
         Assert.Equal("dist/build/build-manifest.json", (string?)json["outputs"]?["manifest"]);
         Assert.Equal("dist/build/checksums.sha256", (string?)json["outputs"]?["checksums"]);
         Assert.Equal(string.Empty, result.Stderr);
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "build", "build-plan.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "build", "build-plan.md")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "build", "build-report-index.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "build", "build-report-index.md")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "build", "build-manifest.json")));
         Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "build", "checksums.sha256")));
+
+        var buildPlan = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "build", "build-plan.json")))
+            ?? throw new InvalidOperationException("Build plan JSON did not parse.");
+        Assert.Equal("wastelandforge.build-plan", (string?)buildPlan["kind"]);
+        Assert.Equal("planned-local", (string?)buildPlan["summary"]?["status"]);
+        Assert.Equal(10, (int?)buildPlan["summary"]?["plannedOutputs"]);
+        Assert.Equal("wf.metadata_reports", (string?)buildPlan["generatorTargets"]?[0]?["generator"]);
+        Assert.Equal(false, (bool?)buildPlan["execution"]?["externalToolExecution"]);
+        Assert.Contains(
+            "# WastelandForge Build Plan",
+            File.ReadAllText(Path.Combine(projectRoot, "dist", "build", "build-plan.md")),
+            StringComparison.Ordinal);
+
+        var reportIndex = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "build", "build-report-index.json")))
+            ?? throw new InvalidOperationException("Build report index JSON did not parse.");
+        Assert.Equal("wastelandforge.build-report-index", (string?)reportIndex["kind"]);
+        Assert.Equal(9, (int?)reportIndex["summary"]?["reports"]);
+        Assert.Equal(1, (int?)reportIndex["summary"]?["planReports"]);
+        Assert.Equal(2, (int?)reportIndex["summary"]?["markdownReports"]);
+        Assert.Contains(
+            reportIndex["reports"]?.AsArray() ?? throw new InvalidOperationException("Build report index reports missing."),
+            report => StringComparer.Ordinal.Equals("dist/build/build-report.json", (string?)report?["path"]));
+        Assert.Contains(
+            "# WastelandForge Build Report Index",
+            File.ReadAllText(Path.Combine(projectRoot, "dist", "build", "build-report-index.md")),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PackageReportsWritesPackagePlanAndStagingSkeleton()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli("package", projectRoot, "--target", "reports", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Package JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("package", (string?)json["command"]);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("reports", (string?)json["target"]);
+        Assert.Equal("dist/reports-package", (string?)json["outputs"]?["root"]);
+        Assert.Equal("dist/reports-package/staging", (string?)json["outputs"]?["stagingRoot"]);
+        Assert.Equal("dist/reports-package/package-plan.json", (string?)json["outputs"]?["packagePlan"]);
+        Assert.Equal("dist/reports-package/staging/package-layout.json", (string?)json["outputs"]?["stagingLayout"]);
+        Assert.Equal("dist/reports-package/package.zip", (string?)json["outputs"]?["packageArchive"]);
+        Assert.Equal("dist/reports-package/package-archive-evidence.json", (string?)json["outputs"]?["packageArchiveEvidence"]);
+        Assert.Equal("dist/reports-package/build-manifest.json", (string?)json["outputs"]?["manifest"]);
+        Assert.Equal("dist/reports-package/checksums.sha256", (string?)json["outputs"]?["checksums"]);
+        Assert.Equal(10, (int?)json["summary"]?["entries"]);
+        Assert.Equal(0, (int?)json["summary"]?["presentInputs"]);
+        Assert.Equal(10, (int?)json["summary"]?["missingInputs"]);
+        Assert.Equal(0, (int?)json["summary"]?["stagedInputs"]);
+        Assert.Equal(10, (int?)json["summary"]?["unstagedInputs"]);
+        Assert.Equal(6, (int?)json["summary"]?["outputs"]);
+        Assert.Equal(10, json["entries"]?.AsArray().Count);
+        Assert.Contains(
+            json["entries"]?.AsArray() ?? throw new InvalidOperationException("Package entries missing."),
+            entry =>
+                StringComparer.Ordinal.Equals("dist/build/validation.json", (string?)entry?["sourcePath"]) &&
+                (bool?)entry?["sourceExists"] == false &&
+                StringComparer.Ordinal.Equals("missing", (string?)entry?["inputStatus"]) &&
+                (bool?)entry?["staged"] == false &&
+                StringComparer.Ordinal.Equals("not-staged-missing-input", (string?)entry?["stageStatus"]));
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "reports-package", "package-plan.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "reports-package", "staging", "package-layout.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "reports-package", "package.zip")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "reports-package", "package-archive-evidence.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "reports-package", "build-manifest.json")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "reports-package", "checksums.sha256")));
+        Assert.False(File.Exists(Path.Combine(projectRoot, "dist", "build", "validation.json")));
+
+        var packagePlan = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "reports-package", "package-plan.json")))
+            ?? throw new InvalidOperationException("Package plan did not parse.");
+        Assert.Equal("wastelandforge.package-plan", (string?)packagePlan["kind"]);
+        Assert.Equal("wastelandforge/reports-evidence-package/v1", (string?)packagePlan["packageType"]);
+        Assert.Equal("planned-local", (string?)packagePlan["summary"]?["status"]);
+        Assert.Equal("inputs-missing", (string?)packagePlan["summary"]?["inputStatus"]);
+        Assert.Equal(0, (int?)packagePlan["summary"]?["presentInputs"]);
+        Assert.Equal(10, (int?)packagePlan["summary"]?["missingInputs"]);
+        Assert.Equal(0, (int?)packagePlan["summary"]?["stagedInputs"]);
+        Assert.Equal("created", (string?)packagePlan["summary"]?["archive"]);
+        Assert.Equal(true, (bool?)packagePlan["package"]?["copiesInputs"]);
+        Assert.Equal(true, (bool?)packagePlan["package"]?["inputExistenceChecks"]);
+        Assert.Equal("created", (string?)packagePlan["package"]?["archive"]);
+        Assert.Equal("dist/reports-package/package.zip", (string?)packagePlan["package"]?["archivePath"]);
+        Assert.Equal("dist/reports-package/package-archive-evidence.json", (string?)packagePlan["package"]?["archiveEvidence"]);
+        Assert.Equal(true, (bool?)packagePlan["package"]?["archiveRevalidation"]);
+        Assert.Equal("inputs-missing", (string?)packagePlan["inputDiscovery"]?["status"]);
+        Assert.Equal("no-inputs-copied", (string?)packagePlan["staging"]?["status"]);
+        Assert.Equal("created", (string?)packagePlan["archive"]?["status"]);
+
+        var archiveEvidence = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "reports-package", "package-archive-evidence.json")))
+            ?? throw new InvalidOperationException("Package archive evidence did not parse.");
+        Assert.Equal("wastelandforge.package-archive-evidence", (string?)archiveEvidence["kind"]);
+        Assert.Equal("passed", (string?)archiveEvidence["status"]);
+        Assert.Equal(true, (bool?)archiveEvidence["checks"]?["archiveDigestRecomputed"]);
+        Assert.Equal(true, (bool?)archiveEvidence["checks"]?["entryNamesMatch"]);
+        Assert.Equal(true, (bool?)archiveEvidence["checks"]?["entryOrderingMatch"]);
+        Assert.Equal(true, (bool?)archiveEvidence["checks"]?["deterministicTimestampsMatch"]);
+        Assert.Equal(true, (bool?)archiveEvidence["checks"]?["storedCompressionMatch"]);
     }
 
     [Fact]
@@ -4513,8 +4713,8 @@ public sealed class CliGoldenTests
         Assert.Equal("generated/graph/project-source-graph.md", (string?)json["outputs"]?["graphMarkdown"]);
         Assert.Equal("generated/graph/graph-manifest.json", (string?)json["outputs"]?["manifest"]);
         Assert.Equal("generated/graph/checksums.sha256", (string?)json["outputs"]?["checksums"]);
-        Assert.Equal(71, (int?)json["summary"]?["nodes"]);
-        Assert.Equal(188, (int?)json["summary"]?["edges"]);
+        Assert.Equal(75, (int?)json["summary"]?["nodes"]);
+        Assert.Equal(200, (int?)json["summary"]?["edges"]);
         Assert.Equal(8, (int?)json["summary"]?["sourceDocuments"]);
         Assert.Equal(1, (int?)json["summary"]?["manifestDocuments"]);
         Assert.Equal(7, (int?)json["summary"]?["registryDocuments"]);
@@ -4529,10 +4729,10 @@ public sealed class CliGoldenTests
         Assert.Equal(5, (int?)json["summary"]?["generatorTargets"]);
         Assert.Equal(20, (int?)json["summary"]?["generatorTargetInputEdges"]);
         Assert.Equal(8, (int?)json["summary"]?["generatorTargetOutputEdges"]);
-        Assert.Equal(37, (int?)json["summary"]?["generatedArtifactExpectations"]);
-        Assert.Equal(74, (int?)json["summary"]?["generatedArtifactExpectationEdges"]);
+        Assert.Equal(41, (int?)json["summary"]?["generatedArtifactExpectations"]);
+        Assert.Equal(82, (int?)json["summary"]?["generatedArtifactExpectationEdges"]);
         Assert.Equal(10, (int?)json["summary"]?["manifestProvenanceReferences"]);
-        Assert.Equal(50, (int?)json["summary"]?["manifestProvenanceReferenceEdges"]);
+        Assert.Equal(54, (int?)json["summary"]?["manifestProvenanceReferenceEdges"]);
         Assert.Equal(8, (int?)json["summary"]?["sources"]);
         Assert.True((int?)json["summary"]?["outputs"] > 0);
         Assert.True(json["nodes"]?.AsArray().Any(node =>
@@ -4564,6 +4764,26 @@ public sealed class CliGoldenTests
         Assert.True(json["nodes"]?.AsArray().Any(node =>
             StringComparer.Ordinal.Equals("artifact-expectation:mcm-json:dist-package-archive", (string?)node?["id"]) &&
             StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
+        Assert.True(json["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("artifact-expectation:reports:dist-build-plan", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("dist/build/build-plan.json", (string?)node?["path"]) &&
+            StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
+        Assert.True(json["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("artifact-expectation:reports:dist-build-plan-markdown", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("dist/build/build-plan.md", (string?)node?["path"]) &&
+            StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
+        Assert.True(json["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("artifact-expectation:reports:dist-build-report-index", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("dist/build/build-report-index.json", (string?)node?["path"]) &&
+            StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
+        Assert.True(json["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("artifact-expectation:reports:dist-build-report-index-markdown", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("dist/build/build-report-index.md", (string?)node?["path"]) &&
             StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
         Assert.True(json["nodes"]?.AsArray().Any(node =>
             StringComparer.Ordinal.Equals("manifest-reference:mcm-json:generated-generation-manifest", (string?)node?["id"]) &&
@@ -4617,6 +4837,14 @@ public sealed class CliGoldenTests
             StringComparer.Ordinal.Equals("records-provenance-for-artifact-expectation", (string?)edge?["kind"])) ?? false);
         Assert.True(json["edges"]?.AsArray().Any(edge =>
             StringComparer.Ordinal.Equals("manifest-reference:reports:dist-build-manifest", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("artifact-expectation:reports:dist-build-plan", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("records-provenance-for-artifact-expectation", (string?)edge?["kind"])) ?? false);
+        Assert.True(json["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("manifest-reference:reports:dist-build-manifest", (string?)edge?["from"]) &&
+            StringComparer.Ordinal.Equals("artifact-expectation:reports:dist-build-plan-markdown", (string?)edge?["to"]) &&
+            StringComparer.Ordinal.Equals("records-provenance-for-artifact-expectation", (string?)edge?["kind"])) ?? false);
+        Assert.True(json["edges"]?.AsArray().Any(edge =>
+            StringComparer.Ordinal.Equals("manifest-reference:reports:dist-build-manifest", (string?)edge?["from"]) &&
             StringComparer.Ordinal.Equals("boundary:dist", (string?)edge?["to"]) &&
             StringComparer.Ordinal.Equals("references-distribution-provenance-boundary", (string?)edge?["kind"])) ?? false);
         Assert.Contains(
@@ -4642,8 +4870,8 @@ public sealed class CliGoldenTests
         Assert.Equal("generated/graph", (string?)graph["outputRoot"]);
         Assert.Equal("wastelandforge.fnv.builtin", (string?)graph["catalogue"]?["id"]);
         Assert.Equal("built-in", (string?)graph["catalogue"]?["source"]);
-        Assert.Equal(71, (int?)graph["summary"]?["nodes"]);
-        Assert.Equal(188, (int?)graph["summary"]?["edges"]);
+        Assert.Equal(75, (int?)graph["summary"]?["nodes"]);
+        Assert.Equal(200, (int?)graph["summary"]?["edges"]);
         Assert.Equal(8, (int?)graph["summary"]?["sourceDocuments"]);
         Assert.Equal(2, (int?)graph["summary"]?["capabilityRequirements"]);
         Assert.Equal(2, (int?)graph["summary"]?["referencedCapabilities"]);
@@ -4651,10 +4879,10 @@ public sealed class CliGoldenTests
         Assert.Equal(5, (int?)graph["summary"]?["generatorTargets"]);
         Assert.Equal(20, (int?)graph["summary"]?["generatorTargetInputEdges"]);
         Assert.Equal(8, (int?)graph["summary"]?["generatorTargetOutputEdges"]);
-        Assert.Equal(37, (int?)graph["summary"]?["generatedArtifactExpectations"]);
-        Assert.Equal(74, (int?)graph["summary"]?["generatedArtifactExpectationEdges"]);
+        Assert.Equal(41, (int?)graph["summary"]?["generatedArtifactExpectations"]);
+        Assert.Equal(82, (int?)graph["summary"]?["generatedArtifactExpectationEdges"]);
         Assert.Equal(10, (int?)graph["summary"]?["manifestProvenanceReferences"]);
-        Assert.Equal(50, (int?)graph["summary"]?["manifestProvenanceReferenceEdges"]);
+        Assert.Equal(54, (int?)graph["summary"]?["manifestProvenanceReferenceEdges"]);
         Assert.True(graph["nodes"]?.AsArray().Any(node =>
             StringComparer.Ordinal.Equals("source:src/registries/dependencies/main.json", (string?)node?["id"]) &&
             StringComparer.Ordinal.Equals("source-registry", (string?)node?["kind"])) ?? false);
@@ -4671,6 +4899,16 @@ public sealed class CliGoldenTests
             StringComparer.Ordinal.Equals("artifact-expectation:reports:dist-build-manifest", (string?)node?["id"]) &&
             StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
             StringComparer.Ordinal.Equals("dist/build/build-manifest.json", (string?)node?["path"]) &&
+            StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
+        Assert.True(graph["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("artifact-expectation:reports:dist-build-report-index", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("dist/build/build-report-index.json", (string?)node?["path"]) &&
+            StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
+        Assert.True(graph["nodes"]?.AsArray().Any(node =>
+            StringComparer.Ordinal.Equals("artifact-expectation:reports:dist-build-report-index-markdown", (string?)node?["id"]) &&
+            StringComparer.Ordinal.Equals("generated-artifact-expectation", (string?)node?["kind"]) &&
+            StringComparer.Ordinal.Equals("dist/build/build-report-index.md", (string?)node?["path"]) &&
             StringComparer.Ordinal.Equals("dist", (string?)node?["boundary"])) ?? false);
         Assert.True(graph["nodes"]?.AsArray().Any(node =>
             StringComparer.Ordinal.Equals("manifest-reference:xedit-audit:generated-script-manifest", (string?)node?["id"]) &&
@@ -4747,10 +4985,10 @@ public sealed class CliGoldenTests
         Assert.Equal(5, (int?)manifest["summary"]?["generatorTargets"]);
         Assert.Equal(20, (int?)manifest["summary"]?["generatorTargetInputEdges"]);
         Assert.Equal(8, (int?)manifest["summary"]?["generatorTargetOutputEdges"]);
-        Assert.Equal(37, (int?)manifest["summary"]?["generatedArtifactExpectations"]);
-        Assert.Equal(74, (int?)manifest["summary"]?["generatedArtifactExpectationEdges"]);
+        Assert.Equal(41, (int?)manifest["summary"]?["generatedArtifactExpectations"]);
+        Assert.Equal(82, (int?)manifest["summary"]?["generatedArtifactExpectationEdges"]);
         Assert.Equal(10, (int?)manifest["summary"]?["manifestProvenanceReferences"]);
-        Assert.Equal(50, (int?)manifest["summary"]?["manifestProvenanceReferenceEdges"]);
+        Assert.Equal(54, (int?)manifest["summary"]?["manifestProvenanceReferenceEdges"]);
         Assert.Contains(
             manifest["sources"]?.AsArray() ?? [],
             source => StringComparer.Ordinal.Equals("src/registries/dependencies/main.json", (string?)source?["path"]));
@@ -4787,8 +5025,8 @@ public sealed class CliGoldenTests
         Assert.Equal("planned", (string?)json["status"]);
         Assert.Equal(true, (bool?)json["dryRun"]);
         Assert.Equal("generated/graph", (string?)json["outputs"]?["root"]);
-        Assert.Equal(71, (int?)json["summary"]?["nodes"]);
-        Assert.Equal(188, (int?)json["summary"]?["edges"]);
+        Assert.Equal(75, (int?)json["summary"]?["nodes"]);
+        Assert.Equal(200, (int?)json["summary"]?["edges"]);
         Assert.Equal(8, (int?)json["summary"]?["sourceDocuments"]);
         Assert.Equal(2, (int?)json["summary"]?["capabilityRequirements"]);
         Assert.Equal(2, (int?)json["summary"]?["referencedCapabilities"]);
@@ -4796,10 +5034,10 @@ public sealed class CliGoldenTests
         Assert.Equal(5, (int?)json["summary"]?["generatorTargets"]);
         Assert.Equal(20, (int?)json["summary"]?["generatorTargetInputEdges"]);
         Assert.Equal(8, (int?)json["summary"]?["generatorTargetOutputEdges"]);
-        Assert.Equal(37, (int?)json["summary"]?["generatedArtifactExpectations"]);
-        Assert.Equal(74, (int?)json["summary"]?["generatedArtifactExpectationEdges"]);
+        Assert.Equal(41, (int?)json["summary"]?["generatedArtifactExpectations"]);
+        Assert.Equal(82, (int?)json["summary"]?["generatedArtifactExpectationEdges"]);
         Assert.Equal(10, (int?)json["summary"]?["manifestProvenanceReferences"]);
-        Assert.Equal(50, (int?)json["summary"]?["manifestProvenanceReferenceEdges"]);
+        Assert.Equal(54, (int?)json["summary"]?["manifestProvenanceReferenceEdges"]);
         Assert.Equal(0, json["outputDigests"]?.AsArray().Count);
         Assert.Equal(string.Empty, result.Stderr);
         Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
@@ -9804,7 +10042,7 @@ public sealed class CliGoldenTests
     [Fact]
     public void ExplainOutputJsonClassifiesKnownOutputPathWithoutExecution()
     {
-        var result = RunCli("explain", "output", "generated/graph/project-source-graph.json", "--format", "json");
+        var result = RunCli("explain", "output", "dist/build/build-plan.md", "--format", "json");
         var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Explain output JSON did not parse.");
         var classification = json["classification"] ?? throw new InvalidOperationException("Explain output JSON did not include classification.");
         var target = json["target"] ?? throw new InvalidOperationException("Explain output JSON did not include target metadata.");
@@ -9814,12 +10052,12 @@ public sealed class CliGoldenTests
         Assert.Equal("explain output", (string?)json["command"]);
         Assert.Equal("explained", (string?)json["status"]);
         Assert.Equal("output", (string?)json["subject"]?["kind"]);
-        Assert.Equal("generated/graph/project-source-graph.json", (string?)json["subject"]?["normalizedPath"]);
+        Assert.Equal("dist/build/build-plan.md", (string?)json["subject"]?["normalizedPath"]);
         Assert.Equal("expected-output", (string?)classification["status"]);
-        Assert.Equal("generated/graph/project-source-graph.json", (string?)classification["pattern"]);
-        Assert.Equal("project-source-graph-json", (string?)classification["outputKind"]);
-        Assert.Equal("graph", (string?)target["id"]);
-        Assert.Equal("Project source graph", (string?)target["title"]);
+        Assert.Equal("dist/build/build-plan.md", (string?)classification["pattern"]);
+        Assert.Equal("build-plan-markdown", (string?)classification["outputKind"]);
+        Assert.Equal("reports", (string?)target["id"]);
+        Assert.Equal("Metadata reports", (string?)target["title"]);
         Assert.Equal("output-path-classification-skeleton", (string?)json["detailStatus"]);
         Assert.Equal(false, (bool?)execution["projectRead"]);
         Assert.Equal(false, (bool?)execution["manifestRead"]);
