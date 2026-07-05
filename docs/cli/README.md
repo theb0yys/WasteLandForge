@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 304 forge release verify evidence status projection
+Status: Gate 307 forge release publish collection-plan evidence
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -849,6 +849,8 @@ dist/release-dry-run/release-summary.json
 dist/release-dry-run/release-verify.json
 dist/release-dry-run/release-evidence-index.json
 dist/release-dry-run/release-evidence-status.json
+dist/release-dry-run/release-evidence-actions.json
+dist/release-dry-run/release-evidence-collection-plan.json
 dist/release-dry-run/release-evidence-handoff.md
 dist/release-dry-run/build-manifest.json
 dist/release-dry-run/checksums.sha256
@@ -860,10 +862,16 @@ release-publish preflight evidence paths for validation, capability scan,
 package verification, and release verification plus command hints for
 producing them. `release-evidence-status.json` marks indexed evidence paths
 as `present` or `missing` from local file presence only.
-`release-evidence-handoff.md` renders that status as an operator-facing
-Markdown summary with command hints and disabled execution boundaries.
-`build-manifest.json` and `checksums.sha256` cover all four files as local
-release-verification evidence.
+`release-evidence-actions.json` lists manual action hints for missing
+capability/environment and package-validation evidence. The hints are
+advisory only; release verify does not execute them.
+`release-evidence-collection-plan.json` lists ordered collection steps for
+release-publish preflight evidence and links missing manual steps to the
+action checklist. It is declarative only; release verify does not run the
+steps. `release-evidence-handoff.md` renders that status, action checklist,
+and collection plan as an operator-facing Markdown summary with command hints
+and disabled execution boundaries. `build-manifest.json` and
+`checksums.sha256` cover these local release-verification evidence files.
 
 `--output` is accepted only when the resolved path stays under project `dist/`.
 
@@ -936,7 +944,9 @@ local governance-check evaluation, schema-validation evidence evaluation from
 evaluation from `dist/release-dry-run/capabilities-scan.json`, and
 package-validation evidence evaluation from
 `dist/release-dry-run/package-verify.json`, and release-verification evidence
-evaluation from `dist/release-dry-run/release-verify.json`, plus explicit
+evaluation from `dist/release-dry-run/release-verify.json`, and
+collection-plan evidence evaluation from
+`dist/release-dry-run/release-evidence-collection-plan.json`, plus explicit
 human-approval evaluation through `--yes --confirm <project-id>`, and
 publish-readiness aggregation. Gate 288 also reports `laneCloseout` metadata
 that closes the no-publish lane and routes Gate 289 to `forge doctor export`
@@ -947,11 +957,12 @@ required local evidence, release-prepare artifact status, checksum/build
 manifest/archive evidence status, governance check evidence path/detail/status,
 schema-validation evidence path/detail/status, capability/environment evidence
 path/detail/status, package-validation evidence path/detail/status,
-release-verification evidence path/detail/status, explicit human-approval
-confirmation value/match status, `publishReadiness` satisfied/blocking checks,
-`laneCloseout` next-slice routing, and false execution flags for release
-publishing, remote repository calls, release uploads, attestation/signing,
-external tools, plugin mutation, MO2/GECK automation, runtime probes, and AI.
+release-verification evidence path/detail/status, collection-plan evidence
+path/detail/status, explicit human-approval confirmation value/match status,
+`publishReadiness` satisfied/blocking checks, `laneCloseout` next-slice
+routing, and false execution flags for release publishing, remote repository
+calls, release uploads, attestation/signing, external tools, plugin mutation,
+MO2/GECK automation, runtime probes, and AI.
 It does not accept archive payload contents or write publish outputs.
 
 Gate 289 adds a local release-readiness handoff projection to
@@ -1145,6 +1156,53 @@ or attest artifacts, execute external tools, mutate plugins, automate
 MO2/GECK, run runtime probes, use real third-party fixtures, or use AI. The
 next implementation route is Gate 305 local missing-evidence action
 checklist.
+
+Gate 305 adds the local missing-evidence action checklist. Successful release
+verify runs now write `dist/release-dry-run/release-evidence-actions.json`,
+report the path as `outputs.releaseEvidenceActions`, link it from
+`release-evidence-index.json`, `release-evidence-status.json`, and
+`release-evidence-handoff.md`, and include it in
+`dist/release-dry-run/build-manifest.json` and
+`dist/release-dry-run/checksums.sha256`. The checklist contains only manual
+command hints for missing release-publish preflight evidence. The gate does
+not run those hints, run capability scans, run package verification, publish
+releases, call remote repositories, sign or attest artifacts, execute
+external tools, mutate plugins, automate MO2/GECK, run runtime probes, use
+real third-party fixtures, or use AI. The next implementation route is Gate
+306 local release dry-run evidence collection plan skeleton.
+
+Gate 306 adds the local release dry-run evidence collection plan. Successful
+release verify runs now write
+`dist/release-dry-run/release-evidence-collection-plan.json`, report the path
+as `outputs.releaseEvidenceCollectionPlan`, link it from
+`release-evidence-index.json`, `release-evidence-status.json`,
+`release-evidence-actions.json`, and `release-evidence-handoff.md`, and
+include it in `dist/release-dry-run/build-manifest.json` and
+`dist/release-dry-run/checksums.sha256`. The collection plan orders
+schema-validation, capability/environment-validation, package-validation, and
+release-verification steps and links missing manual steps to action IDs. The
+gate does not run those steps, run capability scans, run package
+verification, publish releases, call remote repositories, sign or attest
+artifacts, execute external tools, mutate plugins, automate MO2/GECK, run
+runtime probes, use real third-party fixtures, or use AI. The next
+implementation route is Gate 307 local release-publish collection-plan
+evidence evaluation.
+
+Gate 307 adds local release-publish collection-plan evidence evaluation.
+`forge release publish` now reads
+`dist/release-dry-run/release-evidence-collection-plan.json`, checks the
+Gate 306 contract identity, `dist/release-dry-run` output root, index/status/
+action/handoff links, ordered schema/capability/package/release collection
+steps, summary counters, manual action shape, and all no-execution boundary
+flags. JSON output includes `collectionPlanEvidence`,
+`releasePrepareEvidence.collectionPlanEvidenceStatus`, collection-plan step
+counters, `execution.collectionPlanEvidenceEvaluation`, and required evidence
+ID `release-dry-run-collection-plan`. The gate still does not run collection
+steps, run capability scans, run package verification, publish releases, call
+remote repositories, sign or attest artifacts, execute external tools, mutate
+plugins, automate MO2/GECK, run runtime probes, use real third-party fixtures,
+or use AI. The next implementation route is Gate 308 local release dry-run
+evidence cross-link consistency evaluation.
 
 ## Docs Evidence
 

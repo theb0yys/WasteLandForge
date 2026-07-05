@@ -42,6 +42,7 @@ internal static class ReleaseDryRunTextRenderer
             builder.AppendLine("  OK   release-evidence-index.json written");
             builder.AppendLine("  OK   release-evidence-status.json written");
             builder.AppendLine("  OK   release-evidence-actions.json written");
+            builder.AppendLine("  OK   release-evidence-collection-plan.json written");
             builder.AppendLine("  OK   release-evidence-handoff.md written");
             builder.AppendLine("  OK   build-manifest.json written");
             builder.AppendLine("  OK   checksums.sha256 written");

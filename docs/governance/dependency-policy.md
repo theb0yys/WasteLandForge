@@ -1332,3 +1332,23 @@ uses existing .NET JSON, file-existence, hashing, and file APIs. It does not
 add command runners, package validators, publishing clients, repository API
 clients, signing or attestation dependencies, external tool integrations,
 network calls, runtime probes, MO2 or GECK automation, or AI requirements.
+
+Gate 305 adds no package dependency. Release verify missing-evidence action
+checklist emission uses existing .NET JSON, file-existence, hashing, and file
+APIs. It does not add command runners, package validators, publishing
+clients, repository API clients, signing or attestation dependencies,
+external tool integrations, network calls, runtime probes, MO2 or GECK
+automation, or AI requirements.
+
+Gate 306 adds no package dependency. Release verify evidence collection-plan
+emission uses existing .NET JSON, file-existence, hashing, and file APIs. It
+does not add command runners, package validators, publishing clients,
+repository API clients, signing or attestation dependencies, external tool
+integrations, network calls, runtime probes, MO2 or GECK automation, or AI
+requirements.
+
+Gate 307 adds no package dependency. Release publish collection-plan evidence
+evaluation uses existing .NET JSON and file APIs. It does not add command
+runners, package validators, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, MO2 or GECK automation, or AI requirements.

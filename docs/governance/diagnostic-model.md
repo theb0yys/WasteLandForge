@@ -1436,5 +1436,34 @@ diagnostics, evidence content validation diagnostics, external tool
 diagnostics, runtime probe diagnostics, repository publish diagnostics,
 signing/attestation diagnostics, or AI requirements.
 
+Gate 305 adds no new diagnostic rule ID. `release-evidence-actions.json` is a
+local manual action checklist for missing release dry-run planning evidence,
+not a blocking diagnostic report. It lists command hints for missing evidence
+while continuing to reuse existing `WF-REL-*` release diagnostics. The gate
+does not add package verification diagnostics, capability execution
+diagnostics, evidence content validation diagnostics, external tool
+diagnostics, runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, or AI requirements.
+
+Gate 306 adds no new diagnostic rule ID.
+`release-evidence-collection-plan.json` is a local ordered plan for release
+dry-run evidence collection, not a blocking diagnostic report. It links
+missing manual steps to existing action IDs while continuing to reuse
+existing `WF-REL-*` release diagnostics. The gate does not add package
+verification diagnostics, capability execution diagnostics, evidence content
+validation diagnostics, external tool diagnostics, runtime probe diagnostics,
+repository publish diagnostics, signing/attestation diagnostics, or AI
+requirements.
+
+Gate 307 adds no new diagnostic rule ID. `forge release publish` treats
+`release-evidence-collection-plan.json` as local evidence for publish
+readiness and reports its status through `collectionPlanEvidence`, not as a
+new diagnostic report. Collection-plan mismatches become blocking readiness
+evidence statuses while continuing to reuse existing `WF-REL-*` release
+diagnostics. The gate does not add package verification diagnostics,
+capability execution diagnostics, external tool diagnostics, runtime probe
+diagnostics, repository publish diagnostics, signing/attestation diagnostics,
+or AI requirements.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

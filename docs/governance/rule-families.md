@@ -941,3 +941,30 @@ containment behavior. It does not add `WF-BUILD-*`, `WF-GOV-*`, or
 evidence content validation rules, external tool diagnostics, runtime probe
 diagnostics, repository publish diagnostics, signing/attestation diagnostics,
 or AI requirements.
+
+Gate 305 adds no new rule family or diagnostic ID. Release verify
+missing-evidence action emission is a local manual checklist projection
+covered by existing release dry-run provenance outputs and `WF-REL-001`
+output containment behavior. It does not add `WF-BUILD-*`, `WF-GOV-*`, or
+`WF-SEC-*` diagnostics, command fan-out diagnostics, package verifier rules,
+evidence content validation rules, external tool diagnostics, runtime probe
+diagnostics, repository publish diagnostics, signing/attestation diagnostics,
+or AI requirements.
+
+Gate 306 adds no new rule family or diagnostic ID. Release verify evidence
+collection-plan emission is a local ordered planning projection covered by
+existing release dry-run provenance outputs and `WF-REL-001` output
+containment behavior. It does not add `WF-BUILD-*`, `WF-GOV-*`, or
+`WF-SEC-*` diagnostics, command fan-out diagnostics, package verifier rules,
+evidence content validation rules, external tool diagnostics, runtime probe
+diagnostics, repository publish diagnostics, signing/attestation diagnostics,
+or AI requirements.
+
+Gate 307 adds no new rule family or diagnostic ID. Release publish
+collection-plan evidence evaluation is a local readiness evidence check over
+the Gate 306 planning projection and keeps using existing release dry-run
+provenance outputs and `WF-REL-001` output containment behavior. It does not
+add `WF-BUILD-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, command fan-out
+diagnostics, package verifier rules, external tool diagnostics, runtime probe
+diagnostics, repository publish diagnostics, signing/attestation diagnostics,
+or AI requirements.

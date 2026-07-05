@@ -745,11 +745,17 @@ Gate 303 implements local release dry-run evidence handoff summary emission
 under `dist/release-dry-run/release-evidence-handoff.md`. Route the next
 implementation slice to Gate 304: local release dry-run evidence status
 projection. Gate 304 implements status projection under
-`dist/release-dry-run/release-evidence-status.json`. Route the next
-implementation slice to Gate 305: local missing-evidence action checklist,
-still with no command fan-out, capability scan execution, package verify
-execution, publish behavior, external tool execution, runtime probes, or AI
-behavior.
+`dist/release-dry-run/release-evidence-status.json`. Gate 305 implements
+local missing-evidence action checklist under
+`dist/release-dry-run/release-evidence-actions.json`. Gate 306 implements
+local evidence collection plan under
+`dist/release-dry-run/release-evidence-collection-plan.json`. Gate 307
+implements release-publish collection-plan evidence evaluation from
+`dist/release-dry-run/release-evidence-collection-plan.json`. Route the next
+implementation slice to Gate 308: release dry-run evidence cross-link
+consistency evaluation, still with no command fan-out, capability scan
+execution, package verify execution, publish behavior, external tool
+execution, runtime probes, or AI behavior.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -836,11 +842,17 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   under `dist/release-dry-run/release-evidence-handoff.md`. Route the next
   implementation slice to Gate 304: local release dry-run evidence status
   projection. Gate 304 implements status projection under
-  `dist/release-dry-run/release-evidence-status.json`. Route the next
-  implementation slice to Gate 305: local missing-evidence action checklist,
-  still with no command fan-out, capability scan execution, package verify
-  execution, publish behavior, external tool execution, runtime probes, or AI
-  behavior.
+  `dist/release-dry-run/release-evidence-status.json`. Gate 305 implements
+  local missing-evidence action checklist under
+  `dist/release-dry-run/release-evidence-actions.json`. Gate 306 implements
+  local evidence collection plan under
+  `dist/release-dry-run/release-evidence-collection-plan.json`. Gate 307
+  implements release-publish collection-plan evidence evaluation from
+  `dist/release-dry-run/release-evidence-collection-plan.json`. Route the next
+  implementation slice to Gate 308: release dry-run evidence cross-link
+  consistency evaluation, still with no command fan-out, capability scan
+  execution, package verify execution, publish behavior, external tool
+  execution, runtime probes, or AI behavior.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider

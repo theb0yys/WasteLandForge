@@ -61,6 +61,7 @@ internal static class ReleaseDryRunJsonSerializer
                 ["releaseEvidenceIndex"] = result.Outputs.ReleaseEvidenceIndex,
                 ["releaseEvidenceStatus"] = result.Outputs.ReleaseEvidenceStatus,
                 ["releaseEvidenceActions"] = result.Outputs.ReleaseEvidenceActions,
+                ["releaseEvidenceCollectionPlan"] = result.Outputs.ReleaseEvidenceCollectionPlan,
                 ["releaseEvidenceHandoff"] = result.Outputs.ReleaseEvidenceHandoff,
                 ["buildManifest"] = result.Outputs.BuildManifest,
                 ["checksums"] = result.Outputs.Checksums

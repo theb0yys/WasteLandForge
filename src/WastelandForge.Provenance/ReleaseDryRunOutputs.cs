@@ -9,6 +9,7 @@ public sealed record ReleaseDryRunOutputs(
     string ReleaseEvidenceIndex,
     string ReleaseEvidenceStatus,
     string ReleaseEvidenceActions,
+    string ReleaseEvidenceCollectionPlan,
     string ReleaseEvidenceHandoff,
     string BuildManifest,
     string Checksums);

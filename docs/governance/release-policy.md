@@ -343,3 +343,37 @@ same statuses. It does not run capability scans, run package verification,
 parse or validate evidence content, publish releases, call remote
 repositories, upload assets, sign or attest artifacts, execute external
 tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 305 adds a local missing-evidence action checklist for that evidence
+status. `forge release verify` now writes
+`dist/release-dry-run/release-evidence-actions.json`, listing manual command
+hints for missing release-publish preflight evidence. The checklist is
+covered by the local release dry-run build manifest and `checksums.sha256`,
+and the Markdown handoff links and summarizes the same actions. It does not
+run those command hints, run capability scans, run package verification,
+parse or validate evidence content, publish releases, call remote
+repositories, upload assets, sign or attest artifacts, execute external
+tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 306 adds a local evidence collection plan for that action checklist.
+`forge release verify` now writes
+`dist/release-dry-run/release-evidence-collection-plan.json`, ordering the
+release-publish preflight evidence steps and linking missing manual steps to
+action IDs. The collection plan is covered by the local release dry-run build
+manifest and `checksums.sha256`, and the Markdown handoff links and
+summarizes the same plan. It does not run those steps, run capability scans,
+run package verification, parse or validate evidence content, publish
+releases, call remote repositories, upload assets, sign or attest artifacts,
+execute external tools, mutate plugins, automate MO2 or GECK, run runtime
+probes, or use AI.
+
+Gate 307 adds local release-publish evaluation for that evidence collection
+plan. `forge release publish` now reads
+`dist/release-dry-run/release-evidence-collection-plan.json`, checks its
+identity, evidence links, ordered steps, summary counters, manual action
+shape, and no-execution flags, and adds
+`release-dry-run-collection-plan` to publish-readiness evidence. It does not
+run those steps, run capability scans, run package verification, publish
+releases, call remote repositories, upload assets, sign or attest artifacts,
+execute external tools, mutate plugins, automate MO2 or GECK, run runtime
+probes, or use AI.

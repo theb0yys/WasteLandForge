@@ -66,6 +66,7 @@ public sealed class ReleaseDryRunVerifier
         var releaseEvidenceIndexPath = Path.Combine(outputRoot, "release-evidence-index.json");
         var releaseEvidenceStatusPath = Path.Combine(outputRoot, "release-evidence-status.json");
         var releaseEvidenceActionsPath = Path.Combine(outputRoot, "release-evidence-actions.json");
+        var releaseEvidenceCollectionPlanPath = Path.Combine(outputRoot, "release-evidence-collection-plan.json");
         var releaseEvidenceHandoffPath = Path.Combine(outputRoot, "release-evidence-handoff.md");
         var manifestPath = Path.Combine(outputRoot, "build-manifest.json");
         var checksumsPath = Path.Combine(outputRoot, "checksums.sha256");
@@ -78,6 +79,7 @@ public sealed class ReleaseDryRunVerifier
             ToDisplayPath(projectRoot, releaseEvidenceIndexPath),
             ToDisplayPath(projectRoot, releaseEvidenceStatusPath),
             ToDisplayPath(projectRoot, releaseEvidenceActionsPath),
+            ToDisplayPath(projectRoot, releaseEvidenceCollectionPlanPath),
             ToDisplayPath(projectRoot, releaseEvidenceHandoffPath),
             ToDisplayPath(projectRoot, manifestPath),
             ToDisplayPath(projectRoot, checksumsPath));
@@ -88,6 +90,7 @@ public sealed class ReleaseDryRunVerifier
 
         var evidenceEntries = CreateReleaseEvidenceEntries(projectRoot, plannedOutputs);
         var evidenceActions = CreateReleaseEvidenceActions(evidenceEntries);
+        var evidenceCollectionSteps = CreateReleaseEvidenceCollectionSteps(evidenceEntries, evidenceActions);
         WriteUtf8NoBom(
             releaseEvidenceActionsPath,
             CreateReleaseEvidenceActionsJson(projectId, metadata, plannedOutputs, evidenceEntries, evidenceActions).ToJsonString(JsonOptions) + Environment.NewLine);
@@ -97,15 +100,19 @@ public sealed class ReleaseDryRunVerifier
             CreateReleaseEvidenceStatusJson(projectId, metadata, plannedOutputs, evidenceEntries, evidenceActions).ToJsonString(JsonOptions) + Environment.NewLine);
 
         WriteUtf8NoBom(
+            releaseEvidenceCollectionPlanPath,
+            CreateReleaseEvidenceCollectionPlanJson(projectId, metadata, plannedOutputs, evidenceEntries, evidenceActions, evidenceCollectionSteps).ToJsonString(JsonOptions) + Environment.NewLine);
+
+        WriteUtf8NoBom(
             releaseEvidenceIndexPath,
-            CreateReleaseEvidenceIndexJson(projectId, metadata, plannedOutputs, evidenceEntries, evidenceActions).ToJsonString(JsonOptions) + Environment.NewLine);
+            CreateReleaseEvidenceIndexJson(projectId, metadata, plannedOutputs, evidenceEntries, evidenceActions, evidenceCollectionSteps).ToJsonString(JsonOptions) + Environment.NewLine);
 
         WriteUtf8NoBom(
             releaseEvidenceHandoffPath,
-            CreateReleaseEvidenceHandoffMarkdown(projectId, metadata, plannedOutputs, evidenceEntries, evidenceActions));
+            CreateReleaseEvidenceHandoffMarkdown(projectId, metadata, plannedOutputs, evidenceEntries, evidenceActions, evidenceCollectionSteps));
 
         var outputFilesBeforeManifest = stagedFiles
-            .Concat([validationReportPath, releaseSummaryPath, releaseVerificationPath, releaseEvidenceIndexPath, releaseEvidenceStatusPath, releaseEvidenceActionsPath, releaseEvidenceHandoffPath])
+            .Concat([validationReportPath, releaseSummaryPath, releaseVerificationPath, releaseEvidenceIndexPath, releaseEvidenceStatusPath, releaseEvidenceActionsPath, releaseEvidenceCollectionPlanPath, releaseEvidenceHandoffPath])
             .OrderBy(path => ToDisplayPath(outputRoot, path), StringComparer.Ordinal)
             .ToArray();
 
@@ -325,6 +332,7 @@ public sealed class ReleaseDryRunVerifier
             ["releaseEvidenceIndex"] = outputs.ReleaseEvidenceIndex,
             ["releaseEvidenceStatus"] = outputs.ReleaseEvidenceStatus,
             ["releaseEvidenceActions"] = outputs.ReleaseEvidenceActions,
+            ["releaseEvidenceCollectionPlan"] = outputs.ReleaseEvidenceCollectionPlan,
             ["releaseEvidenceHandoff"] = outputs.ReleaseEvidenceHandoff,
             ["buildManifest"] = outputs.BuildManifest,
             ["checksums"] = outputs.Checksums
@@ -338,7 +346,8 @@ public sealed class ReleaseDryRunVerifier
         ProjectReleaseMetadata metadata,
         ReleaseDryRunOutputs outputs,
         IReadOnlyList<ReleaseEvidenceEntry> evidenceEntries,
-        IReadOnlyList<ReleaseEvidenceAction> evidenceActions)
+        IReadOnlyList<ReleaseEvidenceAction> evidenceActions,
+        IReadOnlyList<ReleaseEvidenceCollectionStep> evidenceCollectionSteps)
     {
         var requiredEvidence = new JsonArray();
         foreach (var entry in evidenceEntries)
@@ -357,8 +366,9 @@ public sealed class ReleaseDryRunVerifier
             ["outputRoot"] = outputs.Root,
             ["statusProjection"] = outputs.ReleaseEvidenceStatus,
             ["actionChecklist"] = outputs.ReleaseEvidenceActions,
+            ["collectionPlan"] = outputs.ReleaseEvidenceCollectionPlan,
             ["handoffSummary"] = outputs.ReleaseEvidenceHandoff,
-            ["summary"] = CreateEvidenceStatusSummaryJson(evidenceEntries, evidenceActions),
+            ["summary"] = CreateEvidenceStatusSummaryJson(evidenceEntries, evidenceActions, evidenceCollectionSteps),
             ["requiredEvidence"] = requiredEvidence,
             ["releasePublishPreflight"] = new JsonObject
             {
@@ -412,6 +422,7 @@ public sealed class ReleaseDryRunVerifier
             ["outputRoot"] = outputs.Root,
             ["evidenceIndex"] = outputs.ReleaseEvidenceIndex,
             ["actionChecklist"] = outputs.ReleaseEvidenceActions,
+            ["collectionPlan"] = outputs.ReleaseEvidenceCollectionPlan,
             ["handoffSummary"] = outputs.ReleaseEvidenceHandoff,
             ["summary"] = CreateEvidenceStatusSummaryJson(evidenceEntries, evidenceActions),
             ["requiredEvidence"] = requiredEvidence,
@@ -447,6 +458,7 @@ public sealed class ReleaseDryRunVerifier
             ["outputRoot"] = outputs.Root,
             ["evidenceIndex"] = outputs.ReleaseEvidenceIndex,
             ["evidenceStatus"] = outputs.ReleaseEvidenceStatus,
+            ["collectionPlan"] = outputs.ReleaseEvidenceCollectionPlan,
             ["handoffSummary"] = outputs.ReleaseEvidenceHandoff,
             ["summary"] = CreateEvidenceStatusSummaryJson(evidenceEntries, evidenceActions),
             ["actions"] = actions,
@@ -455,6 +467,48 @@ public sealed class ReleaseDryRunVerifier
                 "Actions are command hints only.",
                 "No action commands are executed by release verify.",
                 "Run actions explicitly before release-publish preflight when evidence is missing.")
+        };
+    }
+
+    private static JsonObject CreateReleaseEvidenceCollectionPlanJson(
+        LogicalId? projectId,
+        ProjectReleaseMetadata metadata,
+        ReleaseDryRunOutputs outputs,
+        IReadOnlyList<ReleaseEvidenceEntry> evidenceEntries,
+        IReadOnlyList<ReleaseEvidenceAction> evidenceActions,
+        IReadOnlyList<ReleaseEvidenceCollectionStep> evidenceCollectionSteps)
+    {
+        var steps = new JsonArray();
+        foreach (var step in evidenceCollectionSteps)
+        {
+            steps.Add(CreateReleaseEvidenceCollectionStepJson(step));
+        }
+
+        return new JsonObject
+        {
+            ["formatVersion"] = "0.1",
+            ["kind"] = "wastelandforge.release-dry-run-evidence-collection-plan",
+            ["command"] = "release verify",
+            ["dryRun"] = true,
+            ["status"] = "planned",
+            ["project"] = CreateProjectJson(projectId, metadata),
+            ["outputRoot"] = outputs.Root,
+            ["evidenceIndex"] = outputs.ReleaseEvidenceIndex,
+            ["evidenceStatus"] = outputs.ReleaseEvidenceStatus,
+            ["actionChecklist"] = outputs.ReleaseEvidenceActions,
+            ["handoffSummary"] = outputs.ReleaseEvidenceHandoff,
+            ["summary"] = CreateEvidenceStatusSummaryJson(evidenceEntries, evidenceActions, evidenceCollectionSteps),
+            ["steps"] = steps,
+            ["releasePublishPreflight"] = new JsonObject
+            {
+                ["commandHint"] = "forge release publish <project-root> --dry-run --format json --no-input",
+                ["consumes"] = ToStringArray(evidenceEntries.Select(entry => entry.Path).ToArray())
+            },
+            ["execution"] = CreateReleaseEvidenceExecutionJson(),
+            ["notes"] = ToStringArray(
+                "Collection plan is declarative only.",
+                "No collection steps or command hints are executed by release verify.",
+                "Missing evidence remains an explicit operator action before release-publish preflight.")
         };
     }
 
@@ -578,12 +632,79 @@ public sealed class ReleaseDryRunVerifier
         };
     }
 
+    private static IReadOnlyList<ReleaseEvidenceCollectionStep> CreateReleaseEvidenceCollectionSteps(
+        IReadOnlyList<ReleaseEvidenceEntry> evidenceEntries,
+        IReadOnlyList<ReleaseEvidenceAction> evidenceActions)
+    {
+        var actionsByEvidenceId = evidenceActions.ToDictionary(action => action.EvidenceId, StringComparer.Ordinal);
+        return evidenceEntries
+            .Select(entry =>
+            {
+                actionsByEvidenceId.TryGetValue(entry.Id, out var action);
+                return new ReleaseEvidenceCollectionStep(
+                    GetReleaseEvidenceCollectionOrder(entry.Id),
+                    $"collect-{entry.Id}",
+                    entry.Id,
+                    entry.Exists ? "available" : "manual-required",
+                    entry.Path,
+                    entry.ProducerCommand,
+                    entry.CommandHint,
+                    entry.ProducedByCurrentCommand,
+                    entry.Exists
+                        ? entry.ProducedByCurrentCommand ? "current-command-output" : "local-file"
+                        : "manual-command-hint",
+                    action?.Id,
+                    action is null ? "none" : "manual",
+                    entry.SourceGate);
+            })
+            .OrderBy(step => step.Order)
+            .ThenBy(step => step.Id, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static JsonObject CreateReleaseEvidenceCollectionStepJson(ReleaseEvidenceCollectionStep step)
+    {
+        var node = new JsonObject
+        {
+            ["order"] = step.Order,
+            ["id"] = step.Id,
+            ["evidenceId"] = step.EvidenceId,
+            ["status"] = step.Status,
+            ["targetPath"] = step.TargetPath,
+            ["producerCommand"] = step.ProducerCommand,
+            ["commandHint"] = step.CommandHint,
+            ["producedByCurrentCommand"] = step.ProducedByCurrentCommand,
+            ["collectionMode"] = step.CollectionMode,
+            ["execution"] = step.Execution,
+            ["requiredBy"] = "forge release publish",
+            ["sourceGate"] = step.SourceGate
+        };
+
+        if (!string.IsNullOrWhiteSpace(step.ActionId))
+        {
+            node["actionId"] = step.ActionId;
+        }
+
+        return node;
+    }
+
+    private static int GetReleaseEvidenceCollectionOrder(string evidenceId) =>
+        evidenceId switch
+        {
+            "schema-validation" => 1,
+            "capability-environment-validation" => 2,
+            "package-validation" => 3,
+            "release-verification" => 4,
+            _ => 100
+        };
+
     private static string CreateReleaseEvidenceHandoffMarkdown(
         LogicalId? projectId,
         ProjectReleaseMetadata metadata,
         ReleaseDryRunOutputs outputs,
         IReadOnlyList<ReleaseEvidenceEntry> evidenceEntries,
-        IReadOnlyList<ReleaseEvidenceAction> evidenceActions)
+        IReadOnlyList<ReleaseEvidenceAction> evidenceActions,
+        IReadOnlyList<ReleaseEvidenceCollectionStep> evidenceCollectionSteps)
     {
         var builder = new StringBuilder();
         builder.AppendLine("# WastelandForge Release Evidence Handoff");
@@ -605,12 +726,17 @@ public sealed class ReleaseDryRunVerifier
         builder.Append("Action checklist: `");
         builder.Append(outputs.ReleaseEvidenceActions);
         builder.AppendLine("`");
+        builder.Append("Collection plan: `");
+        builder.Append(outputs.ReleaseEvidenceCollectionPlan);
+        builder.AppendLine("`");
         builder.Append("Evidence present: ");
         builder.Append(evidenceEntries.Count(entry => entry.Exists));
         builder.Append(" / ");
         builder.AppendLine(evidenceEntries.Count.ToString());
         builder.Append("Missing evidence actions: ");
         builder.AppendLine(evidenceActions.Count.ToString());
+        builder.Append("Collection steps: ");
+        builder.AppendLine(evidenceCollectionSteps.Count.ToString());
         builder.AppendLine();
         builder.AppendLine("## Required Evidence");
         builder.AppendLine();
@@ -655,6 +781,28 @@ public sealed class ReleaseDryRunVerifier
         }
 
         builder.AppendLine();
+        builder.AppendLine("## Evidence Collection Plan");
+        builder.AppendLine();
+        builder.AppendLine("| Order | Step | Status | Collection mode | Execution | Target evidence |");
+        builder.AppendLine("|---|---|---|---|---|---|");
+        foreach (var step in evidenceCollectionSteps)
+        {
+            builder.Append("| ");
+            builder.Append(step.Order.ToString());
+            builder.Append(" | `");
+            builder.Append(step.Id);
+            builder.Append("` | `");
+            builder.Append(step.Status);
+            builder.Append("` | `");
+            builder.Append(step.CollectionMode);
+            builder.Append("` | `");
+            builder.Append(step.Execution);
+            builder.Append("` | `");
+            builder.Append(step.TargetPath);
+            builder.AppendLine("` |");
+        }
+
+        builder.AppendLine();
         builder.AppendLine("## Release Publish Preflight");
         builder.AppendLine();
         builder.AppendLine("Command hint: `forge release publish <project-root> --dry-run --format json --no-input`");
@@ -689,17 +837,27 @@ public sealed class ReleaseDryRunVerifier
 
     private static JsonObject CreateEvidenceStatusSummaryJson(
         IReadOnlyList<ReleaseEvidenceEntry> evidenceEntries,
-        IReadOnlyList<ReleaseEvidenceAction> evidenceActions)
+        IReadOnlyList<ReleaseEvidenceAction> evidenceActions,
+        IReadOnlyList<ReleaseEvidenceCollectionStep>? evidenceCollectionSteps = null)
     {
         var present = evidenceEntries.Count(entry => entry.Exists);
         var missing = evidenceEntries.Count - present;
-        return new JsonObject
+        var summary = new JsonObject
         {
             ["total"] = evidenceEntries.Count,
             ["present"] = present,
             ["missing"] = missing,
             ["actions"] = evidenceActions.Count
         };
+
+        if (evidenceCollectionSteps is not null)
+        {
+            summary["steps"] = evidenceCollectionSteps.Count;
+            summary["manualSteps"] = evidenceCollectionSteps.Count(step => StringComparer.Ordinal.Equals("manual", step.Execution));
+            summary["availableSteps"] = evidenceCollectionSteps.Count(step => StringComparer.Ordinal.Equals("available", step.Status));
+        }
+
+        return summary;
     }
 
     private static JsonObject CreateReleaseEvidenceExecutionJson() =>
@@ -946,6 +1104,20 @@ public sealed class ReleaseDryRunVerifier
         string ProducerCommand,
         string CommandHint,
         string Reason,
+        string SourceGate);
+
+    private sealed record ReleaseEvidenceCollectionStep(
+        int Order,
+        string Id,
+        string EvidenceId,
+        string Status,
+        string TargetPath,
+        string ProducerCommand,
+        string CommandHint,
+        bool ProducedByCurrentCommand,
+        string CollectionMode,
+        string? ActionId,
+        string Execution,
         string SourceGate);
 
     private sealed record ProjectReleaseMetadata(

@@ -293,6 +293,50 @@ internal sealed record ReleasePublishReleaseVerificationEvidence(
     int ReleaseIssueCount,
     string Detail);
 
+internal sealed record ReleasePublishCollectionPlanEvidence(
+    string Path,
+    bool Exists,
+    string Status,
+    bool CheckedInCurrentGate,
+    bool ContentReadInCurrentGate,
+    bool DryRun,
+    string? OutputRoot,
+    bool DistScoped,
+    bool LinksEvidenceIndex,
+    bool LinksEvidenceStatus,
+    bool LinksActionChecklist,
+    bool LinksHandoffSummary,
+    int Steps,
+    int ManualSteps,
+    int AvailableSteps,
+    int MalformedSteps,
+    bool NoExecutionBoundary,
+    string Detail);
+
+internal sealed record ReleasePublishDryRunCrossLinkEvidence(
+    string Status,
+    bool CheckedInCurrentGate,
+    bool ContentReadInCurrentGate,
+    int ExpectedFiles,
+    int PresentFiles,
+    int MissingFiles,
+    int MalformedFiles,
+    int ExpectedLinks,
+    int ValidLinks,
+    int MismatchedLinks,
+    int RequiredEvidenceEntries,
+    int StatusEntries,
+    int ActionItems,
+    int CollectionSteps,
+    bool IdentityConsistent,
+    bool SummaryCountersConsistent,
+    bool RequiredEvidenceConsistent,
+    bool ActionReferencesConsistent,
+    bool CollectionStepsConsistent,
+    bool ExecutionBoundariesConsistent,
+    bool HandoffReferencesConsistent,
+    string Detail);
+
 internal sealed record ReleasePublishGovernanceCheck(
     string Id,
     string Title,
@@ -378,6 +422,8 @@ internal sealed record ReleasePublishPreflightResult(
     ReleasePublishCapabilityEnvironmentEvidence CapabilityEnvironmentEvidence,
     ReleasePublishPackageValidationEvidence PackageValidationEvidence,
     ReleasePublishReleaseVerificationEvidence ReleaseVerificationEvidence,
+    ReleasePublishCollectionPlanEvidence CollectionPlanEvidence,
+    ReleasePublishDryRunCrossLinkEvidence DryRunCrossLinkEvidence,
     ReleasePublishReadiness PublishReadiness,
     ReleasePublishLaneCloseout LaneCloseout,
     string? RefusalReason,
@@ -406,6 +452,15 @@ internal static class ReleasePublishPreflightPlanner
         string Detail,
         IReadOnlyList<ReleasePublishArchiveEntryRevalidation> Entries);
 
+    private sealed record ReleaseDryRunEvidenceJsonRead(
+        string Path,
+        bool Exists,
+        bool ContentRead,
+        bool Parsed,
+        bool IdentityValid,
+        JsonObject? Root,
+        string Detail);
+
     private static readonly string[] BoundaryLines =
     [
         "Gate 288 closes the release publish no-publish lane and routes the next value slice.",
@@ -422,6 +477,8 @@ internal static class ReleasePublishPreflightPlanner
         "Capability/environment evidence reads local dist/release-dry-run/capabilities-scan.json only and checks project-scoped capabilities scan shape plus WF-CAP issue count.",
         "Package-validation evidence reads local dist/release-dry-run/package-verify.json only and checks package verify-existing report shape plus WF-BUILD issue count.",
         "Release-verification evidence reads local dist/release-dry-run/release-verify.json only and checks release verify report shape plus WF-REL-* issue count.",
+        "Collection-plan evidence reads local dist/release-dry-run/release-evidence-collection-plan.json only and checks ordered release-publish preflight evidence steps plus no-execution flags.",
+        "Release dry-run cross-link evidence reads local release-evidence-index.json, release-evidence-status.json, release-evidence-actions.json, release-evidence-collection-plan.json, and release-evidence-handoff.md only.",
         "Explicit human approval reads only the root project manifest ID and requires --yes plus --confirm <project-id>.",
         "Publish readiness is an aggregate of local evidence, governance, and approval states only.",
         "Lane closeout is reported as local routing metadata only.",
@@ -543,6 +600,19 @@ internal static class ReleasePublishPreflightPlanner
     private const string CapabilityEnvironmentEvidenceRelativePath = "dist/release-dry-run/capabilities-scan.json";
     private const string PackageValidationEvidenceRelativePath = "dist/release-dry-run/package-verify.json";
     private const string ReleaseVerificationEvidenceRelativePath = "dist/release-dry-run/release-verify.json";
+    private const string ReleaseEvidenceIndexRelativePath = "dist/release-dry-run/release-evidence-index.json";
+    private const string ReleaseEvidenceStatusRelativePath = "dist/release-dry-run/release-evidence-status.json";
+    private const string ReleaseEvidenceActionsRelativePath = "dist/release-dry-run/release-evidence-actions.json";
+    private const string CollectionPlanEvidenceRelativePath = "dist/release-dry-run/release-evidence-collection-plan.json";
+    private const string ReleaseEvidenceHandoffRelativePath = "dist/release-dry-run/release-evidence-handoff.md";
+
+    private static readonly (int Order, string Id, string EvidenceId, string TargetPath)[] CollectionPlanExpectedSteps =
+    [
+        (1, "collect-schema-validation", "schema-validation", SchemaValidationEvidenceRelativePath),
+        (2, "collect-capability-environment-validation", "capability-environment-validation", CapabilityEnvironmentEvidenceRelativePath),
+        (3, "collect-package-validation", "package-validation", PackageValidationEvidenceRelativePath),
+        (4, "collect-release-verification", "release-verification", ReleaseVerificationEvidenceRelativePath)
+    ];
 
     public static ReleasePublishPreflightResult Plan(ReleasePublishPreflightOptions options)
     {
@@ -561,6 +631,8 @@ internal static class ReleasePublishPreflightPlanner
         var capabilityEnvironmentEvidence = CreateCapabilityEnvironmentEvidence(projectRoot);
         var packageValidationEvidence = CreatePackageValidationEvidence(projectRoot);
         var releaseVerificationEvidence = CreateReleaseVerificationEvidence(projectRoot);
+        var collectionPlanEvidence = CreateCollectionPlanEvidence(projectRoot);
+        var dryRunCrossLinkEvidence = CreateDryRunCrossLinkEvidence(projectRoot);
         var governanceChecks = CreateGovernanceChecks(projectRoot);
         var approval = CreateApprovalRequirement(projectRoot, options.Yes, options.Confirm);
         var presentArtifacts = localEvidenceArtifacts.Count(artifact => artifact.Exists);
@@ -570,7 +642,7 @@ internal static class ReleasePublishPreflightPlanner
         var unclassifiedArtifacts = localEvidenceArtifacts.Count(artifact => StringComparer.Ordinal.Equals(artifact.Status, "present-not-classified"));
         var releasePrepareEvidenceStatus = ReleasePrepareEvidenceStatus(presentArtifacts, missingArtifacts, malformedArtifacts, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference, semanticEvidenceValidation);
         var status = options.DryRun ? "planned" : "refused";
-        var requiredEvidence = CreateRequiredEvidence(localEvidenceArtifacts, schemaValidationEvidence, capabilityEnvironmentEvidence, packageValidationEvidence, releaseVerificationEvidence, semanticEvidenceValidation, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference, governanceChecks);
+        var requiredEvidence = CreateRequiredEvidence(localEvidenceArtifacts, schemaValidationEvidence, capabilityEnvironmentEvidence, packageValidationEvidence, releaseVerificationEvidence, collectionPlanEvidence, dryRunCrossLinkEvidence, semanticEvidenceValidation, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference, governanceChecks);
         var publishReadiness = CreatePublishReadiness(requiredEvidence, approval);
         var laneCloseout = CreateLaneCloseout();
         var refusalReason = CreateRefusalReason(options.DryRun, approval, publishReadiness);
@@ -597,6 +669,8 @@ internal static class ReleasePublishPreflightPlanner
             capabilityEnvironmentEvidence,
             packageValidationEvidence,
             releaseVerificationEvidence,
+            collectionPlanEvidence,
+            dryRunCrossLinkEvidence,
             publishReadiness,
             laneCloseout,
             refusalReason,
@@ -613,6 +687,8 @@ internal static class ReleasePublishPreflightPlanner
         ReleasePublishCapabilityEnvironmentEvidence capabilityEnvironmentEvidence,
         ReleasePublishPackageValidationEvidence packageValidationEvidence,
         ReleasePublishReleaseVerificationEvidence releaseVerificationEvidence,
+        ReleasePublishCollectionPlanEvidence collectionPlanEvidence,
+        ReleasePublishDryRunCrossLinkEvidence dryRunCrossLinkEvidence,
         ReleasePublishSemanticEvidenceValidation semanticEvidenceValidation,
         ReleasePublishChecksumSidecar checksumSidecar,
         ReleasePublishBuildManifestCrossReference buildManifestCrossReference,
@@ -627,7 +703,9 @@ internal static class ReleasePublishPreflightPlanner
         Evidence("release-prepare-build-manifest", "Local release prepare build-manifest.json exists and is accepted", "ADR-011 mandatory local build manifest", BuildManifestRequirementStatus(localEvidenceArtifacts, buildManifestCrossReference), checkedInCurrentGate: true),
         Evidence("release-prepare-checksums", "Local release prepare checksums.sha256 exists and is accepted", "ADR-011 checksum evidence", ChecksumRequirementStatus(localEvidenceArtifacts, checksumSidecar), checkedInCurrentGate: true),
         Evidence("release-prepare-archive-evidence", "Local release archive evidence exists and is accepted", "Gate 268 release archive evidence", ArchiveEvidenceRequirementStatus(localEvidenceArtifacts, archiveEvidenceCrossReference), checkedInCurrentGate: true),
-        Evidence("governance-checks", "Governance checks passed", "ADR-011 release governance", GovernanceRequirementStatus(governanceChecks), checkedInCurrentGate: true)
+        Evidence("governance-checks", "Governance checks passed", "ADR-011 release governance", GovernanceRequirementStatus(governanceChecks), checkedInCurrentGate: true),
+        Evidence("release-dry-run-collection-plan", "Release dry-run evidence collection plan accepted", "Gate 307 release publish collection-plan evidence", collectionPlanEvidence.Status, checkedInCurrentGate: true),
+        Evidence("release-dry-run-cross-links", "Release dry-run evidence cross-links are consistent", "Gate 308 release publish dry-run evidence cross-links", dryRunCrossLinkEvidence.Status, checkedInCurrentGate: true)
     ];
 
     private static ReleasePublishReadiness CreatePublishReadiness(
@@ -711,6 +789,8 @@ internal static class ReleasePublishPreflightPlanner
         "release-prepare-checksums" => "complete-digest-revalidated",
         "release-prepare-archive-evidence" => "complete-archive-revalidated",
         "governance-checks" => "complete-governance-evaluated",
+        "release-dry-run-collection-plan" => "complete-collection-plan-validated",
+        "release-dry-run-cross-links" => "complete-cross-links-validated",
         _ => null
     };
 
@@ -1433,6 +1513,265 @@ internal static class ReleasePublishPreflightPlanner
         return StringComparer.Ordinal.Equals(normalized, "dist") ||
             normalized.StartsWith("dist/", StringComparison.Ordinal);
     }
+
+    private static ReleasePublishCollectionPlanEvidence CreateCollectionPlanEvidence(string projectRoot)
+    {
+        var fullPath = Path.Combine(projectRoot, CollectionPlanEvidenceRelativePath.Replace('/', Path.DirectorySeparatorChar));
+        var displayPath = ToDisplayPath(projectRoot, fullPath);
+        if (!File.Exists(fullPath))
+        {
+            return CollectionPlanEvidence(displayPath, exists: false, "missing", contentRead: false, "collection-plan-missing");
+        }
+
+        JsonObject? root;
+        try
+        {
+            root = JsonNode.Parse(File.ReadAllText(fullPath)) as JsonObject;
+        }
+        catch (JsonException ex)
+        {
+            return CollectionPlanEvidence(displayPath, exists: true, "malformed", contentRead: true, $"json-parse-error:{ex.Message}");
+        }
+        catch (IOException)
+        {
+            return CollectionPlanEvidence(displayPath, exists: true, "malformed", contentRead: false, "collection-plan-unreadable");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return CollectionPlanEvidence(displayPath, exists: true, "malformed", contentRead: false, "collection-plan-unreadable");
+        }
+
+        if (root is null)
+        {
+            return CollectionPlanEvidence(displayPath, exists: true, "malformed", contentRead: true, "collection-plan-not-json-object");
+        }
+
+        if (!TryGetStringProperty(root, "formatVersion", out var formatVersion) ||
+            !StringComparer.Ordinal.Equals(formatVersion, "0.1") ||
+            !TryGetStringProperty(root, "kind", out var kind) ||
+            !StringComparer.Ordinal.Equals(kind, "wastelandforge.release-dry-run-evidence-collection-plan") ||
+            !TryGetStringProperty(root, "command", out var command) ||
+            !StringComparer.Ordinal.Equals(command, "release verify") ||
+            !TryGetBooleanProperty(root, "dryRun", out var dryRun) ||
+            !TryGetStringProperty(root, "status", out var reportStatus) ||
+            !StringComparer.Ordinal.Equals(reportStatus, "planned"))
+        {
+            return CollectionPlanEvidence(displayPath, exists: true, "unexpected-report", contentRead: true, "collection-plan-identity-mismatch");
+        }
+
+        if (!dryRun)
+        {
+            return CollectionPlanEvidence(displayPath, exists: true, "unsupported-evidence", contentRead: true, "collection-plan-not-dry-run");
+        }
+
+        if (!TryGetStringProperty(root, "outputRoot", out var outputRoot) ||
+            root["summary"] is not JsonObject summary ||
+            !TryGetInt32Property(summary, "total", out var total) ||
+            !TryGetInt32Property(summary, "present", out var present) ||
+            !TryGetInt32Property(summary, "missing", out var missing) ||
+            !TryGetInt32Property(summary, "actions", out var actions) ||
+            !TryGetInt32Property(summary, "steps", out var summarySteps) ||
+            !TryGetInt32Property(summary, "manualSteps", out var manualSteps) ||
+            !TryGetInt32Property(summary, "availableSteps", out var availableSteps) ||
+            root["steps"] is not JsonArray steps ||
+            root["execution"] is not JsonObject execution)
+        {
+            return CollectionPlanEvidence(displayPath, exists: true, "malformed", contentRead: true, "collection-plan-summary-steps-or-execution-malformed");
+        }
+
+        var linksEvidenceIndex = StringPropertyEquals(root, "evidenceIndex", "dist/release-dry-run/release-evidence-index.json");
+        var linksEvidenceStatus = StringPropertyEquals(root, "evidenceStatus", "dist/release-dry-run/release-evidence-status.json");
+        var linksActionChecklist = StringPropertyEquals(root, "actionChecklist", "dist/release-dry-run/release-evidence-actions.json");
+        var linksHandoffSummary = StringPropertyEquals(root, "handoffSummary", "dist/release-dry-run/release-evidence-handoff.md");
+        var distScoped = StringComparer.Ordinal.Equals(outputRoot.Replace('\\', '/'), "dist/release-dry-run");
+        var stepContractValid = TryValidateCollectionPlanSteps(steps, out var malformedSteps);
+        var summaryCountersValid =
+            total == CollectionPlanExpectedSteps.Length &&
+            present + missing == total &&
+            actions <= total &&
+            summarySteps == steps.Count &&
+            summarySteps == CollectionPlanExpectedSteps.Length &&
+            manualSteps + availableSteps == summarySteps &&
+            manualSteps >= 0 &&
+            availableSteps >= 0;
+        var noExecutionBoundary = HasCollectionPlanNoExecutionBoundary(execution);
+        var status = ResolveCollectionPlanEvidenceStatus(
+            distScoped,
+            linksEvidenceIndex,
+            linksEvidenceStatus,
+            linksActionChecklist,
+            linksHandoffSummary,
+            summaryCountersValid,
+            stepContractValid,
+            noExecutionBoundary);
+        var detail = ResolveCollectionPlanEvidenceDetail(status);
+
+        return new ReleasePublishCollectionPlanEvidence(
+            displayPath,
+            Exists: true,
+            status,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: true,
+            dryRun,
+            outputRoot,
+            distScoped,
+            linksEvidenceIndex,
+            linksEvidenceStatus,
+            linksActionChecklist,
+            linksHandoffSummary,
+            summarySteps,
+            manualSteps,
+            availableSteps,
+            malformedSteps,
+            noExecutionBoundary,
+            detail);
+    }
+
+    private static ReleasePublishCollectionPlanEvidence CollectionPlanEvidence(
+        string path,
+        bool exists,
+        string status,
+        bool contentRead,
+        string detail) =>
+        new(
+            path,
+            exists,
+            status,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: contentRead,
+            DryRun: false,
+            OutputRoot: null,
+            DistScoped: false,
+            LinksEvidenceIndex: false,
+            LinksEvidenceStatus: false,
+            LinksActionChecklist: false,
+            LinksHandoffSummary: false,
+            Steps: 0,
+            ManualSteps: 0,
+            AvailableSteps: 0,
+            MalformedSteps: 0,
+            NoExecutionBoundary: false,
+            detail);
+
+    private static string ResolveCollectionPlanEvidenceStatus(
+        bool distScoped,
+        bool linksEvidenceIndex,
+        bool linksEvidenceStatus,
+        bool linksActionChecklist,
+        bool linksHandoffSummary,
+        bool summaryCountersValid,
+        bool stepContractValid,
+        bool noExecutionBoundary)
+    {
+        if (!noExecutionBoundary)
+        {
+            return "unsupported-evidence";
+        }
+
+        if (!distScoped)
+        {
+            return "not-dist-scoped";
+        }
+
+        if (!linksEvidenceIndex || !linksEvidenceStatus || !linksActionChecklist || !linksHandoffSummary)
+        {
+            return "collection-plan-links-mismatch";
+        }
+
+        return summaryCountersValid && stepContractValid
+            ? "complete-collection-plan-validated"
+            : "collection-plan-contract-mismatch";
+    }
+
+    private static string ResolveCollectionPlanEvidenceDetail(string status) => status switch
+    {
+        "complete-collection-plan-validated" => "collection-plan-contract-and-no-execution-boundary-validated",
+        "collection-plan-contract-mismatch" => "collection-plan-summary-or-step-contract-mismatch",
+        "collection-plan-links-mismatch" => "collection-plan-required-links-mismatch",
+        "not-dist-scoped" => "collection-plan-output-root-not-dist-release-dry-run",
+        "unsupported-evidence" => "collection-plan-execution-boundary-mismatch",
+        _ => status
+    };
+
+    private static bool TryValidateCollectionPlanSteps(JsonArray steps, out int malformedSteps)
+    {
+        malformedSteps = 0;
+        if (steps.Count != CollectionPlanExpectedSteps.Length)
+        {
+            malformedSteps = Math.Abs(steps.Count - CollectionPlanExpectedSteps.Length);
+            return false;
+        }
+
+        foreach (var expectedStep in CollectionPlanExpectedSteps)
+        {
+            var step = steps[expectedStep.Order - 1] as JsonObject;
+            if (step is null ||
+                !TryGetInt32Property(step, "order", out var order) ||
+                order != expectedStep.Order ||
+                !StringPropertyEquals(step, "id", expectedStep.Id) ||
+                !StringPropertyEquals(step, "evidenceId", expectedStep.EvidenceId) ||
+                !StringPropertyEquals(step, "targetPath", expectedStep.TargetPath) ||
+                !StringPropertyEquals(step, "requiredBy", "forge release publish") ||
+                !TryGetStringProperty(step, "producerCommand", out _) ||
+                !TryGetStringProperty(step, "commandHint", out _) ||
+                !TryGetStringProperty(step, "sourceGate", out _) ||
+                !TryGetStringProperty(step, "status", out var status) ||
+                !IsCollectionStepStatus(status) ||
+                !TryGetStringProperty(step, "collectionMode", out var collectionMode) ||
+                !IsCollectionStepMode(collectionMode) ||
+                !TryGetStringProperty(step, "execution", out var execution) ||
+                !IsCollectionStepExecution(execution) ||
+                !TryGetBooleanProperty(step, "producedByCurrentCommand", out _) ||
+                !IsCollectionStepExecutionShapeValid(step, expectedStep.EvidenceId, status, collectionMode, execution))
+            {
+                malformedSteps++;
+            }
+        }
+
+        return malformedSteps == 0;
+    }
+
+    private static bool IsCollectionStepStatus(string status) =>
+        StringComparer.Ordinal.Equals(status, "available") ||
+        StringComparer.Ordinal.Equals(status, "manual-required");
+
+    private static bool IsCollectionStepMode(string mode) =>
+        StringComparer.Ordinal.Equals(mode, "current-command-output") ||
+        StringComparer.Ordinal.Equals(mode, "local-file") ||
+        StringComparer.Ordinal.Equals(mode, "manual-command-hint");
+
+    private static bool IsCollectionStepExecution(string execution) =>
+        StringComparer.Ordinal.Equals(execution, "none") ||
+        StringComparer.Ordinal.Equals(execution, "manual");
+
+    private static bool IsCollectionStepExecutionShapeValid(JsonObject step, string evidenceId, string status, string collectionMode, string execution)
+    {
+        if (StringComparer.Ordinal.Equals(execution, "manual"))
+        {
+            return StringComparer.Ordinal.Equals(status, "manual-required") &&
+                StringComparer.Ordinal.Equals(collectionMode, "manual-command-hint") &&
+                StringPropertyEquals(step, "actionId", $"produce-{evidenceId}");
+        }
+
+        return !StringComparer.Ordinal.Equals(status, "manual-required") &&
+            !StringComparer.Ordinal.Equals(collectionMode, "manual-command-hint") &&
+            step["actionId"] is null;
+    }
+
+    private static bool HasCollectionPlanNoExecutionBoundary(JsonObject execution) =>
+        BooleanPropertyEquals(execution, "commandFanOut", expected: false) &&
+        BooleanPropertyEquals(execution, "capabilityScanExecution", expected: false) &&
+        BooleanPropertyEquals(execution, "packageVerifyExecution", expected: false) &&
+        BooleanPropertyEquals(execution, "releasePublishExecution", expected: false) &&
+        BooleanPropertyEquals(execution, "releaseUploads", expected: false) &&
+        BooleanPropertyEquals(execution, "attestationSigning", expected: false) &&
+        BooleanPropertyEquals(execution, "externalToolExecution", expected: false) &&
+        BooleanPropertyEquals(execution, "pluginMutation", expected: false) &&
+        BooleanPropertyEquals(execution, "mo2Automation", expected: false) &&
+        BooleanPropertyEquals(execution, "geckAutomation", expected: false) &&
+        BooleanPropertyEquals(execution, "runtimeProbes", expected: false) &&
+        BooleanPropertyEquals(execution, "realThirdPartyPluginFixtures", expected: false) &&
+        BooleanPropertyEquals(execution, "ai", expected: false);
 
     private static ReleasePublishApprovalRequirement CreateApprovalRequirement(
         string projectRoot,
@@ -3822,6 +4161,9 @@ internal static class ReleasePublishPreflightJsonSerializer
                 ["releaseVerificationEvidenceStatus"] = result.ReleaseVerificationEvidence.Status,
                 ["releaseVerificationEvidenceErrors"] = result.ReleaseVerificationEvidence.Errors,
                 ["releaseVerificationEvidenceReleaseDiagnostics"] = result.ReleaseVerificationEvidence.ReleaseIssueCount,
+                ["collectionPlanEvidenceStatus"] = result.CollectionPlanEvidence.Status,
+                ["collectionPlanEvidenceSteps"] = result.CollectionPlanEvidence.Steps,
+                ["collectionPlanEvidenceMalformedSteps"] = result.CollectionPlanEvidence.MalformedSteps,
                 ["publishReadinessStatus"] = result.PublishReadiness.Status,
                 ["publishReadinessLocalPreconditionsSatisfied"] = result.PublishReadiness.LocalPreconditionsSatisfied,
                 ["publishReadinessBlockingChecks"] = result.PublishReadiness.BlockingChecks,
@@ -3845,6 +4187,7 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["capabilityEnvironmentEvidence"] = ToCapabilityEnvironmentEvidence(result.CapabilityEnvironmentEvidence),
             ["packageValidationEvidence"] = ToPackageValidationEvidence(result.PackageValidationEvidence),
             ["releaseVerificationEvidence"] = ToReleaseVerificationEvidence(result.ReleaseVerificationEvidence),
+            ["collectionPlanEvidence"] = ToCollectionPlanEvidence(result.CollectionPlanEvidence),
             ["requiredEvidence"] = ToEvidenceArray(result.RequiredEvidence),
             ["localEvidenceArtifacts"] = ToArtifactArray(result.LocalEvidenceArtifacts),
             ["governanceChecks"] = ToGovernanceCheckArray(result.GovernanceChecks),
@@ -4253,6 +4596,29 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["detail"] = evidence.Detail
         };
 
+    private static JsonObject ToCollectionPlanEvidence(ReleasePublishCollectionPlanEvidence evidence) =>
+        new()
+        {
+            ["path"] = evidence.Path,
+            ["exists"] = evidence.Exists,
+            ["status"] = evidence.Status,
+            ["checkedInCurrentGate"] = evidence.CheckedInCurrentGate,
+            ["contentReadInCurrentGate"] = evidence.ContentReadInCurrentGate,
+            ["dryRun"] = evidence.DryRun,
+            ["outputRoot"] = evidence.OutputRoot,
+            ["distScoped"] = evidence.DistScoped,
+            ["linksEvidenceIndex"] = evidence.LinksEvidenceIndex,
+            ["linksEvidenceStatus"] = evidence.LinksEvidenceStatus,
+            ["linksActionChecklist"] = evidence.LinksActionChecklist,
+            ["linksHandoffSummary"] = evidence.LinksHandoffSummary,
+            ["steps"] = evidence.Steps,
+            ["manualSteps"] = evidence.ManualSteps,
+            ["availableSteps"] = evidence.AvailableSteps,
+            ["malformedSteps"] = evidence.MalformedSteps,
+            ["noExecutionBoundary"] = evidence.NoExecutionBoundary,
+            ["detail"] = evidence.Detail
+        };
+
     private static JsonArray ToArtifactArray(IReadOnlyList<ReleasePublishEvidenceArtifact> artifacts)
     {
         var array = new JsonArray();
@@ -4397,6 +4763,7 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["capabilityEnvironmentEvidenceEvaluation"] = result.CapabilityEnvironmentEvidence.CheckedInCurrentGate,
             ["packageValidationEvidenceEvaluation"] = result.PackageValidationEvidence.CheckedInCurrentGate,
             ["releaseVerificationEvidenceEvaluation"] = result.ReleaseVerificationEvidence.CheckedInCurrentGate,
+            ["collectionPlanEvidenceEvaluation"] = result.CollectionPlanEvidence.CheckedInCurrentGate,
             ["humanApprovalEvaluation"] = true,
             ["humanApprovalConfirmationValidated"] = result.Approval.ConfirmationValidated,
             ["governanceCheckExecution"] = true,
@@ -4511,6 +4878,17 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.Append(", archive entry names match: ");
         builder.Append(result.ArchiveEvidenceCrossReference.ArchiveEntryNamesMatchLocal.ToString().ToLowerInvariant());
         builder.AppendLine(")");
+        builder.Append("Collection plan evidence: ");
+        builder.Append(result.CollectionPlanEvidence.Status);
+        builder.Append(" (");
+        builder.Append(result.CollectionPlanEvidence.Steps);
+        builder.Append(" steps, ");
+        builder.Append(result.CollectionPlanEvidence.ManualSteps);
+        builder.Append(" manual, ");
+        builder.Append(result.CollectionPlanEvidence.AvailableSteps);
+        builder.Append(" available, ");
+        builder.Append(result.CollectionPlanEvidence.MalformedSteps);
+        builder.AppendLine(" malformed)");
         builder.Append("Mode: ");
         builder.AppendLine(result.DryRun ? "dry-run-preflight" : "no-publish-refusal");
         builder.Append("Publish ready: ");
@@ -4931,6 +5309,47 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine(result.ReleaseVerificationEvidence.Detail);
 
         builder.AppendLine();
+        builder.AppendLine("Collection plan evidence");
+        builder.Append("  path: ");
+        builder.AppendLine(result.CollectionPlanEvidence.Path);
+        builder.Append("  exists: ");
+        builder.AppendLine(result.CollectionPlanEvidence.Exists.ToString().ToLowerInvariant());
+        builder.Append("  status: ");
+        builder.AppendLine(result.CollectionPlanEvidence.Status);
+        builder.Append("  checked in current gate: ");
+        builder.AppendLine(result.CollectionPlanEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  content read in current gate: ");
+        builder.AppendLine(result.CollectionPlanEvidence.ContentReadInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  dry run: ");
+        builder.AppendLine(result.CollectionPlanEvidence.DryRun.ToString().ToLowerInvariant());
+        builder.Append("  output root: ");
+        builder.AppendLine(result.CollectionPlanEvidence.OutputRoot ?? "missing");
+        builder.Append("  dist scoped: ");
+        builder.AppendLine(result.CollectionPlanEvidence.DistScoped.ToString().ToLowerInvariant());
+        builder.Append("  links evidence index: ");
+        builder.AppendLine(result.CollectionPlanEvidence.LinksEvidenceIndex.ToString().ToLowerInvariant());
+        builder.Append("  links evidence status: ");
+        builder.AppendLine(result.CollectionPlanEvidence.LinksEvidenceStatus.ToString().ToLowerInvariant());
+        builder.Append("  links action checklist: ");
+        builder.AppendLine(result.CollectionPlanEvidence.LinksActionChecklist.ToString().ToLowerInvariant());
+        builder.Append("  links handoff summary: ");
+        builder.AppendLine(result.CollectionPlanEvidence.LinksHandoffSummary.ToString().ToLowerInvariant());
+        builder.Append("  summary: ");
+        builder.Append(result.CollectionPlanEvidence.Steps);
+        builder.Append(" steps, ");
+        builder.Append(result.CollectionPlanEvidence.ManualSteps);
+        builder.Append(" manual, ");
+        builder.Append(result.CollectionPlanEvidence.AvailableSteps);
+        builder.Append(" available, ");
+        builder.Append(result.CollectionPlanEvidence.MalformedSteps);
+        builder.Append(" malformed");
+        builder.AppendLine();
+        builder.Append("  no execution boundary: ");
+        builder.AppendLine(result.CollectionPlanEvidence.NoExecutionBoundary.ToString().ToLowerInvariant());
+        builder.Append("  detail: ");
+        builder.AppendLine(result.CollectionPlanEvidence.Detail);
+
+        builder.AppendLine();
         builder.AppendLine("Governance checks");
         foreach (var check in result.GovernanceChecks)
         {
@@ -5009,6 +5428,8 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine(result.PackageValidationEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
         builder.Append("  release verification evidence evaluation: ");
         builder.AppendLine(result.ReleaseVerificationEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  collection plan evidence evaluation: ");
+        builder.AppendLine(result.CollectionPlanEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
         builder.AppendLine("  human approval evaluation: true");
         builder.Append("  human approval confirmation validated: ");
         builder.AppendLine(result.Approval.ConfirmationValidated.ToString().ToLowerInvariant());

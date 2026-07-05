@@ -1702,3 +1702,41 @@ fan-out, capability scans, package verification, evidence content validation,
 publish releases, call remote repositories, sign or attest artifacts, execute
 external tools, mutate plugins, automate MO2/GECK, run runtime probes, or use
 AI.
+
+Gate 305 extends `forge release verify` with a local missing-evidence action
+checklist. Successful release verify runs now write
+`dist/release-dry-run/release-evidence-actions.json`, listing manual command
+hints for missing release-publish preflight evidence. CLI JSON/text reports
+the action checklist, the evidence index and status projection link it, the
+Markdown handoff renders the missing action count and rows, and
+`dist/release-dry-run/build-manifest.json` plus
+`dist/release-dry-run/checksums.sha256` cover it. It does not run those
+command hints, run command fan-out, capability scans, package verification,
+evidence content validation, publish releases, call remote repositories, sign
+or attest artifacts, execute external tools, mutate plugins, automate
+MO2/GECK, run runtime probes, or use AI.
+
+Gate 306 extends `forge release verify` with a local evidence collection
+plan. Successful release verify runs now write
+`dist/release-dry-run/release-evidence-collection-plan.json`, ordering the
+schema-validation, capability/environment, package-validation, and
+release-verification steps and linking missing manual steps to action IDs.
+CLI JSON/text reports the collection plan, the evidence index, status
+projection, and action checklist link it, the Markdown handoff renders the
+step count and rows, and `dist/release-dry-run/build-manifest.json` plus
+`dist/release-dry-run/checksums.sha256` cover it. It does not run those
+steps, run command fan-out, capability scans, package verification, evidence
+content validation, publish releases, call remote repositories, sign or
+attest artifacts, execute external tools, mutate plugins, automate MO2/GECK,
+run runtime probes, or use AI.
+
+Gate 307 extends `forge release publish` with local collection-plan evidence
+evaluation. The preflight now reads
+`dist/release-dry-run/release-evidence-collection-plan.json`, validates its
+identity, output root, evidence links, ordered steps, summary counters, manual
+action shape, and no-execution flags, reports `collectionPlanEvidence`, and
+adds `release-dry-run-collection-plan` to required evidence/readiness. It
+does not run collection steps, run command fan-out, capability scans, package
+verification, publish releases, call remote repositories, sign or attest
+artifacts, execute external tools, mutate plugins, automate MO2/GECK, run
+runtime probes, or use AI.

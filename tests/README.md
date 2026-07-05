@@ -1502,6 +1502,33 @@ the evidence index and Markdown handoff, is surfaced as
 `outputs.releaseEvidenceStatus`, and is covered by release dry-run
 build-manifest and checksum evidence.
 
+Gate 305 extends unit and golden CLI coverage for `forge release verify`
+missing-evidence action output. Tests verify
+`dist/release-dry-run/release-evidence-actions.json` is written from
+temp-copied synthetic fixtures, lists manual actions for missing
+capability/environment and package-validation evidence, links from the
+evidence index, status projection, and Markdown handoff, is surfaced as
+`outputs.releaseEvidenceActions`, and is covered by release dry-run
+build-manifest and checksum evidence.
+
+Gate 306 extends unit and golden CLI coverage for `forge release verify`
+evidence collection-plan output. Tests verify
+`dist/release-dry-run/release-evidence-collection-plan.json` is written from
+temp-copied synthetic fixtures, orders release-publish preflight evidence
+steps, links missing manual steps to action IDs, links from the evidence
+index, status projection, action checklist, and Markdown handoff, is surfaced
+as `outputs.releaseEvidenceCollectionPlan`, and is covered by release dry-run
+build-manifest and checksum evidence.
+
+Gate 307 extends golden CLI coverage for `forge release publish`
+collection-plan evidence. Tests verify publish dry-run reads
+`dist/release-dry-run/release-evidence-collection-plan.json` from
+temp-copied synthetic fixtures, validates identity, links, ordered steps,
+summary counters, and no-execution flags, surfaces `collectionPlanEvidence`,
+adds `release-dry-run-collection-plan` to required evidence/readiness, and
+keeps release publishing, uploads, external tools, runtime probes, and AI
+disabled.
+
 Run the full local suite serially:
 
 ```text

@@ -1165,6 +1165,26 @@ the synthetic `fixtures/projects/ExampleMod` project through temporary copies
 and create `dist/release-dry-run/release-evidence-status.json` only in temp
 test directories.
 
+Gate 305 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Release verify missing-evidence action
+tests reuse the synthetic `fixtures/projects/ExampleMod` project through
+temporary copies and create `dist/release-dry-run/release-evidence-actions.json`
+only in temp test directories.
+
+Gate 306 adds no public fixture, private fixture, committed generated evidence
+payload, or real provider sample. Release verify evidence collection-plan
+tests reuse the synthetic `fixtures/projects/ExampleMod` project through
+temporary copies and create
+`dist/release-dry-run/release-evidence-collection-plan.json` only in temp test
+directories.
+
+Gate 307 adds no public fixture, private fixture, committed generated
+evidence payload, or real provider sample. Release publish collection-plan
+evidence tests reuse the synthetic `fixtures/projects/ExampleMod` project
+through temporary copies and read
+`dist/release-dry-run/release-evidence-collection-plan.json` only from temp
+test directories after local release-verify dry-run generation.
+
 Gate 216 commits no new fixture files. It uses temp-copied synthetic JSON
 fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install
