@@ -1492,3 +1492,30 @@ standalone packaging dependencies, publishing clients, repository API clients,
 signing or attestation dependencies, external tool integrations, network
 calls, runtime probes, MO2 or GECK automation, plugin mutation dependencies,
 generated workflow/task mutation, or AI requirements.
+
+Gate 329 adds no package dependency. It adds a PowerShell helper that packs
+and restores the existing `WastelandForge.Cli` local tool from ignored local
+package output using an ignored local-only NuGet config. It does not add new
+NuGet dependencies, root `NuGet.config`, NuGet publication, standalone
+packaging dependencies, publishing clients, repository API clients, signing
+or attestation dependencies, external tool integrations, network calls,
+runtime probes, MO2 or GECK automation, plugin mutation dependencies,
+generated workflow/task mutation, or AI requirements.
+
+Gate 330 adds no package dependency. It reuses `eng/Restore-ForgeTool.ps1` from
+the repository-owned CI workflow and keeps package restore scoped to ignored
+local package output plus an isolated package cache. It does not add new NuGet
+dependencies, root `NuGet.config`, NuGet publication, standalone packaging
+dependencies, publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls beyond normal CI action
+setup, runtime probes, MO2 or GECK automation, plugin mutation dependencies,
+generated workflow/task mutation, or AI requirements.
+
+Gate 331 adds no package dependency. It plans repository-owned developer tasks
+that reuse `eng/Restore-ForgeTool.ps1` and the checked-in local tool manifest,
+but it does not create a task file or add a new package source. It does not add
+new NuGet dependencies, root `NuGet.config`, NuGet publication, standalone
+packaging dependencies, publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, MO2 or GECK automation, plugin mutation dependencies, generated
+workflow/task mutation, or AI requirements.

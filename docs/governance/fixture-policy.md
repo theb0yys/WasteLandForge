@@ -1293,3 +1293,21 @@ payload, provider sample, Bethesda asset, third-party mod file, local install
 snapshot, MO2 profile, GECK output, external tool fixture, generated
 workflow/task fixture, checked-in local tool package fixture, or AI-generated
 fixture. It is a docs and prompt routing planning gate only.
+
+Gate 329 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, generated
+workflow/task fixture, checked-in local tool package fixture, or AI-generated
+fixture. Restore smoke artifacts stay under ignored `artifacts/local-tool/`.
+
+Gate 330 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, generated
+workflow/task fixture, checked-in local tool package fixture, or AI-generated
+fixture. Workflow-equivalent smoke artifacts stay under ignored `artifacts/`.
+
+Gate 331 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, repository task
+fixture, generated workflow/task fixture, checked-in local tool package
+fixture, or AI-generated fixture. It is a planning gate only.

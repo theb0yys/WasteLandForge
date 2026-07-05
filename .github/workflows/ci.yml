@@ -49,15 +49,22 @@ jobs:
         shell: pwsh
         run: dotnet test WastelandForge.sln -c Release --no-build --no-restore -m:1 --logger "trx;LogFilePrefix=validate-ubuntu" --results-directory TestResults/validate-ubuntu
 
+      - name: Restore Forge local tool
+        shell: pwsh
+        run: |
+          ./eng/Restore-ForgeTool.ps1 -RestoreRoot artifacts/local-tool/restore/ci
+          $packagesPath = (Resolve-Path -LiteralPath artifacts/local-tool/restore/ci/packages).Path
+          "NUGET_PACKAGES=$packagesPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Export SARIF
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts/validate-ubuntu | Out-Null
-          dotnet run --project src/WastelandForge.Cli/WastelandForge.Cli.csproj -c Release --no-build -- validate fixtures/projects/ExampleMod --format sarif --output artifacts/validate-ubuntu/wastelandforge-validation.sarif --no-input
+          dotnet tool run forge -- validate fixtures/projects/ExampleMod --format sarif --output artifacts/validate-ubuntu/wastelandforge-validation.sarif --no-input
 
       - name: Export GitHub annotations and Markdown summary
         shell: pwsh
-        run: dotnet run --project src/WastelandForge.Cli/WastelandForge.Cli.csproj -c Release --no-build -- validate fixtures/projects/ExampleMod --format github --summary artifacts/validate-ubuntu/wastelandforge-validation.md --no-input
+        run: dotnet tool run forge -- validate fixtures/projects/ExampleMod --format github --summary artifacts/validate-ubuntu/wastelandforge-validation.md --no-input
 
       - name: Write CI governance artifacts
         shell: pwsh
@@ -108,6 +115,10 @@ jobs:
         shell: pwsh
         run: dotnet test WastelandForge.sln -c Release --no-build --no-restore -m:1 --logger "trx;LogFilePrefix=build-test-windows" --results-directory TestResults/build-test-windows
 
+      - name: Restore Forge local tool
+        shell: pwsh
+        run: ./eng/Restore-ForgeTool.ps1 -RestoreRoot artifacts/local-tool/restore/ci
+
       - name: Write CI governance artifacts
         shell: pwsh
         run: ./eng/ci/New-CiArtifacts.ps1 -Lane build-test-windows -OutputDirectory artifacts/build-test-windows
@@ -149,11 +160,18 @@ jobs:
         shell: pwsh
         run: dotnet build WastelandForge.sln -c Release --no-restore
 
+      - name: Restore Forge local tool
+        shell: pwsh
+        run: |
+          ./eng/Restore-ForgeTool.ps1 -RestoreRoot artifacts/local-tool/restore/ci
+          $packagesPath = (Resolve-Path -LiteralPath artifacts/local-tool/restore/ci/packages).Path
+          "NUGET_PACKAGES=$packagesPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Release dry-run
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts/release-dry-run | Out-Null
-          $json = & dotnet run --project src/WastelandForge.Cli/WastelandForge.Cli.csproj -c Release --no-build -- release verify fixtures/projects/ExampleMod --format json --summary artifacts/release-dry-run/release-verify.md --no-input
+          $json = & dotnet tool run forge -- release verify fixtures/projects/ExampleMod --format json --summary artifacts/release-dry-run/release-verify.md --no-input
           $exitCode = $LASTEXITCODE
           $json | Set-Content -LiteralPath artifacts/release-dry-run/release-verify.json -Encoding utf8
           if ($exitCode -ne 0) {

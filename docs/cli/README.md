@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 328 generated workflow and task bootstrap integration planning
+Status: Gate 331 repository-owned developer task local-tool bootstrap planning
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -1418,6 +1418,37 @@ therefore must not blindly call `dotnet pack src/WastelandForge.Cli/...`
 until publication or another explicit package-source policy is gated. Gate
 328 changes no CLI runtime behavior, adds no aliases, mutates no generated
 task or workflow templates, publishes nothing, runs no external tools or
+runtime probes, and adds no AI behavior.
+
+Gate 329 keeps the same canonical command surface and adds
+`eng/Restore-ForgeTool.ps1` as the repository-local restore helper for the
+checked-in local tool manifest. The helper packs `WastelandForge.Cli`, writes
+an ignored local-only NuGet config and isolated package cache under
+`artifacts/local-tool/restore/gate-329/`, restores `.config/dotnet-tools.json`
+from local package output, and verifies `dotnet tool run forge -- --version`
+by default. Gate 329 changes no CLI runtime behavior, adds no aliases, mutates
+no generated task or workflow templates, publishes nothing, runs no external
+game tools or runtime probes, and adds no AI behavior.
+
+Gate 330 keeps the same canonical command surface and integrates the
+repo-local restore helper into the repository-owned CI workflow. The Ubuntu
+validation lane restores the checked-in local tool manifest, sets the isolated
+package cache for later CI steps, and invokes `dotnet tool run forge -- validate`
+for SARIF and GitHub/Markdown output. The mandatory Windows lane restores the
+local tool as a bootstrap smoke, and the release dry-run lane invokes
+`dotnet tool run forge -- release verify`. Gate 330 changes no CLI runtime
+behavior, adds no aliases, mutates no generated task or workflow templates,
+publishes nothing, runs no external game tools or runtime probes, and adds no
+AI behavior.
+
+Gate 331 keeps the same canonical command surface and plans repository-owned
+developer task bootstrap for the checked-in local tool flow. The planned source
+repository `.vscode/tasks.json` should restore Forge through
+`eng/Restore-ForgeTool.ps1`, set `NUGET_PACKAGES` to the isolated developer
+restore cache, and invoke canonical read-only `dotnet tool run forge` tasks
+such as help, validation, and capabilities listing. Gate 331 changes no CLI
+runtime behavior, adds no aliases, creates no task file, mutates no generated
+task or workflow templates, publishes nothing, runs no external game tools or
 runtime probes, and adds no AI behavior.
 
 ## Docs Evidence

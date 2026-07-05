@@ -1890,3 +1890,24 @@ manifest, while recording that consumer-project scaffolds cannot assume this
 source tree exists. It mutates no generated workflow or task templates, adds
 no root `NuGet.config`, runs no external tools or runtime probes, publishes no
 releases, signs or attests nothing, and uses no AI.
+
+Gate 329 changes no source code and no project metadata. It adds the
+repo-local engineering helper `eng/Restore-ForgeTool.ps1` to pack and restore
+the existing CLI local tool from ignored local package output. It mutates no
+generated workflow or task templates, adds no root `NuGet.config`, runs no
+external game tools or runtime probes, publishes no releases, signs or attests
+nothing, and uses no AI.
+
+Gate 330 changes no source code and no project metadata. It integrates the
+repo-local restore helper into the repository-owned CI workflow so validation
+and release dry-run lanes invoke the restored local tool through
+`dotnet tool run forge`. It mutates no generated workflow or task templates,
+adds no root `NuGet.config`, runs no external game tools or runtime probes,
+publishes no releases, signs or attests nothing, and uses no AI.
+
+Gate 331 changes no source code and no project metadata. It plans
+repository-owned developer task bootstrap for a source-repository
+`.vscode/tasks.json` that restores the checked-in local tool before read-only
+Forge commands. It mutates no generated workflow or task templates, adds no
+root `NuGet.config`, runs no external game tools or runtime probes, publishes
+no releases, signs or attests nothing, and uses no AI.

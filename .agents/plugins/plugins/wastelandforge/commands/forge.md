@@ -785,9 +785,12 @@ Gate 324 plans Forge CLI local-tool package metadata. Gate 325 implements the
 Forge CLI local-tool package metadata scaffold. Gate 326 plans the checked-in
 local tool manifest flow. Gate 327 implements the checked-in local tool
 manifest scaffold. Gate 328 plans generated workflow and task bootstrap
-integration for the repository-pinned local tool flow. Route the next
-development step to Gate 329: repo-local Forge local-tool restore helper
-scaffold.
+integration for the repository-pinned local tool flow. Gate 329 implements the
+repo-local Forge local-tool restore helper scaffold. Gate 330 integrates the
+restore helper into the repository-owned CI bootstrap path. Gate 331 plans
+repository-owned developer task local-tool bootstrap. Route the next
+development step to Gate 332: repository-owned developer task local-tool
+bootstrap scaffold.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -914,9 +917,12 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   the Forge CLI local-tool package metadata scaffold. Gate 326 plans the
   checked-in local tool manifest flow. Gate 327 implements the checked-in local
   tool manifest scaffold. Gate 328 plans generated workflow and task bootstrap
-  integration for the repository-pinned local tool flow. Route the next
-  development step to Gate 329: repo-local Forge local-tool restore helper
-  scaffold.
+  integration for the repository-pinned local tool flow. Gate 329 implements
+  the repo-local Forge local-tool restore helper scaffold. Gate 330 integrates
+  the restore helper into the repository-owned CI bootstrap path. Gate 331
+  plans repository-owned developer task local-tool bootstrap. Route the next
+  development step to Gate 332: repository-owned developer task local-tool
+  bootstrap scaffold.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider

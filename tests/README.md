@@ -1686,6 +1686,37 @@ third-party mod files, external tool fixtures, runtime probes, generated
 workflow/task mutations, VS Code extension processes, language-server
 processes, local tool package publication, or AI requirements are added.
 
+Gate 329 adds repo-local restore helper smoke validation. The required checks
+run `eng/Restore-ForgeTool.ps1`, which packs `WastelandForge.Cli`, restores
+the checked-in `.config/dotnet-tools.json` manifest from local package output
+using ignored local restore artifacts, then verifies `forge --version`
+through `dotnet tool run`; a follow-up `dotnet tool run forge -- help` with
+`NUGET_PACKAGES` pointed at the isolated restore cache checks normal local-tool
+invocation. No public fixtures, generated payload fixtures, real provider
+samples, Bethesda assets, third-party mod files, external tool fixtures,
+runtime probes, generated workflow/task mutations, VS Code extension
+processes, language-server processes, local tool package publication, or AI
+requirements are added.
+
+Gate 330 adds workflow-equivalent local-tool bootstrap validation. The required
+checks run `eng/Restore-ForgeTool.ps1 -RestoreRoot artifacts/local-tool/restore/gate-330`,
+point `NUGET_PACKAGES` at the isolated restore cache, then invoke
+`dotnet tool run forge -- validate` for SARIF and GitHub/Markdown output and
+`dotnet tool run forge -- release verify` for release dry-run output. No public
+fixtures, generated payload fixtures, real provider samples, Bethesda assets,
+third-party mod files, external tool fixtures, runtime probes, generated
+workflow/task mutations, VS Code extension processes, language-server
+processes, local tool package publication, or AI requirements are added.
+
+Gate 331 adds no runtime test fixture. The required checks confirm that no
+repository `.vscode` task scaffold exists yet, that route text now points to
+Gate 332, and that diff/protected-file checks pass. Gate 332 is routed to add
+the repository-owned `.vscode/tasks.json` scaffold and task-shape validation.
+No public fixtures, generated payload fixtures, real provider samples,
+Bethesda assets, third-party mod files, external tool fixtures, runtime probes,
+generated workflow/task mutations, VS Code extension processes, language-server
+processes, local tool package publication, or AI requirements are added.
+
 Run the full local suite serially:
 
 ```text

@@ -11,3 +11,11 @@ Repository rulesets are settings, not files. The intended baseline is recorded i
 
 Gate 11 adds GitHub annotation and job-summary output as convenience CI
 projections. Local validation and SARIF generation remain the correctness path.
+
+Gate 330 integrates the repo-local local-tool restore helper into
+`.github/workflows/ci.yml`. The Ubuntu validation lane and release dry-run lane
+restore `.config/dotnet-tools.json` through `eng/Restore-ForgeTool.ps1`, set
+the isolated package cache for later steps, and invoke `dotnet tool run forge`
+with `validate` or `release verify`. The mandatory Windows lane also restores
+the local tool as bootstrap smoke. Generated `forge init` workflow and task
+templates remain unchanged.

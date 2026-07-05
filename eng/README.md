@@ -81,3 +81,39 @@ can pack and restore the local tool from `src/WastelandForge.Cli`, but
 consumer projects created by `forge init` cannot assume that source tree is
 present. Gate 329 is routed to add a repo-local restore helper before any
 generated workflow or task template is changed.
+
+Gate 329 adds that repo-local restore helper:
+
+- `Restore-ForgeTool.ps1` - packs `WastelandForge.Cli`, writes an ignored
+  local-only NuGet config and isolated package cache under
+  `artifacts/local-tool/restore/gate-329/`, restores
+  `.config/dotnet-tools.json`, and verifies the restored `forge` local tool
+  unless `-NoVerify` is passed.
+
+Example:
+
+```text
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Restore-ForgeTool.ps1
+$env:NUGET_PACKAGES = (Resolve-Path -LiteralPath artifacts/local-tool/restore/gate-329/packages).Path
+dotnet tool run forge -- help
+Remove-Item Env:\NUGET_PACKAGES
+```
+
+The helper is for this source repository only. It does not publish a package,
+add a root `NuGet.config`, mutate generated workflows or tasks, install
+providers, run external game tools, change the ADR-010 CLI command surface,
+or add AI behavior.
+
+Gate 330 wires this helper into the repository-owned CI workflow. The Ubuntu
+validation lane restores the local tool before running `dotnet tool run forge`
+for SARIF and GitHub/Markdown validation output, the mandatory Windows lane
+restores the local tool as bootstrap smoke, and the release dry-run lane
+restores the local tool before `dotnet tool run forge -- release verify`.
+Generated `forge init` workflow and task templates still stay unchanged.
+
+Gate 331 plans repository-owned developer task bootstrap for the same helper.
+The planned source-repository `.vscode/tasks.json` should restore the local
+tool through `Restore-ForgeTool.ps1`, set `NUGET_PACKAGES` to the ignored
+developer restore cache, and run read-only canonical Forge commands through
+`dotnet tool run forge`. Gate 331 does not create the task file; Gate 332 is
+routed to do that scaffold.

@@ -1126,3 +1126,32 @@ external tool diagnostics, runtime probe diagnostics, repository publish
 diagnostics, signing/attestation diagnostics, plugin mutation diagnostics,
 generated workflow/task diagnostics, VS Code extension diagnostics,
 language-server diagnostics, or AI requirements.
+
+Gate 329 adds no new rule family or diagnostic ID. The repo-local restore
+helper does not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`,
+`WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or
+`WF-SEC-*` rules, package validation diagnostics, external tool diagnostics,
+runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, plugin mutation diagnostics, generated
+workflow/task diagnostics, VS Code extension diagnostics, language-server
+diagnostics, or AI requirements.
+
+Gate 330 adds no new rule family or diagnostic ID. Repository-owned CI invokes
+existing validation and release verification commands through the restored
+local tool, but the bootstrap itself does not add `WF-LOAD-*`,
+`WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`,
+`WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules, package validation
+diagnostics, external tool diagnostics, runtime probe diagnostics, repository
+publish diagnostics, signing/attestation diagnostics, plugin mutation
+diagnostics, generated workflow/task diagnostics, VS Code extension
+diagnostics, language-server diagnostics, or AI requirements.
+
+Gate 331 adds no new rule family or diagnostic ID. The planned
+repository-owned developer tasks may surface existing Forge diagnostics, but
+the task bootstrap plan itself does not add `WF-LOAD-*`, `WF-SCHEMA-*`,
+`WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`,
+`WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules, package validation diagnostics,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, plugin mutation diagnostics,
+generated workflow/task diagnostics, VS Code extension diagnostics,
+language-server diagnostics, or AI requirements.

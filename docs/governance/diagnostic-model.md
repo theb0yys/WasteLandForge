@@ -1615,5 +1615,28 @@ release, governance, security, external-tool, runtime-probe,
 repository-publish, signing/attestation, plugin-mutation, VS Code extension,
 language-server, generated workflow/task, or AI diagnostics.
 
+Gate 329 adds no new diagnostic rule ID. The repo-local restore helper is an
+engineering bootstrap script and its smoke output is not a Forge diagnostic
+report. It does not add schema, semantic, capability, build, release,
+governance, security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server,
+generated workflow/task, or AI diagnostics.
+
+Gate 330 adds no new diagnostic rule ID. The repository-owned CI workflow uses
+the restored local tool to emit existing validation and release verification
+outputs; the bootstrap step itself is not a Forge diagnostic report. It does
+not add schema, semantic, capability, build, release, governance, security,
+external-tool, runtime-probe, repository-publish, signing/attestation,
+plugin-mutation, VS Code extension, language-server, generated workflow/task,
+or AI diagnostics.
+
+Gate 331 adds no new diagnostic rule ID. The planned repository-owned developer
+tasks may expose existing Forge validation diagnostics through a local problem
+matcher, but the task bootstrap plan itself is not a Forge diagnostic report.
+It does not add schema, semantic, capability, build, release, governance,
+security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server,
+generated workflow/task, or AI diagnostics.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.
