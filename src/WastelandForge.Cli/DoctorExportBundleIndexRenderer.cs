@@ -214,6 +214,12 @@ internal static class DoctorExportBundleIndexRenderer
             return FormatPurpose("Bundle redaction policy handoff index", mediaType);
         }
 
+        if (StringComparer.Ordinal.Equals(path, "release-readiness/index.json") ||
+            StringComparer.Ordinal.Equals(path, "release-readiness/index.md"))
+        {
+            return FormatPurpose("Release-readiness handoff index", mediaType);
+        }
+
         if (StringComparer.Ordinal.Equals(path, "requirements/index.json") ||
             StringComparer.Ordinal.Equals(path, "requirements/index.md"))
         {

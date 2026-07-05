@@ -162,3 +162,61 @@ requirements or `WF-CAP-*` diagnostics report
 call remote repositories, upload releases, sign or attest artifacts, execute
 external tools, run runtime probes, automate MO2 or GECK, mutate plugins, or
 use AI.
+
+Gate 284 adds local package-validation evidence evaluation to the same
+no-publish preflight. It reads `dist/release-dry-run/package-verify.json` as
+prior `forge package --target mcm-json --verify-existing --format json`
+evidence, checks the report identity, `dist/` output scope, summary/output
+shape, and `WF-BUILD-*` diagnostic count. Missing package reports stay
+`missing`, clean verifier reports are `complete-package-validated`, and
+package verifier diagnostics report `package-diagnostics-present`. It still
+refuses real publish and does not call remote repositories, upload releases,
+sign or attest artifacts, execute external tools, run runtime probes, automate
+MO2 or GECK, mutate plugins, or use AI.
+
+Gate 285 adds local release-verification evidence evaluation to the same
+no-publish preflight. It reads `dist/release-dry-run/release-verify.json` as
+prior `forge release verify --format json` evidence, checks the report
+identity, dry-run flag, optional `dist/` output scope, summary/output shape,
+and `WF-REL-*` diagnostic count. Missing release-verify reports stay
+`missing`, clean verifier reports are `complete-release-verified`, and
+release verifier diagnostics report `release-diagnostics-present`. It still
+refuses real publish and does not call remote repositories, upload releases,
+sign or attest artifacts, execute external tools, run runtime probes, automate
+MO2 or GECK, mutate plugins, or use AI.
+
+Gate 286 adds explicit human-approval evaluation to the same no-publish
+preflight. It accepts `--yes --confirm <project-id>`, reads the root
+`wastelandforge.json`, `wastelandforge.yaml`, or `wastelandforge.yml`
+manifest ID when approval is attempted, and reports whether the confirmation
+matches. Missing, incomplete, missing-manifest, multiple-manifest,
+unreadable-manifest, missing-ID, invalid-ID, and mismatched-ID approval states
+are reported in the command output. Matching approval reports `provided`, but
+normal execution still refuses real publish with exit code 6. It still does
+not call remote repositories, upload releases, sign or attest artifacts,
+execute external tools, run runtime probes, automate MO2 or GECK, mutate
+plugins, or use AI.
+
+Gate 287 adds publish-readiness aggregation to the same no-publish preflight.
+It derives `publishReadiness` from required local evidence, governance checks,
+and explicit approval, reports satisfied and blocking checks, and separately
+reports that publish execution remains disabled. Local preconditions can be
+satisfied, but `readyForRealPublish` remains false until a later gate enables
+actual publication. It still does not call remote repositories, upload
+releases, sign or attest artifacts, execute external tools, run runtime probes,
+automate MO2 or GECK, mutate plugins, or use AI.
+
+Gate 288 closes the `forge release publish` no-publish lane without enabling
+publication. It reports `laneCloseout` metadata, keeps release publication,
+remote repository calls, release uploads, signing, attestation, external tool
+execution, plugin mutation, MO2/GECK automation, runtime probes, and AI
+disabled, and routes the next local value slice to `forge doctor export`
+release-readiness handoff work.
+
+Gate 289 adds that local release-readiness handoff to `forge doctor export`.
+It reuses the existing `forge release publish <project-root> --dry-run --format json --no-input`
+preflight planner when a project root is supplied and exposes the aggregate
+status in JSON, plain, Markdown, and bundle archive indexes. It does not
+publish releases, call remote repositories, upload assets, sign or attest
+artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run
+runtime probes, or use AI.

@@ -271,7 +271,9 @@ internal static class ForgeCli
 
         var result = ReleasePublishPreflightPlanner.Plan(new ReleasePublishPreflightOptions(
             parse.ProjectPath,
-            parse.DryRun));
+            parse.DryRun,
+            parse.Yes,
+            parse.Confirm));
         var payload = CliConstants.IsMachineFormat(parse.Format)
             ? ReleasePublishPreflightJsonSerializer.Serialize(result)
             : ReleasePublishPreflightTextRenderer.Render(result);
@@ -759,6 +761,7 @@ internal static class ForgeCli
             parse.GameRoot,
             parse.DataRoot,
             parse.ToolPaths));
+        var releaseReadiness = DoctorExportReleaseReadinessProjection.NotIncluded();
         if (parse.ProjectPath is not null)
         {
             var requirementRead = new ProjectValidationPipeline().ReadCapabilityRequirements(parse.ProjectPath);
@@ -778,9 +781,10 @@ internal static class ForgeCli
                 Doctor = CapabilityDoctorPlanner.Build(scanReport.Catalog, scanReport.Providers, scanReport.Capabilities, requirementResolution),
                 Requirements = requirementResolution
             };
+            releaseReadiness = DoctorExportReleaseReadinessProjection.Create(requirementRead.ProjectRoot);
         }
 
-        var export = DoctorExportRedactor.Create(scanReport);
+        var export = DoctorExportRedactor.Create(scanReport, releaseReadiness);
         WriteDoctorExportMarkdownSummary(parse.SummaryPath, export);
         WriteDoctorExportArchive(parse.BundlePath, export, scanReport);
 
@@ -1294,6 +1298,8 @@ internal static class ForgeCli
         var format = "human";
         var projectPath = ".";
         var dryRun = false;
+        var yes = false;
+        string? confirm = null;
         var projectWasSet = false;
 
         for (var index = 0; index < args.Length; index++)
@@ -1343,6 +1349,22 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--yes"))
+            {
+                yes = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--confirm"))
+            {
+                if (!TryReadValue(args, ref index, out confirm))
+                {
+                    return ReleasePublishParseResult.Fail(format, "Missing value for --confirm.");
+                }
+
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--no-input"))
             {
                 continue;
@@ -1362,7 +1384,7 @@ internal static class ForgeCli
             projectWasSet = true;
         }
 
-        return ReleasePublishParseResult.Ok(projectPath, dryRun, format);
+        return ReleasePublishParseResult.Ok(projectPath, dryRun, yes, confirm, format);
     }
 
     private static MetadataReportParseResult ParseMetadataReportOptions(string commandPath, string[] args)
@@ -2890,6 +2912,7 @@ internal static class ForgeCli
             .Concat(CreateOpenQuestionIndexSupplements(report))
             .Concat(CreateProviderIndexSupplements(report))
             .Concat(CreateRedactionIndexSupplements(report))
+            .Concat(CreateReleaseReadinessIndexSupplements(report))
             .Concat(CreateRequirementIndexSupplements(report))
             .Concat(CreateScanInputIndexSupplements(report))
             .Concat(CreateSummaryIndexSupplements(report))
@@ -3029,6 +3052,18 @@ internal static class ForgeCli
                 "redaction/index.md",
                 "text/markdown; charset=utf-8",
                 DoctorExportRedactionIndexRenderer.RenderMarkdown(report))
+        ];
+
+    private static IReadOnlyList<DoctorExportArchiveSupplement> CreateReleaseReadinessIndexSupplements(DoctorExportReport report) =>
+        [
+            new DoctorExportArchiveSupplement(
+                "release-readiness/index.json",
+                "application/json",
+                DoctorExportReleaseReadinessIndexRenderer.RenderJson(report.ReleaseReadiness)),
+            new DoctorExportArchiveSupplement(
+                "release-readiness/index.md",
+                "text/markdown; charset=utf-8",
+                DoctorExportReleaseReadinessIndexRenderer.RenderMarkdown(report.ReleaseReadiness))
         ];
 
     private static IReadOnlyList<DoctorExportArchiveSupplement> CreateRequirementIndexSupplements(DoctorExportReport report) =>
@@ -3355,14 +3390,16 @@ internal static class ForgeCli
         bool Success,
         string ProjectPath,
         bool DryRun,
+        bool Yes,
+        string? Confirm,
         string Format,
         string Message)
     {
-        public static ReleasePublishParseResult Ok(string projectPath, bool dryRun, string format) =>
-            new(true, projectPath, dryRun, format, string.Empty);
+        public static ReleasePublishParseResult Ok(string projectPath, bool dryRun, bool yes, string? confirm, string format) =>
+            new(true, projectPath, dryRun, yes, confirm, format, string.Empty);
 
         public static ReleasePublishParseResult Fail(string format, string message) =>
-            new(false, string.Empty, false, format, message);
+            new(false, string.Empty, false, false, null, format, message);
     }
 
     private sealed record MetadataReportParseResult(

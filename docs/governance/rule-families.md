@@ -783,3 +783,49 @@ report shape, project-scoped requirement summary, local-only scan flags, and
 `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, execute external tools,
 run runtime probes, automate MO2 or GECK, call remote repositories, upload
 release assets, sign or attest artifacts, or use AI.
+
+Gate 284 adds no new rule family or diagnostic ID. Release-publish
+package-validation evidence evaluation reports local
+`dist/release-dry-run/package-verify.json` presence, package verify-existing
+report shape, `dist/` output scope, and `WF-BUILD-*` issue counts in command
+output only and does not emit `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or
+`WF-SEC-*` diagnostics, execute external tools, run runtime probes, automate
+MO2 or GECK, call remote repositories, upload release assets, sign or attest
+artifacts, or use AI.
+
+Gate 285 adds no new rule family or diagnostic ID. Release-publish
+release-verification evidence evaluation reports local
+`dist/release-dry-run/release-verify.json` presence, release verify report
+shape, optional `dist/` output scope, and `WF-REL-*` issue counts in command
+output only and does not emit new `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*`
+diagnostics, execute external tools, run runtime probes, automate MO2 or
+GECK, call remote repositories, upload release assets, sign or attest
+artifacts, or use AI.
+
+Gate 286 adds no new rule family or diagnostic ID. Release-publish explicit
+human-approval evaluation reports `--yes`, `--confirm <project-id>`, project
+manifest ID read status, and confirmation match status in command output only
+and does not emit `WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, execute
+external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload release assets, sign or attest artifacts, or use AI.
+
+Gate 287 adds no new rule family or diagnostic ID. Release-publish readiness
+aggregation reports required local evidence, governance, and approval
+satisfied/blocking states in command output only and does not emit
+`WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, execute external tools, run
+runtime probes, automate MO2 or GECK, call remote repositories, upload release
+assets, sign or attest artifacts, or use AI.
+
+Gate 288 adds no new rule family or diagnostic ID. Release-publish
+no-publish lane closeout reports local lane-closeout and next-slice routing
+metadata in command output only and does not emit `WF-GOV-*`, `WF-REL-*`, or
+`WF-SEC-*` diagnostics, execute external tools, run runtime probes, automate
+MO2 or GECK, call remote repositories, upload release assets, sign or attest
+artifacts, or use AI.
+
+Gate 289 adds no new rule family or diagnostic ID. Doctor export
+release-readiness handoff projects existing release-publish preflight
+readiness status into Doctor export JSON, Markdown, and bundle indexes only
+and does not emit `WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*` diagnostics, execute
+external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload release assets, sign or attest artifacts, or use AI.

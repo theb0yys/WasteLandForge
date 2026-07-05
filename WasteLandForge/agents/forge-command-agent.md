@@ -924,10 +924,15 @@ build-manifest output digest revalidation, Gate 278 implements
 release-archive-evidence archive digest metadata revalidation, Gate 279
 implements release archive reopening/revalidation, and Gate 280 implements
 semantic release-evidence validation, Gate 281 implements governance-check
-evaluation, Gate 282 implements schema-validation evidence evaluation, and Gate
-283 implements capability/environment evidence evaluation. Route the next
-implementation slice to Gate 284: forge release publish package-validation
-evidence evaluation skeleton, still with no publish behavior.
+evaluation, Gate 282 implements schema-validation evidence evaluation, Gate
+283 implements capability/environment evidence evaluation, Gate 284
+implements package-validation evidence evaluation, Gate 285 implements
+release-verification evidence evaluation, and Gate 286 implements explicit
+human-approval preflight, Gate 287 implements publish-readiness aggregation,
+Gate 288 closes the no-publish lane and routes the next local value slice, and
+Gate 289 implements the forge doctor export release-readiness handoff
+skeleton. Route the next implementation slice to Gate 290: forge doctor export
+release-readiness triage/worklist integration, still with no publish behavior.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -985,10 +990,16 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   metadata revalidation, Gate 279 implements release archive
   reopening/revalidation, Gate 280 implements semantic release-evidence
   validation, Gate 281 implements governance-check evaluation, Gate 282
-  implements schema-validation evidence evaluation, and Gate 283 implements
-  capability/environment evidence evaluation. Route the next implementation
-  slice to Gate 284: forge release publish package-validation evidence
-  evaluation skeleton, still with no publish behavior.
+  implements schema-validation evidence evaluation, Gate 283 implements
+  capability/environment evidence evaluation, Gate 284 implements
+  package-validation evidence evaluation, Gate 285 implements
+  release-verification evidence evaluation, Gate 286 implements explicit
+  human-approval preflight, Gate 287 implements publish-readiness
+  aggregation, Gate 288 closes the no-publish lane and routes the next local
+  value slice, and Gate 289 implements the forge doctor export
+  release-readiness handoff skeleton. Route the next implementation slice to
+  Gate 290: forge doctor export release-readiness triage/worklist integration,
+  still with no publish behavior.
 
 ## Required output
 

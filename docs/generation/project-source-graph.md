@@ -1,6 +1,6 @@
 # Project Source Graph Output
 
-Status: Gate 283 release publish capability/environment evidence boundary
+Status: Gate 289 doctor export release-readiness handoff boundary
 Research classification: Documented
 Source: R004, R006, ADR-007, ADR-009, ADR-010, ADR-011
 
@@ -259,3 +259,40 @@ schema-validation evidence, evaluate release governance checks, validate
 archive payload contents, assemble FOMOD payloads, publish releases, call
 remote repositories, upload assets, sign or attest artifacts, call external
 tools, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 285 adds release-publish release-verification evidence evaluation, but
+`forge graph` still does not execute release prepare, execute release publish,
+evaluate release-verification evidence, evaluate package-validation evidence,
+evaluate capability/environment evidence, evaluate schema-validation evidence,
+evaluate release governance checks, validate archive payload contents,
+assemble FOMOD payloads, publish releases, call remote repositories, upload
+assets, sign or attest artifacts, call external tools, automate MO2 or GECK,
+run runtime probes, or use AI.
+
+Gate 286 adds release-publish explicit human-approval evaluation, but `forge
+graph` still does not execute release prepare, execute release publish,
+evaluate publish approval, aggregate publish readiness, validate archive
+payload contents, assemble FOMOD payloads, publish releases, call remote
+repositories, upload assets, sign or attest artifacts, call external tools,
+automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 287 adds release-publish readiness aggregation, but `forge graph` still
+does not execute release prepare, execute release publish, evaluate publish
+readiness, validate archive payload contents, assemble FOMOD payloads, publish
+releases, call remote repositories, upload assets, sign or attest artifacts,
+call external tools, automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 288 adds release-publish no-publish lane closeout and next-value routing,
+but `forge graph` still does not execute release prepare, execute release
+publish, evaluate publish readiness, evaluate lane closeout, validate archive
+payload contents, assemble FOMOD payloads, publish releases, call remote
+repositories, upload assets, sign or attest artifacts, call external tools,
+automate MO2 or GECK, run runtime probes, or use AI.
+
+Gate 289 adds Doctor export release-readiness handoff output, but `forge
+graph` still does not execute Doctor export, execute release prepare, execute
+release publish, evaluate publish readiness, evaluate release-readiness
+handoff metadata, validate archive payload contents, assemble FOMOD payloads,
+publish releases, call remote repositories, upload assets, sign or attest
+artifacts, call external tools, automate MO2 or GECK, run runtime probes, or
+use AI.

@@ -24,6 +24,7 @@ internal static class DoctorExportArchiveReadmeRenderer
         var hasOpenQuestionIndex = supplementPaths.Contains("open-questions/index.md", StringComparer.Ordinal);
         var hasProviderIndex = supplementPaths.Contains("providers/index.md", StringComparer.Ordinal);
         var hasRedactionIndex = supplementPaths.Contains("redaction/index.md", StringComparer.Ordinal);
+        var hasReleaseReadinessIndex = supplementPaths.Contains("release-readiness/index.md", StringComparer.Ordinal);
         var hasRequirementIndex = supplementPaths.Contains("requirements/index.md", StringComparer.Ordinal);
         var hasRequirementExplanationIndex = supplementPaths.Contains("requirement-explanations/index.md", StringComparer.Ordinal);
         var hasScanInputIndex = supplementPaths.Contains("scan-inputs/index.md", StringComparer.Ordinal);
@@ -114,6 +115,12 @@ internal static class DoctorExportArchiveReadmeRenderer
         {
             builder.AppendLine("- `redaction/index.md` - redacted bundle redaction policy handoff index.");
             builder.AppendLine("- `redaction/index.json` - machine-readable bundle redaction policy handoff index.");
+        }
+
+        if (hasReleaseReadinessIndex)
+        {
+            builder.AppendLine("- `release-readiness/index.md` - local release-readiness handoff index.");
+            builder.AppendLine("- `release-readiness/index.json` - machine-readable release-readiness handoff index.");
         }
 
         if (hasRequirementIndex)

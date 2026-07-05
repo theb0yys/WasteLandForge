@@ -53,7 +53,8 @@ internal static class DoctorExportTriageIndexRenderer
                 ["optionalUnavailable"] = triage.OptionalUnavailable,
                 ["diagnosticErrors"] = triage.DiagnosticErrors,
                 ["diagnosticWarnings"] = triage.DiagnosticWarnings,
-                ["openQuestions"] = triage.OpenQuestions
+                ["openQuestions"] = triage.OpenQuestions,
+                ["releaseReadinessBlockingChecks"] = triage.ReleaseReadinessBlockingChecks
             },
             ["blocking"] = new JsonArray(triage.Blocking.Select(ToBundleJson).ToArray()),
             ["review"] = new JsonArray(triage.Review.Select(ToBundleJson).ToArray()),

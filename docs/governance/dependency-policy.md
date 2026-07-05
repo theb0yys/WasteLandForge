@@ -1192,3 +1192,44 @@ json` evidence and does not add provider binaries, detector libraries,
 publishing clients, repository API clients, signing or attestation
 dependencies, external tool integrations, network calls, runtime probes, MO2
 or GECK automation, or AI requirements.
+
+Gate 284 adds no package dependency. Release-publish package-validation
+evidence evaluation uses built-in .NET JSON and file APIs already available to
+the CLI. It consumes prior local `forge package --target mcm-json
+--verify-existing --format json` evidence and does not add package validators,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.
+
+Gate 285 adds no package dependency. Release-publish release-verification
+evidence evaluation uses built-in .NET JSON and file APIs already available to
+the CLI. It consumes prior local `forge release verify --format json`
+evidence and does not add release publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, MO2 or GECK automation, or AI requirements.
+
+Gate 286 adds no package dependency. Release-publish explicit human-approval
+evaluation uses built-in .NET file and JSON APIs plus the existing YAML parser
+already used by the CLI for project manifest ID confirmation. It does not add
+release publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.
+
+Gate 287 adds no package dependency. Release-publish readiness aggregation
+uses the already-evaluated local evidence, governance, and approval state in
+memory. It does not add release publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls, runtime probes, MO2 or GECK automation, or AI requirements.
+
+Gate 288 adds no package dependency. Release-publish no-publish lane closeout
+uses static local routing metadata over the existing readiness result. It does
+not add release publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, MO2 or GECK automation, or AI requirements.
+
+Gate 289 adds no package dependency. Doctor export release-readiness handoff
+uses the existing release-publish preflight planner, built-in .NET JSON
+serialization, and existing ZIP bundle writer. It does not add release
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.

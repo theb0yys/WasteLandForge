@@ -1272,5 +1272,50 @@ not run the diagnostic pipeline, emit new `WF-CAP-*`, `WF-REL-*`,
 probes, automate MO2 or GECK, call remote repositories, upload releases, or
 use AI.
 
+Gate 284 adds no new diagnostic rule ID. Release-publish package-validation
+evidence evaluation reads prior package verify-existing JSON and reports
+missing, malformed, clean, or `WF-BUILD-*` issue-present evidence as command
+status fields, not new diagnostics. It does not rerun package validation, emit
+new `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, execute
+external tools, run runtime probes, automate MO2 or GECK, call remote
+repositories, upload releases, or use AI.
+
+Gate 285 adds no new diagnostic rule ID. Release-publish
+release-verification evidence evaluation reads prior release verify JSON and
+reports missing, malformed, clean, or `WF-REL-*` issue-present evidence as
+command status fields, not new diagnostics. It does not rerun release verify,
+emit new `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, execute external
+tools, run runtime probes, automate MO2 or GECK, call remote repositories,
+upload releases, sign or attest artifacts, or use AI.
+
+Gate 286 adds no new diagnostic rule ID. Release-publish explicit
+human-approval evaluation reports `--yes --confirm <project-id>` presence,
+project manifest ID reads, and confirmation match status as command status
+fields, not new diagnostics. It does not emit `WF-GOV-*`, `WF-REL-*`, or
+`WF-SEC-*` diagnostics, execute external tools, run runtime probes, automate
+MO2 or GECK, call remote repositories, upload releases, sign or attest
+artifacts, or use AI.
+
+Gate 287 adds no new diagnostic rule ID. Release-publish readiness aggregation
+reports satisfied and blocking local readiness checks as command status fields,
+not new diagnostics. It does not emit `WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*`
+diagnostics, execute external tools, run runtime probes, automate MO2 or
+GECK, call remote repositories, upload releases, sign or attest artifacts, or
+use AI.
+
+Gate 288 adds no new diagnostic rule ID. Release-publish no-publish lane
+closeout reports local routing metadata as command status fields, not new
+diagnostics. It does not emit `WF-GOV-*`, `WF-REL-*`, or `WF-SEC-*`
+diagnostics, execute external tools, run runtime probes, automate MO2 or
+GECK, call remote repositories, upload releases, sign or attest artifacts, or
+use AI.
+
+Gate 289 adds no new diagnostic rule ID. Doctor export release-readiness
+handoff reports existing release-publish dry-run preflight status as command
+and bundle metadata, not new diagnostics. It does not emit `WF-GOV-*`,
+`WF-REL-*`, or `WF-SEC-*` diagnostics, execute external tools, run runtime
+probes, automate MO2 or GECK, call remote repositories, upload releases, sign
+or attest artifacts, or use AI.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

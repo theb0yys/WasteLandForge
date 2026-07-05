@@ -97,6 +97,11 @@ internal static class DoctorExportHandoffSummaryRenderer
         builder.AppendLine();
         builder.AppendLine("- `doctor-export.md` - full redacted human-readable Doctor report.");
         builder.AppendLine("- `doctor-export.json` - full redacted machine-readable Doctor report.");
+        if (report.ReleaseReadiness.Included)
+        {
+            builder.AppendLine("- `release-readiness/index.md` - local release-readiness handoff summary.");
+        }
+
         foreach (var target in triage.ReviewTargets.Where(target => !string.IsNullOrWhiteSpace(target.BundlePath)))
         {
             builder.AppendLine($"- `{EscapeInline(target.BundlePath ?? string.Empty)}` - {EscapeParagraph(target.Purpose)}");

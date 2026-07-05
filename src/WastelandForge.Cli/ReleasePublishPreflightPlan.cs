@@ -3,12 +3,17 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using WastelandForge.Core;
+using YamlDotNet.Core;
+using YamlDotNet.RepresentationModel;
 
 namespace WastelandForge.Cli;
 
 internal sealed record ReleasePublishPreflightOptions(
     string ProjectRoot,
-    bool DryRun);
+    bool DryRun,
+    bool Yes,
+    string? Confirm);
 
 internal sealed record ReleasePublishEvidenceRequirement(
     string Id,
@@ -272,6 +277,22 @@ internal sealed record ReleasePublishPackageValidationEvidence(
     int PackageIssueCount,
     string Detail);
 
+internal sealed record ReleasePublishReleaseVerificationEvidence(
+    string Path,
+    bool Exists,
+    string Status,
+    bool CheckedInCurrentGate,
+    bool ContentReadInCurrentGate,
+    bool DryRun,
+    string? OutputRoot,
+    bool DistScoped,
+    int Errors,
+    int Warnings,
+    int Notes,
+    int IssueCount,
+    int ReleaseIssueCount,
+    string Detail);
+
 internal sealed record ReleasePublishGovernanceCheck(
     string Id,
     string Title,
@@ -284,8 +305,56 @@ internal sealed record ReleasePublishGovernanceCheck(
 internal sealed record ReleasePublishApprovalRequirement(
     bool Required,
     bool Provided,
+    bool YesProvided,
+    string? ConfirmationValue,
+    bool ConfirmationValidated,
+    bool? ConfirmationMatches,
+    bool ProjectManifestRead,
+    string? ProjectManifestPath,
+    string? ProjectId,
     string Status,
-    string Description);
+    string Description,
+    string Detail);
+
+internal sealed record ReleasePublishApprovalProjectIdReadResult(
+    string? ProjectId,
+    string? Status,
+    string? Error);
+
+internal sealed record ReleasePublishReadinessCheck(
+    string Id,
+    string Title,
+    string Source,
+    string Status,
+    bool Required,
+    bool Satisfied,
+    string Detail);
+
+internal sealed record ReleasePublishReadiness(
+    bool EvaluatedInCurrentGate,
+    string Status,
+    bool LocalPreconditionsSatisfied,
+    bool EvidenceSatisfied,
+    bool GovernanceSatisfied,
+    bool ApprovalSatisfied,
+    bool PublishExecutionEnabled,
+    bool ReadyForRealPublish,
+    int RequiredChecks,
+    int SatisfiedChecks,
+    int BlockingChecks,
+    string Detail,
+    IReadOnlyList<string> BlockingCheckIds,
+    IReadOnlyList<ReleasePublishReadinessCheck> Checks);
+
+internal sealed record ReleasePublishLaneCloseout(
+    bool ClosedInCurrentGate,
+    string Status,
+    string Lane,
+    string CompletedThroughGate,
+    string NextGate,
+    string NextValueSlice,
+    string Detail,
+    IReadOnlyList<string> DeferredCapabilities);
 
 internal sealed record ReleasePublishPreflightResult(
     string Status,
@@ -308,6 +377,9 @@ internal sealed record ReleasePublishPreflightResult(
     ReleasePublishSchemaValidationEvidence SchemaValidationEvidence,
     ReleasePublishCapabilityEnvironmentEvidence CapabilityEnvironmentEvidence,
     ReleasePublishPackageValidationEvidence PackageValidationEvidence,
+    ReleasePublishReleaseVerificationEvidence ReleaseVerificationEvidence,
+    ReleasePublishReadiness PublishReadiness,
+    ReleasePublishLaneCloseout LaneCloseout,
     string? RefusalReason,
     IReadOnlyList<ReleasePublishEvidenceRequirement> RequiredEvidence,
     IReadOnlyList<ReleasePublishEvidenceArtifact> LocalEvidenceArtifacts,
@@ -336,7 +408,7 @@ internal static class ReleasePublishPreflightPlanner
 
     private static readonly string[] BoundaryLines =
     [
-        "Gate 284 evaluates local package-validation evidence for release publish preflight.",
+        "Gate 288 closes the release publish no-publish lane and routes the next value slice.",
         "JSON evidence is parsed for well-formed shape only; checksum sidecar entries are parsed for expected-path coverage only.",
         "Build-manifest outputs and release-archive-evidence metadata are cross-referenced to local evidence paths, checksum sidecar paths, and existing build-manifest output paths only.",
         "Checksum sidecar digests are recomputed for expected local evidence files only.",
@@ -349,11 +421,28 @@ internal static class ReleasePublishPreflightPlanner
         "Schema-validation evidence reads local dist/release-dry-run/validation.json only and checks the diagnostic report shape plus WF-SCHEMA issue count.",
         "Capability/environment evidence reads local dist/release-dry-run/capabilities-scan.json only and checks project-scoped capabilities scan shape plus WF-CAP issue count.",
         "Package-validation evidence reads local dist/release-dry-run/package-verify.json only and checks package verify-existing report shape plus WF-BUILD issue count.",
+        "Release-verification evidence reads local dist/release-dry-run/release-verify.json only and checks release verify report shape plus WF-REL-* issue count.",
+        "Explicit human approval reads only the root project manifest ID and requires --yes plus --confirm <project-id>.",
+        "Publish readiness is an aggregate of local evidence, governance, and approval states only.",
+        "Lane closeout is reported as local routing metadata only.",
         "No release is published.",
         "Remote repositories are not called.",
         "Release assets are not uploaded.",
         "Attestations and signing are not performed.",
         "External tools, plugin mutation, MO2 automation, GECK automation, runtime probes, and AI calls are not used."
+    ];
+
+    private static readonly string[] DeferredPublishCapabilities =
+    [
+        "remote-repository-calls",
+        "release-asset-uploads",
+        "attestation-signing",
+        "external-tool-execution",
+        "plugin-mutation",
+        "mo2-automation",
+        "geck-automation",
+        "runtime-probes",
+        "ai-behavior"
     ];
 
     private static readonly string[] ExpectedChecksumEntryPaths =
@@ -453,6 +542,7 @@ internal static class ReleasePublishPreflightPlanner
     private const string SchemaValidationEvidenceRelativePath = "dist/release-dry-run/validation.json";
     private const string CapabilityEnvironmentEvidenceRelativePath = "dist/release-dry-run/capabilities-scan.json";
     private const string PackageValidationEvidenceRelativePath = "dist/release-dry-run/package-verify.json";
+    private const string ReleaseVerificationEvidenceRelativePath = "dist/release-dry-run/release-verify.json";
 
     public static ReleasePublishPreflightResult Plan(ReleasePublishPreflightOptions options)
     {
@@ -470,7 +560,9 @@ internal static class ReleasePublishPreflightPlanner
         var schemaValidationEvidence = CreateSchemaValidationEvidence(projectRoot);
         var capabilityEnvironmentEvidence = CreateCapabilityEnvironmentEvidence(projectRoot);
         var packageValidationEvidence = CreatePackageValidationEvidence(projectRoot);
+        var releaseVerificationEvidence = CreateReleaseVerificationEvidence(projectRoot);
         var governanceChecks = CreateGovernanceChecks(projectRoot);
+        var approval = CreateApprovalRequirement(projectRoot, options.Yes, options.Confirm);
         var presentArtifacts = localEvidenceArtifacts.Count(artifact => artifact.Exists);
         var missingArtifacts = localEvidenceArtifacts.Count - presentArtifacts;
         var wellFormedArtifacts = localEvidenceArtifacts.Count(artifact => StringComparer.Ordinal.Equals(artifact.Status, "well-formed-not-validated"));
@@ -478,16 +570,17 @@ internal static class ReleasePublishPreflightPlanner
         var unclassifiedArtifacts = localEvidenceArtifacts.Count(artifact => StringComparer.Ordinal.Equals(artifact.Status, "present-not-classified"));
         var releasePrepareEvidenceStatus = ReleasePrepareEvidenceStatus(presentArtifacts, missingArtifacts, malformedArtifacts, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference, semanticEvidenceValidation);
         var status = options.DryRun ? "planned" : "refused";
-        var refusalReason = options.DryRun
-            ? null
-            : "Release publish requires fully validated local schema, capability/environment, package, and governance preflight evidence and explicit human approval; Gate 284 does not publish releases.";
+        var requiredEvidence = CreateRequiredEvidence(localEvidenceArtifacts, schemaValidationEvidence, capabilityEnvironmentEvidence, packageValidationEvidence, releaseVerificationEvidence, semanticEvidenceValidation, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference, governanceChecks);
+        var publishReadiness = CreatePublishReadiness(requiredEvidence, approval);
+        var laneCloseout = CreateLaneCloseout();
+        var refusalReason = CreateRefusalReason(options.DryRun, approval, publishReadiness);
 
         return new ReleasePublishPreflightResult(
             status,
             projectRoot,
             options.DryRun,
             PlanningOnly: true,
-            PublishReady: false,
+            PublishReady: publishReadiness.ReadyForRealPublish,
             releasePrepareEvidenceRoot,
             releasePrepareEvidenceStatus,
             localEvidenceArtifacts.Count,
@@ -503,15 +596,14 @@ internal static class ReleasePublishPreflightPlanner
             schemaValidationEvidence,
             capabilityEnvironmentEvidence,
             packageValidationEvidence,
+            releaseVerificationEvidence,
+            publishReadiness,
+            laneCloseout,
             refusalReason,
-            CreateRequiredEvidence(localEvidenceArtifacts, schemaValidationEvidence, capabilityEnvironmentEvidence, packageValidationEvidence, semanticEvidenceValidation, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference, governanceChecks),
+            requiredEvidence,
             localEvidenceArtifacts,
             governanceChecks,
-            new ReleasePublishApprovalRequirement(
-                Required: true,
-                Provided: false,
-                Status: "missing",
-                Description: "A human operator must explicitly approve publish after local evidence and governance checks pass."),
+            approval,
             BoundaryLines);
     }
 
@@ -520,6 +612,7 @@ internal static class ReleasePublishPreflightPlanner
         ReleasePublishSchemaValidationEvidence schemaValidationEvidence,
         ReleasePublishCapabilityEnvironmentEvidence capabilityEnvironmentEvidence,
         ReleasePublishPackageValidationEvidence packageValidationEvidence,
+        ReleasePublishReleaseVerificationEvidence releaseVerificationEvidence,
         ReleasePublishSemanticEvidenceValidation semanticEvidenceValidation,
         ReleasePublishChecksumSidecar checksumSidecar,
         ReleasePublishBuildManifestCrossReference buildManifestCrossReference,
@@ -530,12 +623,124 @@ internal static class ReleasePublishPreflightPlanner
         Evidence("semantic-validation", "Semantic validation passed", "ADR-011 layered validation", semanticEvidenceValidation.Status, checkedInCurrentGate: true),
         Evidence("capability-environment-validation", "Capability and environment validation passed", "ADR-008 and ADR-011", capabilityEnvironmentEvidence.Status, checkedInCurrentGate: true),
         Evidence("package-validation", "Package validation passed", "ADR-011 release validation", packageValidationEvidence.Status, checkedInCurrentGate: true),
-        Evidence("release-verification", "Release verification passed", "forge release verify"),
+        Evidence("release-verification", "Release verification passed", "forge release verify", releaseVerificationEvidence.Status, checkedInCurrentGate: true),
         Evidence("release-prepare-build-manifest", "Local release prepare build-manifest.json exists and is accepted", "ADR-011 mandatory local build manifest", BuildManifestRequirementStatus(localEvidenceArtifacts, buildManifestCrossReference), checkedInCurrentGate: true),
         Evidence("release-prepare-checksums", "Local release prepare checksums.sha256 exists and is accepted", "ADR-011 checksum evidence", ChecksumRequirementStatus(localEvidenceArtifacts, checksumSidecar), checkedInCurrentGate: true),
         Evidence("release-prepare-archive-evidence", "Local release archive evidence exists and is accepted", "Gate 268 release archive evidence", ArchiveEvidenceRequirementStatus(localEvidenceArtifacts, archiveEvidenceCrossReference), checkedInCurrentGate: true),
         Evidence("governance-checks", "Governance checks passed", "ADR-011 release governance", GovernanceRequirementStatus(governanceChecks), checkedInCurrentGate: true)
     ];
+
+    private static ReleasePublishReadiness CreatePublishReadiness(
+        IReadOnlyList<ReleasePublishEvidenceRequirement> requiredEvidence,
+        ReleasePublishApprovalRequirement approval)
+    {
+        var checks = requiredEvidence
+            .Select(ToReadinessCheck)
+            .Append(new ReleasePublishReadinessCheck(
+                "human-approval",
+                "Explicit human approval recorded",
+                "Gate 286 approval preflight",
+                approval.Status,
+                Required: true,
+                Satisfied: approval.Provided,
+                approval.Provided
+                    ? "readiness-requirement-satisfied"
+                    : approval.Detail))
+            .ToArray();
+        var evidenceSatisfied = checks
+            .Where(check => !StringComparer.Ordinal.Equals(check.Id, "governance-checks") && !StringComparer.Ordinal.Equals(check.Id, "human-approval"))
+            .All(check => check.Satisfied);
+        var governanceSatisfied = checks.Any(check => StringComparer.Ordinal.Equals(check.Id, "governance-checks") && check.Satisfied);
+        var approvalSatisfied = approval.Provided;
+        var localPreconditionsSatisfied = evidenceSatisfied && governanceSatisfied && approvalSatisfied;
+        var blockingCheckIds = checks
+            .Where(check => check.Required && !check.Satisfied)
+            .Select(check => check.Id)
+            .ToArray();
+        var status = localPreconditionsSatisfied
+            ? "locally-ready-no-publish-gate"
+            : "blocked-by-preconditions";
+
+        return new ReleasePublishReadiness(
+            EvaluatedInCurrentGate: true,
+            status,
+            localPreconditionsSatisfied,
+            evidenceSatisfied,
+            governanceSatisfied,
+            approvalSatisfied,
+            PublishExecutionEnabled: false,
+            ReadyForRealPublish: false,
+            checks.Count(check => check.Required),
+            checks.Count(check => check.Required && check.Satisfied),
+            blockingCheckIds.Length,
+            localPreconditionsSatisfied
+                ? "publish-readiness-local-preconditions-satisfied-but-publish-execution-disabled"
+                : "publish-readiness-local-preconditions-incomplete",
+            blockingCheckIds,
+            checks);
+    }
+
+    private static ReleasePublishReadinessCheck ToReadinessCheck(ReleasePublishEvidenceRequirement requirement)
+    {
+        var expectedStatus = ExpectedReadinessStatus(requirement.Id);
+        var satisfied = expectedStatus is not null &&
+            StringComparer.Ordinal.Equals(requirement.Status, expectedStatus);
+        var detail = satisfied
+            ? "readiness-requirement-satisfied"
+            : expectedStatus is null
+                ? "readiness-requirement-has-no-accepted-status"
+                : $"expected-{expectedStatus}-but-was-{requirement.Status}";
+        return new ReleasePublishReadinessCheck(
+            requirement.Id,
+            requirement.Title,
+            requirement.Source,
+            requirement.Status,
+            requirement.Required,
+            satisfied,
+            detail);
+    }
+
+    private static string? ExpectedReadinessStatus(string id) => id switch
+    {
+        "schema-validation" => "complete-schema-validated",
+        "semantic-validation" => "complete-semantic-validated",
+        "capability-environment-validation" => "complete-capability-environment-validated",
+        "package-validation" => "complete-package-validated",
+        "release-verification" => "complete-release-verified",
+        "release-prepare-build-manifest" => "complete-digest-revalidated",
+        "release-prepare-checksums" => "complete-digest-revalidated",
+        "release-prepare-archive-evidence" => "complete-archive-revalidated",
+        "governance-checks" => "complete-governance-evaluated",
+        _ => null
+    };
+
+    private static ReleasePublishLaneCloseout CreateLaneCloseout() =>
+        new(
+            ClosedInCurrentGate: true,
+            Status: "closed-no-publish-lane",
+            Lane: "forge release publish no-publish preflight",
+            CompletedThroughGate: "Gate 287 publish-readiness aggregation",
+            NextGate: "Gate 289",
+            NextValueSlice: "forge doctor export release-readiness handoff",
+            Detail: "release-publish-no-publish-lane-closed-real-publishing-deferred",
+            DeferredCapabilities: DeferredPublishCapabilities);
+
+    private static string? CreateRefusalReason(bool dryRun, ReleasePublishApprovalRequirement approval, ReleasePublishReadiness publishReadiness)
+    {
+        if (dryRun)
+        {
+            return null;
+        }
+
+        if (publishReadiness.LocalPreconditionsSatisfied)
+        {
+            return "Local publish readiness is satisfied, but Gate 288 closes the no-publish lane without publishing releases.";
+        }
+
+        return approval.Provided
+            ? "Release publish approval was recorded, but Gate 288 still requires complete local publish-readiness evidence and closes the no-publish lane without publishing releases."
+            : "Release publish requires complete local publish-readiness evidence plus explicit human approval; Gate 288 closes the no-publish lane without publishing releases.";
+    }
 
     private static IReadOnlyList<ReleasePublishGovernanceCheck> CreateGovernanceChecks(string projectRoot) =>
     [
@@ -1037,6 +1242,408 @@ internal static class ReleasePublishPreflightPlanner
         var normalized = outputRoot.Replace('\\', '/');
         return StringComparer.Ordinal.Equals(normalized, "dist") ||
             normalized.StartsWith("dist/", StringComparison.Ordinal);
+    }
+
+    private static ReleasePublishReleaseVerificationEvidence CreateReleaseVerificationEvidence(string projectRoot)
+    {
+        var fullPath = Path.Combine(projectRoot, ReleaseVerificationEvidenceRelativePath.Replace('/', Path.DirectorySeparatorChar));
+        var displayPath = ToDisplayPath(projectRoot, fullPath);
+        if (!File.Exists(fullPath))
+        {
+            return ReleaseVerificationEvidence(displayPath, exists: false, "missing", contentRead: false, "release-verify-report-missing");
+        }
+
+        JsonObject? root;
+        try
+        {
+            root = JsonNode.Parse(File.ReadAllText(fullPath)) as JsonObject;
+        }
+        catch (JsonException ex)
+        {
+            return ReleaseVerificationEvidence(displayPath, exists: true, "malformed", contentRead: true, $"json-parse-error:{ex.Message}");
+        }
+        catch (IOException)
+        {
+            return ReleaseVerificationEvidence(displayPath, exists: true, "malformed", contentRead: false, "release-verify-report-unreadable");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return ReleaseVerificationEvidence(displayPath, exists: true, "malformed", contentRead: false, "release-verify-report-unreadable");
+        }
+
+        if (root is null)
+        {
+            return ReleaseVerificationEvidence(displayPath, exists: true, "malformed", contentRead: true, "release-verify-report-not-json-object");
+        }
+
+        if (!TryGetStringProperty(root, "formatVersion", out var formatVersion) ||
+            !StringComparer.Ordinal.Equals(formatVersion, "1.0") ||
+            root["tool"] is not JsonObject tool ||
+            !TryGetStringProperty(tool, "name", out var toolName) ||
+            !StringComparer.Ordinal.Equals(toolName, CliConstants.ToolName) ||
+            !TryGetStringProperty(tool, "version", out var toolVersion) ||
+            !StringComparer.Ordinal.Equals(toolVersion, CliConstants.Version) ||
+            !TryGetStringProperty(root, "command", out var command) ||
+            !StringComparer.Ordinal.Equals(command, "release verify"))
+        {
+            return ReleaseVerificationEvidence(displayPath, exists: true, "unexpected-report", contentRead: true, "release-verify-report-identity-mismatch");
+        }
+
+        if (!TryGetStringProperty(root, "status", out var reportStatus) ||
+            !TryGetBooleanProperty(root, "dryRun", out var dryRun) ||
+            root["summary"] is not JsonObject summary ||
+            !TryGetInt32Property(summary, "errors", out var errors) ||
+            !TryGetInt32Property(summary, "warnings", out var warnings) ||
+            !TryGetInt32Property(summary, "notes", out var notes) ||
+            root["issues"] is not JsonArray issues)
+        {
+            return ReleaseVerificationEvidence(displayPath, exists: true, "malformed", contentRead: true, "release-verify-report-summary-or-issues-malformed");
+        }
+
+        if (!StringComparer.Ordinal.Equals(reportStatus, "passed") &&
+            !StringComparer.Ordinal.Equals(reportStatus, "failed"))
+        {
+            return ReleaseVerificationEvidence(displayPath, exists: true, "malformed", contentRead: true, "release-verify-report-status-malformed");
+        }
+
+        string? outputRoot = null;
+        var distScoped = false;
+        if (root["outputs"] is JsonObject outputs)
+        {
+            if (!TryGetStringProperty(outputs, "root", out outputRoot) ||
+                !TryGetStringProperty(outputs, "stagingRoot", out _) ||
+                !TryGetStringProperty(outputs, "validationReport", out _) ||
+                !TryGetStringProperty(outputs, "releaseSummary", out _) ||
+                !TryGetStringProperty(outputs, "buildManifest", out _) ||
+                !TryGetStringProperty(outputs, "checksums", out _))
+            {
+                return ReleaseVerificationEvidence(displayPath, exists: true, "malformed", contentRead: true, "release-verify-report-outputs-malformed");
+            }
+
+            distScoped = IsDistScopedReleaseVerifyOutput(outputRoot);
+        }
+        else if (StringComparer.Ordinal.Equals(reportStatus, "passed"))
+        {
+            return ReleaseVerificationEvidence(displayPath, exists: true, "malformed", contentRead: true, "release-verify-report-passed-without-outputs");
+        }
+
+        var issueCount = 0;
+        var releaseIssueCount = 0;
+        foreach (var issueNode in issues)
+        {
+            if (issueNode is not JsonObject issue ||
+                !TryGetStringProperty(issue, "ruleId", out var ruleId))
+            {
+                return ReleaseVerificationEvidence(displayPath, exists: true, "malformed", contentRead: true, "release-verify-report-issue-malformed");
+            }
+
+            issueCount++;
+            if (ruleId.StartsWith("WF-REL-", StringComparison.Ordinal))
+            {
+                releaseIssueCount++;
+            }
+        }
+
+        var status = ResolveReleaseVerificationEvidenceStatus(
+            reportStatus,
+            dryRun,
+            outputRoot,
+            distScoped,
+            errors,
+            releaseIssueCount);
+        var detail = ResolveReleaseVerificationEvidenceDetail(status);
+
+        return new ReleasePublishReleaseVerificationEvidence(
+            displayPath,
+            Exists: true,
+            status,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: true,
+            dryRun,
+            outputRoot,
+            distScoped,
+            errors,
+            warnings,
+            notes,
+            issueCount,
+            releaseIssueCount,
+            detail);
+    }
+
+    private static ReleasePublishReleaseVerificationEvidence ReleaseVerificationEvidence(
+        string path,
+        bool exists,
+        string status,
+        bool contentRead,
+        string detail) =>
+        new(
+            path,
+            exists,
+            status,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: contentRead,
+            DryRun: false,
+            OutputRoot: null,
+            DistScoped: false,
+            Errors: 0,
+            Warnings: 0,
+            Notes: 0,
+            IssueCount: 0,
+            ReleaseIssueCount: 0,
+            detail);
+
+    private static string ResolveReleaseVerificationEvidenceStatus(
+        string reportStatus,
+        bool dryRun,
+        string? outputRoot,
+        bool distScoped,
+        int errors,
+        int releaseIssueCount)
+    {
+        if (!dryRun)
+        {
+            return "unsupported-evidence";
+        }
+
+        if (outputRoot is not null && !distScoped)
+        {
+            return "not-dist-scoped";
+        }
+
+        return StringComparer.Ordinal.Equals(reportStatus, "passed") &&
+            outputRoot is not null &&
+            errors == 0 &&
+            releaseIssueCount == 0
+            ? "complete-release-verified"
+            : "release-diagnostics-present";
+    }
+
+    private static string ResolveReleaseVerificationEvidenceDetail(string status) => status switch
+    {
+        "complete-release-verified" => "release-verify-report-has-no-release-diagnostics",
+        "release-diagnostics-present" => "release-verify-report-has-release-diagnostics",
+        "not-dist-scoped" => "release-verify-report-not-dist-scoped",
+        "unsupported-evidence" => "release-verify-report-not-dry-run",
+        _ => status
+    };
+
+    private static bool IsDistScopedReleaseVerifyOutput(string outputRoot)
+    {
+        var normalized = outputRoot.Replace('\\', '/');
+        return StringComparer.Ordinal.Equals(normalized, "dist") ||
+            normalized.StartsWith("dist/", StringComparison.Ordinal);
+    }
+
+    private static ReleasePublishApprovalRequirement CreateApprovalRequirement(
+        string projectRoot,
+        bool yesProvided,
+        string? confirmationValue)
+    {
+        if (!yesProvided && string.IsNullOrWhiteSpace(confirmationValue))
+        {
+            return ApprovalRequirement(
+                provided: false,
+                yesProvided,
+                confirmationValue,
+                confirmationValidated: false,
+                confirmationMatches: null,
+                projectManifestRead: false,
+                projectManifestPath: null,
+                projectId: null,
+                "missing",
+                "approval-not-provided");
+        }
+
+        if (!yesProvided || string.IsNullOrWhiteSpace(confirmationValue))
+        {
+            return ApprovalRequirement(
+                provided: false,
+                yesProvided,
+                confirmationValue,
+                confirmationValidated: false,
+                confirmationMatches: false,
+                projectManifestRead: false,
+                projectManifestPath: null,
+                projectId: null,
+                "incomplete",
+                "approval-requires-yes-and-confirm");
+        }
+
+        var manifestCandidates = FindProjectManifestCandidates(projectRoot);
+        if (manifestCandidates.Count == 0)
+        {
+            return ApprovalRequirement(
+                provided: false,
+                yesProvided,
+                confirmationValue,
+                confirmationValidated: true,
+                confirmationMatches: false,
+                projectManifestRead: false,
+                projectManifestPath: null,
+                projectId: null,
+                "project-manifest-missing",
+                "project-manifest-required-for-approval");
+        }
+
+        if (manifestCandidates.Count > 1)
+        {
+            return ApprovalRequirement(
+                provided: false,
+                yesProvided,
+                confirmationValue,
+                confirmationValidated: true,
+                confirmationMatches: false,
+                projectManifestRead: false,
+                ToDisplayPath(projectRoot, manifestCandidates[0]),
+                projectId: null,
+                "multiple-project-manifests",
+                "multiple-project-manifests-found");
+        }
+
+        var manifestPath = manifestCandidates[0];
+        var readResult = ReadApprovalProjectId(manifestPath);
+        if (readResult.Error is not null)
+        {
+            return ApprovalRequirement(
+                provided: false,
+                yesProvided,
+                confirmationValue,
+                confirmationValidated: true,
+                confirmationMatches: false,
+                projectManifestRead: true,
+                ToDisplayPath(projectRoot, manifestPath),
+                projectId: null,
+                readResult.Status ?? "project-manifest-unreadable",
+                readResult.Error);
+        }
+
+        var projectId = readResult.ProjectId;
+        if (!LogicalId.TryParse(projectId, out _))
+        {
+            return ApprovalRequirement(
+                provided: false,
+                yesProvided,
+                confirmationValue,
+                confirmationValidated: true,
+                confirmationMatches: false,
+                projectManifestRead: true,
+                ToDisplayPath(projectRoot, manifestPath),
+                projectId,
+                "project-id-invalid",
+                "project-manifest-id-invalid");
+        }
+
+        var matches = StringComparer.Ordinal.Equals(projectId, confirmationValue);
+        return ApprovalRequirement(
+            provided: matches,
+            yesProvided,
+            confirmationValue,
+            confirmationValidated: true,
+            confirmationMatches: matches,
+            projectManifestRead: true,
+            ToDisplayPath(projectRoot, manifestPath),
+            projectId,
+            matches ? "provided" : "project-id-mismatch",
+            matches ? "approval-confirmation-matches-project-id" : "approval-confirmation-does-not-match-project-id");
+    }
+
+    private static ReleasePublishApprovalRequirement ApprovalRequirement(
+        bool provided,
+        bool yesProvided,
+        string? confirmationValue,
+        bool confirmationValidated,
+        bool? confirmationMatches,
+        bool projectManifestRead,
+        string? projectManifestPath,
+        string? projectId,
+        string status,
+        string detail) =>
+        new(
+            true,
+            provided,
+            yesProvided,
+            string.IsNullOrWhiteSpace(confirmationValue) ? null : confirmationValue,
+            confirmationValidated,
+            confirmationMatches,
+            projectManifestRead,
+            projectManifestPath,
+            projectId,
+            status,
+            "A human operator must explicitly approve publish with --yes and --confirm <project-id> after local evidence and governance checks pass.",
+            detail);
+
+    private static IReadOnlyList<string> FindProjectManifestCandidates(string projectRoot)
+    {
+        if (!Directory.Exists(projectRoot))
+        {
+            return [];
+        }
+
+        var candidates = new[]
+        {
+            Path.Combine(projectRoot, "wastelandforge.json"),
+            Path.Combine(projectRoot, "wastelandforge.yaml"),
+            Path.Combine(projectRoot, "wastelandforge.yml")
+        };
+
+        return candidates
+            .Where(File.Exists)
+            .Select(Path.GetFullPath)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static ReleasePublishApprovalProjectIdReadResult ReadApprovalProjectId(string manifestPath)
+    {
+        try
+        {
+            var extension = Path.GetExtension(manifestPath);
+            var projectId = extension.Equals(".json", StringComparison.OrdinalIgnoreCase)
+                ? ReadJsonApprovalProjectId(manifestPath)
+                : ReadYamlApprovalProjectId(manifestPath);
+
+            return string.IsNullOrWhiteSpace(projectId)
+                ? new ReleasePublishApprovalProjectIdReadResult(null, "project-id-missing", "project-manifest-id-missing")
+                : new ReleasePublishApprovalProjectIdReadResult(projectId, null, null);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or YamlException or InvalidOperationException)
+        {
+            return new ReleasePublishApprovalProjectIdReadResult(null, "project-manifest-unreadable", $"project-manifest-unreadable:{ex.Message}");
+        }
+    }
+
+    private static string? ReadJsonApprovalProjectId(string manifestPath)
+    {
+        var root = JsonNode.Parse(File.ReadAllText(manifestPath)) as JsonObject
+            ?? throw new InvalidOperationException("Manifest root must be a JSON object.");
+        return root["id"]?.GetValue<string>();
+    }
+
+    private static string? ReadYamlApprovalProjectId(string manifestPath)
+    {
+        var stream = new YamlStream();
+        using var reader = new StringReader(File.ReadAllText(manifestPath));
+        stream.Load(reader);
+        if (stream.Documents.Count != 1)
+        {
+            throw new InvalidOperationException("Manifest YAML must contain exactly one document.");
+        }
+
+        if (stream.Documents[0].RootNode is not YamlMappingNode mapping)
+        {
+            throw new InvalidOperationException("Manifest root must be a YAML mapping.");
+        }
+
+        foreach (var pair in mapping.Children)
+        {
+            if (pair.Key is YamlScalarNode { Value: "id" } &&
+                pair.Value is YamlScalarNode value)
+            {
+                return value.Value;
+            }
+        }
+
+        return null;
     }
 
     private static ReleasePublishGovernanceCheck GovernanceCheck(
@@ -3212,6 +3819,12 @@ internal static class ReleasePublishPreflightJsonSerializer
                 ["packageValidationEvidenceStatus"] = result.PackageValidationEvidence.Status,
                 ["packageValidationEvidenceErrors"] = result.PackageValidationEvidence.Errors,
                 ["packageValidationEvidencePackageDiagnostics"] = result.PackageValidationEvidence.PackageIssueCount,
+                ["releaseVerificationEvidenceStatus"] = result.ReleaseVerificationEvidence.Status,
+                ["releaseVerificationEvidenceErrors"] = result.ReleaseVerificationEvidence.Errors,
+                ["releaseVerificationEvidenceReleaseDiagnostics"] = result.ReleaseVerificationEvidence.ReleaseIssueCount,
+                ["publishReadinessStatus"] = result.PublishReadiness.Status,
+                ["publishReadinessLocalPreconditionsSatisfied"] = result.PublishReadiness.LocalPreconditionsSatisfied,
+                ["publishReadinessBlockingChecks"] = result.PublishReadiness.BlockingChecks,
                 ["artifactPathChecksInCurrentGate"] = true,
                 ["artifactReadsInCurrentGate"] = result.LocalEvidenceArtifacts.Any(artifact => artifact.ContentReadInCurrentGate),
                 ["contentShapeClassificationInCurrentGate"] = true,
@@ -3231,6 +3844,7 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["schemaValidationEvidence"] = ToSchemaValidationEvidence(result.SchemaValidationEvidence),
             ["capabilityEnvironmentEvidence"] = ToCapabilityEnvironmentEvidence(result.CapabilityEnvironmentEvidence),
             ["packageValidationEvidence"] = ToPackageValidationEvidence(result.PackageValidationEvidence),
+            ["releaseVerificationEvidence"] = ToReleaseVerificationEvidence(result.ReleaseVerificationEvidence),
             ["requiredEvidence"] = ToEvidenceArray(result.RequiredEvidence),
             ["localEvidenceArtifacts"] = ToArtifactArray(result.LocalEvidenceArtifacts),
             ["governanceChecks"] = ToGovernanceCheckArray(result.GovernanceChecks),
@@ -3238,15 +3852,25 @@ internal static class ReleasePublishPreflightJsonSerializer
             {
                 ["required"] = result.Approval.Required,
                 ["provided"] = result.Approval.Provided,
+                ["yesProvided"] = result.Approval.YesProvided,
+                ["confirmationValue"] = result.Approval.ConfirmationValue,
+                ["confirmationValidated"] = result.Approval.ConfirmationValidated,
+                ["confirmationMatches"] = result.Approval.ConfirmationMatches,
+                ["projectManifestRead"] = result.Approval.ProjectManifestRead,
+                ["projectManifestPath"] = result.Approval.ProjectManifestPath,
+                ["projectId"] = result.Approval.ProjectId,
                 ["status"] = result.Approval.Status,
-                ["description"] = result.Approval.Description
+                ["description"] = result.Approval.Description,
+                ["detail"] = result.Approval.Detail
             },
+            ["publishReadiness"] = ToPublishReadiness(result.PublishReadiness),
+            ["laneCloseout"] = ToLaneCloseout(result.LaneCloseout),
             ["reportContract"] = new JsonObject
             {
                 ["status"] = result.Status,
                 ["canonicalFormat"] = "json",
                 ["mutatesFilesystemInCurrentGate"] = false,
-                ["summary"] = "Release publish evaluates local schema, capability/environment, package, and governance preflight evidence and refuses publish until remaining release evidence and explicit human approval are implemented."
+                ["summary"] = "Release publish aggregates local publish-readiness, closes the no-publish preflight lane, routes the next local value slice, and still refuses real publishing."
             },
             ["execution"] = ToExecution(result),
             ["boundaries"] = ToStringArray(result.Boundaries)
@@ -3610,6 +4234,25 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["detail"] = evidence.Detail
         };
 
+    private static JsonObject ToReleaseVerificationEvidence(ReleasePublishReleaseVerificationEvidence evidence) =>
+        new()
+        {
+            ["path"] = evidence.Path,
+            ["exists"] = evidence.Exists,
+            ["status"] = evidence.Status,
+            ["checkedInCurrentGate"] = evidence.CheckedInCurrentGate,
+            ["contentReadInCurrentGate"] = evidence.ContentReadInCurrentGate,
+            ["dryRun"] = evidence.DryRun,
+            ["outputRoot"] = evidence.OutputRoot,
+            ["distScoped"] = evidence.DistScoped,
+            ["errors"] = evidence.Errors,
+            ["warnings"] = evidence.Warnings,
+            ["notes"] = evidence.Notes,
+            ["issues"] = evidence.IssueCount,
+            ["releaseIssues"] = evidence.ReleaseIssueCount,
+            ["detail"] = evidence.Detail
+        };
+
     private static JsonArray ToArtifactArray(IReadOnlyList<ReleasePublishEvidenceArtifact> artifacts)
     {
         var array = new JsonArray();
@@ -3673,6 +4316,58 @@ internal static class ReleasePublishPreflightJsonSerializer
         return array;
     }
 
+    private static JsonObject ToPublishReadiness(ReleasePublishReadiness readiness) =>
+        new()
+        {
+            ["evaluatedInCurrentGate"] = readiness.EvaluatedInCurrentGate,
+            ["status"] = readiness.Status,
+            ["localPreconditionsSatisfied"] = readiness.LocalPreconditionsSatisfied,
+            ["evidenceSatisfied"] = readiness.EvidenceSatisfied,
+            ["governanceSatisfied"] = readiness.GovernanceSatisfied,
+            ["approvalSatisfied"] = readiness.ApprovalSatisfied,
+            ["publishExecutionEnabled"] = readiness.PublishExecutionEnabled,
+            ["readyForRealPublish"] = readiness.ReadyForRealPublish,
+            ["requiredChecks"] = readiness.RequiredChecks,
+            ["satisfiedChecks"] = readiness.SatisfiedChecks,
+            ["blockingChecks"] = readiness.BlockingChecks,
+            ["detail"] = readiness.Detail,
+            ["blockingCheckIds"] = ToStringArray(readiness.BlockingCheckIds),
+            ["checks"] = ToReadinessCheckArray(readiness.Checks)
+        };
+
+    private static JsonObject ToLaneCloseout(ReleasePublishLaneCloseout closeout) =>
+        new()
+        {
+            ["closedInCurrentGate"] = closeout.ClosedInCurrentGate,
+            ["status"] = closeout.Status,
+            ["lane"] = closeout.Lane,
+            ["completedThroughGate"] = closeout.CompletedThroughGate,
+            ["nextGate"] = closeout.NextGate,
+            ["nextValueSlice"] = closeout.NextValueSlice,
+            ["detail"] = closeout.Detail,
+            ["deferredCapabilities"] = ToStringArray(closeout.DeferredCapabilities)
+        };
+
+    private static JsonArray ToReadinessCheckArray(IReadOnlyList<ReleasePublishReadinessCheck> checks)
+    {
+        var array = new JsonArray();
+        foreach (var check in checks)
+        {
+            array.Add(new JsonObject
+            {
+                ["id"] = check.Id,
+                ["title"] = check.Title,
+                ["source"] = check.Source,
+                ["status"] = check.Status,
+                ["required"] = check.Required,
+                ["satisfied"] = check.Satisfied,
+                ["detail"] = check.Detail
+            });
+        }
+
+        return array;
+    }
+
     private static JsonObject ToExecution(ReleasePublishPreflightResult result) =>
         new()
         {
@@ -3680,6 +4375,11 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["releasePublishExecution"] = false,
             ["releasePublishing"] = false,
             ["publishReady"] = result.PublishReady,
+            ["publishReadinessEvaluation"] = result.PublishReadiness.EvaluatedInCurrentGate,
+            ["localPublishPreconditionsSatisfied"] = result.PublishReadiness.LocalPreconditionsSatisfied,
+            ["publishReadyForRealPublish"] = result.PublishReadiness.ReadyForRealPublish,
+            ["releasePublishLaneCloseout"] = result.LaneCloseout.ClosedInCurrentGate,
+            ["nextValueSliceRouted"] = result.LaneCloseout.ClosedInCurrentGate,
             ["evidenceArtifactPathCheck"] = true,
             ["evidenceArtifactRead"] = result.LocalEvidenceArtifacts.Any(artifact => artifact.ContentReadInCurrentGate),
             ["artifactExistenceCheck"] = true,
@@ -3696,6 +4396,9 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["schemaValidationEvidenceEvaluation"] = result.SchemaValidationEvidence.CheckedInCurrentGate,
             ["capabilityEnvironmentEvidenceEvaluation"] = result.CapabilityEnvironmentEvidence.CheckedInCurrentGate,
             ["packageValidationEvidenceEvaluation"] = result.PackageValidationEvidence.CheckedInCurrentGate,
+            ["releaseVerificationEvidenceEvaluation"] = result.ReleaseVerificationEvidence.CheckedInCurrentGate,
+            ["humanApprovalEvaluation"] = true,
+            ["humanApprovalConfirmationValidated"] = result.Approval.ConfirmationValidated,
             ["governanceCheckExecution"] = true,
             ["humanApprovalProvided"] = result.Approval.Provided,
             ["filesystemMutation"] = false,
@@ -3812,10 +4515,79 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine(result.DryRun ? "dry-run-preflight" : "no-publish-refusal");
         builder.Append("Publish ready: ");
         builder.AppendLine(result.PublishReady.ToString().ToLowerInvariant());
+        builder.Append("Publish readiness: ");
+        builder.Append(result.PublishReadiness.Status);
+        builder.Append(" (");
+        builder.Append(result.PublishReadiness.SatisfiedChecks);
+        builder.Append('/');
+        builder.Append(result.PublishReadiness.RequiredChecks);
+        builder.Append(" checks satisfied, ");
+        builder.Append(result.PublishReadiness.BlockingChecks);
+        builder.AppendLine(" blocking)");
+        builder.Append("Local publish preconditions satisfied: ");
+        builder.AppendLine(result.PublishReadiness.LocalPreconditionsSatisfied.ToString().ToLowerInvariant());
+        builder.Append("Ready for real publish: ");
+        builder.AppendLine(result.PublishReadiness.ReadyForRealPublish.ToString().ToLowerInvariant());
+        builder.Append("Lane closeout: ");
+        builder.AppendLine(result.LaneCloseout.Status);
+        builder.Append("Next value slice: ");
+        builder.Append(result.LaneCloseout.NextGate);
+        builder.Append(" - ");
+        builder.AppendLine(result.LaneCloseout.NextValueSlice);
         if (result.RefusalReason is not null)
         {
             builder.Append("Refusal: ");
             builder.AppendLine(result.RefusalReason);
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("Publish readiness");
+        builder.Append("  status: ");
+        builder.AppendLine(result.PublishReadiness.Status);
+        builder.Append("  local preconditions satisfied: ");
+        builder.AppendLine(result.PublishReadiness.LocalPreconditionsSatisfied.ToString().ToLowerInvariant());
+        builder.Append("  evidence satisfied: ");
+        builder.AppendLine(result.PublishReadiness.EvidenceSatisfied.ToString().ToLowerInvariant());
+        builder.Append("  governance satisfied: ");
+        builder.AppendLine(result.PublishReadiness.GovernanceSatisfied.ToString().ToLowerInvariant());
+        builder.Append("  approval satisfied: ");
+        builder.AppendLine(result.PublishReadiness.ApprovalSatisfied.ToString().ToLowerInvariant());
+        builder.Append("  publish execution enabled: ");
+        builder.AppendLine(result.PublishReadiness.PublishExecutionEnabled.ToString().ToLowerInvariant());
+        builder.Append("  ready for real publish: ");
+        builder.AppendLine(result.PublishReadiness.ReadyForRealPublish.ToString().ToLowerInvariant());
+        builder.Append("  detail: ");
+        builder.AppendLine(result.PublishReadiness.Detail);
+        foreach (var check in result.PublishReadiness.Checks)
+        {
+            builder.Append("  ");
+            builder.Append(check.Satisfied ? "SATISFIED " : "BLOCKING ");
+            builder.Append(check.Id);
+            builder.Append(": ");
+            builder.Append(check.Status);
+            builder.Append(" (");
+            builder.Append(check.Detail);
+            builder.AppendLine(")");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("Lane closeout");
+        builder.Append("  status: ");
+        builder.AppendLine(result.LaneCloseout.Status);
+        builder.Append("  lane: ");
+        builder.AppendLine(result.LaneCloseout.Lane);
+        builder.Append("  completed through: ");
+        builder.AppendLine(result.LaneCloseout.CompletedThroughGate);
+        builder.Append("  next gate: ");
+        builder.AppendLine(result.LaneCloseout.NextGate);
+        builder.Append("  next value slice: ");
+        builder.AppendLine(result.LaneCloseout.NextValueSlice);
+        builder.Append("  detail: ");
+        builder.AppendLine(result.LaneCloseout.Detail);
+        foreach (var deferredCapability in result.LaneCloseout.DeferredCapabilities)
+        {
+            builder.Append("  DEFERRED ");
+            builder.AppendLine(deferredCapability);
         }
 
         builder.AppendLine();
@@ -4128,6 +4900,37 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine(result.PackageValidationEvidence.Detail);
 
         builder.AppendLine();
+        builder.AppendLine("Release verification evidence");
+        builder.Append("  path: ");
+        builder.AppendLine(result.ReleaseVerificationEvidence.Path);
+        builder.Append("  exists: ");
+        builder.AppendLine(result.ReleaseVerificationEvidence.Exists.ToString().ToLowerInvariant());
+        builder.Append("  status: ");
+        builder.AppendLine(result.ReleaseVerificationEvidence.Status);
+        builder.Append("  checked in current gate: ");
+        builder.AppendLine(result.ReleaseVerificationEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  content read in current gate: ");
+        builder.AppendLine(result.ReleaseVerificationEvidence.ContentReadInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  dry run: ");
+        builder.AppendLine(result.ReleaseVerificationEvidence.DryRun.ToString().ToLowerInvariant());
+        builder.Append("  output root: ");
+        builder.AppendLine(result.ReleaseVerificationEvidence.OutputRoot ?? "missing");
+        builder.Append("  dist scoped: ");
+        builder.AppendLine(result.ReleaseVerificationEvidence.DistScoped.ToString().ToLowerInvariant());
+        builder.Append("  summary: ");
+        builder.Append(result.ReleaseVerificationEvidence.Errors);
+        builder.Append(" errors, ");
+        builder.Append(result.ReleaseVerificationEvidence.Warnings);
+        builder.Append(" warnings, ");
+        builder.Append(result.ReleaseVerificationEvidence.Notes);
+        builder.Append(" notes, ");
+        builder.Append(result.ReleaseVerificationEvidence.ReleaseIssueCount);
+        builder.Append(" release diagnostics");
+        builder.AppendLine();
+        builder.Append("  detail: ");
+        builder.AppendLine(result.ReleaseVerificationEvidence.Detail);
+
+        builder.AppendLine();
         builder.AppendLine("Governance checks");
         foreach (var check in result.GovernanceChecks)
         {
@@ -4150,14 +4953,37 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine(result.Approval.Required.ToString().ToLowerInvariant());
         builder.Append("  provided: ");
         builder.AppendLine(result.Approval.Provided.ToString().ToLowerInvariant());
+        builder.Append("  yes provided: ");
+        builder.AppendLine(result.Approval.YesProvided.ToString().ToLowerInvariant());
+        builder.Append("  confirmation value: ");
+        builder.AppendLine(result.Approval.ConfirmationValue ?? "missing");
+        builder.Append("  confirmation validated: ");
+        builder.AppendLine(result.Approval.ConfirmationValidated.ToString().ToLowerInvariant());
+        builder.Append("  confirmation matches: ");
+        builder.AppendLine(result.Approval.ConfirmationMatches?.ToString().ToLowerInvariant() ?? "not-evaluated");
+        builder.Append("  project manifest read: ");
+        builder.AppendLine(result.Approval.ProjectManifestRead.ToString().ToLowerInvariant());
+        builder.Append("  project manifest path: ");
+        builder.AppendLine(result.Approval.ProjectManifestPath ?? "missing");
+        builder.Append("  project id: ");
+        builder.AppendLine(result.Approval.ProjectId ?? "missing");
         builder.Append("  status: ");
         builder.AppendLine(result.Approval.Status);
+        builder.Append("  detail: ");
+        builder.AppendLine(result.Approval.Detail);
 
         builder.AppendLine();
         builder.AppendLine("Execution");
         builder.AppendLine("  release publish preflight planning: true");
         builder.AppendLine("  release publish execution: false");
         builder.AppendLine("  release publishing: false");
+        builder.AppendLine("  publish readiness evaluation: true");
+        builder.Append("  local publish preconditions satisfied: ");
+        builder.AppendLine(result.PublishReadiness.LocalPreconditionsSatisfied.ToString().ToLowerInvariant());
+        builder.Append("  publish ready for real publish: ");
+        builder.AppendLine(result.PublishReadiness.ReadyForRealPublish.ToString().ToLowerInvariant());
+        builder.AppendLine("  release publish lane closeout: true");
+        builder.AppendLine("  next value slice routed: true");
         builder.AppendLine("  evidence artifact path checks: true");
         builder.Append("  evidence artifact reads: ");
         builder.AppendLine(result.LocalEvidenceArtifacts.Any(artifact => artifact.ContentReadInCurrentGate).ToString().ToLowerInvariant());
@@ -4181,6 +5007,11 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine(result.CapabilityEnvironmentEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
         builder.Append("  package validation evidence evaluation: ");
         builder.AppendLine(result.PackageValidationEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  release verification evidence evaluation: ");
+        builder.AppendLine(result.ReleaseVerificationEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.AppendLine("  human approval evaluation: true");
+        builder.Append("  human approval confirmation validated: ");
+        builder.AppendLine(result.Approval.ConfirmationValidated.ToString().ToLowerInvariant());
         builder.AppendLine("  governance check execution: true");
         builder.AppendLine("  filesystem mutation: false");
         builder.AppendLine("  output writes: false");

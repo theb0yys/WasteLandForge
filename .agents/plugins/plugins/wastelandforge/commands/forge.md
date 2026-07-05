@@ -75,12 +75,12 @@ Use this routing:
 | `/forge package` | deterministic staging, package manifest, checksums, and distribution preparation |
 | `/forge release verify` | release gates, local build manifests, checksums, schema immutability, SemVer streams, governance checks |
 | `/forge release prepare` | release dry-run, package preparation, reports, and provenance-ready outputs |
-| `/forge release publish` | protected no-publish governance preflight until explicit approval and completed release governance exist |
+| `/forge release publish` | closed no-publish governance preflight and routing toward local Doctor export release-readiness handoff |
 | `/forge docs` | deterministic documentation generation from canonical source truth |
 | `/forge graph` | build, capability, contract, registry, or provider graph explanation |
 | `/forge explain` | diagnostic, validation, build, capability, or planning explanation |
 | `/forge clean` | generated/dist cleanup only unless the user explicitly authorizes more |
-| `/forge doctor export` | offline-first diagnostic export boundary |
+| `/forge doctor export` | offline-first diagnostic export boundary with local release-readiness handoff projection |
 | `/forge help` | canonical command list and research-bound operating rules |
 | `/forge --version` | actual CLI version if implemented; otherwise planned version state and open implementation status |
 
@@ -717,10 +717,15 @@ build-manifest output digest revalidation, Gate 278 implements
 release-archive-evidence archive digest metadata revalidation, Gate 279
 implements release archive reopening/revalidation, and Gate 280 implements
 semantic release-evidence validation, Gate 281 implements governance-check
-evaluation, Gate 282 implements schema-validation evidence evaluation, and Gate
-283 implements capability/environment evidence evaluation. Route the next
-implementation slice to Gate 284: forge release publish package-validation
-evidence evaluation skeleton, still with no publish behavior.
+evaluation, Gate 282 implements schema-validation evidence evaluation, Gate
+283 implements capability/environment evidence evaluation, Gate 284
+implements package-validation evidence evaluation, Gate 285 implements
+release-verification evidence evaluation, and Gate 286 implements explicit
+human-approval preflight, Gate 287 implements publish-readiness aggregation,
+Gate 288 closes the no-publish lane and routes the next local value slice, and
+Gate 289 implements the forge doctor export release-readiness handoff
+skeleton. Route the next implementation slice to Gate 290: forge doctor export
+release-readiness triage/worklist integration, still with no publish behavior.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -778,10 +783,16 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   metadata revalidation, Gate 279 implements release archive
   reopening/revalidation, Gate 280 implements semantic release-evidence
   validation, Gate 281 implements governance-check evaluation, Gate 282
-  implements schema-validation evidence evaluation, and Gate 283 implements
-  capability/environment evidence evaluation. Route the next implementation
-  slice to Gate 284: forge release publish package-validation evidence
-  evaluation skeleton, still with no publish behavior.
+  implements schema-validation evidence evaluation, Gate 283 implements
+  capability/environment evidence evaluation, Gate 284 implements
+  package-validation evidence evaluation, Gate 285 implements
+  release-verification evidence evaluation, Gate 286 implements explicit
+  human-approval preflight, Gate 287 implements publish-readiness
+  aggregation, Gate 288 closes the no-publish lane and routes the next local
+  value slice, and Gate 289 implements the forge doctor export
+  release-readiness handoff skeleton. Route the next implementation slice to
+  Gate 290: forge doctor export release-readiness triage/worklist integration,
+  still with no publish behavior.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider
@@ -969,4 +980,4 @@ Report:
 - Public fixtures must be synthetic and redistributable.
 - Generated outputs are disposable and must carry provenance.
 - `clean` may target generated outputs only unless explicitly authorized.
-- `release publish` routes to a no-publish governance preflight until explicit approval and completed release governance checks exist.
+- `release publish` routes to the closed no-publish governance preflight and must not publish releases.

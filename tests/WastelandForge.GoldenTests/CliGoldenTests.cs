@@ -1906,6 +1906,8 @@ public sealed class CliGoldenTests
         var capabilities = json["capabilities"] ?? throw new InvalidOperationException("Doctor export did not include capability scan data.");
         var providerEvidence = capabilities["providers"]?[0]?["evidence"]?[0] ??
             throw new InvalidOperationException("Doctor export did not include provider evidence.");
+        var releaseReadiness = json["releaseReadiness"] ??
+            throw new InvalidOperationException("Doctor export did not include release-readiness data.");
 
         Assert.Equal(0, result.ExitCode);
         Assert.Equal("1.0", (string?)json["formatVersion"]);
@@ -1931,23 +1933,54 @@ public sealed class CliGoldenTests
         Assert.True(json["index"]?["cataloguePolicy"]?.AsArray().Count > 0);
         Assert.Equal(2, (int?)json["index"]?["cataloguePolicyDiagnosticHandoff"]?["questions"]);
         Assert.Equal("wastelandforge/doctor-triage/v1", (string?)json["triage"]?["kind"]);
-        Assert.Equal("review", (string?)json["triage"]?["summary"]?["status"]);
-        Assert.Equal(0, (int?)json["triage"]?["summary"]?["blockingItems"]);
+        Assert.Equal("blocked", (string?)json["triage"]?["summary"]?["status"]);
+        Assert.Equal(1, (int?)json["triage"]?["summary"]?["blockingItems"]);
         Assert.Equal(1, (int?)json["triage"]?["summary"]?["reviewItems"]);
         Assert.Equal(0, (int?)json["triage"]?["summary"]?["actions"]);
-        Assert.Equal(2, (int?)json["triage"]?["summary"]?["commandHints"]);
-        Assert.Equal(1, (int?)json["triage"]?["summary"]?["workItems"]);
-        Assert.Equal(1, (int?)json["triage"]?["summary"]?["worklistPriorityGroups"]);
-        Assert.Equal(1, (int?)json["triage"]?["summary"]?["worklistSourceGroups"]);
-        Assert.Equal("review", (string?)json["triage"]?["remediation"]?["status"]);
-        Assert.Equal("Review: 1 work item(s) need operator review.", (string?)json["triage"]?["remediation"]?["headline"]);
-        Assert.Equal(1, (int?)json["triage"]?["remediation"]?["workItems"]);
-        Assert.Equal(0, (int?)json["triage"]?["remediation"]?["blockerItems"]);
+        Assert.Equal(4, (int?)json["triage"]?["summary"]?["commandHints"]);
+        Assert.Equal(11, (int?)json["triage"]?["summary"]?["workItems"]);
+        Assert.Equal(2, (int?)json["triage"]?["summary"]?["worklistPriorityGroups"]);
+        Assert.Equal(2, (int?)json["triage"]?["summary"]?["worklistSourceGroups"]);
+        Assert.Equal(10, (int?)json["triage"]?["summary"]?["releaseReadinessBlockingChecks"]);
+        Assert.Equal("wastelandforge/doctor-release-readiness/v1", (string?)releaseReadiness["kind"]);
+        Assert.Equal(true, (bool?)releaseReadiness["included"]);
+        Assert.Equal(true, (bool?)releaseReadiness["evaluatedInCurrentGate"]);
+        Assert.Equal("forge release publish <project-root> --dry-run --format json --no-input", (string?)releaseReadiness["sourceCommand"]);
+        Assert.Equal("blocked-by-preconditions", (string?)releaseReadiness["status"]);
+        Assert.Equal("publish-readiness-local-preconditions-incomplete", (string?)releaseReadiness["detail"]);
+        Assert.Equal("dist/release-prepare", (string?)releaseReadiness["evidenceRoot"]);
+        Assert.Equal("missing", (string?)releaseReadiness["releasePrepareEvidenceStatus"]);
+        Assert.Equal("blocked-by-preconditions", (string?)releaseReadiness["publishReadinessStatus"]);
+        Assert.Equal(false, (bool?)releaseReadiness["evidenceSatisfied"]);
+        Assert.Equal(false, (bool?)releaseReadiness["governanceSatisfied"]);
+        Assert.Equal(false, (bool?)releaseReadiness["approvalSatisfied"]);
+        Assert.Equal(false, (bool?)releaseReadiness["localPreconditionsSatisfied"]);
+        Assert.Equal(false, (bool?)releaseReadiness["readyForRealPublish"]);
+        Assert.Equal(9, (int?)releaseReadiness["requiredEvidence"]);
+        Assert.Equal(10, (int?)releaseReadiness["requiredChecks"]);
+        Assert.Equal(0, (int?)releaseReadiness["satisfiedChecks"]);
+        Assert.Equal(10, (int?)releaseReadiness["blockingChecks"]);
+        Assert.Equal(10, releaseReadiness["blockingCheckIds"]?.AsArray().Count);
+        Assert.Equal(9, releaseReadiness["evidence"]?.AsArray().Count);
+        Assert.Equal("schema-validation", (string?)releaseReadiness["evidence"]?[0]?["id"]);
+        Assert.Equal("missing", (string?)releaseReadiness["evidence"]?[0]?["status"]);
+        Assert.Contains(
+            releaseReadiness["boundaries"]?.AsArray() ?? throw new InvalidOperationException("Doctor export release-readiness boundaries missing."),
+            item => StringComparer.Ordinal.Equals("No release is published.", (string?)item));
+        Assert.Equal("blocked", (string?)json["triage"]?["remediation"]?["status"]);
+        Assert.Equal("Blocked: 10 blocker item(s) and 1 review item(s) need operator action.", (string?)json["triage"]?["remediation"]?["headline"]);
+        Assert.Equal(11, (int?)json["triage"]?["remediation"]?["workItems"]);
+        Assert.Equal(10, (int?)json["triage"]?["remediation"]?["blockerItems"]);
         Assert.Equal(1, (int?)json["triage"]?["remediation"]?["reviewItems"]);
-        Assert.Equal("review-catalogue-policy", (string?)json["triage"]?["remediation"]?["firstWorkItem"]);
-        Assert.Equal("review-catalogue-policy", (string?)json["triage"]?["remediation"]?["firstCommandHint"]);
-        Assert.Equal("forge capabilities list --format json", (string?)json["triage"]?["remediation"]?["firstCommand"]);
-        Assert.Equal("index.openQuestionDetails", (string?)json["triage"]?["remediation"]?["section"]);
+        Assert.Equal("resolve-release-readiness-schema-validation", (string?)json["triage"]?["remediation"]?["firstWorkItem"]);
+        Assert.Equal("review-release-readiness", (string?)json["triage"]?["remediation"]?["firstCommandHint"]);
+        Assert.Equal("forge release publish <project-root> --dry-run --format json --no-input", (string?)json["triage"]?["remediation"]?["firstCommand"]);
+        Assert.Equal("releaseReadiness", (string?)json["triage"]?["remediation"]?["section"]);
+        Assert.Contains(
+            json["triage"]?["blocking"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage blocking array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("release-readiness-blocking-checks", (string?)item?["id"]) &&
+                (int?)item?["count"] == 10);
         Assert.Contains(
             json["triage"]?["review"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage review array missing."),
             item => StringComparer.Ordinal.Equals("open-questions", (string?)item?["id"]));
@@ -1964,6 +1997,28 @@ public sealed class CliGoldenTests
                 StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["id"]) &&
                 StringComparer.Ordinal.Equals("forge capabilities list --format json", (string?)item?["command"]));
         Assert.Contains(
+            json["triage"]?["commands"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage commands missing."),
+            item =>
+                StringComparer.Ordinal.Equals("review-release-readiness", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("forge release publish <project-root> --dry-run --format json --no-input", (string?)item?["command"]));
+        Assert.Contains(
+            json["triage"]?["commands"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage commands missing."),
+            item =>
+                StringComparer.Ordinal.Equals("confirm-release-approval-dry-run", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("forge release publish <project-root> --dry-run --yes --confirm <project-id> --format json --no-input", (string?)item?["command"]));
+        Assert.Contains(
+            json["triage"]?["worklist"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage worklist missing."),
+            item =>
+                StringComparer.Ordinal.Equals("resolve-release-readiness-schema-validation", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("blocker", (string?)item?["priority"]) &&
+                StringComparer.Ordinal.Equals("review-release-readiness", (string?)item?["commandHint"]) &&
+                StringComparer.Ordinal.Equals("releaseReadiness", (string?)item?["section"]));
+        Assert.Contains(
+            json["triage"]?["worklist"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage worklist missing."),
+            item =>
+                StringComparer.Ordinal.Equals("resolve-release-readiness-human-approval", (string?)item?["id"]) &&
+                StringComparer.Ordinal.Equals("confirm-release-approval-dry-run", (string?)item?["commandHint"]));
+        Assert.Contains(
             json["triage"]?["worklist"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage worklist missing."),
             item =>
                 StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)item?["id"]) &&
@@ -1973,20 +2028,23 @@ public sealed class CliGoldenTests
         Assert.Contains(
             json["triage"]?["worklistSummary"]?["priorities"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage worklist priority summary missing."),
             item =>
-                StringComparer.Ordinal.Equals("review", (string?)item?["priority"]) &&
-                (int?)item?["count"] == 1 &&
+                StringComparer.Ordinal.Equals("blocker", (string?)item?["priority"]) &&
+                (int?)item?["count"] == 10 &&
                 (item?["workItems"]?.AsArray().Any(workItem =>
-                    StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)workItem)) ?? false));
+                    StringComparer.Ordinal.Equals("resolve-release-readiness-human-approval", (string?)workItem)) ?? false));
         Assert.Contains(
             json["triage"]?["worklistSummary"]?["sources"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage worklist source summary missing."),
             item =>
-                StringComparer.Ordinal.Equals("index.openQuestionDetails", (string?)item?["section"]) &&
-                (int?)item?["count"] == 1 &&
+                StringComparer.Ordinal.Equals("releaseReadiness", (string?)item?["section"]) &&
+                (int?)item?["count"] == 10 &&
                 (item?["workItems"]?.AsArray().Any(workItem =>
-                    StringComparer.Ordinal.Equals("review-catalogue-policy", (string?)workItem)) ?? false));
+                    StringComparer.Ordinal.Equals("resolve-release-readiness-schema-validation", (string?)workItem)) ?? false));
         Assert.Contains(
             json["triage"]?["reviewSections"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage review sections missing."),
             item => StringComparer.Ordinal.Equals("index.openQuestionDetails", (string?)item?["section"]));
+        Assert.Contains(
+            json["triage"]?["reviewSections"]?.AsArray() ?? throw new InvalidOperationException("Doctor export triage review sections missing."),
+            item => StringComparer.Ordinal.Equals("releaseReadiness", (string?)item?["section"]));
         Assert.DoesNotContain("triage/index.md", json["triage"]?.ToJsonString(), StringComparison.Ordinal);
         Assert.DoesNotContain("open-questions/index.md", json["triage"]?.ToJsonString(), StringComparison.Ordinal);
         Assert.Equal("base-game", (string?)json["index"]?["doctorAreas"]?[0]?["id"]);
@@ -2015,6 +2073,27 @@ public sealed class CliGoldenTests
         Assert.DoesNotContain(EscapeJsonPath(layout.GameRoot), result.Stdout, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(layout.XEditPath, result.Stdout, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(EscapeJsonPath(layout.XEditPath), result.Stdout, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void DoctorExportJsonMarksReleaseReadinessNotIncludedWithoutProjectRoot()
+    {
+        var result = RunCli("doctor", "export", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Doctor export JSON did not parse.");
+        var releaseReadiness = json["releaseReadiness"] ??
+            throw new InvalidOperationException("Doctor export did not include release-readiness data.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("wastelandforge/doctor-release-readiness/v1", (string?)releaseReadiness["kind"]);
+        Assert.Equal(false, (bool?)releaseReadiness["included"]);
+        Assert.Equal(false, (bool?)releaseReadiness["evaluatedInCurrentGate"]);
+        Assert.Equal("not-included", (string?)releaseReadiness["status"]);
+        Assert.Equal("project-root-not-provided", (string?)releaseReadiness["detail"]);
+        Assert.Null(releaseReadiness["evidenceRoot"]);
+        Assert.Equal(false, (bool?)releaseReadiness["readyForRealPublish"]);
+        Assert.Empty(releaseReadiness["blockingCheckIds"]?.AsArray() ?? throw new InvalidOperationException("Doctor export release-readiness blocking checks missing."));
+        Assert.Empty(releaseReadiness["evidence"]?.AsArray() ?? throw new InvalidOperationException("Doctor export release-readiness evidence missing."));
         Assert.Equal(string.Empty, result.Stderr);
     }
 
@@ -2592,6 +2671,14 @@ public sealed class CliGoldenTests
         Assert.Contains("Catalog: wastelandforge.fnv.builtin 0.1.0", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Requirements: 2 satisfied, 0 missing, 0 unknown, 0 wrong-scope", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Diagnostics: 0 error(s), 0 warning(s), 0 note(s)", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Release readiness:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("status: blocked-by-preconditions", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("included: true", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("source command: forge release publish <project-root> --dry-run --format json --no-input", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("evidence root: dist/release-prepare", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("ready for real publish: false", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("checks: 0/10 satisfied; 10 blocking", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("schema-validation: missing (ADR-011 layered validation)", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Triage:", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Status: review", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Command hints: 2", result.Stdout, StringComparison.Ordinal);
@@ -2966,6 +3053,11 @@ public sealed class CliGoldenTests
         Assert.Contains("## Summary", markdown, StringComparison.Ordinal);
         Assert.Contains("- Doctor: 5 area(s); 5 ready; 0 action-needed; 0 unknown; 0 action(s)", markdown, StringComparison.Ordinal);
         Assert.Contains("- Requirements: 2 total; 2 satisfied; 0 missing; 0 unknown; 0 wrong-scope; 0 required unavailable; 0 optional unavailable", markdown, StringComparison.Ordinal);
+        Assert.Contains("## Release Readiness", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Status: `blocked-by-preconditions`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Source command: `forge release publish <project-root> --dry-run --format json --no-input`", markdown, StringComparison.Ordinal);
+        Assert.Contains("- Ready for real publish: `false`", markdown, StringComparison.Ordinal);
+        Assert.Contains("| `schema-validation` | `missing` | `ADR-011 layered validation` | `true` |", markdown, StringComparison.Ordinal);
         Assert.Contains("## Triage", markdown, StringComparison.Ordinal);
         Assert.Contains("- Status: `review`", markdown, StringComparison.Ordinal);
         Assert.Contains("- Command hints: 2", markdown, StringComparison.Ordinal);
@@ -3073,6 +3165,8 @@ public sealed class CliGoldenTests
                 "providers/index.md",
                 "redaction/index.json",
                 "redaction/index.md",
+                "release-readiness/index.json",
+                "release-readiness/index.md",
                 "requirements/index.json",
                 "requirements/index.md",
                 "scan-inputs/index.json",
@@ -3109,6 +3203,8 @@ public sealed class CliGoldenTests
         var providerIndexMarkdown = ReadZipEntry(archive, "providers/index.md");
         var redactionIndexJsonText = ReadZipEntry(archive, "redaction/index.json");
         var redactionIndexMarkdown = ReadZipEntry(archive, "redaction/index.md");
+        var releaseReadinessIndexJsonText = ReadZipEntry(archive, "release-readiness/index.json");
+        var releaseReadinessIndexMarkdown = ReadZipEntry(archive, "release-readiness/index.md");
         var requirementIndexJsonText = ReadZipEntry(archive, "requirements/index.json");
         var requirementIndexMarkdown = ReadZipEntry(archive, "requirements/index.md");
         var scanInputIndexJsonText = ReadZipEntry(archive, "scan-inputs/index.json");
@@ -3130,12 +3226,13 @@ public sealed class CliGoldenTests
         var openQuestionIndexJson = JsonNode.Parse(openQuestionIndexJsonText) ?? throw new InvalidOperationException("Doctor open-question index JSON did not parse.");
         var providerIndexJson = JsonNode.Parse(providerIndexJsonText) ?? throw new InvalidOperationException("Doctor provider index JSON did not parse.");
         var redactionIndexJson = JsonNode.Parse(redactionIndexJsonText) ?? throw new InvalidOperationException("Doctor redaction index JSON did not parse.");
+        var releaseReadinessIndexJson = JsonNode.Parse(releaseReadinessIndexJsonText) ?? throw new InvalidOperationException("Doctor release-readiness index JSON did not parse.");
         var requirementIndexJson = JsonNode.Parse(requirementIndexJsonText) ?? throw new InvalidOperationException("Doctor requirement index JSON did not parse.");
         var scanInputIndexJson = JsonNode.Parse(scanInputIndexJsonText) ?? throw new InvalidOperationException("Doctor scan-input index JSON did not parse.");
         var summaryIndexJson = JsonNode.Parse(summaryIndexJsonText) ?? throw new InvalidOperationException("Doctor summary index JSON did not parse.");
         var triageIndexJson = JsonNode.Parse(triageIndexJsonText) ?? throw new InvalidOperationException("Doctor triage index JSON did not parse.");
         var manifestJson = JsonNode.Parse(manifestText) ?? throw new InvalidOperationException("Doctor export archive manifest did not parse.");
-        var combined = string.Concat(exportJsonText, exportMarkdown, readme, actionIndexJsonText, actionIndexMarkdown, bundleIndexJsonText, bundleIndexMarkdown, capabilityIndexJsonText, capabilityIndexMarkdown, cataloguePolicyIndexJsonText, cataloguePolicyIndexMarkdown, diagnosticIndexJsonText, diagnosticIndexMarkdown, doctorAreaIndexJsonText, doctorAreaIndexMarkdown, evidenceIndexJsonText, evidenceIndexMarkdown, handoffSummary, openQuestionIndexJsonText, openQuestionIndexMarkdown, providerIndexJsonText, providerIndexMarkdown, redactionIndexJsonText, redactionIndexMarkdown, requirementIndexJsonText, requirementIndexMarkdown, scanInputIndexJsonText, scanInputIndexMarkdown, summaryIndexJsonText, summaryIndexMarkdown, triageIndexJsonText, triageIndexMarkdown, manifestText, checksums);
+        var combined = string.Concat(exportJsonText, exportMarkdown, readme, actionIndexJsonText, actionIndexMarkdown, bundleIndexJsonText, bundleIndexMarkdown, capabilityIndexJsonText, capabilityIndexMarkdown, cataloguePolicyIndexJsonText, cataloguePolicyIndexMarkdown, diagnosticIndexJsonText, diagnosticIndexMarkdown, doctorAreaIndexJsonText, doctorAreaIndexMarkdown, evidenceIndexJsonText, evidenceIndexMarkdown, handoffSummary, openQuestionIndexJsonText, openQuestionIndexMarkdown, providerIndexJsonText, providerIndexMarkdown, redactionIndexJsonText, redactionIndexMarkdown, releaseReadinessIndexJsonText, releaseReadinessIndexMarkdown, requirementIndexJsonText, requirementIndexMarkdown, scanInputIndexJsonText, scanInputIndexMarkdown, summaryIndexJsonText, summaryIndexMarkdown, triageIndexJsonText, triageIndexMarkdown, manifestText, checksums);
 
         Assert.Equal("doctor export", (string?)exportJson["command"]);
         Assert.Equal("doctor export", (string?)manifestJson["command"]);
@@ -3144,7 +3241,7 @@ public sealed class CliGoldenTests
         Assert.Equal("zip", (string?)manifestJson["bundle"]?["archiveFormat"]);
         Assert.Equal("local-paths", (string?)manifestJson["redaction"]?["mode"]);
         Assert.Equal("redacted", (string?)manifestJson["redaction"]?["paths"]);
-        Assert.Equal(32, manifestJson["entries"]?.AsArray().Count);
+        Assert.Equal(34, manifestJson["entries"]?.AsArray().Count);
         Assert.Contains("# WastelandForge Doctor Handoff Bundle", readme, StringComparison.Ordinal);
         Assert.Contains("`actions/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`bundle/index.md`", readme, StringComparison.Ordinal);
@@ -3157,6 +3254,7 @@ public sealed class CliGoldenTests
         Assert.Contains("`open-questions/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`providers/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`redaction/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`release-readiness/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`requirements/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`scan-inputs/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`summary/index.md`", readme, StringComparison.Ordinal);
@@ -3165,7 +3263,7 @@ public sealed class CliGoldenTests
         Assert.Equal("wastelandforge/doctor-action-index/v1", (string?)actionIndexJson["kind"]);
         Assert.Contains("# WastelandForge Doctor Actions", actionIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-bundle-index/v1", (string?)bundleIndexJson["kind"]);
-        Assert.Equal(34, (int?)bundleIndexJson["summary"]?["entries"]);
+        Assert.Equal(36, (int?)bundleIndexJson["summary"]?["entries"]);
         Assert.Contains(
             bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
             item => StringComparer.Ordinal.Equals("doctor-export.json", (string?)item?["path"]));
@@ -3178,6 +3276,11 @@ public sealed class CliGoldenTests
         Assert.Contains(
             bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
             item => StringComparer.Ordinal.Equals("triage/index.json", (string?)item?["path"]));
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item =>
+                StringComparer.Ordinal.Equals("release-readiness/index.json", (string?)item?["path"]) &&
+                StringComparer.Ordinal.Equals("release-readiness", (string?)item?["category"]));
         Assert.Contains(
             bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
             item =>
@@ -3194,9 +3297,19 @@ public sealed class CliGoldenTests
         Assert.Contains("## Command Hints", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`review-catalogue-policy`: `forge capabilities list --format json`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("## Key Archive Paths", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`release-readiness/index.md`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`triage/index.md`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`bundle/index.md`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`open-questions/index.md`", handoffSummary, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-release-readiness/v1", (string?)releaseReadinessIndexJson["kind"]);
+        Assert.Equal("blocked-by-preconditions", (string?)releaseReadinessIndexJson["releaseReadiness"]?["status"]);
+        Assert.Equal(true, (bool?)releaseReadinessIndexJson["releaseReadiness"]?["included"]);
+        Assert.Equal("dist/release-prepare", (string?)releaseReadinessIndexJson["releaseReadiness"]?["evidenceRoot"]);
+        Assert.Equal(false, (bool?)releaseReadinessIndexJson["releaseReadiness"]?["readyForRealPublish"]);
+        Assert.Equal(10, (int?)releaseReadinessIndexJson["releaseReadiness"]?["blockingChecks"]);
+        Assert.Contains("# WastelandForge Doctor Release Readiness", releaseReadinessIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Status: `blocked-by-preconditions`", releaseReadinessIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("| `schema-validation` | `missing` | `ADR-011 layered validation` | `true` |", releaseReadinessIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-triage-index/v1", (string?)triageIndexJson["kind"]);
         Assert.Equal("review", (string?)triageIndexJson["summary"]?["status"]);
         Assert.Equal(0, (int?)triageIndexJson["summary"]?["blockingItems"]);
@@ -3339,9 +3452,11 @@ public sealed class CliGoldenTests
         Assert.Equal(15, (int?)summaryIndexJson["summary"]?["providers"]?["total"]);
         Assert.Equal(19, (int?)summaryIndexJson["summary"]?["capabilities"]?["total"]);
         Assert.Equal(5, (int?)summaryIndexJson["summary"]?["doctor"]?["areas"]);
+        Assert.Equal("blocked-by-preconditions", (string?)summaryIndexJson["indexSummaries"]?["releaseReadinessSummary"]?["status"]);
         Assert.Equal(2, (int?)summaryIndexJson["indexSummaries"]?["cataloguePolicySummary"]?["openQuestions"]);
         Assert.Contains("# WastelandForge Doctor Summary", summaryIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("Derived Index Summaries", summaryIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Release-readiness summary: blocked-by-preconditions; 0/10 check(s) satisfied", summaryIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("  README.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  actions/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  actions/index.md", checksums, StringComparison.Ordinal);
@@ -3364,6 +3479,8 @@ public sealed class CliGoldenTests
         Assert.Contains("  providers/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  redaction/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  redaction/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  release-readiness/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  release-readiness/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirements/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirements/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  scan-inputs/index.json", checksums, StringComparison.Ordinal);
@@ -3429,6 +3546,8 @@ public sealed class CliGoldenTests
         Assert.Contains("providers/index.md", entries);
         Assert.Contains("redaction/index.json", entries);
         Assert.Contains("redaction/index.md", entries);
+        Assert.Contains("release-readiness/index.json", entries);
+        Assert.Contains("release-readiness/index.md", entries);
         Assert.Contains("requirements/index.json", entries);
         Assert.Contains("requirements/index.md", entries);
         Assert.Contains("scan-inputs/index.json", entries);
@@ -3467,6 +3586,8 @@ public sealed class CliGoldenTests
         var providerIndexMarkdown = ReadZipEntry(archive, "providers/index.md");
         var redactionIndexJsonText = ReadZipEntry(archive, "redaction/index.json");
         var redactionIndexMarkdown = ReadZipEntry(archive, "redaction/index.md");
+        var releaseReadinessIndexJsonText = ReadZipEntry(archive, "release-readiness/index.json");
+        var releaseReadinessIndexMarkdown = ReadZipEntry(archive, "release-readiness/index.md");
         var requirementIndexJsonText = ReadZipEntry(archive, "requirements/index.json");
         var requirementIndexMarkdown = ReadZipEntry(archive, "requirements/index.md");
         var scanInputIndexJsonText = ReadZipEntry(archive, "scan-inputs/index.json");
@@ -3493,6 +3614,7 @@ public sealed class CliGoldenTests
         var openQuestionIndexJson = JsonNode.Parse(openQuestionIndexJsonText) ?? throw new InvalidOperationException("Doctor open-question index JSON did not parse.");
         var providerIndexJson = JsonNode.Parse(providerIndexJsonText) ?? throw new InvalidOperationException("Doctor provider index JSON did not parse.");
         var redactionIndexJson = JsonNode.Parse(redactionIndexJsonText) ?? throw new InvalidOperationException("Doctor redaction index JSON did not parse.");
+        var releaseReadinessIndexJson = JsonNode.Parse(releaseReadinessIndexJsonText) ?? throw new InvalidOperationException("Doctor release-readiness index JSON did not parse.");
         var requirementIndexJson = JsonNode.Parse(requirementIndexJsonText) ?? throw new InvalidOperationException("Doctor requirement index JSON did not parse.");
         var scanInputIndexJson = JsonNode.Parse(scanInputIndexJsonText) ?? throw new InvalidOperationException("Doctor scan-input index JSON did not parse.");
         var summaryIndexJson = JsonNode.Parse(summaryIndexJsonText) ?? throw new InvalidOperationException("Doctor summary index JSON did not parse.");
@@ -3500,9 +3622,9 @@ public sealed class CliGoldenTests
         var indexJson = JsonNode.Parse(indexJsonText) ?? throw new InvalidOperationException("Requirement explanation index JSON did not parse.");
         var xnvseExplanationJson = JsonNode.Parse(xnvseExplanationJsonText) ?? throw new InvalidOperationException("Requirement explanation JSON did not parse.");
         var manifestJson = JsonNode.Parse(manifestText) ?? throw new InvalidOperationException("Doctor export archive manifest did not parse.");
-        var combined = string.Concat(readme, actionIndexJsonText, actionIndexMarkdown, bundleIndexJsonText, bundleIndexMarkdown, capabilityIndexJsonText, capabilityIndexMarkdown, cataloguePolicyIndexJsonText, cataloguePolicyIndexMarkdown, diagnosticIndexJsonText, diagnosticIndexMarkdown, doctorAreaIndexJsonText, doctorAreaIndexMarkdown, evidenceIndexJsonText, evidenceIndexMarkdown, handoffSummary, openQuestionIndexJsonText, openQuestionIndexMarkdown, providerIndexJsonText, providerIndexMarkdown, redactionIndexJsonText, redactionIndexMarkdown, requirementIndexJsonText, requirementIndexMarkdown, scanInputIndexJsonText, scanInputIndexMarkdown, summaryIndexJsonText, summaryIndexMarkdown, triageIndexJsonText, triageIndexMarkdown, indexJsonText, indexMarkdown, xnvseExplanationJsonText, xnvseExplanation, mcmExplanationJsonText, mcmExplanation, manifestText, checksums);
+        var combined = string.Concat(readme, actionIndexJsonText, actionIndexMarkdown, bundleIndexJsonText, bundleIndexMarkdown, capabilityIndexJsonText, capabilityIndexMarkdown, cataloguePolicyIndexJsonText, cataloguePolicyIndexMarkdown, diagnosticIndexJsonText, diagnosticIndexMarkdown, doctorAreaIndexJsonText, doctorAreaIndexMarkdown, evidenceIndexJsonText, evidenceIndexMarkdown, handoffSummary, openQuestionIndexJsonText, openQuestionIndexMarkdown, providerIndexJsonText, providerIndexMarkdown, redactionIndexJsonText, redactionIndexMarkdown, releaseReadinessIndexJsonText, releaseReadinessIndexMarkdown, requirementIndexJsonText, requirementIndexMarkdown, scanInputIndexJsonText, scanInputIndexMarkdown, summaryIndexJsonText, summaryIndexMarkdown, triageIndexJsonText, triageIndexMarkdown, indexJsonText, indexMarkdown, xnvseExplanationJsonText, xnvseExplanation, mcmExplanationJsonText, mcmExplanation, manifestText, checksums);
 
-        Assert.Equal(38, manifestJson["entries"]?.AsArray().Count);
+        Assert.Equal(40, manifestJson["entries"]?.AsArray().Count);
         Assert.Contains("# WastelandForge Doctor Handoff Bundle", readme, StringComparison.Ordinal);
         Assert.Contains("`actions/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`bundle/index.md`", readme, StringComparison.Ordinal);
@@ -3515,6 +3637,7 @@ public sealed class CliGoldenTests
         Assert.Contains("`open-questions/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`providers/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`redaction/index.md`", readme, StringComparison.Ordinal);
+        Assert.Contains("`release-readiness/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`requirements/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`scan-inputs/index.md`", readme, StringComparison.Ordinal);
         Assert.Contains("`summary/index.md`", readme, StringComparison.Ordinal);
@@ -3527,7 +3650,7 @@ public sealed class CliGoldenTests
         Assert.Contains("# WastelandForge Doctor Actions", actionIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("Project capability requirements", actionIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-bundle-index/v1", (string?)bundleIndexJson["kind"]);
-        Assert.Equal(40, (int?)bundleIndexJson["summary"]?["entries"]);
+        Assert.Equal(42, (int?)bundleIndexJson["summary"]?["entries"]);
         Assert.Contains(
             bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
             item => StringComparer.Ordinal.Equals("requirement-explanations/runtime.scripting.xnvse.json", (string?)item?["path"]));
@@ -3537,6 +3660,9 @@ public sealed class CliGoldenTests
         Assert.Contains(
             bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
             item => StringComparer.Ordinal.Equals("triage/index.json", (string?)item?["path"]));
+        Assert.Contains(
+            bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
+            item => StringComparer.Ordinal.Equals("release-readiness/index.json", (string?)item?["path"]));
         Assert.Contains(
             bundleIndexJson["entries"]?.AsArray() ?? throw new InvalidOperationException("Doctor bundle index entries array missing."),
             item =>
@@ -3554,8 +3680,16 @@ public sealed class CliGoldenTests
         Assert.Contains("## Command Hints", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`explain-requirement-runtime-scripting-xnvse`: `forge capabilities explain runtime.scripting.xnvse --project <project-root> --game-root <game-root> --tool-path <tool-path> --format plain`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("## Key Archive Paths", handoffSummary, StringComparison.Ordinal);
+        Assert.Contains("`release-readiness/index.md`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`requirement-explanations/index.md`", handoffSummary, StringComparison.Ordinal);
         Assert.Contains("`diagnostics/index.md`", handoffSummary, StringComparison.Ordinal);
+        Assert.Equal("wastelandforge/doctor-release-readiness/v1", (string?)releaseReadinessIndexJson["kind"]);
+        Assert.Equal("blocked-by-preconditions", (string?)releaseReadinessIndexJson["releaseReadiness"]?["status"]);
+        Assert.Equal(true, (bool?)releaseReadinessIndexJson["releaseReadiness"]?["included"]);
+        Assert.Equal(false, (bool?)releaseReadinessIndexJson["releaseReadiness"]?["readyForRealPublish"]);
+        Assert.Equal(10, (int?)releaseReadinessIndexJson["releaseReadiness"]?["blockingChecks"]);
+        Assert.Contains("# WastelandForge Doctor Release Readiness", releaseReadinessIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("- Status: `blocked-by-preconditions`", releaseReadinessIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-triage-index/v1", (string?)triageIndexJson["kind"]);
         Assert.Equal("blocked", (string?)triageIndexJson["summary"]?["status"]);
         Assert.Equal(2, (int?)triageIndexJson["summary"]?["blockingItems"]);
@@ -3701,8 +3835,10 @@ public sealed class CliGoldenTests
         Assert.Equal(5, (int?)summaryIndexJson["summary"]?["doctor"]?["areas"]);
         Assert.Equal(2, (int?)summaryIndexJson["indexSummaries"]?["requirementSummary"]?["unavailable"]);
         Assert.Equal(2, (int?)summaryIndexJson["indexSummaries"]?["diagnosticSummary"]?["issues"]);
+        Assert.Equal("blocked-by-preconditions", (string?)summaryIndexJson["indexSummaries"]?["releaseReadinessSummary"]?["status"]);
         Assert.Contains("# WastelandForge Doctor Summary", summaryIndexMarkdown, StringComparison.Ordinal);
         Assert.Contains("Catalogue-policy: 2 open question", summaryIndexMarkdown, StringComparison.Ordinal);
+        Assert.Contains("Release-readiness summary: blocked-by-preconditions; 0/10 check(s) satisfied", summaryIndexMarkdown, StringComparison.Ordinal);
         Assert.Equal("wastelandforge/doctor-requirement-explanation-index/v1", (string?)indexJson["kind"]);
         Assert.Equal("<redacted:project-root>", (string?)indexJson["project"]?["root"]);
         Assert.Equal(2, (int?)indexJson["summary"]?["requirements"]);
@@ -3752,6 +3888,8 @@ public sealed class CliGoldenTests
         Assert.Contains("  providers/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  redaction/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  redaction/index.md", checksums, StringComparison.Ordinal);
+        Assert.Contains("  release-readiness/index.json", checksums, StringComparison.Ordinal);
+        Assert.Contains("  release-readiness/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirements/index.json", checksums, StringComparison.Ordinal);
         Assert.Contains("  requirements/index.md", checksums, StringComparison.Ordinal);
         Assert.Contains("  scan-inputs/index.json", checksums, StringComparison.Ordinal);
@@ -7018,6 +7156,9 @@ public sealed class CliGoldenTests
         var schemaValidationEvidence = json["schemaValidationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include schema validation evidence.");
         var capabilityEnvironmentEvidence = json["capabilityEnvironmentEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include capability/environment evidence.");
         var packageValidationEvidence = json["packageValidationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include package validation evidence.");
+        var releaseVerificationEvidence = json["releaseVerificationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include release verification evidence.");
+        var publishReadiness = json["publishReadiness"] ?? throw new InvalidOperationException("Release publish JSON did not include publish readiness.");
+        var laneCloseout = json["laneCloseout"] ?? throw new InvalidOperationException("Release publish JSON did not include lane closeout.");
         var execution = json["execution"] ?? throw new InvalidOperationException("Release publish JSON did not include execution flags.");
 
         Assert.Equal(6, result.ExitCode);
@@ -7062,6 +7203,9 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["buildManifestOutputCrossReferenceInCurrentGate"]);
         Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["buildManifestDigestRevalidationInCurrentGate"]);
         Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["archiveEvidenceMetadataCrossReferenceInCurrentGate"]);
+        Assert.Equal("blocked-by-preconditions", (string?)json["releasePrepareEvidence"]?["publishReadinessStatus"]);
+        Assert.Equal(false, (bool?)json["releasePrepareEvidence"]?["publishReadinessLocalPreconditionsSatisfied"]);
+        Assert.Equal(10, (int?)json["releasePrepareEvidence"]?["publishReadinessBlockingChecks"]);
         Assert.Equal("missing", (string?)json["checksumSidecar"]?["status"]);
         Assert.Equal(false, (bool?)json["checksumSidecar"]?["exists"]);
         Assert.Equal(true, (bool?)json["checksumSidecar"]?["digestRevalidationInCurrentGate"]);
@@ -7122,6 +7266,18 @@ public sealed class CliGoldenTests
         Assert.Equal(false, (bool?)packageValidationEvidence["distScoped"]);
         Assert.Equal(0, (int?)packageValidationEvidence["packageIssues"]);
         Assert.Equal("package-verify-report-missing", (string?)packageValidationEvidence["detail"]);
+        Assert.Equal("release-verification", (string?)requiredEvidence[4]?["id"]);
+        Assert.Equal("missing", (string?)requiredEvidence[4]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[4]?["checkedInCurrentGate"]);
+        Assert.Equal("dist/release-dry-run/release-verify.json", (string?)releaseVerificationEvidence["path"]);
+        Assert.Equal(false, (bool?)releaseVerificationEvidence["exists"]);
+        Assert.Equal("missing", (string?)releaseVerificationEvidence["status"]);
+        Assert.Equal(true, (bool?)releaseVerificationEvidence["checkedInCurrentGate"]);
+        Assert.Equal(false, (bool?)releaseVerificationEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(false, (bool?)releaseVerificationEvidence["dryRun"]);
+        Assert.Equal(false, (bool?)releaseVerificationEvidence["distScoped"]);
+        Assert.Equal(0, (int?)releaseVerificationEvidence["releaseIssues"]);
+        Assert.Equal("release-verify-report-missing", (string?)releaseVerificationEvidence["detail"]);
         Assert.Equal("release-prepare-build-manifest", (string?)requiredEvidence[5]?["id"]);
         Assert.Equal("missing", (string?)requiredEvidence[5]?["status"]);
         Assert.Equal(true, (bool?)requiredEvidence[5]?["checkedInCurrentGate"]);
@@ -7158,12 +7314,52 @@ public sealed class CliGoldenTests
         Assert.Equal("AGENTS.md", (string?)governanceChecks[5]?["evidencePath"]);
         Assert.Equal(true, (bool?)json["approval"]?["required"]);
         Assert.Equal(false, (bool?)json["approval"]?["provided"]);
+        Assert.Equal(false, (bool?)json["approval"]?["yesProvided"]);
+        Assert.Null(json["approval"]?["confirmationValue"]);
+        Assert.Equal(false, (bool?)json["approval"]?["confirmationValidated"]);
+        Assert.Null(json["approval"]?["confirmationMatches"]);
+        Assert.Equal(false, (bool?)json["approval"]?["projectManifestRead"]);
+        Assert.Null(json["approval"]?["projectManifestPath"]);
+        Assert.Null(json["approval"]?["projectId"]);
         Assert.Equal("missing", (string?)json["approval"]?["status"]);
-        Assert.Equal("Release publish requires fully validated local schema, capability/environment, package, and governance preflight evidence and explicit human approval; Gate 284 does not publish releases.", (string?)json["refusalReason"]);
+        Assert.Equal("approval-not-provided", (string?)json["approval"]?["detail"]);
+        Assert.Equal("blocked-by-preconditions", (string?)publishReadiness["status"]);
+        Assert.Equal(false, (bool?)publishReadiness["localPreconditionsSatisfied"]);
+        Assert.Equal(false, (bool?)publishReadiness["evidenceSatisfied"]);
+        Assert.Equal(false, (bool?)publishReadiness["governanceSatisfied"]);
+        Assert.Equal(false, (bool?)publishReadiness["approvalSatisfied"]);
+        Assert.Equal(false, (bool?)publishReadiness["publishExecutionEnabled"]);
+        Assert.Equal(false, (bool?)publishReadiness["readyForRealPublish"]);
+        Assert.Equal(10, (int?)publishReadiness["requiredChecks"]);
+        Assert.Equal(0, (int?)publishReadiness["satisfiedChecks"]);
+        Assert.Equal(10, (int?)publishReadiness["blockingChecks"]);
+        Assert.Equal("publish-readiness-local-preconditions-incomplete", (string?)publishReadiness["detail"]);
+        Assert.Equal(10, publishReadiness["blockingCheckIds"]?.AsArray().Count);
+        Assert.Equal(10, publishReadiness["checks"]?.AsArray().Count);
+        Assert.Equal("schema-validation", (string?)publishReadiness["checks"]?[0]?["id"]);
+        Assert.Equal(false, (bool?)publishReadiness["checks"]?[0]?["satisfied"]);
+        Assert.Equal("human-approval", (string?)publishReadiness["checks"]?[9]?["id"]);
+        Assert.Equal(false, (bool?)publishReadiness["checks"]?[9]?["satisfied"]);
+        Assert.Equal(true, (bool?)laneCloseout["closedInCurrentGate"]);
+        Assert.Equal("closed-no-publish-lane", (string?)laneCloseout["status"]);
+        Assert.Equal("forge release publish no-publish preflight", (string?)laneCloseout["lane"]);
+        Assert.Equal("Gate 287 publish-readiness aggregation", (string?)laneCloseout["completedThroughGate"]);
+        Assert.Equal("Gate 289", (string?)laneCloseout["nextGate"]);
+        Assert.Equal("forge doctor export release-readiness handoff", (string?)laneCloseout["nextValueSlice"]);
+        Assert.Equal("release-publish-no-publish-lane-closed-real-publishing-deferred", (string?)laneCloseout["detail"]);
+        Assert.Equal(9, laneCloseout["deferredCapabilities"]?.AsArray().Count);
+        Assert.Equal("remote-repository-calls", (string?)laneCloseout["deferredCapabilities"]?[0]);
+        Assert.Equal("ai-behavior", (string?)laneCloseout["deferredCapabilities"]?[8]);
+        Assert.Equal("Release publish requires complete local publish-readiness evidence plus explicit human approval; Gate 288 closes the no-publish lane without publishing releases.", (string?)json["refusalReason"]);
         Assert.Equal(false, (bool?)json["reportContract"]?["mutatesFilesystemInCurrentGate"]);
         Assert.Equal(true, (bool?)execution["releasePublishPreflightPlanning"]);
         Assert.Equal(false, (bool?)execution["releasePublishExecution"]);
         Assert.Equal(false, (bool?)execution["releasePublishing"]);
+        Assert.Equal(true, (bool?)execution["publishReadinessEvaluation"]);
+        Assert.Equal(false, (bool?)execution["localPublishPreconditionsSatisfied"]);
+        Assert.Equal(false, (bool?)execution["publishReadyForRealPublish"]);
+        Assert.Equal(true, (bool?)execution["releasePublishLaneCloseout"]);
+        Assert.Equal(true, (bool?)execution["nextValueSliceRouted"]);
         Assert.Equal(true, (bool?)execution["evidenceArtifactPathCheck"]);
         Assert.Equal(false, (bool?)execution["evidenceArtifactRead"]);
         Assert.Equal(true, (bool?)execution["artifactExistenceCheck"]);
@@ -7180,7 +7376,11 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)execution["schemaValidationEvidenceEvaluation"]);
         Assert.Equal(true, (bool?)execution["capabilityEnvironmentEvidenceEvaluation"]);
         Assert.Equal(true, (bool?)execution["packageValidationEvidenceEvaluation"]);
+        Assert.Equal(true, (bool?)execution["releaseVerificationEvidenceEvaluation"]);
+        Assert.Equal(true, (bool?)execution["humanApprovalEvaluation"]);
+        Assert.Equal(false, (bool?)execution["humanApprovalConfirmationValidated"]);
         Assert.Equal(true, (bool?)execution["governanceCheckExecution"]);
+        Assert.Equal(false, (bool?)execution["humanApprovalProvided"]);
         Assert.Equal(false, (bool?)execution["filesystemMutation"]);
         Assert.Equal(false, (bool?)execution["outputWrites"]);
         Assert.Equal(false, (bool?)execution["remoteRepositoryCall"]);
@@ -7558,6 +7758,294 @@ public sealed class CliGoldenTests
         Assert.Equal("package-verify-report-has-package-diagnostics", (string?)packageValidationEvidence["detail"]);
         Assert.Equal(true, (bool?)json["execution"]?["packageValidationEvidenceEvaluation"]);
         Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["outputWrites"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunEvaluatesCleanReleaseVerificationEvidenceWithoutPublishing()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var evidencePath = Path.Combine(projectRoot, "dist", "release-dry-run", "release-verify.json");
+
+        var verify = RunCli("release", "verify", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, verify.ExitCode);
+        Assert.Equal(string.Empty, verify.Stderr);
+        Directory.CreateDirectory(Path.GetDirectoryName(evidencePath) ?? throw new InvalidOperationException("Evidence path has no directory."));
+        File.WriteAllText(evidencePath, verify.Stdout);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var releaseVerificationEvidence = json["releaseVerificationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include release verification evidence.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("complete-release-verified", (string?)requiredEvidence[4]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[4]?["checkedInCurrentGate"]);
+        Assert.Equal("dist/release-dry-run/release-verify.json", (string?)releaseVerificationEvidence["path"]);
+        Assert.Equal(true, (bool?)releaseVerificationEvidence["exists"]);
+        Assert.Equal("complete-release-verified", (string?)releaseVerificationEvidence["status"]);
+        Assert.Equal(true, (bool?)releaseVerificationEvidence["checkedInCurrentGate"]);
+        Assert.Equal(true, (bool?)releaseVerificationEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(true, (bool?)releaseVerificationEvidence["dryRun"]);
+        Assert.Equal("dist/release-dry-run", (string?)releaseVerificationEvidence["outputRoot"]);
+        Assert.Equal(true, (bool?)releaseVerificationEvidence["distScoped"]);
+        Assert.Equal(0, (int?)releaseVerificationEvidence["errors"]);
+        Assert.Equal(0, (int?)releaseVerificationEvidence["releaseIssues"]);
+        Assert.Equal("release-verify-report-has-no-release-diagnostics", (string?)releaseVerificationEvidence["detail"]);
+        Assert.Equal(true, (bool?)json["execution"]?["releaseVerificationEvidenceEvaluation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunReportsReleaseVerificationDiagnosticsWithoutPublishing()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var evidencePath = Path.Combine(projectRoot, "dist", "release-dry-run", "release-verify.json");
+
+        var verify = RunCli("release", "verify", projectRoot, "--output", "../outside", "--format", "json", "--no-input");
+        Assert.Equal(1, verify.ExitCode);
+        Assert.Equal(string.Empty, verify.Stderr);
+        Directory.CreateDirectory(Path.GetDirectoryName(evidencePath) ?? throw new InvalidOperationException("Evidence path has no directory."));
+        File.WriteAllText(evidencePath, verify.Stdout);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var releaseVerificationEvidence = json["releaseVerificationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include release verification evidence.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("release-diagnostics-present", (string?)requiredEvidence[4]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[4]?["checkedInCurrentGate"]);
+        Assert.Equal("release-diagnostics-present", (string?)releaseVerificationEvidence["status"]);
+        Assert.Equal(true, (bool?)releaseVerificationEvidence["exists"]);
+        Assert.Equal(true, (bool?)releaseVerificationEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(true, (bool?)releaseVerificationEvidence["dryRun"]);
+        Assert.Equal(false, (bool?)releaseVerificationEvidence["distScoped"]);
+        Assert.Equal(1, (int?)releaseVerificationEvidence["errors"]);
+        Assert.Equal(1, (int?)releaseVerificationEvidence["issues"]);
+        Assert.Equal(1, (int?)releaseVerificationEvidence["releaseIssues"]);
+        Assert.Equal("release-verify-report-has-release-diagnostics", (string?)releaseVerificationEvidence["detail"]);
+        Assert.Equal(true, (bool?)json["execution"]?["releaseVerificationEvidenceEvaluation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishJsonRecordsConfirmedHumanApprovalWithoutPublishing()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli(
+            "release",
+            "publish",
+            projectRoot,
+            "--yes",
+            "--confirm",
+            "io.github.theboyyss.examplemod",
+            "--format",
+            "json",
+            "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var approval = json["approval"] ?? throw new InvalidOperationException("Release publish JSON did not include approval.");
+        var publishReadiness = json["publishReadiness"] ?? throw new InvalidOperationException("Release publish JSON did not include publish readiness.");
+
+        Assert.Equal(6, result.ExitCode);
+        Assert.Equal("refused", (string?)json["status"]);
+        Assert.Equal(true, (bool?)approval["required"]);
+        Assert.Equal(true, (bool?)approval["provided"]);
+        Assert.Equal(true, (bool?)approval["yesProvided"]);
+        Assert.Equal("io.github.theboyyss.examplemod", (string?)approval["confirmationValue"]);
+        Assert.Equal(true, (bool?)approval["confirmationValidated"]);
+        Assert.Equal(true, (bool?)approval["confirmationMatches"]);
+        Assert.Equal(true, (bool?)approval["projectManifestRead"]);
+        Assert.Equal("wastelandforge.json", (string?)approval["projectManifestPath"]);
+        Assert.Equal("io.github.theboyyss.examplemod", (string?)approval["projectId"]);
+        Assert.Equal("provided", (string?)approval["status"]);
+        Assert.Equal("approval-confirmation-matches-project-id", (string?)approval["detail"]);
+        Assert.Equal("blocked-by-preconditions", (string?)publishReadiness["status"]);
+        Assert.Equal(false, (bool?)publishReadiness["localPreconditionsSatisfied"]);
+        Assert.Equal(false, (bool?)publishReadiness["evidenceSatisfied"]);
+        Assert.Equal(false, (bool?)publishReadiness["governanceSatisfied"]);
+        Assert.Equal(true, (bool?)publishReadiness["approvalSatisfied"]);
+        Assert.Equal(false, (bool?)publishReadiness["publishExecutionEnabled"]);
+        Assert.Equal(false, (bool?)publishReadiness["readyForRealPublish"]);
+        Assert.Equal(10, (int?)publishReadiness["requiredChecks"]);
+        Assert.Equal(1, (int?)publishReadiness["satisfiedChecks"]);
+        Assert.Equal(9, (int?)publishReadiness["blockingChecks"]);
+        Assert.Equal("publish-readiness-local-preconditions-incomplete", (string?)publishReadiness["detail"]);
+        Assert.Equal("Release publish approval was recorded, but Gate 288 still requires complete local publish-readiness evidence and closes the no-publish lane without publishing releases.", (string?)json["refusalReason"]);
+        Assert.Equal(true, (bool?)json["execution"]?["humanApprovalEvaluation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["humanApprovalConfirmationValidated"]);
+        Assert.Equal(true, (bool?)json["execution"]?["humanApprovalProvided"]);
+        Assert.Equal(true, (bool?)json["execution"]?["publishReadinessEvaluation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["localPublishPreconditionsSatisfied"]);
+        Assert.Equal(false, (bool?)json["execution"]?["publishReadyForRealPublish"]);
+        Assert.Equal(true, (bool?)json["execution"]?["releasePublishLaneCloseout"]);
+        Assert.Equal(true, (bool?)json["execution"]?["nextValueSliceRouted"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
+        Assert.Equal(false, (bool?)json["execution"]?["filesystemMutation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["outputWrites"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunReportsMismatchedHumanApprovalWithoutPublishing()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+
+        var result = RunCli(
+            "release",
+            "publish",
+            projectRoot,
+            "--dry-run",
+            "--yes",
+            "--confirm",
+            "io.github.theboyyss.other",
+            "--format",
+            "json",
+            "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var approval = json["approval"] ?? throw new InvalidOperationException("Release publish JSON did not include approval.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("planned", (string?)json["status"]);
+        Assert.Equal(true, (bool?)approval["required"]);
+        Assert.Equal(false, (bool?)approval["provided"]);
+        Assert.Equal(true, (bool?)approval["yesProvided"]);
+        Assert.Equal("io.github.theboyyss.other", (string?)approval["confirmationValue"]);
+        Assert.Equal(true, (bool?)approval["confirmationValidated"]);
+        Assert.Equal(false, (bool?)approval["confirmationMatches"]);
+        Assert.Equal(true, (bool?)approval["projectManifestRead"]);
+        Assert.Equal("wastelandforge.json", (string?)approval["projectManifestPath"]);
+        Assert.Equal("io.github.theboyyss.examplemod", (string?)approval["projectId"]);
+        Assert.Equal("project-id-mismatch", (string?)approval["status"]);
+        Assert.Equal("approval-confirmation-does-not-match-project-id", (string?)approval["detail"]);
+        Assert.Equal(true, (bool?)json["execution"]?["humanApprovalEvaluation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["humanApprovalConfirmationValidated"]);
+        Assert.Equal(false, (bool?)json["execution"]?["humanApprovalProvided"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishJsonAggregatesCompleteLocalReadinessWithoutPublishing()
+    {
+        var layout = CreateSyntheticCapabilityLayout();
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        WriteReleasePublishGovernanceEvidence(projectRoot);
+
+        var validate = RunCli("validate", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, validate.ExitCode);
+        Assert.Equal(string.Empty, validate.Stderr);
+
+        var scan = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--game-root",
+            layout.GameRoot,
+            "--format",
+            "json",
+            "--no-input");
+        Assert.Equal(0, scan.ExitCode);
+        Assert.Equal(string.Empty, scan.Stderr);
+
+        var package = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, package.ExitCode);
+        Assert.Equal(string.Empty, package.Stderr);
+
+        var packageVerify = RunCli("package", projectRoot, "--verify-existing", "--format", "json", "--no-input");
+        Assert.Equal(0, packageVerify.ExitCode);
+        Assert.Equal(string.Empty, packageVerify.Stderr);
+
+        var releaseVerify = RunCli("release", "verify", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, releaseVerify.ExitCode);
+        Assert.Equal(string.Empty, releaseVerify.Stderr);
+
+        var prepare = RunCli("release", "prepare", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, prepare.ExitCode);
+        Assert.Equal(string.Empty, prepare.Stderr);
+
+        var releaseDryRunRoot = Path.Combine(projectRoot, "dist", "release-dry-run");
+        Directory.CreateDirectory(releaseDryRunRoot);
+        File.WriteAllText(Path.Combine(releaseDryRunRoot, "validation.json"), validate.Stdout);
+        File.WriteAllText(Path.Combine(releaseDryRunRoot, "capabilities-scan.json"), scan.Stdout);
+        File.WriteAllText(Path.Combine(releaseDryRunRoot, "package-verify.json"), packageVerify.Stdout);
+        File.WriteAllText(Path.Combine(releaseDryRunRoot, "release-verify.json"), releaseVerify.Stdout);
+
+        var result = RunCli(
+            "release",
+            "publish",
+            projectRoot,
+            "--yes",
+            "--confirm",
+            "io.github.theboyyss.examplemod",
+            "--format",
+            "json",
+            "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var governanceChecks = json["governanceChecks"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include governance checks.");
+        var readiness = json["publishReadiness"] ?? throw new InvalidOperationException("Release publish JSON did not include publish readiness.");
+        var laneCloseout = json["laneCloseout"] ?? throw new InvalidOperationException("Release publish JSON did not include lane closeout.");
+        var readinessChecks = readiness["checks"]?.AsArray() ?? throw new InvalidOperationException("Release publish readiness did not include checks.");
+
+        Assert.Equal(6, result.ExitCode);
+        Assert.Equal("refused", (string?)json["status"]);
+        Assert.Equal(false, (bool?)json["publishReady"]);
+        Assert.Equal("complete-semantic-validated", (string?)json["releasePrepareEvidence"]?["semanticEvidenceStatus"]);
+        Assert.Equal("locally-ready-no-publish-gate", (string?)json["releasePrepareEvidence"]?["publishReadinessStatus"]);
+        Assert.Equal(true, (bool?)json["releasePrepareEvidence"]?["publishReadinessLocalPreconditionsSatisfied"]);
+        Assert.Equal(0, (int?)json["releasePrepareEvidence"]?["publishReadinessBlockingChecks"]);
+        Assert.Equal("complete-schema-validated", (string?)requiredEvidence[0]?["status"]);
+        Assert.Equal("complete-semantic-validated", (string?)requiredEvidence[1]?["status"]);
+        Assert.Equal("complete-capability-environment-validated", (string?)requiredEvidence[2]?["status"]);
+        Assert.Equal("complete-package-validated", (string?)requiredEvidence[3]?["status"]);
+        Assert.Equal("complete-release-verified", (string?)requiredEvidence[4]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)requiredEvidence[5]?["status"]);
+        Assert.Equal("complete-digest-revalidated", (string?)requiredEvidence[6]?["status"]);
+        Assert.Equal("complete-archive-revalidated", (string?)requiredEvidence[7]?["status"]);
+        Assert.Equal("complete-governance-evaluated", (string?)requiredEvidence[8]?["status"]);
+        Assert.Equal(6, governanceChecks.Count);
+        Assert.All(governanceChecks, check => Assert.Equal("passed", (string?)check?["status"]));
+        Assert.Equal(true, (bool?)json["approval"]?["provided"]);
+        Assert.Equal("locally-ready-no-publish-gate", (string?)readiness["status"]);
+        Assert.Equal(true, (bool?)readiness["localPreconditionsSatisfied"]);
+        Assert.Equal(true, (bool?)readiness["evidenceSatisfied"]);
+        Assert.Equal(true, (bool?)readiness["governanceSatisfied"]);
+        Assert.Equal(true, (bool?)readiness["approvalSatisfied"]);
+        Assert.Equal(false, (bool?)readiness["publishExecutionEnabled"]);
+        Assert.Equal(false, (bool?)readiness["readyForRealPublish"]);
+        Assert.Equal(10, (int?)readiness["requiredChecks"]);
+        Assert.Equal(10, (int?)readiness["satisfiedChecks"]);
+        Assert.Equal(0, (int?)readiness["blockingChecks"]);
+        Assert.Equal("publish-readiness-local-preconditions-satisfied-but-publish-execution-disabled", (string?)readiness["detail"]);
+        Assert.Empty(readiness["blockingCheckIds"]?.AsArray() ?? throw new InvalidOperationException("Readiness blocking IDs missing."));
+        Assert.Equal(10, readinessChecks.Count);
+        Assert.All(readinessChecks, check => Assert.Equal(true, (bool?)check?["satisfied"]));
+        Assert.Equal("closed-no-publish-lane", (string?)laneCloseout["status"]);
+        Assert.Equal("Gate 289", (string?)laneCloseout["nextGate"]);
+        Assert.Equal("forge doctor export release-readiness handoff", (string?)laneCloseout["nextValueSlice"]);
+        Assert.Equal("Local publish readiness is satisfied, but Gate 288 closes the no-publish lane without publishing releases.", (string?)json["refusalReason"]);
+        Assert.Equal(true, (bool?)json["execution"]?["publishReadinessEvaluation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["localPublishPreconditionsSatisfied"]);
+        Assert.Equal(false, (bool?)json["execution"]?["publishReadyForRealPublish"]);
+        Assert.Equal(true, (bool?)json["execution"]?["releasePublishLaneCloseout"]);
+        Assert.Equal(true, (bool?)json["execution"]?["nextValueSliceRouted"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
         Assert.Equal(false, (bool?)json["execution"]?["outputWrites"]);
         Assert.Equal(string.Empty, result.Stderr);
     }
@@ -8449,8 +8937,11 @@ public sealed class CliGoldenTests
 
         Assert.Equal(0, result.ExitCode);
         Assert.Contains("forge release publish", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Gate 284 reports a no-publish governance preflight with local release-prepare evidence shape classification, checksum sidecar entry coverage and digest revalidation, build-manifest output cross-reference and digest revalidation, release-archive-evidence metadata cross-reference, archive digest metadata revalidation, archive entry metadata revalidation, semantic release-evidence validation, local governance-check evaluation, schema-validation evidence evaluation, capability/environment evidence evaluation, and package-validation evidence evaluation.", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("evaluates dist/release-dry-run/validation.json for schema-validation evidence; evaluates dist/release-dry-run/capabilities-scan.json for local project-scoped capability/environment evidence; and evaluates dist/release-dry-run/package-verify.json for package verify-existing evidence.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Gate 288 reports a no-publish governance preflight with local release-prepare evidence shape classification, checksum sidecar entry coverage and digest revalidation, build-manifest output cross-reference and digest revalidation, release-archive-evidence metadata cross-reference, archive digest metadata revalidation, archive entry metadata revalidation, semantic release-evidence validation, local governance-check evaluation, schema-validation evidence evaluation, capability/environment evidence evaluation, package-validation evidence evaluation, release-verification evidence evaluation from dist/release-dry-run/release-verify.json, explicit human-approval evaluation through --yes --confirm <project-id>, publish-readiness aggregation, and no-publish lane closeout.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("evaluates dist/release-dry-run/validation.json for schema-validation evidence; evaluates dist/release-dry-run/capabilities-scan.json for local project-scoped capability/environment evidence; evaluates dist/release-dry-run/package-verify.json for package verify-existing evidence; and evaluates dist/release-dry-run/release-verify.json for release-verification evidence.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("--yes plus --confirm <project-id> records explicit human approval only when the confirmation value matches the root project manifest id.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Publish readiness aggregates the required local evidence, governance checks, and approval into satisfied/blocking checks while keeping publish execution disabled.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Lane closeout marks the release-publish no-publish preflight lane closed and routes Gate 289 to forge doctor export release-readiness handoff work.", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("release-archive-evidence.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("schema validation, semantic validation, capability/environment validation, package validation, release verification", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("dist/release-prepare/", result.Stdout, StringComparison.Ordinal);
@@ -9597,6 +10088,42 @@ public sealed class CliGoldenTests
         var target = Path.Combine(projectRoot, "generated", "xedit-audit", "reports", "synthetic-record-inspection.json");
         Directory.CreateDirectory(Path.GetDirectoryName(target) ?? projectRoot);
         File.Copy(source, target, overwrite: true);
+    }
+
+    private static void WriteReleasePublishGovernanceEvidence(string projectRoot)
+    {
+        Directory.CreateDirectory(Path.Combine(projectRoot, "docs", "governance"));
+        Directory.CreateDirectory(Path.Combine(projectRoot, ".github", "workflows"));
+        Directory.CreateDirectory(Path.Combine(projectRoot, ".github"));
+        File.WriteAllText(
+            Path.Combine(projectRoot, "docs", "governance", "schema-version-policy.md"),
+            "Released schema documents keep immutable $id values.");
+        File.WriteAllText(
+            Path.Combine(projectRoot, "docs", "governance", "fixture-policy.md"),
+            "Public fixtures are synthetic and redistributable.");
+        File.WriteAllText(
+            Path.Combine(projectRoot, ".github", "workflows", "release.yml"),
+            """
+            name: release
+            on: workflow_dispatch
+            permissions:
+              contents: read
+            jobs:
+              release:
+                runs-on: windows-latest
+                steps:
+                  - run: dotnet test
+            """);
+        File.WriteAllText(
+            Path.Combine(projectRoot, ".github", "CODEOWNERS"),
+            """
+            docs/governance/ @wastelandforge/maintainers
+            .github/ @wastelandforge/maintainers
+            schemas/ @wastelandforge/maintainers
+            """);
+        File.WriteAllText(
+            Path.Combine(projectRoot, "AGENTS.md"),
+            "AI is optional. Release correctness does not require AI or API keys.");
     }
 
     private static SyntheticCapabilityLayout CreateSyntheticCapabilityLayout()

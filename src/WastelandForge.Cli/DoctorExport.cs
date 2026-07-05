@@ -13,6 +13,7 @@ internal sealed record DoctorExportReport(
     DoctorExportRedaction Redaction,
     DoctorExportSummary Summary,
     DoctorExportIndex Index,
+    DoctorExportReleaseReadiness ReleaseReadiness,
     CapabilityScanReport Capabilities);
 
 internal sealed record DoctorExportRedaction(
@@ -135,9 +136,10 @@ internal sealed record DoctorExportDiagnosticIndexEntry(
 
 internal static class DoctorExportRedactor
 {
-    public static DoctorExportReport Create(CapabilityScanReport report)
+    public static DoctorExportReport Create(CapabilityScanReport report, DoctorExportReleaseReadiness? releaseReadiness = null)
     {
         ArgumentNullException.ThrowIfNull(report);
+        releaseReadiness ??= DoctorExportReleaseReadinessProjection.NotIncluded();
 
         var redactor = new PathRedactor(report.Inputs);
         var inputs = report.Inputs with
@@ -192,6 +194,7 @@ internal static class DoctorExportRedactor
             redaction,
             summary,
             index,
+            releaseReadiness,
             redactedReport);
     }
 
@@ -512,6 +515,7 @@ internal static class DoctorExportJsonSerializer
             },
             ["redaction"] = ToJson(report.Redaction),
             ["summary"] = ToJson(report.Summary),
+            ["releaseReadiness"] = DoctorExportReleaseReadinessIndexRenderer.ToJson(report.ReleaseReadiness),
             ["triage"] = DoctorExportTriageProjection.ToJson(triage),
             ["index"] = ToJson(report.Index),
             ["capabilities"] = capabilityScan
@@ -729,6 +733,8 @@ internal static class DoctorExportTextRenderer
 
         builder.AppendLine(
             $"  Diagnostics: {report.Summary.Diagnostics.Errors} error(s), {report.Summary.Diagnostics.Warnings} warning(s), {report.Summary.Diagnostics.Notes} note(s)");
+        builder.AppendLine();
+        DoctorExportReleaseReadinessIndexRenderer.AppendText(builder, report.ReleaseReadiness);
         builder.AppendLine();
         DoctorExportTriageProjection.AppendText(builder, DoctorExportTriageProjection.Create(report));
         builder.AppendLine();

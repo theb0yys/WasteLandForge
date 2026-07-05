@@ -543,7 +543,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge release prepare [options]");
         writer.WriteLine("  forge release publish [options]");
         writer.WriteLine();
-        writer.WriteLine("Release verify is implemented. Release prepare writes Gate 268 local staging-payload, release-archive-plan, deterministic release archive, release-archive-evidence, release-plan, release-summary, build-manifest, and checksum evidence only. Release publish runs Gate 284 no-publish governance preflight with local evidence shape classification, checksum sidecar digest revalidation, build-manifest output digest revalidation, release-archive-evidence metadata cross-reference, archive digest metadata revalidation, archive entry metadata revalidation, semantic release-evidence validation, local governance-check evaluation, schema-validation evidence evaluation, capability/environment evidence evaluation, and package-validation evidence evaluation, then refuses real publish by default.");
+        writer.WriteLine("Release verify is implemented. Release prepare writes Gate 268 local staging-payload, release-archive-plan, deterministic release archive, release-archive-evidence, release-plan, release-summary, build-manifest, and checksum evidence only. Release publish runs Gate 288 no-publish governance preflight with local evidence shape classification, checksum sidecar digest revalidation, build-manifest output digest revalidation, release-archive-evidence metadata cross-reference, archive digest metadata revalidation, archive entry metadata revalidation, semantic release-evidence validation, local governance-check evaluation, schema-validation evidence evaluation, capability/environment evidence evaluation, package-validation evidence evaluation, release-verification evidence evaluation, explicit human-approval evaluation, publish-readiness aggregation, and no-publish lane closeout routing to the next local value slice, then refuses real publish by default.");
     }
 
     private static void WriteReleaseVerifyHelp(TextWriter writer)
@@ -610,12 +610,15 @@ internal static class CliHelpWriter
         writer.WriteLine("forge release publish");
         writer.WriteLine();
         writer.WriteLine("Usage:");
-        writer.WriteLine("  forge release publish [project-root] [--project <path>] [--format human|plain|json] [--dry-run] [--no-input]");
+        writer.WriteLine("  forge release publish [project-root] [--project <path>] [--format human|plain|json] [--dry-run] [--yes] [--confirm <project-id>] [--no-input]");
         writer.WriteLine();
-        writer.WriteLine("Gate 284 reports a no-publish governance preflight with local release-prepare evidence shape classification, checksum sidecar entry coverage and digest revalidation, build-manifest output cross-reference and digest revalidation, release-archive-evidence metadata cross-reference, archive digest metadata revalidation, archive entry metadata revalidation, semantic release-evidence validation, local governance-check evaluation, schema-validation evidence evaluation, capability/environment evidence evaluation, and package-validation evidence evaluation. Normal execution refuses publish until remaining release evidence and explicit human approval are implemented.");
+        writer.WriteLine("Gate 288 reports a no-publish governance preflight with local release-prepare evidence shape classification, checksum sidecar entry coverage and digest revalidation, build-manifest output cross-reference and digest revalidation, release-archive-evidence metadata cross-reference, archive digest metadata revalidation, archive entry metadata revalidation, semantic release-evidence validation, local governance-check evaluation, schema-validation evidence evaluation, capability/environment evidence evaluation, package-validation evidence evaluation, release-verification evidence evaluation from dist/release-dry-run/release-verify.json, explicit human-approval evaluation through --yes --confirm <project-id>, publish-readiness aggregation, and no-publish lane closeout. Normal execution refuses publish even when local readiness is satisfied.");
         writer.WriteLine("--dry-run reports the same preflight plan with exit code 0.");
-        writer.WriteLine("It checks expected release-prepare evidence path existence for staging/release-payload.json, release-archive-plan.json, archives/release.zip, release-archive-evidence.json, release-plan.json, release-summary.json, build-manifest.json, and checksums.sha256; parses JSON evidence for well-formed shape; parses checksums.sha256 entries for expected-path coverage; recomputes SHA-256 for expected local checksum entries; cross-references build-manifest outputs to local evidence and checksum sidecar paths; recomputes SHA-256 for expected local build-manifest outputs; cross-references release-archive-evidence output metadata; recomputes archive sha256 and length metadata; reopens the expected local archive to compare entry names, entry order, deterministic timestamps, and stored compression metadata; validates local evidence kind/status contracts, output path maps, release-summary counters, archive-plan inputs, archive-evidence checks, build-manifest output sets, and no-publish execution boundaries; evaluates local governance policy/workflow/CODEOWNERS/fixture/AI-optional/tool-version evidence; evaluates dist/release-dry-run/validation.json for schema-validation evidence; evaluates dist/release-dry-run/capabilities-scan.json for local project-scoped capability/environment evidence; and evaluates dist/release-dry-run/package-verify.json for package verify-existing evidence.");
+        writer.WriteLine("It checks expected release-prepare evidence path existence for staging/release-payload.json, release-archive-plan.json, archives/release.zip, release-archive-evidence.json, release-plan.json, release-summary.json, build-manifest.json, and checksums.sha256; parses JSON evidence for well-formed shape; parses checksums.sha256 entries for expected-path coverage; recomputes SHA-256 for expected local checksum entries; cross-references build-manifest outputs to local evidence and checksum sidecar paths; recomputes SHA-256 for expected local build-manifest outputs; cross-references release-archive-evidence output metadata; recomputes archive sha256 and length metadata; reopens the expected local archive to compare entry names, entry order, deterministic timestamps, and stored compression metadata; validates local evidence kind/status contracts, output path maps, release-summary counters, archive-plan inputs, archive-evidence checks, build-manifest output sets, and no-publish execution boundaries; evaluates local governance policy/workflow/CODEOWNERS/fixture/AI-optional/tool-version evidence; evaluates dist/release-dry-run/validation.json for schema-validation evidence; evaluates dist/release-dry-run/capabilities-scan.json for local project-scoped capability/environment evidence; evaluates dist/release-dry-run/package-verify.json for package verify-existing evidence; and evaluates dist/release-dry-run/release-verify.json for release-verification evidence.");
         writer.WriteLine("Required evidence includes schema validation, semantic validation, capability/environment validation, package validation, release verification, release-prepare build-manifest.json, release-prepare checksums.sha256, release archive evidence, governance checks, and explicit human approval.");
+        writer.WriteLine("--yes plus --confirm <project-id> records explicit human approval only when the confirmation value matches the root project manifest id.");
+        writer.WriteLine("Publish readiness aggregates the required local evidence, governance checks, and approval into satisfied/blocking checks while keeping publish execution disabled.");
+        writer.WriteLine("Lane closeout marks the release-publish no-publish preflight lane closed and routes Gate 289 to forge doctor export release-readiness handoff work.");
         writer.WriteLine("It does not validate archive payload contents, publish releases, call remote repositories, upload assets, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.");
         writer.WriteLine();
         writer.WriteLine("Expected local evidence root:");
@@ -624,11 +627,12 @@ internal static class CliHelpWriter
         writer.WriteLine("Examples:");
         writer.WriteLine("  forge release publish fixtures/projects/ExampleMod --format json --no-input");
         writer.WriteLine("  forge release publish --project fixtures/projects/ExampleMod --dry-run --format json");
+        writer.WriteLine("  forge release publish fixtures/projects/ExampleMod --yes --confirm io.github.theboyyss.examplemod --format json --no-input");
         writer.WriteLine();
         writer.WriteLine("Exit codes:");
         writer.WriteLine("  0 dry-run preflight plan printed");
         writer.WriteLine("  2 usage or unsupported format");
-        writer.WriteLine("  6 publish refused because remaining release evidence and explicit approval are not implemented in the current gate");
+        writer.WriteLine("  6 publish refused because Gate 288 closes the no-publish lane but does not publish releases");
     }
 
     private static void WriteDoctorHelp(TextWriter writer)
@@ -639,6 +643,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge doctor export [options]");
         writer.WriteLine();
         writer.WriteLine("Doctor export writes a redacted local handoff bundle from capability scan evidence. It remains offline-first and AI-optional.");
+        writer.WriteLine("When a project root is supplied, export also includes a local release-readiness handoff projection without publishing.");
     }
 
     private static void WriteDoctorExportHelp(TextWriter writer)
@@ -650,10 +655,11 @@ internal static class CliHelpWriter
         writer.WriteLine();
         writer.WriteLine("Writes a redacted Doctor handoff bundle from the same deterministic path-based evidence used by capabilities scan.");
         writer.WriteLine("Includes compact catalogue-policy open-question groups, details, and diagnostic handoff metadata.");
+        writer.WriteLine("When a project root is supplied, includes a local release-readiness projection from release publish dry-run preflight evidence.");
         writer.WriteLine("--summary writes a redacted Markdown handoff summary beside the selected primary output.");
-        writer.WriteLine("--bundle writes a deterministic redacted ZIP handoff archive with JSON, Markdown, manifest, checksums, and indexed per-requirement explanation JSON/Markdown when project requirements are unavailable.");
+        writer.WriteLine("--bundle writes a deterministic redacted ZIP handoff archive with JSON, Markdown, manifest, checksums, release-readiness indexes, and indexed per-requirement explanation JSON/Markdown when project requirements are unavailable.");
         writer.WriteLine("Absolute local game, data, tool, project, and evidence paths are replaced with placeholders.");
-        writer.WriteLine("Runtime probes, MO2 VFS launch, GECK automation, network checks, and AI calls are not used.");
+        writer.WriteLine("Runtime probes, MO2 VFS launch, GECK automation, network checks, release publishing, and AI calls are not used.");
         writer.WriteLine();
         writer.WriteLine("Examples:");
         writer.WriteLine("  forge doctor export fixtures/projects/ExampleMod --format json");

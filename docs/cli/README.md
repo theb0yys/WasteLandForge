@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 275 forge release publish release-archive-evidence metadata cross-reference
+Status: Gate 289 forge doctor export release-readiness handoff skeleton
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -888,7 +888,7 @@ skeleton metadata, signing or attestation material, external tools, MO2/GECK
 automation, runtime probes, real third-party plugin fixtures, and AI-assisted
 release drafting.
 
-`release publish` runs a Gate 284 no-publish governance preflight with local
+`release publish` runs a Gate 288 no-publish governance preflight with local
 release-prepare evidence shape classification, checksum sidecar digest
 revalidation, build-manifest digest revalidation, release-archive-evidence
 metadata and archive revalidation, semantic release-evidence validation,
@@ -896,17 +896,36 @@ local governance-check evaluation, schema-validation evidence evaluation from
 `dist/release-dry-run/validation.json`, capability/environment evidence
 evaluation from `dist/release-dry-run/capabilities-scan.json`, and
 package-validation evidence evaluation from
-`dist/release-dry-run/package-verify.json`. Normal execution refuses publish
-with exit code 6 until evidence validation and explicit human approval exist.
+`dist/release-dry-run/package-verify.json`, and release-verification evidence
+evaluation from `dist/release-dry-run/release-verify.json`, plus explicit
+human-approval evaluation through `--yes --confirm <project-id>`, and
+publish-readiness aggregation. Gate 288 also reports `laneCloseout` metadata
+that closes the no-publish lane and routes Gate 289 to `forge doctor export`
+release-readiness handoff work. Normal execution refuses publish with exit
+code 6 even when local readiness is satisfied.
 `--dry-run` reports the same preflight with exit code 0. The preflight reports
 required local evidence, release-prepare artifact status, checksum/build
 manifest/archive evidence status, governance check evidence path/detail/status,
 schema-validation evidence path/detail/status, capability/environment evidence
-path/detail/status, package-validation evidence path/detail/status, explicit human-approval
-requirements, and false execution flags for release publishing, remote
-repository calls, release uploads, attestation/signing, external tools, plugin
-mutation, MO2/GECK automation, runtime probes, and AI. It does not accept
-archive payload contents or write publish outputs.
+path/detail/status, package-validation evidence path/detail/status,
+release-verification evidence path/detail/status, explicit human-approval
+confirmation value/match status, `publishReadiness` satisfied/blocking checks,
+`laneCloseout` next-slice routing, and false execution flags for release
+publishing, remote repository calls, release uploads, attestation/signing,
+external tools, plugin mutation, MO2/GECK automation, runtime probes, and AI.
+It does not accept archive payload contents or write publish outputs.
+
+Gate 289 adds a local release-readiness handoff projection to
+`forge doctor export`. JSON output includes top-level `releaseReadiness`.
+Plain and Markdown output include a release-readiness section. Bundle archives
+include `release-readiness/index.json` and `release-readiness/index.md`, and
+the bundle README, bundle index, handoff summary, summary index, manifest, and
+checksums reference those entries. When no project root is supplied the
+projection is `not-included`; when a project root is supplied it reuses the
+same local preflight planner as `forge release publish <project-root> --dry-run --format json --no-input`.
+It still does not publish releases, call remote repositories, upload assets,
+sign or attest artifacts, execute external tools, mutate plugins, automate MO2
+or GECK, run runtime probes, or use AI.
 
 ## Docs Evidence
 

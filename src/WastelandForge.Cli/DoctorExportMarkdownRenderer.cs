@@ -20,6 +20,7 @@ internal static class DoctorExportMarkdownRenderer
         builder.AppendLine();
 
         AppendSummary(builder, report);
+        DoctorExportReleaseReadinessIndexRenderer.AppendMarkdown(builder, report.ReleaseReadiness);
         DoctorExportTriageProjection.AppendMarkdown(builder, DoctorExportTriageProjection.Create(report));
         AppendDoctorAreas(builder, report);
         AppendActions(builder, report);

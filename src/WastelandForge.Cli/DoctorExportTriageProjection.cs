@@ -30,7 +30,8 @@ internal static class DoctorExportTriageProjection
             report.Summary.Requirements?.OptionalUnavailable ?? 0,
             report.Summary.Diagnostics.Errors,
             report.Summary.Diagnostics.Warnings,
-            report.Index.CataloguePolicy.OpenQuestions.Count);
+            report.Index.CataloguePolicy.OpenQuestions.Count,
+            report.ReleaseReadiness.Included ? report.ReleaseReadiness.BlockingChecks : 0);
     }
 
     public static JsonObject ToJson(DoctorExportTriageReport triage)
@@ -59,7 +60,8 @@ internal static class DoctorExportTriageProjection
                 ["optionalUnavailable"] = triage.OptionalUnavailable,
                 ["diagnosticErrors"] = triage.DiagnosticErrors,
                 ["diagnosticWarnings"] = triage.DiagnosticWarnings,
-                ["openQuestions"] = triage.OpenQuestions
+                ["openQuestions"] = triage.OpenQuestions,
+                ["releaseReadinessBlockingChecks"] = triage.ReleaseReadinessBlockingChecks
             },
             ["blocking"] = new JsonArray(triage.Blocking.Select(ToPrimaryJson).ToArray()),
             ["review"] = new JsonArray(triage.Review.Select(ToPrimaryJson).ToArray()),
@@ -130,7 +132,8 @@ internal static class DoctorExportTriageProjection
     private static string ResolveStatus(DoctorExportReport report)
     {
         if (report.Summary.Diagnostics.Errors > 0 ||
-            (report.Summary.Requirements?.RequiredUnavailable ?? 0) > 0)
+            (report.Summary.Requirements?.RequiredUnavailable ?? 0) > 0 ||
+            HasReleaseReadinessBlockers(report))
         {
             return "blocked";
         }
@@ -204,6 +207,17 @@ internal static class DoctorExportTriageProjection
                 "Diagnostics include blocking errors.",
                 ["summary.diagnostics", "index.diagnosticSummary", "index.diagnostics"],
                 ["diagnostics/index.md", "diagnostics/index.json"]);
+        }
+
+        if (HasReleaseReadinessBlockers(report))
+        {
+            yield return new DoctorExportTriageItem(
+                "release-readiness-blocking-checks",
+                "error",
+                report.ReleaseReadiness.BlockingChecks,
+                "Release-readiness checks are blocking local publish readiness.",
+                ["releaseReadiness"],
+                ["release-readiness/index.md", "release-readiness/index.json"]);
         }
     }
 
@@ -309,6 +323,26 @@ internal static class DoctorExportTriageProjection
                 "diagnostics/index.md");
         }
 
+        if (HasReleaseReadinessBlockers(report))
+        {
+            yield return new DoctorExportTriageCommandHint(
+                "review-release-readiness",
+                "forge release publish <project-root> --dry-run --format json --no-input",
+                "Review local release-readiness blocking checks without publishing.",
+                "releaseReadiness",
+                "release-readiness/index.md");
+
+            if (report.ReleaseReadiness.BlockingCheckIds.Any(id => StringComparer.Ordinal.Equals("human-approval", id)))
+            {
+                yield return new DoctorExportTriageCommandHint(
+                    "confirm-release-approval-dry-run",
+                    "forge release publish <project-root> --dry-run --yes --confirm <project-id> --format json --no-input",
+                    "Validate explicit release approval locally without publishing.",
+                    "releaseReadiness",
+                    "release-readiness/index.md");
+            }
+        }
+
         if (report.Summary.Doctor.Actions > 0)
         {
             yield return new DoctorExportTriageCommandHint(
@@ -374,6 +408,12 @@ internal static class DoctorExportTriageProjection
                 "review-diagnostics",
                 "index.diagnostics",
                 "diagnostics/index.md");
+            order += 10;
+        }
+
+        foreach (var workItem in CreateReleaseReadinessWorkItems(report, order))
+        {
+            yield return workItem;
             order += 10;
         }
 
@@ -496,6 +536,11 @@ internal static class DoctorExportTriageProjection
             yield return new DoctorExportTriageReviewTarget("index.diagnostics", "diagnostics/index.md", "Review projected diagnostics.");
         }
 
+        if (report.ReleaseReadiness.Included)
+        {
+            yield return new DoctorExportTriageReviewTarget("releaseReadiness", "release-readiness/index.md", "Review local release-readiness evidence and blocking checks.");
+        }
+
         yield return new DoctorExportTriageReviewTarget("index.providerStatuses", "providers/index.md", "Review provider readiness.");
         yield return new DoctorExportTriageReviewTarget("index.capabilityStatuses", "capabilities/index.md", "Review capability readiness.");
         yield return new DoctorExportTriageReviewTarget("index.doctorAreas", "doctor-areas/index.md", "Review Doctor readiness areas.");
@@ -529,6 +574,50 @@ internal static class DoctorExportTriageProjection
 
         return paths;
     }
+
+    private static IEnumerable<DoctorExportTriageWorkItem> CreateReleaseReadinessWorkItems(
+        DoctorExportReport report,
+        int startOrder)
+    {
+        if (!HasReleaseReadinessBlockers(report))
+        {
+            yield break;
+        }
+
+        var evidenceById = report.ReleaseReadiness.Evidence.ToDictionary(item => item.Id, StringComparer.Ordinal);
+        var order = startOrder;
+        foreach (var checkId in report.ReleaseReadiness.BlockingCheckIds)
+        {
+            evidenceById.TryGetValue(checkId, out var evidence);
+            yield return new DoctorExportTriageWorkItem(
+                order,
+                $"resolve-release-readiness-{Slug(checkId)}",
+                "blocker",
+                $"Resolve release-readiness check {checkId}",
+                FormatReleaseReadinessWorkItemReason(checkId, evidence),
+                StringComparer.Ordinal.Equals(checkId, "human-approval")
+                    ? "confirm-release-approval-dry-run"
+                    : "review-release-readiness",
+                "releaseReadiness",
+                "release-readiness/index.md");
+            order += 10;
+        }
+    }
+
+    private static string FormatReleaseReadinessWorkItemReason(
+        string checkId,
+        DoctorExportReleaseReadinessEvidence? evidence)
+    {
+        if (evidence is not null)
+        {
+            return $"Release-readiness check {checkId} is {evidence.Status}: {evidence.Title}.";
+        }
+
+        return $"Release-readiness check {checkId} is blocking local publish readiness.";
+    }
+
+    private static bool HasReleaseReadinessBlockers(DoctorExportReport report) =>
+        report.ReleaseReadiness.Included && report.ReleaseReadiness.BlockingChecks > 0;
 
     private static IEnumerable<DoctorExportTriageReviewTarget> PrimaryReviewTargets(DoctorExportTriageReport triage) =>
         triage.ReviewTargets.Where(target => !string.IsNullOrWhiteSpace(target.Section));
@@ -1098,7 +1187,8 @@ internal sealed record DoctorExportTriageReport(
     int OptionalUnavailable,
     int DiagnosticErrors,
     int DiagnosticWarnings,
-    int OpenQuestions);
+    int OpenQuestions,
+    int ReleaseReadinessBlockingChecks);
 
 internal sealed record DoctorExportTriageItem(
     string Id,

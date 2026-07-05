@@ -288,9 +288,15 @@ Gate status:
 - `gates/gate-281-forge-release-publish-governance-check-evaluation.md` - Gate 281, `forge release publish` local governance-check evaluation for immutable schema policy, SemVer tool versioning, workflow permissions, CODEOWNERS, fixture policy, and AI-optional correctness, still no-publish.
 - `gates/gate-282-forge-release-publish-schema-validation-evidence.md` - Gate 282, `forge release publish` local schema-validation evidence evaluation from `dist/release-dry-run/validation.json`, still no-publish.
 - `gates/gate-283-forge-release-publish-capability-environment-evidence.md` - Gate 283, `forge release publish` local capability/environment evidence evaluation from `dist/release-dry-run/capabilities-scan.json`, still no-publish.
+- `gates/gate-284-forge-release-publish-package-validation-evidence.md` - Gate 284, `forge release publish` local package-validation evidence evaluation from `dist/release-dry-run/package-verify.json`, still no-publish.
+- `gates/gate-285-forge-release-publish-release-verification-evidence.md` - Gate 285, `forge release publish` local release-verification evidence evaluation from `dist/release-dry-run/release-verify.json`, still no-publish.
+- `gates/gate-286-forge-release-publish-human-approval-preflight.md` - Gate 286, `forge release publish` explicit human-approval preflight through `--yes --confirm <project-id>`, still no-publish.
+- `gates/gate-287-forge-release-publish-readiness-aggregation.md` - Gate 287, `forge release publish` publish-readiness aggregation from local evidence, governance, and approval states, still no-publish.
+- `gates/gate-288-forge-release-publish-no-publish-lane-closeout.md` - Gate 288, `forge release publish` no-publish lane closeout metadata and next-value routing to a local Doctor export release-readiness handoff, still no-publish.
+- `gates/gate-289-forge-doctor-export-release-readiness-handoff-skeleton.md` - Gate 289, `forge doctor export` local release-readiness handoff projection from release-publish dry-run preflight evidence, with JSON, plain, Markdown, archive, bundle index, summary index, README, and checksum coverage and still no publish behavior.
 
 Next gate:
 
-- Gate 284 - `forge release publish` package-validation evidence evaluation skeleton, still no-publish by default, stopping before remote repository calls, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 290 - `forge doctor export` release-readiness triage/worklist integration, turning blocking release-readiness checks into local operator handoff items while still stopping before remote repository calls, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

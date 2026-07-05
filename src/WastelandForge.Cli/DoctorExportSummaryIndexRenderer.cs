@@ -40,6 +40,7 @@ internal static class DoctorExportSummaryIndexRenderer
                 ["actionSummary"] = CapabilityDoctorActionSummaryIndex.ToJson(report.Index.ActionSummary),
                 ["requirementSummary"] = CapabilityRequirementSummaryIndex.ToJson(report.Index.RequirementSummary),
                 ["diagnosticSummary"] = CapabilityDiagnosticSummaryIndex.ToJson(report.Index.DiagnosticSummary),
+                ["releaseReadinessSummary"] = DoctorExportReleaseReadinessIndexRenderer.ToJson(report.ReleaseReadiness),
                 ["cataloguePolicySummary"] = ToJson(report.Index.CataloguePolicy)
             }
         };
@@ -98,6 +99,7 @@ internal static class DoctorExportSummaryIndexRenderer
         builder.AppendLine($"- Action summaries: {report.Index.ActionSummary.Actions} action(s) across {report.Index.ActionSummary.AreasWithActions} area(s)");
         builder.AppendLine($"- Requirement summaries: {report.Index.RequirementSummary.Requirements} requirement(s); {report.Index.RequirementSummary.Unavailable} unavailable");
         builder.AppendLine($"- Diagnostic summaries: {report.Index.DiagnosticSummary.Issues} issue(s)");
+        builder.AppendLine($"- Release-readiness summary: {report.ReleaseReadiness.Status}; {report.ReleaseReadiness.SatisfiedChecks}/{report.ReleaseReadiness.RequiredChecks} check(s) satisfied");
         builder.AppendLine($"- Catalogue-policy summaries: {report.Index.CataloguePolicy.SourceTypeIndex.Count} source type(s); {report.Index.CataloguePolicy.OpenQuestionDetails.Count} open-question detail(s)");
     }
 
