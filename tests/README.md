@@ -1562,6 +1562,78 @@ behavior, schema, diagnostic, release execution, Doctor execution, init
 execution, external tool execution, runtime probe, or AI requirement. Normal
 build/test smoke checks remain the validation expectation.
 
+Gate 312 extends golden CLI coverage for `forge init` scaffold planning.
+Tests verify init help, JSON planning output, derived project identity,
+planned scaffold paths, false execution flags, existing planned-path refusal
+with exit code `6`, diagnostic-only format rejection, and no scaffold writes
+against temporary synthetic directories. It adds no public fixture corpus,
+real provider sample, Bethesda asset, third-party mod file, external tool
+fixture, runtime probe, or AI requirement.
+
+Gate 316 extends golden CLI coverage for `forge init` minimal scaffold
+emission. Tests verify normal init writes only the manifest and dependency/
+capability registry files, dry-run remains no-write, generated/dist/editor/
+workflow/README paths remain absent, written-path execution metadata is
+reported, existing planned-path refusal remains exit code `6`, and the
+created temp scaffold passes `forge validate` with zero errors. It adds no
+public fixture corpus, real provider sample, Bethesda asset, third-party mod
+file, external tool fixture, runtime probe, or AI requirement.
+
+Gate 317 extends golden CLI coverage for `forge init` config and README
+scaffold emission. Tests verify normal init writes `.wastelandforge/config.jsonc`
+and `README.md`, dry-run remains no-write, generated/dist/cache/editor/
+workflow paths remain absent, config and README write metadata is reported,
+existing planned-path refusal remains exit code `6`, and the created temp
+scaffold passes `forge validate` with zero errors. It adds no public fixture
+corpus, real provider sample, Bethesda asset, third-party mod file, external
+tool fixture, runtime probe, or AI requirement.
+
+Gate 318 extends golden CLI coverage for `forge init` VS Code task scaffold
+emission. Tests verify normal init writes `.vscode/tasks.json`, parses the task
+file, checks the validate/capability-scan/build task labels and validate
+problem matcher, dry-run remains no-write, generated/dist/cache/workflow paths
+remain absent, VS Code write metadata is reported, existing planned-path
+refusal remains exit code `6`, and the created temp scaffold passes
+`forge validate` with zero errors. It adds no public fixture corpus, real
+provider sample, Bethesda asset, third-party mod file, external tool fixture,
+runtime probe, or AI requirement.
+
+Gate 319 extends golden CLI coverage for `forge init` GitHub Actions workflow
+scaffold emission. Tests verify normal init writes
+`.github/workflows/wastelandforge.yml`, checks Windows and Ubuntu lane markers,
+least-privilege permissions, pinned action SHAs, SARIF/artifact/release dry-run
+markers, dry-run remains no-write, generated/dist/cache paths remain absent,
+workflow write metadata is reported, existing planned-path refusal remains
+exit code `6`, and the created temp scaffold passes `forge validate` with zero
+errors. It adds no public fixture corpus, real provider sample, Bethesda asset,
+third-party mod file, external tool fixture, runtime probe, or AI requirement.
+
+Gate 320 extends golden CLI coverage for `forge init` editor schema
+association scaffold emission. Tests verify normal init writes
+`.vscode/settings.json`, parses the settings file, checks JSON and YAML schema
+association mappings, dry-run remains no-write, generated/dist/cache paths
+remain absent, editor schema write metadata is reported, existing planned-path
+refusal remains exit code `6`, and the created temp scaffold passes
+`forge validate` with zero errors. It adds no public fixture corpus, real
+provider sample, Bethesda asset, third-party mod file, external tool fixture,
+runtime probe, VS Code extension process, language-server process, or AI
+requirement.
+
+Gate 321 adds no new runtime test coverage. It is a docs and prompt routing
+closeout for the `forge init` onboarding lane and routes the next value slice
+to Forge CLI runner/bootstrap planning. No public fixtures, generated payload
+fixtures, real provider samples, Bethesda assets, third-party mod files,
+external tool fixtures, runtime probes, VS Code extension processes,
+language-server processes, or AI requirements are added.
+
+Gate 322 adds no new runtime test coverage. It is a docs and prompt routing
+planning gate for the Forge CLI runner/bootstrap model and routes Gate 323 to
+a source-built runner shim scaffold. No public fixtures, generated payload
+fixtures, real provider samples, Bethesda assets, third-party mod files,
+external tool fixtures, runtime probes, VS Code extension processes,
+language-server processes, local tool package publication, or AI requirements
+are added.
+
 Run the full local suite serially:
 
 ```text

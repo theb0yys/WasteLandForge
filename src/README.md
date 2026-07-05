@@ -1780,3 +1780,69 @@ gate reopens it, and the next source lane moves to `forge init` project
 scaffold planning. It does not add `forge init` execution yet, command
 fan-out, automatic remediation, capability scan execution, package verify
 execution, publish behavior, external tool execution, runtime probes, or AI.
+
+Gate 312 implements the first `forge init` runtime behavior as a planning-only
+scaffold report. `InitPlanPlanner`, JSON/plain renderers, CLI parsing, and
+command help now describe planned project scaffold paths, existing-path
+refusal, future validation command hints, and false execution flags. The gate
+does not write scaffold files, install providers, execute tools, automate
+MO2/GECK, run runtime probes, mutate plugins, publish releases, call remote
+repositories, sign or attest artifacts, or use AI.
+
+Gate 316 extends `forge init` with minimal scaffold emission. `InitScaffoldWriter`
+creates the project root, `wastelandforge.json`, and the minimal dependency
+and capability registry files when safety checks pass. `--dry-run` still
+writes nothing. The command still refuses existing planned paths and does not
+write generated/dist/editor/workflow/README/config paths, run validation,
+install providers, execute tools, automate MO2/GECK, run runtime probes,
+mutate plugins, publish releases, call remote repositories, sign or attest
+artifacts, or use AI.
+
+Gate 317 extends `InitScaffoldWriter` with repo-local Forge config and README
+scaffold content. Safe `forge init` execution now writes
+`.wastelandforge/config.jsonc` and `README.md` in addition to the manifest and
+dependency/capability registries. `--dry-run` still writes nothing. The
+command still refuses existing planned paths and does not write generated/
+dist/editor/workflow/cache paths, run validation, install providers, execute
+tools, automate MO2/GECK, run runtime probes, mutate plugins, publish
+releases, call remote repositories, sign or attest artifacts, or use AI.
+
+Gate 318 extends `InitScaffoldWriter` with VS Code task scaffold content. Safe
+`forge init` execution now writes `.vscode/tasks.json` with validate,
+capabilities scan, and reports build tasks plus a validate problem matcher.
+`--dry-run` still writes nothing. The command still refuses existing planned
+paths and does not write generated/dist/workflow/cache paths, run validation,
+install providers, execute tools, automate MO2/GECK, run runtime probes,
+mutate plugins, publish releases, call remote repositories, sign or attest
+artifacts, or use AI.
+
+Gate 319 extends `InitScaffoldWriter` with GitHub Actions workflow scaffold
+content. Safe `forge init` execution now writes
+`.github/workflows/wastelandforge.yml` with Ubuntu validation, Windows
+validation/build, and Windows release dry-run lanes, pinned action SHAs,
+least-privilege permissions, artifact upload surfaces, and Forge CLI
+availability checks. `--dry-run` still writes nothing. The command still
+refuses existing planned paths and does not write generated/dist/cache paths,
+run validation, install providers, execute tools, automate MO2/GECK, run
+runtime probes, mutate plugins, publish releases, call remote repositories,
+sign or attest artifacts, or use AI.
+
+Gate 320 extends `InitScaffoldWriter` with editor schema association scaffold
+content. Safe `forge init` execution now writes `.vscode/settings.json` with
+`json.schemas` and `yaml.schemas` mappings from WastelandForge source globs to
+canonical schema IDs. `--dry-run` still writes nothing. The command still
+refuses existing planned paths and does not write generated/dist/cache paths,
+run validation, install providers, execute tools, automate MO2/GECK, run
+runtime probes, mutate plugins, publish releases, call remote repositories,
+start VS Code extension or language-server processes, sign or attest
+artifacts, or use AI.
+
+Gate 321 changes no runtime source behavior. It closes the current
+`forge init` onboarding lane in planning and routes the next source work
+toward Forge CLI runner/bootstrap planning, where generated tasks and
+workflows can start gaining a documented way to obtain a known `forge`
+command.
+
+Gate 322 changes no runtime source behavior. It defines the staged Forge CLI
+runner/bootstrap model and routes Gate 323 to a source-built repo-local runner
+shim scaffold.

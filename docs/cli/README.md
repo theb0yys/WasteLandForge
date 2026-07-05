@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 311 release dry-run remediation handoff lane closeout
+Status: Gate 322 Forge CLI runner bootstrap planning
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -35,6 +35,15 @@ forge --version
 - `forge`, `forge --help`, `forge -h`, and `forge help` show top-level help.
 - `forge help <command>` and `<command> --help` show command help.
 - `forge --version` prints the CLI version.
+- `forge init` writes the source scaffold when safe:
+  `wastelandforge.json`, `src/registries/dependencies/main.json`, and
+  `src/registries/capabilities/runtime.json`, plus
+  `.wastelandforge/config.jsonc`, `README.md`, `.vscode/tasks.json`,
+  `.vscode/settings.json`, and `.github/workflows/wastelandforge.yml`. It supports `--template
+  fnv-basic|fnv-framework|fnv-quest-pack|fnv-docs-only`, `--name`, `--game
+  falloutnv`, `--format human|plain|json`, `--dry-run`, `--project`, and
+  `--no-input`. `--dry-run` emits the plan without writes. Existing planned
+  scaffold paths return exit code `6`.
 - `forge validate` runs the Gate 5 loader and validation pipeline.
 - `forge validate --geck-dialogue-export <path>` checks that a GECK dialogue
   export text file exists, is readable as text, and is non-empty. This is a
@@ -1265,8 +1274,86 @@ triage handoff projection. Automatic remediation, command fan-out, capability
 scan execution, package verification execution, release publishing, remote
 calls, signing or attestation, external tool execution, plugin mutation,
 MO2/GECK automation, runtime probes, real third-party fixtures, and AI remain
-deferred. The next implementation route is Gate 312 `forge init` project
+deferred. The next implementation route was Gate 312 `forge init` project
 scaffold planning.
+
+Gate 312 implements `forge init` as a planning-only project scaffold report.
+JSON/plain output lists planned scaffold paths, selected template, project
+identity, safety/conflict status, a future validation command hint, and false
+execution flags. The command writes no scaffold files, installs no providers,
+runs no external tools, performs no MO2/GECK automation, runs no runtime
+probes, mutates no plugins, publishes no release, calls no remote repository,
+signs or attests nothing, and requires no AI. Because Gates 313 through 315
+are app-shell route numbers, Gate 316 was reserved for the next `forge init`
+implementation slice.
+
+Gate 316 implements the first safe `forge init` scaffold writes. Normal
+execution creates the project root if needed, writes `wastelandforge.json`,
+`src/registries/dependencies/main.json`, and
+`src/registries/capabilities/runtime.json`, and reports written paths in JSON
+and plain output. `--dry-run` preserves the Gate 312 no-write plan. Existing
+planned paths are refused with exit code `6`. Generated, distribution,
+editor, workflow, README, cache, provider, external-tool, MO2/GECK, runtime
+probe, plugin mutation, release, remote repository, signing, attestation, and
+AI behavior remain outside this gate.
+
+Gate 317 extends `forge init` scaffold writes with `.wastelandforge/config.jsonc`
+and `README.md`. The config records local path defaults and disabled
+automation flags; the README records basic Forge commands and the
+source/generated boundary. `--dry-run` remains no-write, existing planned
+paths still return exit code `6`, and generated, distribution, cache, editor,
+workflow, provider, external-tool, MO2/GECK, runtime probe, plugin mutation,
+release, remote repository, signing, attestation, and AI behavior remain
+outside this gate. That routed into Gate 318 VS Code task scaffold generation.
+
+Gate 318 extends `forge init` scaffold writes with `.vscode/tasks.json`. The
+task file adds local VS Code tasks for validate, capabilities scan, and reports
+build, plus a plain-output `ERR` problem matcher for the validate task. `--dry-run`
+remains no-write, existing planned paths still return exit code `6`, and
+generated, distribution, cache, workflow, provider, external-tool, MO2/GECK,
+runtime probe, plugin mutation, release, remote repository, signing,
+attestation, and AI behavior remain outside this gate. That routed into Gate
+319 GitHub Actions workflow scaffold generation.
+
+Gate 319 extends `forge init` scaffold writes with
+`.github/workflows/wastelandforge.yml`. The workflow scaffold includes an
+Ubuntu validation lane with local SARIF export, a Windows validation/build
+lane, a Windows release dry-run lane, least-privilege permissions, pinned
+action commit SHAs, artifact upload surfaces, and explicit Forge CLI
+availability checks. `--dry-run` remains no-write, existing planned paths still
+return exit code `6`, and generated, distribution, cache, provider,
+external-tool, MO2/GECK, runtime probe, plugin mutation, release publication,
+remote repository calls from `forge init`, signing, attestation, and AI
+behavior remain outside this gate. That routed into Gate 320 editor schema
+association scaffold generation.
+
+Gate 320 extends `forge init` scaffold writes with `.vscode/settings.json`.
+The settings scaffold associates WastelandForge manifest and registry JSON
+globs with canonical schema IDs through `json.schemas`, and includes YAML
+language-server schema mappings for the same source families. `--dry-run`
+remains no-write, existing planned paths still return exit code `6`, and
+generated, distribution, cache, provider, external-tool, MO2/GECK, runtime
+probe, plugin mutation, release publication, remote repository calls from
+`forge init`, signing, attestation, VS Code extension, language-server
+process, and AI behavior remain outside this gate. Gate 321 closed this
+`forge init` onboarding lane and selected the next value route.
+
+Gate 321 closes the current `forge init` onboarding lane without changing CLI
+runtime behavior. The init lane now has safe scaffold planning, source
+manifest and registry emission, repo-local config and README content, VS Code
+tasks, GitHub Actions workflow metadata, VS Code schema associations, dry-run
+no-write behavior, existing-path refusal, golden CLI coverage, and validation
+smoke coverage. That routed into Gate 322 Forge CLI runner/bootstrap planning,
+because generated tasks and workflows currently assume a `forge` command is
+available on PATH while R006/R008 call for repository-pinned tooling and
+explicit CI setup.
+
+Gate 322 defines the Forge CLI runner/bootstrap model without changing CLI
+runtime behavior. The staged model starts with a source-built repo-local runner
+shim, then local tool package metadata and local package-source testing, then a
+repository-pinned `.config/dotnet-tools.json` flow for consumer projects, then
+workflow/task integration once a stable restore path exists. The next route is
+Gate 323 source-built Forge runner shim scaffold.
 
 ## Docs Evidence
 

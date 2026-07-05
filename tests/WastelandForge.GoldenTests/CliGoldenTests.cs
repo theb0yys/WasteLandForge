@@ -21,6 +21,238 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void InitHelpDescribesScaffoldWriter()
+    {
+        var result = RunCli("help", "init");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("forge init", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Creates a WastelandForge source scaffold when safe", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("wastelandforge.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(".wastelandforge/config.jsonc", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(".vscode/tasks.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(".vscode/settings.json", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains(".github/workflows/wastelandforge.yml", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Gate 320 does not install providers", result.Stdout, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void InitJsonPlansScaffoldWithoutWritingFiles()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "new-mod");
+
+        var result = RunCli(
+            "init",
+            projectRoot,
+            "--template",
+            "fnv-basic",
+            "--name",
+            "New Mod",
+            "--game",
+            "FalloutNV",
+            "--dry-run",
+            "--format",
+            "json",
+            "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Init JSON did not parse.");
+        var plannedPaths = json["plannedPaths"]?.AsArray() ?? throw new InvalidOperationException("Init planned paths were missing.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("init", (string?)json["command"]);
+        Assert.Equal("planned", (string?)json["status"]);
+        Assert.Equal(true, (bool?)json["planningOnly"]);
+        Assert.Equal("New Mod", (string?)json["project"]?["name"]);
+        Assert.Equal("example.newmod", (string?)json["project"]?["id"]);
+        Assert.Equal("falloutnv", (string?)json["project"]?["game"]);
+        Assert.Equal("fnv-basic", (string?)json["template"]?["id"]);
+        Assert.Equal("wastelandforge.json", (string?)json["manifest"]?["path"]);
+        Assert.Equal("safe-to-plan", (string?)json["safety"]?["status"]);
+        Assert.Equal(false, (bool?)json["execution"]?["scaffoldWrites"]);
+        Assert.Equal(false, (bool?)json["execution"]?["externalToolExecution"]);
+        Assert.Equal(false, (bool?)json["execution"]?["aiRequired"]);
+        Assert.Contains(plannedPaths, path =>
+            StringComparer.Ordinal.Equals((string?)path?["path"], "src/registries/dependencies/main.json") &&
+            (bool?)path?["wouldWriteInCurrentGate"] == true);
+        Assert.Contains(plannedPaths, path =>
+            StringComparer.Ordinal.Equals((string?)path?["path"], ".vscode/tasks.json") &&
+            (bool?)path?["wouldWriteInCurrentGate"] == true);
+        Assert.Contains(plannedPaths, path =>
+            StringComparer.Ordinal.Equals((string?)path?["path"], ".vscode/settings.json") &&
+            (bool?)path?["wouldWriteInCurrentGate"] == true);
+        Assert.Contains(plannedPaths, path =>
+            StringComparer.Ordinal.Equals((string?)path?["path"], ".github/workflows/wastelandforge.yml") &&
+            (bool?)path?["wouldWriteInCurrentGate"] == true);
+        Assert.False(Directory.Exists(projectRoot));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void InitJsonCreatesScaffoldWithConfigReadmeVscodeSettingsTasksAndWorkflowThatValidates()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "created-mod");
+
+        var result = RunCli(
+            "init",
+            projectRoot,
+            "--template",
+            "fnv-basic",
+            "--name",
+            "Created Mod",
+            "--format",
+            "json",
+            "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Init JSON did not parse.");
+        var writtenPaths = json["execution"]?["writtenPaths"]?.AsArray()
+            ?? throw new InvalidOperationException("Init written paths were missing.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("created", (string?)json["status"]);
+        Assert.Equal(false, (bool?)json["planningOnly"]);
+        Assert.Equal(true, (bool?)json["execution"]?["initExecution"]);
+        Assert.Equal(true, (bool?)json["execution"]?["scaffoldWrites"]);
+        Assert.Equal(true, (bool?)json["execution"]?["manifestWrites"]);
+        Assert.Equal(true, (bool?)json["execution"]?["registryWrites"]);
+        Assert.Equal(true, (bool?)json["execution"]?["forgeConfigWrites"]);
+        Assert.Equal(true, (bool?)json["execution"]?["readmeWrites"]);
+        Assert.Equal(true, (bool?)json["execution"]?["vscodeWrites"]);
+        Assert.Equal(true, (bool?)json["execution"]?["editorSchemaAssociationWrites"]);
+        Assert.Equal(true, (bool?)json["execution"]?["workflowWrites"]);
+        Assert.Equal(false, (bool?)json["execution"]?["validationExecution"]);
+        Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), "wastelandforge.json"));
+        Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), "src/registries/dependencies/main.json"));
+        Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), "src/registries/capabilities/runtime.json"));
+        Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), ".wastelandforge/config.jsonc"));
+        Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), "README.md"));
+        Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), ".vscode/tasks.json"));
+        Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), ".vscode/settings.json"));
+        Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), ".github/workflows/wastelandforge.yml"));
+
+        var manifestPath = Path.Combine(projectRoot, "wastelandforge.json");
+        var dependencyPath = Path.Combine(projectRoot, "src", "registries", "dependencies", "main.json");
+        var capabilityPath = Path.Combine(projectRoot, "src", "registries", "capabilities", "runtime.json");
+        var configPath = Path.Combine(projectRoot, ".wastelandforge", "config.jsonc");
+        var readmePath = Path.Combine(projectRoot, "README.md");
+        var vscodeTasksPath = Path.Combine(projectRoot, ".vscode", "tasks.json");
+        var vscodeSettingsPath = Path.Combine(projectRoot, ".vscode", "settings.json");
+        var workflowPath = Path.Combine(projectRoot, ".github", "workflows", "wastelandforge.yml");
+        Assert.True(File.Exists(manifestPath));
+        Assert.True(File.Exists(dependencyPath));
+        Assert.True(File.Exists(capabilityPath));
+        Assert.True(File.Exists(configPath));
+        Assert.True(File.Exists(readmePath));
+        Assert.True(File.Exists(vscodeTasksPath));
+        Assert.True(File.Exists(vscodeSettingsPath));
+        Assert.True(File.Exists(workflowPath));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, ".wastelandforge", "cache")));
+
+        var manifest = JsonNode.Parse(File.ReadAllText(manifestPath)) ?? throw new InvalidOperationException("Init manifest did not parse.");
+        var dependency = JsonNode.Parse(File.ReadAllText(dependencyPath)) ?? throw new InvalidOperationException("Init dependency registry did not parse.");
+        var capability = JsonNode.Parse(File.ReadAllText(capabilityPath)) ?? throw new InvalidOperationException("Init capability registry did not parse.");
+        var config = JsonNode.Parse(File.ReadAllText(configPath)) ?? throw new InvalidOperationException("Init Forge config did not parse.");
+        var vscodeTasks = JsonNode.Parse(File.ReadAllText(vscodeTasksPath)) ?? throw new InvalidOperationException("Init VS Code tasks did not parse.");
+        var vscodeSettings = JsonNode.Parse(File.ReadAllText(vscodeSettingsPath)) ?? throw new InvalidOperationException("Init VS Code settings did not parse.");
+        var readme = File.ReadAllText(readmePath);
+        var workflow = File.ReadAllText(workflowPath);
+        Assert.Equal("example.createdmod", (string?)manifest["id"]);
+        Assert.Equal("Created Mod", (string?)manifest["name"]);
+        Assert.Equal("src/registries/dependencies/", (string?)manifest["registries"]?["dependencies"]);
+        Assert.Equal("example.createdmod.dependencies", (string?)dependency["id"]);
+        Assert.Empty(dependency["requires"]?["capabilities"]?.AsArray() ?? throw new InvalidOperationException("Init dependency capabilities were missing."));
+        Assert.Equal("example.createdmod.baseline", (string?)capability["id"]);
+        Assert.Equal("wastelandforge.local-config", (string?)config["kind"]);
+        Assert.Equal("example.createdmod", (string?)config["projectId"]);
+        Assert.Equal(false, (bool?)config["behavior"]?["aiRequired"]);
+        Assert.Equal("2.0.0", (string?)vscodeTasks["version"]);
+        var tasks = vscodeTasks["tasks"]?.AsArray() ?? throw new InvalidOperationException("Init VS Code tasks were missing.");
+        var validateTask = tasks
+            .OfType<JsonObject>()
+            .Single(task => StringComparer.Ordinal.Equals("Forge: Validate", (string?)task["label"]));
+        Assert.Contains(tasks, task => StringComparer.Ordinal.Equals("Forge: Capabilities Scan", (string?)task?["label"]));
+        Assert.Contains(tasks, task => StringComparer.Ordinal.Equals("Forge: Build Reports", (string?)task?["label"]));
+        Assert.Equal("forge", (string?)validateTask["command"]);
+        Assert.Contains(validateTask["args"]?.AsArray() ?? throw new InvalidOperationException("Validate task args were missing."),
+            arg => StringComparer.Ordinal.Equals("validate", arg?.GetValue<string>()));
+        Assert.Equal("wastelandforge", (string?)validateTask["problemMatcher"]?["owner"]);
+        Assert.Equal("^ERR\\s+(WF-[A-Z]+-\\d+)\\s+([^#\\s]+)(?:#\\S+)?\\s+(.*)$", (string?)validateTask["problemMatcher"]?["pattern"]?["regexp"]);
+        var jsonSchemas = vscodeSettings["json.schemas"]?.AsArray() ?? throw new InvalidOperationException("VS Code JSON schema associations were missing.");
+        Assert.Contains(jsonSchemas, schema =>
+            StringComparer.Ordinal.Equals(WastelandForgeSchemaIds.Manifest020, (string?)schema?["url"]) &&
+            ContainsString(schema?["fileMatch"], "/wastelandforge.json"));
+        Assert.Contains(jsonSchemas, schema =>
+            StringComparer.Ordinal.Equals(WastelandForgeSchemaIds.Dependency020, (string?)schema?["url"]) &&
+            ContainsString(schema?["fileMatch"], "/src/registries/dependencies/**/*.json"));
+        Assert.Contains(jsonSchemas, schema =>
+            StringComparer.Ordinal.Equals(WastelandForgeSchemaIds.Capability020, (string?)schema?["url"]) &&
+            ContainsString(schema?["fileMatch"], "/src/registries/capabilities/**/*.json"));
+        Assert.Contains(jsonSchemas, schema =>
+            StringComparer.Ordinal.Equals(WastelandForgeSchemaIds.Dialogue0230, (string?)schema?["url"]) &&
+            ContainsString(schema?["fileMatch"], "/src/registries/dialogue/**/*.json"));
+        var yamlSchemas = vscodeSettings["yaml.schemas"]?.AsObject() ?? throw new InvalidOperationException("VS Code YAML schema associations were missing.");
+        Assert.True(ContainsString(yamlSchemas[WastelandForgeSchemaIds.Manifest020], "wastelandforge.yaml"));
+        Assert.True(ContainsString(yamlSchemas[WastelandForgeSchemaIds.Dependency020], "src/registries/dependencies/**/*.yaml"));
+        Assert.True(ContainsString(yamlSchemas[WastelandForgeSchemaIds.Capability020], "src/registries/capabilities/**/*.yml"));
+        Assert.Contains("# Created Mod", readme, StringComparison.Ordinal);
+        Assert.Contains("forge validate . --format json --no-input", readme, StringComparison.Ordinal);
+        Assert.Contains(".vscode/tasks.json", readme, StringComparison.Ordinal);
+        Assert.Contains(".vscode/settings.json", readme, StringComparison.Ordinal);
+        Assert.Contains(".github/workflows/wastelandforge.yml", readme, StringComparison.Ordinal);
+        Assert.Contains("name: wastelandforge", workflow, StringComparison.Ordinal);
+        Assert.Contains("permissions:", workflow, StringComparison.Ordinal);
+        Assert.Contains("contents: read", workflow, StringComparison.Ordinal);
+        Assert.Contains("security-events: write", workflow, StringComparison.Ordinal);
+        Assert.Contains("runs-on: windows-latest", workflow, StringComparison.Ordinal);
+        Assert.Contains("runs-on: ubuntu-latest", workflow, StringComparison.Ordinal);
+        Assert.Contains("actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10", workflow, StringComparison.Ordinal);
+        Assert.Contains("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", workflow, StringComparison.Ordinal);
+        Assert.Contains("github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e", workflow, StringComparison.Ordinal);
+        Assert.Contains("validate . --format sarif", workflow, StringComparison.Ordinal);
+        Assert.Contains("build . --target reports", workflow, StringComparison.Ordinal);
+        Assert.Contains("release verify . --format json", workflow, StringComparison.Ordinal);
+        Assert.Contains("Forge CLI is not installed on this runner", workflow, StringComparison.Ordinal);
+
+        var validation = RunCli("validate", projectRoot, "--format", "json");
+        var validationJson = JsonNode.Parse(validation.Stdout) ?? throw new InvalidOperationException("Validation JSON did not parse.");
+        Assert.Equal(0, validation.ExitCode);
+        Assert.Equal(0, (int?)validationJson["summary"]?["errors"]);
+        Assert.Equal(string.Empty, validation.Stderr);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void InitJsonRefusesExistingPlannedPathsWithoutWriting()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "existing-mod");
+        Directory.CreateDirectory(projectRoot);
+        File.WriteAllText(Path.Combine(projectRoot, "wastelandforge.json"), "{}");
+
+        var result = RunCli("init", projectRoot, "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Init JSON did not parse.");
+        var existingPaths = json["safety"]?["existingPlannedPaths"]?.AsArray()
+            ?? throw new InvalidOperationException("Init existing paths were missing.");
+
+        Assert.Equal(6, result.ExitCode);
+        Assert.Equal("refused", (string?)json["status"]);
+        Assert.Equal("refused-existing-planned-paths", (string?)json["safety"]?["status"]);
+        Assert.Contains(existingPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), "wastelandforge.json"));
+        Assert.DoesNotContain(existingPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), "."));
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "src")));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void InitRejectsSarifFormatAsNonDiagnostic()
+    {
+        var result = RunCli("init", "--format", "sarif");
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Equal(string.Empty, result.Stdout);
+        Assert.Contains("--format sarif is only available for diagnostic report commands in the current gate.", result.Stderr, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ExampleModJsonValidationMatchesGoldenOutput()
     {
         var result = RunCli("validate", Path.Combine(RepositoryRoot(), "fixtures", "projects", "ExampleMod"), "--format", "json");
@@ -11307,6 +11539,10 @@ public sealed class CliGoldenTests
 
     private static string EscapeJsonPath(string path) =>
         path.Replace("\\", "\\\\", StringComparison.Ordinal);
+
+    private static bool ContainsString(JsonNode? node, string expected) =>
+        node is JsonArray array &&
+        array.Any(value => StringComparer.Ordinal.Equals(expected, value?.GetValue<string>()));
 
     private static void MarkCapabilityRequirementsOptional(string projectRoot)
     {

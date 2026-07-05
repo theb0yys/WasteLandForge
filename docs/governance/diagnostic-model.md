@@ -1503,5 +1503,76 @@ diagnostics, repository publish diagnostics, signing/attestation diagnostics,
 and AI requirements unless a later gate explicitly reopens one of those
 scopes.
 
+Gate 312 adds no new diagnostic rule ID. `forge init` reports scaffold safety
+as command planning status rather than as a diagnostic report. Existing
+planned scaffold paths are refused with exit code `6`, while unsupported
+formats/templates/games remain usage errors. The gate does not add schema,
+semantic, capability, build, release, governance, security, external-tool,
+runtime-probe, repository-publish, signing/attestation, plugin-mutation, or
+AI diagnostics.
+
+Gate 316 adds no new diagnostic rule ID. `forge init` now writes minimal
+source scaffold files when safety checks pass, but scaffold creation status
+remains command output rather than a diagnostic report. Existing planned
+paths still return exit code `6`, unsupported formats/templates/games remain
+usage errors, and post-write validation remains a separate `forge validate`
+command. The gate does not add schema, semantic, capability, build, release,
+governance, security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, or AI diagnostics.
+
+Gate 317 adds no new diagnostic rule ID. `forge init` now also writes
+repo-local Forge config and README scaffold files when safety checks pass,
+but scaffold creation status remains command output rather than a diagnostic
+report. Existing planned paths still return exit code `6`, unsupported
+formats/templates/games remain usage errors, and post-write validation remains
+a separate `forge validate` command. The gate does not add schema, semantic,
+capability, build, release, governance, security, external-tool,
+runtime-probe, repository-publish, signing/attestation, plugin-mutation, or
+AI diagnostics.
+
+Gate 318 adds no new diagnostic rule ID. `forge init` now also writes VS Code
+task scaffold files when safety checks pass, but scaffold creation status
+remains command output rather than a diagnostic report. Existing planned paths
+still return exit code `6`, unsupported formats/templates/games remain usage
+errors, and post-write validation remains a separate `forge validate` command.
+The gate does not add schema, semantic, capability, build, release,
+governance, security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, or AI diagnostics.
+
+Gate 319 adds no new diagnostic rule ID. `forge init` now also writes GitHub
+Actions workflow scaffold files when safety checks pass, but scaffold creation
+status remains command output rather than a diagnostic report. Existing
+planned paths still return exit code `6`, unsupported formats/templates/games
+remain usage errors, and post-write validation remains a separate
+`forge validate` command. The gate does not add schema, semantic, capability,
+build, release, governance, security, external-tool, runtime-probe,
+repository-publish, signing/attestation, plugin-mutation, or AI diagnostics.
+
+Gate 320 adds no new diagnostic rule ID. `forge init` now also writes editor
+schema association scaffold files when safety checks pass, but scaffold
+creation status remains command output rather than a diagnostic report.
+Existing planned paths still return exit code `6`, unsupported
+formats/templates/games remain usage errors, and post-write validation remains
+a separate `forge validate` command. The gate does not add schema, semantic,
+capability, build, release, governance, security, external-tool,
+runtime-probe, repository-publish, signing/attestation, plugin-mutation,
+VS Code extension, language-server, or AI diagnostics.
+
+Gate 321 adds no new diagnostic rule ID. It closes the current `forge init`
+onboarding lane and routes the next slice toward Forge CLI runner/bootstrap
+planning, but it does not change command execution or diagnostic projection.
+It does not add schema, semantic, capability, build, release, governance,
+security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server, or
+AI diagnostics.
+
+Gate 322 adds no new diagnostic rule ID. It defines the Forge CLI
+runner/bootstrap model and routes Gate 323 to a source-built runner shim
+scaffold, but it does not change command execution or diagnostic projection.
+It does not add schema, semantic, capability, build, release, governance,
+security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server, or
+AI diagnostics.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

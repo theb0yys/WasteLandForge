@@ -1379,3 +1379,64 @@ closeout is documentation and prompt-routing only. It does not add command
 runners, package validators, publishing clients, repository API clients,
 signing or attestation dependencies, external tool integrations, network
 calls, runtime probes, MO2 or GECK automation, or AI requirements.
+
+Gate 312 adds no package dependency. `forge init` scaffold planning uses
+existing .NET path, file-existence, text, and JSON APIs only. It does not add
+template engines, command runners, package validators, publishing clients,
+repository API clients, signing or attestation dependencies, external tool
+integrations, network calls, runtime probes, MO2 or GECK automation, plugin
+mutation dependencies, or AI requirements.
+
+Gate 316 adds no package dependency. Minimal `forge init` scaffold emission
+uses existing .NET directory, file, UTF-8 text, and JSON APIs only. It does
+not add template engines, command runners, package validators, publishing
+clients, repository API clients, signing or attestation dependencies,
+external tool integrations, network calls, runtime probes, MO2 or GECK
+automation, plugin mutation dependencies, or AI requirements.
+
+Gate 317 adds no package dependency. Forge config and README scaffold emission
+uses existing .NET directory, file, UTF-8 text, and JSON APIs only. It does
+not add template engines, command runners, package validators, publishing
+clients, repository API clients, signing or attestation dependencies,
+external tool integrations, network calls, runtime probes, MO2 or GECK
+automation, plugin mutation dependencies, or AI requirements.
+
+Gate 318 adds no package dependency. VS Code task scaffold emission uses
+existing .NET directory, file, UTF-8 text, and JSON APIs only. It does not add
+template engines, command runners, package validators, publishing clients,
+repository API clients, signing or attestation dependencies, external tool
+integrations, network calls, runtime probes, MO2 or GECK automation, plugin
+mutation dependencies, or AI requirements.
+
+Gate 319 adds no package dependency. GitHub Actions workflow scaffold emission
+uses existing .NET directory, file, UTF-8 text, and JSON APIs only. It does
+not add template engines, command runners, package validators, publishing
+clients, repository API clients, signing or attestation dependencies,
+external tool integrations, network calls from `forge init`, runtime probes,
+MO2 or GECK automation, plugin mutation dependencies, or AI requirements.
+
+Gate 320 adds no package dependency. Editor schema association scaffold
+emission uses existing .NET directory, file, UTF-8 text, JSON APIs, and
+existing schema ID constants only. It does not add VS Code extension
+dependencies, YAML language-server dependencies, template engines, command
+runners, package validators, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network
+calls from `forge init`, runtime probes, MO2 or GECK automation, plugin
+mutation dependencies, or AI requirements.
+
+Gate 321 adds no package dependency. It is a docs and prompt routing closeout
+for the `forge init` onboarding lane and only routes the next slice toward
+Forge CLI runner/bootstrap planning. It does not add .NET local tool packages,
+NuGet publication, standalone packaging dependencies, command runners,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, plugin mutation dependencies, or AI requirements.
+
+Gate 322 adds no package dependency. It defines the Forge CLI
+runner/bootstrap model and routes the first concrete step to a source-built
+repo-local runner shim. It does not add .NET local tool packages,
+`.config/dotnet-tools.json`, local NuGet package creation, NuGet publication,
+standalone packaging dependencies, command runners beyond future wrapper
+planning, publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, plugin mutation dependencies, or AI requirements.

@@ -71,6 +71,11 @@ internal static class ForgeCli
             return RunValidate(resolution.RemainingArgs);
         }
 
+        if (StringComparer.Ordinal.Equals(resolution.CommandPath, "init"))
+        {
+            return RunInitCommand(resolution.RemainingArgs);
+        }
+
         if (StringComparer.Ordinal.Equals(resolution.CommandPath, "release verify"))
         {
             return RunReleaseVerify(resolution.RemainingArgs);
@@ -234,6 +239,36 @@ internal static class ForgeCli
 
         return result.HasErrors
             ? (int)CliExitCode.BlockingDiagnostics
+            : (int)CliExitCode.Success;
+    }
+
+    private static int RunInitCommand(string[] args)
+    {
+        var parse = ParseInitOptions(args);
+        if (!parse.Success)
+        {
+            WriteUsage(parse.Format, "init", parse.Message);
+            return (int)CliExitCode.Usage;
+        }
+
+        var result = InitPlanPlanner.Plan(new InitPlanOptions(
+            parse.ProjectPath,
+            parse.Template,
+            parse.ProjectName,
+            parse.Game,
+            parse.DryRun));
+        if (!result.IsRefused && !result.DryRun)
+        {
+            result = InitScaffoldWriter.Execute(result);
+        }
+
+        var payload = CliConstants.IsMachineFormat(parse.Format)
+            ? InitPlanJsonSerializer.Serialize(result)
+            : InitPlanTextRenderer.Render(result);
+        Console.Write(payload);
+
+        return result.IsRefused
+            ? (int)CliExitCode.UnsafeOperationRefused
             : (int)CliExitCode.Success;
     }
 
@@ -1130,6 +1165,154 @@ internal static class ForgeCli
         }
 
         return ValidateParseResult.Ok(projectPath, outputPath, summaryPath, geckDialogueExportPath, format);
+    }
+
+    private static InitParseResult ParseInitOptions(string[] args)
+    {
+        var format = "human";
+        var projectPath = ".";
+        var template = InitPlanPlanner.DefaultTemplate;
+        string? projectName = null;
+        var game = InitPlanPlanner.DefaultGame;
+        var dryRun = false;
+        var projectWasSet = false;
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var arg = args[index];
+            if (StringComparer.Ordinal.Equals(arg, "--format"))
+            {
+                if (!TryReadValue(args, ref index, out format))
+                {
+                    return InitParseResult.Fail(format, "Missing value for --format.");
+                }
+
+                if (!CliConstants.IsKnownFormat(format))
+                {
+                    return InitParseResult.Fail(format, $"Unsupported format '{format}'.");
+                }
+
+                if (StringComparer.Ordinal.Equals(format, "sarif") ||
+                    StringComparer.Ordinal.Equals(format, "github"))
+                {
+                    return InitParseResult.Fail(format, $"--format {format} is only available for diagnostic report commands in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--project"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitProjectPath))
+                {
+                    return InitParseResult.Fail(format, "Missing value for --project.");
+                }
+
+                if (projectWasSet)
+                {
+                    return InitParseResult.Fail(format, "Project root was specified more than once.");
+                }
+
+                projectPath = explicitProjectPath;
+                projectWasSet = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--template"))
+            {
+                if (!TryReadValue(args, ref index, out template))
+                {
+                    return InitParseResult.Fail(format, "Missing value for --template.");
+                }
+
+                if (!InitPlanPlanner.SupportedTemplates.Contains(template, StringComparer.Ordinal))
+                {
+                    return InitParseResult.Fail(format, $"Unsupported init template '{template}'.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--name"))
+            {
+                if (!TryReadValue(args, ref index, out projectName))
+                {
+                    return InitParseResult.Fail(format, "Missing value for --name.");
+                }
+
+                if (string.IsNullOrWhiteSpace(projectName))
+                {
+                    return InitParseResult.Fail(format, "--name must not be empty.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--game"))
+            {
+                if (!TryReadValue(args, ref index, out var explicitGame))
+                {
+                    return InitParseResult.Fail(format, "Missing value for --game.");
+                }
+
+                if (!TryNormalizeGame(explicitGame, out game))
+                {
+                    return InitParseResult.Fail(format, $"Unsupported game '{explicitGame}'. Only falloutnv is planned in the current gate.");
+                }
+
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--dry-run"))
+            {
+                dryRun = true;
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--no-input"))
+            {
+                continue;
+            }
+
+            if (arg.StartsWith("-", StringComparison.Ordinal))
+            {
+                return InitParseResult.Fail(format, $"Unsupported init option '{arg}'.");
+            }
+
+            if (projectWasSet)
+            {
+                return InitParseResult.Fail(format, "Project root was specified more than once.");
+            }
+
+            projectPath = arg;
+            projectWasSet = true;
+        }
+
+        projectName ??= DeriveProjectName(projectPath);
+        return InitParseResult.Ok(projectPath, template, projectName, game, dryRun, format);
+    }
+
+    private static bool TryNormalizeGame(string value, out string game)
+    {
+        if (StringComparer.OrdinalIgnoreCase.Equals(value, "falloutnv") ||
+            StringComparer.OrdinalIgnoreCase.Equals(value, "fallout-new-vegas") ||
+            StringComparer.OrdinalIgnoreCase.Equals(value, "fnv"))
+        {
+            game = InitPlanPlanner.DefaultGame;
+            return true;
+        }
+
+        game = string.Empty;
+        return false;
+    }
+
+    private static string DeriveProjectName(string projectPath)
+    {
+        var fullPath = Path.GetFullPath(string.IsNullOrWhiteSpace(projectPath) ? "." : projectPath);
+        var directoryName = Path.GetFileName(fullPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        return string.IsNullOrWhiteSpace(directoryName)
+            ? "WastelandForge Project"
+            : directoryName;
     }
 
     private static ReleaseVerifyParseResult ParseReleaseVerifyOptions(string[] args)
@@ -3372,6 +3555,23 @@ internal static class ForgeCli
 
         public static ValidateParseResult Fail(string format, string message) =>
             new(false, string.Empty, null, null, null, format, message);
+    }
+
+    private sealed record InitParseResult(
+        bool Success,
+        string ProjectPath,
+        string Template,
+        string ProjectName,
+        string Game,
+        bool DryRun,
+        string Format,
+        string Message)
+    {
+        public static InitParseResult Ok(string projectPath, string template, string projectName, string game, bool dryRun, string format) =>
+            new(true, projectPath, template, projectName, game, dryRun, format, string.Empty);
+
+        public static InitParseResult Fail(string format, string message) =>
+            new(false, string.Empty, InitPlanPlanner.DefaultTemplate, string.Empty, InitPlanPlanner.DefaultGame, false, format, message);
     }
 
     private sealed record ReleaseVerifyParseResult(

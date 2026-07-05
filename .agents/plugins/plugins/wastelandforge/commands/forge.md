@@ -766,10 +766,22 @@ remediation handoff lane closeout and next-value routing, still with no
 command fan-out, automatic remediation, capability scan execution, package
 verify execution, publish behavior, external tool execution, runtime probes,
 or AI behavior. Gate 311 closes that lane without runtime behavior changes and
-routes the next implementation slice to Gate 312: `forge init` project
+routed the next implementation slice to Gate 312: `forge init` project
 scaffold planning, still with no provider installation, external tool
 execution, MO2/GECK automation, runtime probes, release publication, remote
-repository calls, signing/attestation, plugin mutation, or AI behavior.
+repository calls, signing/attestation, plugin mutation, or AI behavior. Gate
+312 implements `forge init` as a planning-only scaffold report with planned
+paths, safety/refusal status, validation hints, help, and golden coverage,
+while still writing no scaffold files. Because Gates 313 through 315 are
+already reserved for the app-shell lane, Gate 316 implements safe minimal
+scaffold emission for the root manifest and dependency/capability registry
+files. Gate 317 implements repo-local Forge config and README scaffold
+content. Gate 318 implements VS Code task scaffold generation. Gate 319
+implements GitHub Actions workflow scaffold generation. Gate 320 implements
+editor schema association scaffold generation. Gate 321 closes the current
+`forge init` onboarding lane. Gate 322 defines Forge CLI runner/bootstrap
+planning. Route the next development step to Gate 323: source-built Forge
+runner shim scaffold.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -877,10 +889,22 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   command fan-out, automatic remediation, capability scan execution, package
   verify execution, publish behavior, external tool execution, runtime probes,
   or AI behavior. Gate 311 closes that lane without runtime behavior changes and
-  routes the next implementation slice to Gate 312: `forge init` project
+  routed the next implementation slice to Gate 312: `forge init` project
   scaffold planning, still with no provider installation, external tool
   execution, MO2/GECK automation, runtime probes, release publication, remote
-  repository calls, signing/attestation, plugin mutation, or AI behavior.
+  repository calls, signing/attestation, plugin mutation, or AI behavior. Gate
+  312 implements `forge init` as a planning-only scaffold report with planned
+  paths, safety/refusal status, validation hints, help, and golden coverage,
+  while still writing no scaffold files. Because Gates 313 through 315 are
+  already reserved for the app-shell lane, Gate 316 implements safe minimal
+  scaffold emission for the root manifest and dependency/capability registry
+  files. Gate 317 implements repo-local Forge config and README scaffold
+  content. Gate 318 implements VS Code task scaffold generation. Gate 319
+  implements GitHub Actions workflow scaffold generation. Gate 320 implements
+  editor schema association scaffold generation. Gate 321 closes the current
+  `forge init` onboarding lane. Gate 322 defines Forge CLI runner/bootstrap
+  planning. Route the next development step to Gate 323: source-built Forge
+  runner shim scaffold.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider

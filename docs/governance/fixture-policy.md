@@ -1202,3 +1202,58 @@ fixtures for JIP package unit and CLI coverage and commits no staged package
 outputs, provider DLLs, Bethesda assets, third-party mod files, local install
 snapshots, MO2 profiles, GECK outputs, external tool fixtures, or generated
 evidence fixtures.
+
+Gate 312 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, or AI-generated
+fixture. `forge init` coverage creates only temporary synthetic directories
+under the test temp root and verifies that planning output does not write the
+planned scaffold files.
+
+Gate 316 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, or AI-generated
+fixture. `forge init` coverage creates temporary synthetic project
+directories, writes only minimal source scaffold contracts in those temp
+directories, and validates them locally before test cleanup by the OS temp
+area.
+
+Gate 317 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, or AI-generated
+fixture. `forge init` coverage creates temporary synthetic project
+directories, writes config and README scaffold files only in those temp
+directories, and validates the resulting source contracts locally.
+
+Gate 318 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, or AI-generated
+fixture. `forge init` coverage creates temporary synthetic project
+directories, writes VS Code task scaffold files only in those temp directories,
+parses the task JSON, and validates the resulting source contracts locally.
+
+Gate 319 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, or AI-generated
+fixture. `forge init` coverage creates temporary synthetic project
+directories, writes GitHub Actions workflow scaffold files only in those temp
+directories, inspects the workflow text for expected CI/governance markers,
+and validates the resulting source contracts locally.
+
+Gate 320 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, or AI-generated
+fixture. `forge init` coverage creates temporary synthetic project
+directories, writes editor schema association scaffold files only in those
+temp directories, parses the settings JSON, inspects schema association
+mappings, and validates the resulting source contracts locally.
+
+Gate 321 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, or AI-generated
+fixture. It is a docs and prompt routing closeout only.
+
+Gate 322 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, or AI-generated
+fixture. It is a docs and prompt routing planning gate only.

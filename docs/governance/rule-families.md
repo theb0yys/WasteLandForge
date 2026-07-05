@@ -1002,3 +1002,75 @@ automatic remediation rules, command fan-out diagnostics, package verifier
 rules, capability execution diagnostics, external tool diagnostics, runtime
 probe diagnostics, repository publish diagnostics, signing/attestation
 diagnostics, or AI requirements.
+
+Gate 312 adds no new rule family or diagnostic ID. `forge init` scaffold
+planning reports existing planned scaffold paths as command refusal status,
+not as `WF-*` diagnostics. It does not add `WF-LOAD-*`, `WF-SCHEMA-*`,
+`WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` rules, external tool diagnostics, runtime probe
+diagnostics, repository publish diagnostics, signing/attestation diagnostics,
+plugin mutation diagnostics, or AI requirements.
+
+Gate 316 adds no new rule family or diagnostic ID. Minimal `forge init`
+scaffold emission keeps file creation/refusal as command status and relies on
+the existing `forge validate` pipeline to validate the created source
+contracts. It does not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`,
+`WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`,
+or `WF-SEC-*` rules, external tool diagnostics, runtime probe diagnostics,
+repository publish diagnostics, signing/attestation diagnostics, plugin
+mutation diagnostics, or AI requirements.
+
+Gate 317 adds no new rule family or diagnostic ID. Config and README scaffold
+emission keeps file creation/refusal as command status and relies on the
+existing `forge validate` pipeline for source contract validation. It does
+not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`,
+`WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, plugin mutation diagnostics, or
+AI requirements.
+
+Gate 320 adds no new rule family or diagnostic ID. Editor schema association
+scaffold emission keeps file creation/refusal as command status and relies on
+the existing `forge validate` pipeline for source contract validation. It does
+not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`,
+`WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, plugin mutation diagnostics,
+VS Code extension diagnostics, language-server diagnostics, or AI
+requirements.
+
+Gate 322 adds no new rule family or diagnostic ID. Forge CLI runner/bootstrap
+planning is documentation and prompt routing only. It does not add
+`WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`,
+`WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, plugin mutation diagnostics,
+VS Code extension diagnostics, language-server diagnostics, or AI
+requirements.
+
+Gate 321 adds no new rule family or diagnostic ID. The `forge init`
+onboarding lane closeout is documentation and prompt routing only. It does not
+add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`,
+`WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, plugin mutation diagnostics,
+VS Code extension diagnostics, language-server diagnostics, or AI
+requirements.
+
+Gate 318 adds no new rule family or diagnostic ID. VS Code task scaffold
+emission keeps file creation/refusal as command status and relies on the
+existing `forge validate` pipeline for source contract validation. It does
+not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`,
+`WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, plugin mutation diagnostics, or
+AI requirements.
+
+Gate 319 adds no new rule family or diagnostic ID. GitHub Actions workflow
+scaffold emission keeps file creation/refusal as command status and relies on
+the existing `forge validate` pipeline for source contract validation. It does
+not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`,
+`WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, plugin mutation diagnostics, or
+AI requirements.

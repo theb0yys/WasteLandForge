@@ -123,7 +123,7 @@ internal static class CliHelpWriter
                 WriteDoctorExportHelp(writer);
                 return true;
             case "init":
-                WriteReservedCommandHelp(writer, commandPath, "This command is part of the ADR-010 command surface and is reserved for a later gate.");
+                WriteInitHelp(writer);
                 return true;
             case "clean":
                 WriteCleanHelp(writer);
@@ -156,6 +156,44 @@ internal static class CliHelpWriter
         writer.WriteLine("  0 no blocking diagnostics");
         writer.WriteLine("  1 blocking diagnostics found");
         writer.WriteLine("  2 usage or unsupported format");
+    }
+
+    private static void WriteInitHelp(TextWriter writer)
+    {
+        writer.WriteLine("forge init");
+        writer.WriteLine();
+        writer.WriteLine("Usage:");
+        writer.WriteLine("  forge init [project-root] [--project <path>] [--template fnv-basic|fnv-framework|fnv-quest-pack|fnv-docs-only] [--name <name>] [--game falloutnv] [--format human|plain|json] [--dry-run] [--no-input]");
+        writer.WriteLine();
+        writer.WriteLine("Creates a WastelandForge source scaffold when safe. Gate 320 writes the root manifest, dependency/capability registry scaffold, repo-local Forge config, README, VS Code tasks, VS Code schema associations, and GitHub Actions workflow; use --dry-run to emit the plan without writing files.");
+        writer.WriteLine("Existing planned paths are refused unless a later gate adds an explicit overwrite policy.");
+        writer.WriteLine();
+        writer.WriteLine("Written in the current gate:");
+        writer.WriteLine("  wastelandforge.json");
+        writer.WriteLine("  src/registries/dependencies/main.json");
+        writer.WriteLine("  src/registries/capabilities/runtime.json");
+        writer.WriteLine("  .wastelandforge/config.jsonc");
+        writer.WriteLine("  README.md");
+        writer.WriteLine("  .vscode/tasks.json");
+        writer.WriteLine("  .vscode/settings.json");
+        writer.WriteLine("  .github/workflows/wastelandforge.yml");
+        writer.WriteLine();
+        writer.WriteLine("Planned for later gates:");
+        writer.WriteLine("  generated/");
+        writer.WriteLine("  dist/");
+        writer.WriteLine("  .wastelandforge/cache/");
+        writer.WriteLine();
+        writer.WriteLine("Examples:");
+        writer.WriteLine("  forge init MyMod --template fnv-basic --name \"My Mod\" --game falloutnv --format json");
+        writer.WriteLine("  forge init --project . --format plain --no-input");
+        writer.WriteLine();
+        writer.WriteLine("Boundaries:");
+        writer.WriteLine("  Gate 320 does not install providers, run external tools, perform MO2/GECK automation, run runtime probes, write generated/dist/cache paths, mutate plugins, publish releases, call remote repositories, sign or attest artifacts, create a VS Code extension, start a language server, or require AI.");
+        writer.WriteLine();
+        writer.WriteLine("Exit codes:");
+        writer.WriteLine("  0 scaffold created or dry-run plan emitted");
+        writer.WriteLine("  2 usage or unsupported format/template/game");
+        writer.WriteLine("  6 scaffold writes would conflict with existing planned paths");
     }
 
     private static void WriteGenerateHelp(TextWriter writer)
