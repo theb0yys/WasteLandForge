@@ -1246,5 +1246,31 @@ not run the diagnostic pipeline, emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*`
 diagnostics, validate archive payload contents, inspect provider evidence,
 execute external tools, run runtime probes, or use AI.
 
+Gate 281 adds no new diagnostic rule ID. Release-publish governance-check
+evaluation reports immutable schema policy, SemVer tool version,
+least-privilege workflow permission, CODEOWNERS, redistributable fixture
+policy, and AI-optional release correctness checks as command status fields,
+not diagnostics. It does not run the diagnostic pipeline, emit `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` diagnostics, inspect provider evidence, execute
+external tools, run runtime probes, call remote repositories, upload releases,
+or use AI.
+
+Gate 282 adds no new diagnostic rule ID. Release-publish schema-validation
+evidence evaluation reads prior diagnostic-report JSON and reports missing,
+malformed, clean, or `WF-SCHEMA-*` issue-present evidence as command status
+fields, not diagnostics. It does not run the diagnostic pipeline, emit new
+`WF-SCHEMA-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, inspect
+provider evidence, execute external tools, run runtime probes, call remote
+repositories, upload releases, or use AI.
+
+Gate 283 adds no new diagnostic rule ID. Release-publish
+capability/environment evidence evaluation reads prior capabilities-scan JSON
+and reports missing, malformed, project-scoped clean, or `WF-CAP-*`
+issue-present evidence as command status fields, not new diagnostics. It does
+not run the diagnostic pipeline, emit new `WF-CAP-*`, `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` diagnostics, execute external tools, run runtime
+probes, automate MO2 or GECK, call remote repositories, upload releases, or
+use AI.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

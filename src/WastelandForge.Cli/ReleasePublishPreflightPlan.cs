@@ -214,12 +214,72 @@ internal sealed record ReleasePublishSemanticEvidenceCheck(
     string Status,
     string Detail);
 
+internal sealed record ReleasePublishSchemaValidationEvidence(
+    string Path,
+    bool Exists,
+    string Status,
+    bool CheckedInCurrentGate,
+    bool ContentReadInCurrentGate,
+    int Errors,
+    int Warnings,
+    int Notes,
+    int IssueCount,
+    int SchemaIssueCount,
+    string Detail);
+
+internal sealed record ReleasePublishCapabilityEnvironmentEvidence(
+    string Path,
+    bool Exists,
+    string Status,
+    bool CheckedInCurrentGate,
+    bool ContentReadInCurrentGate,
+    bool ProjectScoped,
+    bool RuntimeProbesEnabled,
+    bool Mo2VfsEnabled,
+    int Providers,
+    int Capabilities,
+    int MissingProviders,
+    int UnknownProviders,
+    int WrongScopeProviders,
+    int MissingCapabilities,
+    int UnknownCapabilities,
+    int WrongScopeCapabilities,
+    int Requirements,
+    int RequiredUnavailable,
+    int OptionalUnavailable,
+    int Diagnostics,
+    int CapabilityDiagnostics,
+    int DoctorAreas,
+    int DoctorActionNeededAreas,
+    int DoctorUnknownAreas,
+    string Detail);
+
+internal sealed record ReleasePublishPackageValidationEvidence(
+    string Path,
+    bool Exists,
+    string Status,
+    bool CheckedInCurrentGate,
+    bool ContentReadInCurrentGate,
+    string? Target,
+    string? Mode,
+    string? OutputRoot,
+    bool DistScoped,
+    bool PackageArchivePresent,
+    int Errors,
+    int Warnings,
+    int Notes,
+    int IssueCount,
+    int PackageIssueCount,
+    string Detail);
+
 internal sealed record ReleasePublishGovernanceCheck(
     string Id,
     string Title,
     string Status,
     bool Required,
-    bool CheckedInCurrentGate);
+    bool CheckedInCurrentGate,
+    string EvidencePath,
+    string Detail);
 
 internal sealed record ReleasePublishApprovalRequirement(
     bool Required,
@@ -245,6 +305,9 @@ internal sealed record ReleasePublishPreflightResult(
     ReleasePublishBuildManifestCrossReference BuildManifestCrossReference,
     ReleasePublishArchiveEvidenceCrossReference ArchiveEvidenceCrossReference,
     ReleasePublishSemanticEvidenceValidation SemanticEvidenceValidation,
+    ReleasePublishSchemaValidationEvidence SchemaValidationEvidence,
+    ReleasePublishCapabilityEnvironmentEvidence CapabilityEnvironmentEvidence,
+    ReleasePublishPackageValidationEvidence PackageValidationEvidence,
     string? RefusalReason,
     IReadOnlyList<ReleasePublishEvidenceRequirement> RequiredEvidence,
     IReadOnlyList<ReleasePublishEvidenceArtifact> LocalEvidenceArtifacts,
@@ -273,7 +336,7 @@ internal static class ReleasePublishPreflightPlanner
 
     private static readonly string[] BoundaryLines =
     [
-        "Gate 280 validates local release-prepare evidence semantics for release publish preflight.",
+        "Gate 284 evaluates local package-validation evidence for release publish preflight.",
         "JSON evidence is parsed for well-formed shape only; checksum sidecar entries are parsed for expected-path coverage only.",
         "Build-manifest outputs and release-archive-evidence metadata are cross-referenced to local evidence paths, checksum sidecar paths, and existing build-manifest output paths only.",
         "Checksum sidecar digests are recomputed for expected local evidence files only.",
@@ -282,6 +345,10 @@ internal static class ReleasePublishPreflightPlanner
         "The expected local release archive is reopened only to compare entry names, entry order, deterministic timestamps, and stored compression metadata.",
         "Release archive entries are inspected as metadata only; payload contents are not semantically validated.",
         "Semantic release-evidence validation checks local evidence kind/status contracts, output path maps, release-summary counters, archive-plan inputs, archive-evidence checks, build-manifest output sets, and no-publish execution boundaries.",
+        "Governance checks read local policy, workflow, CODEOWNERS, fixture, AI-optional, and tool-version evidence only.",
+        "Schema-validation evidence reads local dist/release-dry-run/validation.json only and checks the diagnostic report shape plus WF-SCHEMA issue count.",
+        "Capability/environment evidence reads local dist/release-dry-run/capabilities-scan.json only and checks project-scoped capabilities scan shape plus WF-CAP issue count.",
+        "Package-validation evidence reads local dist/release-dry-run/package-verify.json only and checks package verify-existing report shape plus WF-BUILD issue count.",
         "No release is published.",
         "Remote repositories are not called.",
         "Release assets are not uploaded.",
@@ -383,6 +450,10 @@ internal static class ReleasePublishPreflightPlanner
         ("non-publish-execution-boundary", "release evidence execution flags remain no-publish and local-only", "dist/release-prepare")
     ];
 
+    private const string SchemaValidationEvidenceRelativePath = "dist/release-dry-run/validation.json";
+    private const string CapabilityEnvironmentEvidenceRelativePath = "dist/release-dry-run/capabilities-scan.json";
+    private const string PackageValidationEvidenceRelativePath = "dist/release-dry-run/package-verify.json";
+
     public static ReleasePublishPreflightResult Plan(ReleasePublishPreflightOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -396,6 +467,10 @@ internal static class ReleasePublishPreflightPlanner
         var buildManifestCrossReference = CreateBuildManifestCrossReference(projectRoot, releasePrepareEvidenceRootPath, localEvidenceArtifacts, checksumSidecar);
         var archiveEvidenceCrossReference = CreateArchiveEvidenceCrossReference(projectRoot, releasePrepareEvidenceRootPath, localEvidenceArtifacts, checksumSidecar, buildManifestCrossReference);
         var semanticEvidenceValidation = CreateSemanticEvidenceValidation(projectRoot, releasePrepareEvidenceRootPath, localEvidenceArtifacts, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference);
+        var schemaValidationEvidence = CreateSchemaValidationEvidence(projectRoot);
+        var capabilityEnvironmentEvidence = CreateCapabilityEnvironmentEvidence(projectRoot);
+        var packageValidationEvidence = CreatePackageValidationEvidence(projectRoot);
+        var governanceChecks = CreateGovernanceChecks(projectRoot);
         var presentArtifacts = localEvidenceArtifacts.Count(artifact => artifact.Exists);
         var missingArtifacts = localEvidenceArtifacts.Count - presentArtifacts;
         var wellFormedArtifacts = localEvidenceArtifacts.Count(artifact => StringComparer.Ordinal.Equals(artifact.Status, "well-formed-not-validated"));
@@ -405,7 +480,7 @@ internal static class ReleasePublishPreflightPlanner
         var status = options.DryRun ? "planned" : "refused";
         var refusalReason = options.DryRun
             ? null
-            : "Release publish requires validated local governance preflight evidence and explicit human approval; Gate 280 does not publish releases.";
+            : "Release publish requires fully validated local schema, capability/environment, package, and governance preflight evidence and explicit human approval; Gate 284 does not publish releases.";
 
         return new ReleasePublishPreflightResult(
             status,
@@ -425,10 +500,13 @@ internal static class ReleasePublishPreflightPlanner
             buildManifestCrossReference,
             archiveEvidenceCrossReference,
             semanticEvidenceValidation,
+            schemaValidationEvidence,
+            capabilityEnvironmentEvidence,
+            packageValidationEvidence,
             refusalReason,
-            CreateRequiredEvidence(localEvidenceArtifacts, semanticEvidenceValidation, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference),
+            CreateRequiredEvidence(localEvidenceArtifacts, schemaValidationEvidence, capabilityEnvironmentEvidence, packageValidationEvidence, semanticEvidenceValidation, checksumSidecar, buildManifestCrossReference, archiveEvidenceCrossReference, governanceChecks),
             localEvidenceArtifacts,
-            CreateGovernanceChecks(),
+            governanceChecks,
             new ReleasePublishApprovalRequirement(
                 Required: true,
                 Provided: false,
@@ -439,30 +517,44 @@ internal static class ReleasePublishPreflightPlanner
 
     private static IReadOnlyList<ReleasePublishEvidenceRequirement> CreateRequiredEvidence(
         IReadOnlyList<ReleasePublishEvidenceArtifact> localEvidenceArtifacts,
+        ReleasePublishSchemaValidationEvidence schemaValidationEvidence,
+        ReleasePublishCapabilityEnvironmentEvidence capabilityEnvironmentEvidence,
+        ReleasePublishPackageValidationEvidence packageValidationEvidence,
         ReleasePublishSemanticEvidenceValidation semanticEvidenceValidation,
         ReleasePublishChecksumSidecar checksumSidecar,
         ReleasePublishBuildManifestCrossReference buildManifestCrossReference,
-        ReleasePublishArchiveEvidenceCrossReference archiveEvidenceCrossReference) =>
+        ReleasePublishArchiveEvidenceCrossReference archiveEvidenceCrossReference,
+        IReadOnlyList<ReleasePublishGovernanceCheck> governanceChecks) =>
     [
-        Evidence("schema-validation", "Schema validation passed", "ADR-011 layered validation"),
+        Evidence("schema-validation", "Schema validation passed", "ADR-011 layered validation", schemaValidationEvidence.Status, checkedInCurrentGate: true),
         Evidence("semantic-validation", "Semantic validation passed", "ADR-011 layered validation", semanticEvidenceValidation.Status, checkedInCurrentGate: true),
-        Evidence("capability-environment-validation", "Capability and environment validation passed", "ADR-008 and ADR-011"),
-        Evidence("package-validation", "Package validation passed", "ADR-011 release validation"),
+        Evidence("capability-environment-validation", "Capability and environment validation passed", "ADR-008 and ADR-011", capabilityEnvironmentEvidence.Status, checkedInCurrentGate: true),
+        Evidence("package-validation", "Package validation passed", "ADR-011 release validation", packageValidationEvidence.Status, checkedInCurrentGate: true),
         Evidence("release-verification", "Release verification passed", "forge release verify"),
         Evidence("release-prepare-build-manifest", "Local release prepare build-manifest.json exists and is accepted", "ADR-011 mandatory local build manifest", BuildManifestRequirementStatus(localEvidenceArtifacts, buildManifestCrossReference), checkedInCurrentGate: true),
         Evidence("release-prepare-checksums", "Local release prepare checksums.sha256 exists and is accepted", "ADR-011 checksum evidence", ChecksumRequirementStatus(localEvidenceArtifacts, checksumSidecar), checkedInCurrentGate: true),
         Evidence("release-prepare-archive-evidence", "Local release archive evidence exists and is accepted", "Gate 268 release archive evidence", ArchiveEvidenceRequirementStatus(localEvidenceArtifacts, archiveEvidenceCrossReference), checkedInCurrentGate: true),
-        Evidence("governance-checks", "Governance checks passed", "ADR-011 release governance")
+        Evidence("governance-checks", "Governance checks passed", "ADR-011 release governance", GovernanceRequirementStatus(governanceChecks), checkedInCurrentGate: true)
     ];
 
-    private static IReadOnlyList<ReleasePublishGovernanceCheck> CreateGovernanceChecks() =>
+    private static IReadOnlyList<ReleasePublishGovernanceCheck> CreateGovernanceChecks(string projectRoot) =>
     [
-        Check("immutable-schema-policy", "Published schemas remain immutable"),
-        Check("semver-version-stream", "Release version follows SemVer-governed streams"),
-        Check("least-privilege-release-permissions", "Release workflow uses least-privilege permissions"),
-        Check("codeowner-sensitive-path-review", "Sensitive release paths have required review"),
-        Check("redistributable-fixture-policy", "Public fixtures remain synthetic and redistributable"),
-        Check("ai-optional-release-path", "Release correctness path does not require AI")
+        PolicyFileCheck(
+            "immutable-schema-policy",
+            "Published schemas remain immutable",
+            projectRoot,
+            Path.Combine("docs", "governance", "schema-version-policy.md"),
+            ["schema", "immutable", "$id"]),
+        ToolVersionSemVerCheck(),
+        ReleaseWorkflowPermissionsCheck(projectRoot),
+        CodeownersCheck(projectRoot),
+        PolicyFileCheck(
+            "redistributable-fixture-policy",
+            "Public fixtures remain synthetic and redistributable",
+            projectRoot,
+            Path.Combine("docs", "governance", "fixture-policy.md"),
+            ["synthetic", "redistributable"]),
+        AiOptionalReleasePathCheck(projectRoot)
     ];
 
     private static ReleasePublishEvidenceRequirement Evidence(string id, string title, string source, string status = "required-not-evaluated", bool checkedInCurrentGate = false) =>
@@ -474,13 +566,683 @@ internal static class ReleasePublishPreflightPlanner
             Required: true,
             CheckedInCurrentGate: checkedInCurrentGate);
 
-    private static ReleasePublishGovernanceCheck Check(string id, string title) =>
+    private static ReleasePublishSchemaValidationEvidence CreateSchemaValidationEvidence(string projectRoot)
+    {
+        var fullPath = Path.Combine(projectRoot, SchemaValidationEvidenceRelativePath.Replace('/', Path.DirectorySeparatorChar));
+        var displayPath = ToDisplayPath(projectRoot, fullPath);
+        if (!File.Exists(fullPath))
+        {
+            return SchemaValidationEvidence(displayPath, exists: false, "missing", contentRead: false, "validation-report-missing");
+        }
+
+        JsonObject? root;
+        try
+        {
+            root = JsonNode.Parse(File.ReadAllText(fullPath)) as JsonObject;
+        }
+        catch (JsonException ex)
+        {
+            return SchemaValidationEvidence(displayPath, exists: true, "malformed", contentRead: true, $"json-parse-error:{ex.Message}");
+        }
+        catch (IOException)
+        {
+            return SchemaValidationEvidence(displayPath, exists: true, "malformed", contentRead: false, "validation-report-unreadable");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return SchemaValidationEvidence(displayPath, exists: true, "malformed", contentRead: false, "validation-report-unreadable");
+        }
+
+        if (root is null)
+        {
+            return SchemaValidationEvidence(displayPath, exists: true, "malformed", contentRead: true, "validation-report-not-json-object");
+        }
+
+        if (!TryGetStringProperty(root, "formatVersion", out var formatVersion) ||
+            !StringComparer.Ordinal.Equals(formatVersion, "1.0") ||
+            root["tool"] is not JsonObject tool ||
+            !TryGetStringProperty(tool, "name", out var toolName) ||
+            !StringComparer.Ordinal.Equals(toolName, CliConstants.ToolName) ||
+            !TryGetStringProperty(tool, "version", out var toolVersion) ||
+            !StringComparer.Ordinal.Equals(toolVersion, CliConstants.Version) ||
+            !TryGetStringProperty(root, "command", out var command) ||
+            !StringComparer.Ordinal.Equals(command, "validate"))
+        {
+            return SchemaValidationEvidence(displayPath, exists: true, "unexpected-report", contentRead: true, "validation-report-identity-mismatch");
+        }
+
+        if (root["summary"] is not JsonObject summary ||
+            !TryGetInt32Property(summary, "errors", out var errors) ||
+            !TryGetInt32Property(summary, "warnings", out var warnings) ||
+            !TryGetInt32Property(summary, "notes", out var notes) ||
+            root["issues"] is not JsonArray issues)
+        {
+            return SchemaValidationEvidence(displayPath, exists: true, "malformed", contentRead: true, "validation-report-summary-or-issues-malformed");
+        }
+
+        var issueCount = 0;
+        var schemaIssueCount = 0;
+        foreach (var issueNode in issues)
+        {
+            if (issueNode is not JsonObject issue ||
+                !TryGetStringProperty(issue, "ruleId", out var ruleId))
+            {
+                return SchemaValidationEvidence(displayPath, exists: true, "malformed", contentRead: true, "validation-report-issue-malformed");
+            }
+
+            issueCount++;
+            if (ruleId.StartsWith("WF-SCHEMA-", StringComparison.Ordinal))
+            {
+                schemaIssueCount++;
+            }
+        }
+
+        return new ReleasePublishSchemaValidationEvidence(
+            displayPath,
+            Exists: true,
+            Status: schemaIssueCount == 0 ? "complete-schema-validated" : "schema-diagnostics-present",
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: true,
+            errors,
+            warnings,
+            notes,
+            issueCount,
+            schemaIssueCount,
+            schemaIssueCount == 0 ? "validation-report-has-no-schema-diagnostics" : "validation-report-has-schema-diagnostics");
+    }
+
+    private static ReleasePublishSchemaValidationEvidence SchemaValidationEvidence(
+        string path,
+        bool exists,
+        string status,
+        bool contentRead,
+        string detail) =>
+        new(
+            path,
+            exists,
+            status,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: contentRead,
+            Errors: 0,
+            Warnings: 0,
+            Notes: 0,
+            IssueCount: 0,
+            SchemaIssueCount: 0,
+            detail);
+
+    private static ReleasePublishCapabilityEnvironmentEvidence CreateCapabilityEnvironmentEvidence(string projectRoot)
+    {
+        var fullPath = Path.Combine(projectRoot, CapabilityEnvironmentEvidenceRelativePath.Replace('/', Path.DirectorySeparatorChar));
+        var displayPath = ToDisplayPath(projectRoot, fullPath);
+        if (!File.Exists(fullPath))
+        {
+            return CapabilityEnvironmentEvidence(displayPath, exists: false, "missing", contentRead: false, projectScoped: false, "capability-scan-report-missing");
+        }
+
+        JsonObject? root;
+        try
+        {
+            root = JsonNode.Parse(File.ReadAllText(fullPath)) as JsonObject;
+        }
+        catch (JsonException ex)
+        {
+            return CapabilityEnvironmentEvidence(displayPath, exists: true, "malformed", contentRead: true, projectScoped: false, $"json-parse-error:{ex.Message}");
+        }
+        catch (IOException)
+        {
+            return CapabilityEnvironmentEvidence(displayPath, exists: true, "malformed", contentRead: false, projectScoped: false, "capability-scan-report-unreadable");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return CapabilityEnvironmentEvidence(displayPath, exists: true, "malformed", contentRead: false, projectScoped: false, "capability-scan-report-unreadable");
+        }
+
+        if (root is null)
+        {
+            return CapabilityEnvironmentEvidence(displayPath, exists: true, "malformed", contentRead: true, projectScoped: false, "capability-scan-report-not-json-object");
+        }
+
+        if (!TryGetStringProperty(root, "formatVersion", out var formatVersion) ||
+            !StringComparer.Ordinal.Equals(formatVersion, "1.0") ||
+            root["tool"] is not JsonObject tool ||
+            !TryGetStringProperty(tool, "name", out var toolName) ||
+            !StringComparer.Ordinal.Equals(toolName, CliConstants.ToolName) ||
+            !TryGetStringProperty(tool, "version", out var toolVersion) ||
+            !StringComparer.Ordinal.Equals(toolVersion, CliConstants.Version) ||
+            !TryGetStringProperty(root, "command", out var command) ||
+            !StringComparer.Ordinal.Equals(command, "capabilities scan"))
+        {
+            return CapabilityEnvironmentEvidence(displayPath, exists: true, "unexpected-report", contentRead: true, projectScoped: false, "capability-scan-report-identity-mismatch");
+        }
+
+        if (root["inputs"] is not JsonObject inputs ||
+            !TryGetBooleanProperty(inputs, "runtimeProbesEnabled", out var runtimeProbesEnabled) ||
+            !TryGetBooleanProperty(inputs, "mo2VfsEnabled", out var mo2VfsEnabled) ||
+            root["summary"] is not JsonObject summary ||
+            !TryGetInt32Property(summary, "providers", out var providers) ||
+            !TryGetInt32Property(summary, "capabilities", out var capabilities) ||
+            !TryGetInt32Property(summary, "missingProviders", out var missingProviders) ||
+            !TryGetInt32Property(summary, "unknownProviders", out var unknownProviders) ||
+            !TryGetInt32Property(summary, "wrongScopeProviders", out var wrongScopeProviders) ||
+            !TryGetInt32Property(summary, "missingCapabilities", out var missingCapabilities) ||
+            !TryGetInt32Property(summary, "unknownCapabilities", out var unknownCapabilities) ||
+            !TryGetInt32Property(summary, "wrongScopeCapabilities", out var wrongScopeCapabilities) ||
+            root["doctor"] is not JsonObject doctor ||
+            doctor["summary"] is not JsonObject doctorSummary ||
+            !TryGetInt32Property(doctorSummary, "areas", out var doctorAreas) ||
+            !TryGetInt32Property(doctorSummary, "actionNeededAreas", out var doctorActionNeededAreas) ||
+            !TryGetInt32Property(doctorSummary, "unknownAreas", out var doctorUnknownAreas) ||
+            root["diagnostics"] is not JsonObject diagnostics ||
+            diagnostics["issues"] is not JsonArray diagnosticIssues)
+        {
+            return CapabilityEnvironmentEvidence(displayPath, exists: true, "malformed", contentRead: true, projectScoped: false, "capability-scan-report-summary-or-diagnostics-malformed");
+        }
+
+        var diagnosticCount = 0;
+        var capabilityDiagnosticCount = 0;
+        foreach (var issueNode in diagnosticIssues)
+        {
+            if (issueNode is not JsonObject issue ||
+                !TryGetStringProperty(issue, "ruleId", out var ruleId))
+            {
+                return CapabilityEnvironmentEvidence(displayPath, exists: true, "malformed", contentRead: true, projectScoped: false, "capability-scan-report-diagnostic-malformed");
+            }
+
+            diagnosticCount++;
+            if (ruleId.StartsWith("WF-CAP-", StringComparison.Ordinal))
+            {
+                capabilityDiagnosticCount++;
+            }
+        }
+
+        var requirementCount = 0;
+        var requiredUnavailable = 0;
+        var optionalUnavailable = 0;
+        var projectScoped = root["requirements"] is JsonObject requirements &&
+            requirements["summary"] is JsonObject requirementSummary &&
+            TryGetInt32Property(requirementSummary, "requirements", out requirementCount) &&
+            TryGetInt32Property(requirementSummary, "requiredUnavailable", out requiredUnavailable) &&
+            TryGetInt32Property(requirementSummary, "optionalUnavailable", out optionalUnavailable);
+
+        var status = ResolveCapabilityEnvironmentEvidenceStatus(
+            projectScoped,
+            runtimeProbesEnabled,
+            mo2VfsEnabled,
+            requiredUnavailable,
+            capabilityDiagnosticCount);
+        var detail = ResolveCapabilityEnvironmentEvidenceDetail(status);
+
+        return new ReleasePublishCapabilityEnvironmentEvidence(
+            displayPath,
+            Exists: true,
+            status,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: true,
+            projectScoped,
+            runtimeProbesEnabled,
+            mo2VfsEnabled,
+            providers,
+            capabilities,
+            missingProviders,
+            unknownProviders,
+            wrongScopeProviders,
+            missingCapabilities,
+            unknownCapabilities,
+            wrongScopeCapabilities,
+            requirementCount,
+            requiredUnavailable,
+            optionalUnavailable,
+            diagnosticCount,
+            capabilityDiagnosticCount,
+            doctorAreas,
+            doctorActionNeededAreas,
+            doctorUnknownAreas,
+            detail);
+    }
+
+    private static ReleasePublishCapabilityEnvironmentEvidence CapabilityEnvironmentEvidence(
+        string path,
+        bool exists,
+        string status,
+        bool contentRead,
+        bool projectScoped,
+        string detail) =>
+        new(
+            path,
+            exists,
+            status,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: contentRead,
+            projectScoped,
+            RuntimeProbesEnabled: false,
+            Mo2VfsEnabled: false,
+            Providers: 0,
+            Capabilities: 0,
+            MissingProviders: 0,
+            UnknownProviders: 0,
+            WrongScopeProviders: 0,
+            MissingCapabilities: 0,
+            UnknownCapabilities: 0,
+            WrongScopeCapabilities: 0,
+            Requirements: 0,
+            RequiredUnavailable: 0,
+            OptionalUnavailable: 0,
+            Diagnostics: 0,
+            CapabilityDiagnostics: 0,
+            DoctorAreas: 0,
+            DoctorActionNeededAreas: 0,
+            DoctorUnknownAreas: 0,
+            detail);
+
+    private static string ResolveCapabilityEnvironmentEvidenceStatus(
+        bool projectScoped,
+        bool runtimeProbesEnabled,
+        bool mo2VfsEnabled,
+        int requiredUnavailable,
+        int capabilityDiagnosticCount)
+    {
+        if (runtimeProbesEnabled || mo2VfsEnabled)
+        {
+            return "unsupported-evidence";
+        }
+
+        if (!projectScoped)
+        {
+            return "not-project-scoped";
+        }
+
+        return requiredUnavailable == 0 && capabilityDiagnosticCount == 0
+            ? "complete-capability-environment-validated"
+            : "capability-diagnostics-present";
+    }
+
+    private static string ResolveCapabilityEnvironmentEvidenceDetail(string status) => status switch
+    {
+        "complete-capability-environment-validated" => "capability-scan-report-has-no-required-capability-diagnostics",
+        "capability-diagnostics-present" => "capability-scan-report-has-capability-diagnostics",
+        "not-project-scoped" => "capability-scan-report-not-project-scoped",
+        "unsupported-evidence" => "capability-scan-report-used-runtime-or-mo2-evidence",
+        _ => status
+    };
+
+    private static ReleasePublishPackageValidationEvidence CreatePackageValidationEvidence(string projectRoot)
+    {
+        var fullPath = Path.Combine(projectRoot, PackageValidationEvidenceRelativePath.Replace('/', Path.DirectorySeparatorChar));
+        var displayPath = ToDisplayPath(projectRoot, fullPath);
+        if (!File.Exists(fullPath))
+        {
+            return PackageValidationEvidence(displayPath, exists: false, "missing", contentRead: false, "package-verify-report-missing");
+        }
+
+        JsonObject? root;
+        try
+        {
+            root = JsonNode.Parse(File.ReadAllText(fullPath)) as JsonObject;
+        }
+        catch (JsonException ex)
+        {
+            return PackageValidationEvidence(displayPath, exists: true, "malformed", contentRead: true, $"json-parse-error:{ex.Message}");
+        }
+        catch (IOException)
+        {
+            return PackageValidationEvidence(displayPath, exists: true, "malformed", contentRead: false, "package-verify-report-unreadable");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return PackageValidationEvidence(displayPath, exists: true, "malformed", contentRead: false, "package-verify-report-unreadable");
+        }
+
+        if (root is null)
+        {
+            return PackageValidationEvidence(displayPath, exists: true, "malformed", contentRead: true, "package-verify-report-not-json-object");
+        }
+
+        if (!TryGetStringProperty(root, "formatVersion", out var formatVersion) ||
+            !StringComparer.Ordinal.Equals(formatVersion, "1.0") ||
+            root["tool"] is not JsonObject tool ||
+            !TryGetStringProperty(tool, "name", out var toolName) ||
+            !StringComparer.Ordinal.Equals(toolName, CliConstants.ToolName) ||
+            !TryGetStringProperty(tool, "version", out var toolVersion) ||
+            !StringComparer.Ordinal.Equals(toolVersion, CliConstants.Version) ||
+            !TryGetStringProperty(root, "command", out var command) ||
+            !StringComparer.Ordinal.Equals(command, "package") ||
+            !TryGetStringProperty(root, "target", out var target) ||
+            !StringComparer.Ordinal.Equals(target, "mcm-json") ||
+            !TryGetStringProperty(root, "mode", out var mode) ||
+            !StringComparer.Ordinal.Equals(mode, "verify-existing"))
+        {
+            return PackageValidationEvidence(displayPath, exists: true, "unexpected-report", contentRead: true, "package-verify-report-identity-mismatch");
+        }
+
+        if (!TryGetStringProperty(root, "status", out var reportStatus) ||
+            root["summary"] is not JsonObject summary ||
+            !TryGetInt32Property(summary, "errors", out var errors) ||
+            !TryGetInt32Property(summary, "warnings", out var warnings) ||
+            !TryGetInt32Property(summary, "notes", out var notes) ||
+            root["outputs"] is not JsonObject outputs ||
+            !TryGetStringProperty(outputs, "root", out var outputRoot) ||
+            !TryGetStringProperty(outputs, "packageManifest", out _) ||
+            !TryGetStringProperty(outputs, "installPreview", out _) ||
+            !TryGetStringProperty(outputs, "installPlan", out _) ||
+            !TryGetStringProperty(outputs, "packageVerification", out _) ||
+            !TryGetStringProperty(outputs, "checksums", out _) ||
+            !TryGetStringProperty(outputs, "buildManifest", out _) ||
+            root["issues"] is not JsonArray issues)
+        {
+            return PackageValidationEvidence(displayPath, exists: true, "malformed", contentRead: true, "package-verify-report-summary-outputs-or-issues-malformed");
+        }
+
+        if (!StringComparer.Ordinal.Equals(reportStatus, "passed") &&
+            !StringComparer.Ordinal.Equals(reportStatus, "failed"))
+        {
+            return PackageValidationEvidence(displayPath, exists: true, "malformed", contentRead: true, "package-verify-report-status-malformed");
+        }
+
+        var issueCount = 0;
+        var packageIssueCount = 0;
+        foreach (var issueNode in issues)
+        {
+            if (issueNode is not JsonObject issue ||
+                !TryGetStringProperty(issue, "ruleId", out var ruleId))
+            {
+                return PackageValidationEvidence(displayPath, exists: true, "malformed", contentRead: true, "package-verify-report-issue-malformed");
+            }
+
+            issueCount++;
+            if (ruleId.StartsWith("WF-BUILD-", StringComparison.Ordinal))
+            {
+                packageIssueCount++;
+            }
+        }
+
+        var distScoped = IsDistScopedPackageOutput(outputRoot);
+        var status = ResolvePackageValidationEvidenceStatus(
+            reportStatus,
+            distScoped,
+            errors,
+            packageIssueCount);
+        var detail = ResolvePackageValidationEvidenceDetail(status);
+
+        return new ReleasePublishPackageValidationEvidence(
+            displayPath,
+            Exists: true,
+            status,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: true,
+            target,
+            mode,
+            outputRoot,
+            distScoped,
+            PackageArchivePresent: TryGetStringProperty(outputs, "packageArchive", out _),
+            errors,
+            warnings,
+            notes,
+            issueCount,
+            packageIssueCount,
+            detail);
+    }
+
+    private static ReleasePublishPackageValidationEvidence PackageValidationEvidence(
+        string path,
+        bool exists,
+        string status,
+        bool contentRead,
+        string detail) =>
+        new(
+            path,
+            exists,
+            status,
+            CheckedInCurrentGate: true,
+            ContentReadInCurrentGate: contentRead,
+            Target: null,
+            Mode: null,
+            OutputRoot: null,
+            DistScoped: false,
+            PackageArchivePresent: false,
+            Errors: 0,
+            Warnings: 0,
+            Notes: 0,
+            IssueCount: 0,
+            PackageIssueCount: 0,
+            detail);
+
+    private static string ResolvePackageValidationEvidenceStatus(
+        string reportStatus,
+        bool distScoped,
+        int errors,
+        int packageIssueCount)
+    {
+        if (!distScoped)
+        {
+            return "not-dist-scoped";
+        }
+
+        return StringComparer.Ordinal.Equals(reportStatus, "passed") &&
+            errors == 0 &&
+            packageIssueCount == 0
+            ? "complete-package-validated"
+            : "package-diagnostics-present";
+    }
+
+    private static string ResolvePackageValidationEvidenceDetail(string status) => status switch
+    {
+        "complete-package-validated" => "package-verify-report-has-no-package-diagnostics",
+        "package-diagnostics-present" => "package-verify-report-has-package-diagnostics",
+        "not-dist-scoped" => "package-verify-report-not-dist-scoped",
+        _ => status
+    };
+
+    private static bool IsDistScopedPackageOutput(string outputRoot)
+    {
+        var normalized = outputRoot.Replace('\\', '/');
+        return StringComparer.Ordinal.Equals(normalized, "dist") ||
+            normalized.StartsWith("dist/", StringComparison.Ordinal);
+    }
+
+    private static ReleasePublishGovernanceCheck GovernanceCheck(
+        string id,
+        string title,
+        string status,
+        string evidencePath,
+        string detail) =>
         new(
             id,
             title,
-            Status: "required-not-evaluated",
+            status,
             Required: true,
-            CheckedInCurrentGate: false);
+            CheckedInCurrentGate: true,
+            evidencePath,
+            detail);
+
+    private static ReleasePublishGovernanceCheck PolicyFileCheck(
+        string id,
+        string title,
+        string projectRoot,
+        string relativePath,
+        IReadOnlyList<string> requiredTerms)
+    {
+        var fullPath = Path.Combine(projectRoot, relativePath);
+        var evidencePath = relativePath.Replace('\\', '/');
+        if (!File.Exists(fullPath))
+        {
+            return GovernanceCheck(id, title, "missing-local-evidence", evidencePath, "local-policy-file-missing");
+        }
+
+        if (!TryReadText(fullPath, out var content))
+        {
+            return GovernanceCheck(id, title, "failed", evidencePath, "local-policy-file-unreadable");
+        }
+
+        var passed = requiredTerms.All(term => ContainsOrdinalIgnoreCase(content, term));
+        return GovernanceCheck(
+            id,
+            title,
+            passed ? "passed" : "failed",
+            ToDisplayPath(projectRoot, fullPath),
+            passed ? "local-policy-evidence-matched" : "local-policy-required-terms-missing");
+    }
+
+    private static ReleasePublishGovernanceCheck ToolVersionSemVerCheck()
+    {
+        var passed = IsSemVer(CliConstants.Version);
+        return GovernanceCheck(
+            "semver-version-stream",
+            "Release version follows SemVer-governed streams",
+            passed ? "passed" : "failed",
+            "tool-version",
+            passed ? $"tool-version-semver:{CliConstants.Version}" : $"tool-version-not-semver:{CliConstants.Version}");
+    }
+
+    private static ReleasePublishGovernanceCheck ReleaseWorkflowPermissionsCheck(string projectRoot)
+    {
+        var workflowRoot = Path.Combine(projectRoot, ".github", "workflows");
+        if (!Directory.Exists(workflowRoot))
+        {
+            return GovernanceCheck(
+                "least-privilege-release-permissions",
+                "Release workflow uses least-privilege permissions",
+                "missing-local-evidence",
+                ".github/workflows",
+                "workflow-directory-missing");
+        }
+
+        var workflowFiles = Directory.EnumerateFiles(workflowRoot, "*.yml")
+            .Concat(Directory.EnumerateFiles(workflowRoot, "*.yaml"))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        if (workflowFiles.Length == 0)
+        {
+            return GovernanceCheck(
+                "least-privilege-release-permissions",
+                "Release workflow uses least-privilege permissions",
+                "missing-local-evidence",
+                ".github/workflows",
+                "workflow-file-missing");
+        }
+
+        var allReadable = true;
+        var allDeclarePermissions = true;
+        var broadWritePermission = false;
+        foreach (var workflowFile in workflowFiles)
+        {
+            if (!TryReadText(workflowFile, out var content))
+            {
+                allReadable = false;
+                continue;
+            }
+
+            allDeclarePermissions &= ContainsOrdinalIgnoreCase(content, "permissions:");
+            broadWritePermission |=
+                ContainsOrdinalIgnoreCase(content, "write-all") ||
+                ContainsOrdinalIgnoreCase(content, "contents: write") ||
+                ContainsOrdinalIgnoreCase(content, "contents:write");
+        }
+
+        var passed = allReadable && allDeclarePermissions && !broadWritePermission;
+        return GovernanceCheck(
+            "least-privilege-release-permissions",
+            "Release workflow uses least-privilege permissions",
+            passed ? "passed" : "failed",
+            ToDisplayPath(projectRoot, workflowFiles[0]),
+            passed ? "workflow-permissions-are-scoped" : "workflow-permissions-not-least-privilege");
+    }
+
+    private static ReleasePublishGovernanceCheck CodeownersCheck(string projectRoot)
+    {
+        var candidatePaths = new[]
+        {
+            Path.Combine(projectRoot, ".github", "CODEOWNERS"),
+            Path.Combine(projectRoot, "CODEOWNERS")
+        };
+        var codeownersPath = candidatePaths.FirstOrDefault(File.Exists);
+        if (codeownersPath is null)
+        {
+            return GovernanceCheck(
+                "codeowner-sensitive-path-review",
+                "Sensitive release paths have required review",
+                "missing-local-evidence",
+                ".github/CODEOWNERS",
+                "codeowners-file-missing");
+        }
+
+        if (!TryReadText(codeownersPath, out var content))
+        {
+            return GovernanceCheck(
+                "codeowner-sensitive-path-review",
+                "Sensitive release paths have required review",
+                "failed",
+                ToDisplayPath(projectRoot, codeownersPath),
+                "codeowners-file-unreadable");
+        }
+
+        var meaningfulLines = content
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .Where(line => line.Length > 0 && !line.StartsWith('#'))
+            .ToArray();
+        var hasGovernanceOwner = meaningfulLines.Any(line => ContainsOrdinalIgnoreCase(line, "docs/governance"));
+        var hasWorkflowOwner = meaningfulLines.Any(line => ContainsOrdinalIgnoreCase(line, ".github"));
+        var hasSchemaOwner = meaningfulLines.Any(line => ContainsOrdinalIgnoreCase(line, "schemas"));
+        var passed = hasGovernanceOwner && hasWorkflowOwner && hasSchemaOwner;
+        return GovernanceCheck(
+            "codeowner-sensitive-path-review",
+            "Sensitive release paths have required review",
+            passed ? "passed" : "failed",
+            ToDisplayPath(projectRoot, codeownersPath),
+            passed ? "sensitive-path-codeowners-present" : "sensitive-path-codeowners-incomplete");
+    }
+
+    private static ReleasePublishGovernanceCheck AiOptionalReleasePathCheck(string projectRoot)
+    {
+        var candidatePaths = new[]
+        {
+            Path.Combine(projectRoot, "AGENTS.md"),
+            Path.Combine(projectRoot, "docs", "governance", "release-policy.md"),
+            Path.Combine(projectRoot, "docs", "governance", "dependency-policy.md")
+        };
+
+        var existingPaths = candidatePaths.Where(File.Exists).ToArray();
+        if (existingPaths.Length == 0)
+        {
+            return GovernanceCheck(
+                "ai-optional-release-path",
+                "Release correctness path does not require AI",
+                "missing-local-evidence",
+                "AGENTS.md",
+                "ai-optional-policy-evidence-missing");
+        }
+
+        foreach (var path in existingPaths)
+        {
+            if (!TryReadText(path, out var content))
+            {
+                continue;
+            }
+
+            var containsAi = ContainsOrdinalIgnoreCase(content, "AI");
+            var containsOptionalBoundary =
+                ContainsOrdinalIgnoreCase(content, "optional") ||
+                ContainsOrdinalIgnoreCase(content, "does not require AI") ||
+                ContainsOrdinalIgnoreCase(content, "do not require AI") ||
+                ContainsOrdinalIgnoreCase(content, "without API keys");
+            if (containsAi && containsOptionalBoundary)
+            {
+                return GovernanceCheck(
+                    "ai-optional-release-path",
+                    "Release correctness path does not require AI",
+                    "passed",
+                    ToDisplayPath(projectRoot, path),
+                    "ai-optional-policy-evidence-matched");
+            }
+        }
+
+        return GovernanceCheck(
+            "ai-optional-release-path",
+            "Release correctness path does not require AI",
+            "failed",
+            ToDisplayPath(projectRoot, existingPaths[0]),
+            "ai-optional-policy-evidence-incomplete");
+    }
 
     private static IReadOnlyList<ReleasePublishEvidenceArtifact> CreateLocalEvidenceArtifacts(string projectRoot, string releasePrepareEvidenceRoot) =>
     [
@@ -2281,6 +3043,69 @@ internal static class ReleasePublishPreflightPlanner
             : artifactStatus;
     }
 
+    private static string GovernanceRequirementStatus(IReadOnlyList<ReleasePublishGovernanceCheck> governanceChecks)
+    {
+        if (governanceChecks.Any(check => StringComparer.Ordinal.Equals(check.Status, "failed")))
+        {
+            return "failed-governance-evaluated";
+        }
+
+        return governanceChecks.Any(check => StringComparer.Ordinal.Equals(check.Status, "missing-local-evidence"))
+            ? "incomplete-governance-evaluated"
+            : "complete-governance-evaluated";
+    }
+
+    private static bool TryReadText(string path, out string content)
+    {
+        try
+        {
+            content = File.ReadAllText(path);
+            return true;
+        }
+        catch (IOException)
+        {
+            content = string.Empty;
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            content = string.Empty;
+            return false;
+        }
+    }
+
+    private static bool ContainsOrdinalIgnoreCase(string value, string expected) =>
+        value.IndexOf(expected, StringComparison.OrdinalIgnoreCase) >= 0;
+
+    private static bool IsSemVer(string version)
+    {
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            return false;
+        }
+
+        var coreVersion = version;
+        var metadataIndex = coreVersion.IndexOf('+');
+        if (metadataIndex >= 0)
+        {
+            coreVersion = coreVersion[..metadataIndex];
+        }
+
+        var prereleaseIndex = coreVersion.IndexOf('-');
+        if (prereleaseIndex >= 0)
+        {
+            coreVersion = coreVersion[..prereleaseIndex];
+        }
+
+        var parts = coreVersion.Split('.');
+        return parts.Length == 3 && parts.All(IsSemVerNumber);
+    }
+
+    private static bool IsSemVerNumber(string value) =>
+        value.Length > 0 &&
+        (value.Length == 1 || value[0] != '0') &&
+        value.All(char.IsDigit);
+
     private static string ComputeSha256(string path)
     {
         using var stream = File.OpenRead(path);
@@ -2380,6 +3205,13 @@ internal static class ReleasePublishPreflightJsonSerializer
                 ["semanticEvidencePassedChecks"] = result.SemanticEvidenceValidation.PassedChecks,
                 ["semanticEvidenceFailedChecks"] = result.SemanticEvidenceValidation.FailedChecks,
                 ["semanticEvidenceSkippedChecks"] = result.SemanticEvidenceValidation.SkippedChecks,
+                ["schemaValidationEvidenceStatus"] = result.SchemaValidationEvidence.Status,
+                ["capabilityEnvironmentEvidenceStatus"] = result.CapabilityEnvironmentEvidence.Status,
+                ["capabilityEnvironmentRequiredUnavailable"] = result.CapabilityEnvironmentEvidence.RequiredUnavailable,
+                ["capabilityEnvironmentCapabilityDiagnostics"] = result.CapabilityEnvironmentEvidence.CapabilityDiagnostics,
+                ["packageValidationEvidenceStatus"] = result.PackageValidationEvidence.Status,
+                ["packageValidationEvidenceErrors"] = result.PackageValidationEvidence.Errors,
+                ["packageValidationEvidencePackageDiagnostics"] = result.PackageValidationEvidence.PackageIssueCount,
                 ["artifactPathChecksInCurrentGate"] = true,
                 ["artifactReadsInCurrentGate"] = result.LocalEvidenceArtifacts.Any(artifact => artifact.ContentReadInCurrentGate),
                 ["contentShapeClassificationInCurrentGate"] = true,
@@ -2396,6 +3228,9 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["buildManifestCrossReference"] = ToBuildManifestCrossReference(result.BuildManifestCrossReference),
             ["archiveEvidenceCrossReference"] = ToArchiveEvidenceCrossReference(result.ArchiveEvidenceCrossReference),
             ["semanticEvidenceValidation"] = ToSemanticEvidenceValidation(result.SemanticEvidenceValidation),
+            ["schemaValidationEvidence"] = ToSchemaValidationEvidence(result.SchemaValidationEvidence),
+            ["capabilityEnvironmentEvidence"] = ToCapabilityEnvironmentEvidence(result.CapabilityEnvironmentEvidence),
+            ["packageValidationEvidence"] = ToPackageValidationEvidence(result.PackageValidationEvidence),
             ["requiredEvidence"] = ToEvidenceArray(result.RequiredEvidence),
             ["localEvidenceArtifacts"] = ToArtifactArray(result.LocalEvidenceArtifacts),
             ["governanceChecks"] = ToGovernanceCheckArray(result.GovernanceChecks),
@@ -2411,7 +3246,7 @@ internal static class ReleasePublishPreflightJsonSerializer
                 ["status"] = result.Status,
                 ["canonicalFormat"] = "json",
                 ["mutatesFilesystemInCurrentGate"] = false,
-                ["summary"] = "Release publish reports governance preflight requirements and refuses publish until remaining governance checks and explicit human approval are implemented."
+                ["summary"] = "Release publish evaluates local schema, capability/environment, package, and governance preflight evidence and refuses publish until remaining release evidence and explicit human approval are implemented."
             },
             ["execution"] = ToExecution(result),
             ["boundaries"] = ToStringArray(result.Boundaries)
@@ -2708,6 +3543,73 @@ internal static class ReleasePublishPreflightJsonSerializer
         return array;
     }
 
+    private static JsonObject ToSchemaValidationEvidence(ReleasePublishSchemaValidationEvidence evidence) =>
+        new()
+        {
+            ["path"] = evidence.Path,
+            ["exists"] = evidence.Exists,
+            ["status"] = evidence.Status,
+            ["checkedInCurrentGate"] = evidence.CheckedInCurrentGate,
+            ["contentReadInCurrentGate"] = evidence.ContentReadInCurrentGate,
+            ["errors"] = evidence.Errors,
+            ["warnings"] = evidence.Warnings,
+            ["notes"] = evidence.Notes,
+            ["issues"] = evidence.IssueCount,
+            ["schemaIssues"] = evidence.SchemaIssueCount,
+            ["detail"] = evidence.Detail
+        };
+
+    private static JsonObject ToCapabilityEnvironmentEvidence(ReleasePublishCapabilityEnvironmentEvidence evidence) =>
+        new()
+        {
+            ["path"] = evidence.Path,
+            ["exists"] = evidence.Exists,
+            ["status"] = evidence.Status,
+            ["checkedInCurrentGate"] = evidence.CheckedInCurrentGate,
+            ["contentReadInCurrentGate"] = evidence.ContentReadInCurrentGate,
+            ["projectScoped"] = evidence.ProjectScoped,
+            ["runtimeProbesEnabled"] = evidence.RuntimeProbesEnabled,
+            ["mo2VfsEnabled"] = evidence.Mo2VfsEnabled,
+            ["providers"] = evidence.Providers,
+            ["capabilities"] = evidence.Capabilities,
+            ["missingProviders"] = evidence.MissingProviders,
+            ["unknownProviders"] = evidence.UnknownProviders,
+            ["wrongScopeProviders"] = evidence.WrongScopeProviders,
+            ["missingCapabilities"] = evidence.MissingCapabilities,
+            ["unknownCapabilities"] = evidence.UnknownCapabilities,
+            ["wrongScopeCapabilities"] = evidence.WrongScopeCapabilities,
+            ["requirements"] = evidence.Requirements,
+            ["requiredUnavailable"] = evidence.RequiredUnavailable,
+            ["optionalUnavailable"] = evidence.OptionalUnavailable,
+            ["diagnostics"] = evidence.Diagnostics,
+            ["capabilityDiagnostics"] = evidence.CapabilityDiagnostics,
+            ["doctorAreas"] = evidence.DoctorAreas,
+            ["doctorActionNeededAreas"] = evidence.DoctorActionNeededAreas,
+            ["doctorUnknownAreas"] = evidence.DoctorUnknownAreas,
+            ["detail"] = evidence.Detail
+        };
+
+    private static JsonObject ToPackageValidationEvidence(ReleasePublishPackageValidationEvidence evidence) =>
+        new()
+        {
+            ["path"] = evidence.Path,
+            ["exists"] = evidence.Exists,
+            ["status"] = evidence.Status,
+            ["checkedInCurrentGate"] = evidence.CheckedInCurrentGate,
+            ["contentReadInCurrentGate"] = evidence.ContentReadInCurrentGate,
+            ["target"] = evidence.Target,
+            ["mode"] = evidence.Mode,
+            ["outputRoot"] = evidence.OutputRoot,
+            ["distScoped"] = evidence.DistScoped,
+            ["packageArchivePresent"] = evidence.PackageArchivePresent,
+            ["errors"] = evidence.Errors,
+            ["warnings"] = evidence.Warnings,
+            ["notes"] = evidence.Notes,
+            ["issues"] = evidence.IssueCount,
+            ["packageIssues"] = evidence.PackageIssueCount,
+            ["detail"] = evidence.Detail
+        };
+
     private static JsonArray ToArtifactArray(IReadOnlyList<ReleasePublishEvidenceArtifact> artifacts)
     {
         var array = new JsonArray();
@@ -2762,7 +3664,9 @@ internal static class ReleasePublishPreflightJsonSerializer
                 ["title"] = check.Title,
                 ["status"] = check.Status,
                 ["required"] = check.Required,
-                ["checkedInCurrentGate"] = check.CheckedInCurrentGate
+                ["checkedInCurrentGate"] = check.CheckedInCurrentGate,
+                ["evidencePath"] = check.EvidencePath,
+                ["detail"] = check.Detail
             });
         }
 
@@ -2789,7 +3693,10 @@ internal static class ReleasePublishPreflightJsonSerializer
             ["archiveEvidenceDigestRevalidation"] = result.ArchiveEvidenceCrossReference.DigestRevalidationInCurrentGate,
             ["semanticEvidenceValidation"] = result.SemanticEvidenceValidation.ValidationInCurrentGate,
             ["archiveRevalidation"] = result.ArchiveEvidenceCrossReference.ArchiveRevalidationInCurrentGate,
-            ["governanceCheckExecution"] = false,
+            ["schemaValidationEvidenceEvaluation"] = result.SchemaValidationEvidence.CheckedInCurrentGate,
+            ["capabilityEnvironmentEvidenceEvaluation"] = result.CapabilityEnvironmentEvidence.CheckedInCurrentGate,
+            ["packageValidationEvidenceEvaluation"] = result.PackageValidationEvidence.CheckedInCurrentGate,
+            ["governanceCheckExecution"] = true,
             ["humanApprovalProvided"] = result.Approval.Provided,
             ["filesystemMutation"] = false,
             ["outputWrites"] = false,
@@ -3121,6 +4028,106 @@ internal static class ReleasePublishPreflightTextRenderer
         }
 
         builder.AppendLine();
+        builder.AppendLine("Schema validation evidence");
+        builder.Append("  path: ");
+        builder.AppendLine(result.SchemaValidationEvidence.Path);
+        builder.Append("  exists: ");
+        builder.AppendLine(result.SchemaValidationEvidence.Exists.ToString().ToLowerInvariant());
+        builder.Append("  status: ");
+        builder.AppendLine(result.SchemaValidationEvidence.Status);
+        builder.Append("  checked in current gate: ");
+        builder.AppendLine(result.SchemaValidationEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  content read in current gate: ");
+        builder.AppendLine(result.SchemaValidationEvidence.ContentReadInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  summary: ");
+        builder.Append(result.SchemaValidationEvidence.Errors);
+        builder.Append(" errors, ");
+        builder.Append(result.SchemaValidationEvidence.Warnings);
+        builder.Append(" warnings, ");
+        builder.Append(result.SchemaValidationEvidence.Notes);
+        builder.Append(" notes, ");
+        builder.Append(result.SchemaValidationEvidence.SchemaIssueCount);
+        builder.Append(" schema issues");
+        builder.AppendLine();
+        builder.Append("  detail: ");
+        builder.AppendLine(result.SchemaValidationEvidence.Detail);
+
+        builder.AppendLine();
+        builder.AppendLine("Capability/environment evidence");
+        builder.Append("  path: ");
+        builder.AppendLine(result.CapabilityEnvironmentEvidence.Path);
+        builder.Append("  exists: ");
+        builder.AppendLine(result.CapabilityEnvironmentEvidence.Exists.ToString().ToLowerInvariant());
+        builder.Append("  status: ");
+        builder.AppendLine(result.CapabilityEnvironmentEvidence.Status);
+        builder.Append("  checked in current gate: ");
+        builder.AppendLine(result.CapabilityEnvironmentEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  content read in current gate: ");
+        builder.AppendLine(result.CapabilityEnvironmentEvidence.ContentReadInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  project scoped: ");
+        builder.AppendLine(result.CapabilityEnvironmentEvidence.ProjectScoped.ToString().ToLowerInvariant());
+        builder.Append("  runtime probes enabled: ");
+        builder.AppendLine(result.CapabilityEnvironmentEvidence.RuntimeProbesEnabled.ToString().ToLowerInvariant());
+        builder.Append("  MO2 VFS enabled: ");
+        builder.AppendLine(result.CapabilityEnvironmentEvidence.Mo2VfsEnabled.ToString().ToLowerInvariant());
+        builder.Append("  summary: ");
+        builder.Append(result.CapabilityEnvironmentEvidence.Providers);
+        builder.Append(" providers, ");
+        builder.Append(result.CapabilityEnvironmentEvidence.Capabilities);
+        builder.Append(" capabilities, ");
+        builder.Append(result.CapabilityEnvironmentEvidence.Requirements);
+        builder.Append(" requirements, ");
+        builder.Append(result.CapabilityEnvironmentEvidence.RequiredUnavailable);
+        builder.Append(" required unavailable, ");
+        builder.Append(result.CapabilityEnvironmentEvidence.CapabilityDiagnostics);
+        builder.Append(" capability diagnostics");
+        builder.AppendLine();
+        builder.Append("  doctor: ");
+        builder.Append(result.CapabilityEnvironmentEvidence.DoctorAreas);
+        builder.Append(" areas, ");
+        builder.Append(result.CapabilityEnvironmentEvidence.DoctorActionNeededAreas);
+        builder.Append(" action-needed, ");
+        builder.Append(result.CapabilityEnvironmentEvidence.DoctorUnknownAreas);
+        builder.AppendLine(" unknown");
+        builder.Append("  detail: ");
+        builder.AppendLine(result.CapabilityEnvironmentEvidence.Detail);
+
+        builder.AppendLine();
+        builder.AppendLine("Package validation evidence");
+        builder.Append("  path: ");
+        builder.AppendLine(result.PackageValidationEvidence.Path);
+        builder.Append("  exists: ");
+        builder.AppendLine(result.PackageValidationEvidence.Exists.ToString().ToLowerInvariant());
+        builder.Append("  status: ");
+        builder.AppendLine(result.PackageValidationEvidence.Status);
+        builder.Append("  checked in current gate: ");
+        builder.AppendLine(result.PackageValidationEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  content read in current gate: ");
+        builder.AppendLine(result.PackageValidationEvidence.ContentReadInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  target: ");
+        builder.AppendLine(result.PackageValidationEvidence.Target ?? "missing");
+        builder.Append("  mode: ");
+        builder.AppendLine(result.PackageValidationEvidence.Mode ?? "missing");
+        builder.Append("  output root: ");
+        builder.AppendLine(result.PackageValidationEvidence.OutputRoot ?? "missing");
+        builder.Append("  dist scoped: ");
+        builder.AppendLine(result.PackageValidationEvidence.DistScoped.ToString().ToLowerInvariant());
+        builder.Append("  package archive present: ");
+        builder.AppendLine(result.PackageValidationEvidence.PackageArchivePresent.ToString().ToLowerInvariant());
+        builder.Append("  summary: ");
+        builder.Append(result.PackageValidationEvidence.Errors);
+        builder.Append(" errors, ");
+        builder.Append(result.PackageValidationEvidence.Warnings);
+        builder.Append(" warnings, ");
+        builder.Append(result.PackageValidationEvidence.Notes);
+        builder.Append(" notes, ");
+        builder.Append(result.PackageValidationEvidence.PackageIssueCount);
+        builder.Append(" package diagnostics");
+        builder.AppendLine();
+        builder.Append("  detail: ");
+        builder.AppendLine(result.PackageValidationEvidence.Detail);
+
+        builder.AppendLine();
         builder.AppendLine("Governance checks");
         foreach (var check in result.GovernanceChecks)
         {
@@ -3130,6 +4137,10 @@ internal static class ReleasePublishPreflightTextRenderer
             builder.Append(check.Title);
             builder.Append(" (");
             builder.Append(check.Status);
+            builder.Append("; ");
+            builder.Append(check.EvidencePath);
+            builder.Append("; ");
+            builder.Append(check.Detail);
             builder.AppendLine(")");
         }
 
@@ -3164,7 +4175,13 @@ internal static class ReleasePublishPreflightTextRenderer
         builder.AppendLine(result.SemanticEvidenceValidation.ValidationInCurrentGate.ToString().ToLowerInvariant());
         builder.Append("  archive revalidation: ");
         builder.AppendLine(result.ArchiveEvidenceCrossReference.ArchiveRevalidationInCurrentGate.ToString().ToLowerInvariant());
-        builder.AppendLine("  governance check execution: false");
+        builder.Append("  schema validation evidence evaluation: ");
+        builder.AppendLine(result.SchemaValidationEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  capability/environment evidence evaluation: ");
+        builder.AppendLine(result.CapabilityEnvironmentEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.Append("  package validation evidence evaluation: ");
+        builder.AppendLine(result.PackageValidationEvidence.CheckedInCurrentGate.ToString().ToLowerInvariant());
+        builder.AppendLine("  governance check execution: true");
         builder.AppendLine("  filesystem mutation: false");
         builder.AppendLine("  output writes: false");
         builder.AppendLine("  remote repository calls: false");

@@ -888,23 +888,25 @@ skeleton metadata, signing or attestation material, external tools, MO2/GECK
 automation, runtime probes, real third-party plugin fixtures, and AI-assisted
 release drafting.
 
-`release publish` runs a Gate 275 no-publish governance preflight with local
-release-prepare evidence shape classification, checksum sidecar entry
-coverage, build-manifest output cross-reference, and
-release-archive-evidence metadata cross-reference. Normal execution refuses
-publish with exit code 6 until evidence validation and explicit human approval
-exist. `--dry-run` reports the same preflight with exit code 0. The preflight
-reports required local evidence, per-artifact present/missing status,
-well-formed/malformed JSON and checksum shape status, parsed checksum entries,
-expected-path coverage, build-manifest output cross-reference,
-release-archive-evidence output metadata cross-reference, governance checks,
-explicit human-approval requirements, and false execution flags for checksum
-digest revalidation, build-manifest digest revalidation,
-release-archive-evidence digest revalidation, semantic evidence validation,
-archive revalidation, release publishing, remote repository calls, release
-uploads, attestation/signing, external tools, plugin mutation, MO2/GECK
-automation, runtime probes, and AI. It does not semantically accept release
-artifact contents or write publish outputs.
+`release publish` runs a Gate 284 no-publish governance preflight with local
+release-prepare evidence shape classification, checksum sidecar digest
+revalidation, build-manifest digest revalidation, release-archive-evidence
+metadata and archive revalidation, semantic release-evidence validation,
+local governance-check evaluation, schema-validation evidence evaluation from
+`dist/release-dry-run/validation.json`, capability/environment evidence
+evaluation from `dist/release-dry-run/capabilities-scan.json`, and
+package-validation evidence evaluation from
+`dist/release-dry-run/package-verify.json`. Normal execution refuses publish
+with exit code 6 until evidence validation and explicit human approval exist.
+`--dry-run` reports the same preflight with exit code 0. The preflight reports
+required local evidence, release-prepare artifact status, checksum/build
+manifest/archive evidence status, governance check evidence path/detail/status,
+schema-validation evidence path/detail/status, capability/environment evidence
+path/detail/status, package-validation evidence path/detail/status, explicit human-approval
+requirements, and false execution flags for release publishing, remote
+repository calls, release uploads, attestation/signing, external tools, plugin
+mutation, MO2/GECK automation, runtime probes, and AI. It does not accept
+archive payload contents or write publish outputs.
 
 ## Docs Evidence
 

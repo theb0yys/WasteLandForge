@@ -1627,7 +1627,21 @@ reopening/revalidation for entry names, entry order, deterministic timestamps,
 and stored compression metadata only. Gate 280 adds semantic release-evidence
 validation for local evidence kind/status contracts, output path maps,
 release-summary counters, archive-plan inputs, archive-evidence checks,
-build-manifest output sets, and no-publish execution boundaries. Normal
+build-manifest output sets, and no-publish execution boundaries. Gate 281
+adds local governance-check evaluation for immutable schema policy,
+SemVer tool versioning, least-privilege workflow permissions, CODEOWNERS
+coverage, redistributable fixture policy, and AI-optional release correctness.
+Gate 282 adds schema-validation evidence evaluation from
+`dist/release-dry-run/validation.json`, checking diagnostic report identity,
+summary shape, issue shape, and `WF-SCHEMA-*` issue count.
+Gate 283 adds capability/environment evidence evaluation from
+`dist/release-dry-run/capabilities-scan.json`, checking capabilities scan
+report identity, project-scoped requirement summary, local-only scan flags,
+Doctor summary shape, and `WF-CAP-*` issue count. Gate 284 adds
+package-validation evidence evaluation from
+`dist/release-dry-run/package-verify.json`, checking package verify-existing
+report identity, `dist/` output scope, summary/output shape, and `WF-BUILD-*`
+issue count. Normal
 execution refuses publish with
 exit code 6, `--dry-run` reports the preflight with exit code 0, and JSON/text output lists required
 local evidence, per-artifact present/missing status,
@@ -1635,7 +1649,9 @@ well-formed/malformed/unclassified shape status, checksum sidecar coverage and
 digest status, build-manifest cross-reference and digest status,
 release-archive-evidence cross-reference, archive digest metadata status, and
 archive entry metadata status, semantic release-evidence status, governance
-checks, missing human approval, and false
+check evidence path/detail/status, schema-validation evidence
+path/detail/status, capability/environment evidence path/detail/status,
+package-validation evidence path/detail/status, missing human approval, and false
 publish/remote/upload/signing/tool/runtime/AI execution flags.
 Release-prepare backlog items such as real payload staging, FOMOD installer
 assembly, archive payload validation, signing/attestation material, external

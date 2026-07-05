@@ -1,6 +1,6 @@
 # Project Source Graph Output
 
-Status: Gate 275 release publish release-archive-evidence metadata cross-reference
+Status: Gate 283 release publish capability/environment evidence boundary
 Research classification: Documented
 Source: R004, R006, ADR-007, ADR-009, ADR-010, ADR-011
 
@@ -238,3 +238,24 @@ Gate 280 adds release-publish semantic release-evidence validation, but
 validate archive payload contents, assemble FOMOD payloads, publish releases,
 call remote repositories, upload assets, sign or attest artifacts, call
 external tools, run runtime probes, or use AI.
+
+Gate 281 adds release-publish governance-check evaluation, but `forge graph`
+still does not execute release prepare, execute release publish, evaluate
+release governance checks, validate archive payload contents, assemble FOMOD
+payloads, publish releases, call remote repositories, upload assets, sign or
+attest artifacts, call external tools, run runtime probes, or use AI.
+
+Gate 282 adds release-publish schema-validation evidence evaluation, but
+`forge graph` still does not execute release prepare, execute release publish,
+evaluate release schema-validation evidence, evaluate release governance
+checks, validate archive payload contents, assemble FOMOD payloads, publish
+releases, call remote repositories, upload assets, sign or attest artifacts,
+call external tools, run runtime probes, or use AI.
+
+Gate 283 adds release-publish capability/environment evidence evaluation, but
+`forge graph` still does not execute release prepare, execute release publish,
+evaluate release capability/environment evidence, evaluate release
+schema-validation evidence, evaluate release governance checks, validate
+archive payload contents, assemble FOMOD payloads, publish releases, call
+remote repositories, upload assets, sign or attest artifacts, call external
+tools, automate MO2 or GECK, run runtime probes, or use AI.

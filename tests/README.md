@@ -1436,6 +1436,41 @@ lower checksum, build-manifest, and archive checks remain complete, and
 archive payload validation, publish, remote, upload, signing, external-tool,
 runtime-probe, and AI execution remain disabled.
 
+Gate 281 extends golden CLI coverage for `forge release publish`
+governance-check evaluation. Tests verify missing local governance policy
+evidence reports `incomplete-governance-evaluated`, synthetic temp policy
+files can satisfy all six governance checks, each check reports evidence
+path/detail/status, governance execution is true, and publish, remote, upload,
+signing, external-tool, runtime-probe, and AI behavior remain disabled.
+
+Gate 282 extends golden CLI coverage for `forge release publish`
+schema-validation evidence evaluation. Tests verify missing validation reports
+remain `missing`, clean temp-only `dist/release-dry-run/validation.json`
+reports `complete-schema-validated`, `WF-SCHEMA-*` issues report
+`schema-diagnostics-present`, schema evidence execution is true, and publish,
+remote, upload, signing, external-tool, runtime-probe, and AI behavior remain
+disabled.
+
+Gate 283 extends golden CLI coverage for `forge release publish`
+capability/environment evidence evaluation. Tests verify missing capability
+scan reports remain `missing`, clean synthetic project-scoped
+`dist/release-dry-run/capabilities-scan.json` reports
+`complete-capability-environment-validated`, `WF-CAP-*` issues and
+required-unavailable requirements report `capability-diagnostics-present`,
+capability/environment evidence execution is true, and publish, remote,
+upload, signing, external-tool, runtime-probe, MO2 automation, and AI behavior
+remain disabled.
+
+Gate 284 extends golden CLI coverage for `forge release publish`
+package-validation evidence evaluation. Tests verify missing package verifier
+reports remain `missing`, clean temp-only
+`dist/release-dry-run/package-verify.json` reports
+`complete-package-validated`, saved `forge package --target mcm-json
+--verify-existing --format json` reports with `WF-BUILD-*` issues report
+`package-diagnostics-present`, package-validation evidence execution is true,
+and publish, remote, upload, signing, external-tool, runtime-probe, MO2
+automation, and AI behavior remain disabled.
+
 Run the full local suite serially:
 
 ```text

@@ -2,7 +2,7 @@
 
 WastelandForge is a research-bound developer platform for Fallout: New Vegas content workflows.
 
-The project is currently in gated v0.1 implementation. Gate 280 extends the
+The project is currently in gated v0.1 implementation. Gate 284 extends the
 guarded `forge release publish` lane after Gate 269 closes the current
 `forge release prepare` lane. The release-prepare lane includes the Gate 260
 planning skeleton, Gate 261 release-plan emission, Gate 262 release-summary
@@ -43,6 +43,21 @@ deterministic timestamps, and stored compression metadata only. It now
 validates local release evidence semantics for kind/status contracts, output
 path maps, release-summary counters, archive-plan inputs, archive-evidence
 checks, build-manifest output sets, and no-publish execution boundaries.
+It now evaluates local governance evidence for immutable schema policy,
+SemVer tool versioning, least-privilege workflow permissions, CODEOWNERS
+coverage for sensitive paths, redistributable fixture policy, and AI-optional
+release correctness.
+It now evaluates local schema-validation evidence from
+`dist/release-dry-run/validation.json`, accepting the evidence only when the
+report is a Forge `validate` JSON report with no `WF-SCHEMA-*` diagnostics.
+It also evaluates local capability/environment evidence from
+`dist/release-dry-run/capabilities-scan.json`, accepting the evidence only
+when the report is a project-scoped Forge `capabilities scan` JSON report with
+no required-unavailable capability requirements and no `WF-CAP-*` diagnostics.
+It also evaluates local package-validation evidence from
+`dist/release-dry-run/package-verify.json`, accepting the evidence only when
+the report is a Forge `package --target mcm-json --verify-existing` JSON report
+under `dist/` with no `WF-BUILD-*` package diagnostics.
 Normal execution refuses publish
 with exit code 6; `--dry-run` reports the same preflight with exit code 0.
 The preflight lists required local evidence, governance checks, explicit human
@@ -50,8 +65,11 @@ approval, per-artifact present/missing status, well-formed/malformed shape
 status, checksum sidecar entry coverage, and build-manifest output
 cross-reference and digest status, and release-archive-evidence metadata
 cross-reference, archive digest metadata status, archive entry metadata
-status, and semantic release-evidence status for local release-prepare
-evidence. It does not validate archive payload contents, publish releases, call
+status, semantic release-evidence status for local release-prepare evidence,
+per-governance-check evidence path/detail/status, and schema-validation
+evidence path/detail/status plus capability/environment evidence
+path/detail/status plus package-validation evidence path/detail/status. It does not validate
+archive payload contents, publish releases, call
 remote repositories, upload assets, sign/attest artifacts, execute external
 tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.
 Gate 258 added active build/cache lock safety for `forge clean` beside the
@@ -1031,6 +1049,20 @@ Gate 280 adds semantic release-evidence validation for local evidence
 kind/status contracts, output path maps, release-summary counters,
 archive-plan inputs, archive-evidence checks, build-manifest output sets, and
 no-publish execution boundaries.
+Gate 281 adds local governance-check evaluation for immutable schema policy,
+SemVer tool versioning, least-privilege workflow permissions, CODEOWNERS
+coverage, redistributable fixture policy, and AI-optional release correctness.
+Gate 282 adds schema-validation evidence evaluation from
+`dist/release-dry-run/validation.json`, checking diagnostic report identity,
+summary shape, issue shape, and `WF-SCHEMA-*` issue count.
+Gate 283 adds capability/environment evidence evaluation from
+`dist/release-dry-run/capabilities-scan.json`, checking capabilities scan
+report identity, project-scoped requirement summary, local-only scan flags,
+Doctor summary shape, and `WF-CAP-*` issue count.
+Gate 284 adds package-validation evidence evaluation from
+`dist/release-dry-run/package-verify.json`, checking package verify-existing
+report identity, `dist/` output scope, summary/output shape, and `WF-BUILD-*`
+issue count.
 Normal execution refuses publish until local evidence
 validation, governance checks, and explicit human approval exist; `--dry-run` reports the same
 preflight with exit code 0. It reports required evidence, governance checks,
@@ -1038,7 +1070,9 @@ approval requirements, per-artifact present/missing status, shape status,
 checksum sidecar coverage and digest status, build-manifest cross-reference
 and digest status, release-archive-evidence cross-reference and archive
 digest metadata status, archive entry metadata status, semantic
-release-evidence status, and false
+release-evidence status, governance evidence path/detail/status,
+schema-validation evidence path/detail/status, capability/environment
+evidence path/detail/status, and false
 publish/remote/upload/signing/tool/runtime/AI execution flags. It does not
 validate archive payload contents or write publish outputs.
 

@@ -7015,6 +7015,9 @@ public sealed class CliGoldenTests
         var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
         var localEvidenceArtifacts = json["localEvidenceArtifacts"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include local evidence artifacts.");
         var governanceChecks = json["governanceChecks"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include governance checks.");
+        var schemaValidationEvidence = json["schemaValidationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include schema validation evidence.");
+        var capabilityEnvironmentEvidence = json["capabilityEnvironmentEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include capability/environment evidence.");
+        var packageValidationEvidence = json["packageValidationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include package validation evidence.");
         var execution = json["execution"] ?? throw new InvalidOperationException("Release publish JSON did not include execution flags.");
 
         Assert.Equal(6, result.ExitCode);
@@ -7088,8 +7091,37 @@ public sealed class CliGoldenTests
         Assert.Empty(json["archiveEvidenceCrossReference"]?["paths"]?.AsArray() ?? throw new InvalidOperationException("Archive evidence paths missing."));
         Assert.Equal(9, requiredEvidence.Count);
         Assert.Equal("schema-validation", (string?)requiredEvidence[0]?["id"]);
-        Assert.Equal("required-not-evaluated", (string?)requiredEvidence[0]?["status"]);
-        Assert.Equal(false, (bool?)requiredEvidence[0]?["checkedInCurrentGate"]);
+        Assert.Equal("missing", (string?)requiredEvidence[0]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[0]?["checkedInCurrentGate"]);
+        Assert.Equal("dist/release-dry-run/validation.json", (string?)schemaValidationEvidence["path"]);
+        Assert.Equal(false, (bool?)schemaValidationEvidence["exists"]);
+        Assert.Equal("missing", (string?)schemaValidationEvidence["status"]);
+        Assert.Equal(true, (bool?)schemaValidationEvidence["checkedInCurrentGate"]);
+        Assert.Equal(false, (bool?)schemaValidationEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(0, (int?)schemaValidationEvidence["schemaIssues"]);
+        Assert.Equal("validation-report-missing", (string?)schemaValidationEvidence["detail"]);
+        Assert.Equal("capability-environment-validation", (string?)requiredEvidence[2]?["id"]);
+        Assert.Equal("missing", (string?)requiredEvidence[2]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[2]?["checkedInCurrentGate"]);
+        Assert.Equal("dist/release-dry-run/capabilities-scan.json", (string?)capabilityEnvironmentEvidence["path"]);
+        Assert.Equal(false, (bool?)capabilityEnvironmentEvidence["exists"]);
+        Assert.Equal("missing", (string?)capabilityEnvironmentEvidence["status"]);
+        Assert.Equal(true, (bool?)capabilityEnvironmentEvidence["checkedInCurrentGate"]);
+        Assert.Equal(false, (bool?)capabilityEnvironmentEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(false, (bool?)capabilityEnvironmentEvidence["projectScoped"]);
+        Assert.Equal(0, (int?)capabilityEnvironmentEvidence["capabilityDiagnostics"]);
+        Assert.Equal("capability-scan-report-missing", (string?)capabilityEnvironmentEvidence["detail"]);
+        Assert.Equal("package-validation", (string?)requiredEvidence[3]?["id"]);
+        Assert.Equal("missing", (string?)requiredEvidence[3]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[3]?["checkedInCurrentGate"]);
+        Assert.Equal("dist/release-dry-run/package-verify.json", (string?)packageValidationEvidence["path"]);
+        Assert.Equal(false, (bool?)packageValidationEvidence["exists"]);
+        Assert.Equal("missing", (string?)packageValidationEvidence["status"]);
+        Assert.Equal(true, (bool?)packageValidationEvidence["checkedInCurrentGate"]);
+        Assert.Equal(false, (bool?)packageValidationEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(false, (bool?)packageValidationEvidence["distScoped"]);
+        Assert.Equal(0, (int?)packageValidationEvidence["packageIssues"]);
+        Assert.Equal("package-verify-report-missing", (string?)packageValidationEvidence["detail"]);
         Assert.Equal("release-prepare-build-manifest", (string?)requiredEvidence[5]?["id"]);
         Assert.Equal("missing", (string?)requiredEvidence[5]?["status"]);
         Assert.Equal(true, (bool?)requiredEvidence[5]?["checkedInCurrentGate"]);
@@ -7098,6 +7130,8 @@ public sealed class CliGoldenTests
         Assert.Equal("release-prepare-archive-evidence", (string?)requiredEvidence[7]?["id"]);
         Assert.Equal("missing", (string?)requiredEvidence[7]?["status"]);
         Assert.Equal("governance-checks", (string?)requiredEvidence[8]?["id"]);
+        Assert.Equal("incomplete-governance-evaluated", (string?)requiredEvidence[8]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[8]?["checkedInCurrentGate"]);
         Assert.Equal(8, localEvidenceArtifacts.Count);
         Assert.Equal("release-prepare-staging-payload", (string?)localEvidenceArtifacts[0]?["id"]);
         Assert.Equal("dist/release-prepare/staging/release-payload.json", (string?)localEvidenceArtifacts[0]?["path"]);
@@ -7112,11 +7146,20 @@ public sealed class CliGoldenTests
         Assert.Equal(false, (bool?)localEvidenceArtifacts[7]?["exists"]);
         Assert.Equal(6, governanceChecks.Count);
         Assert.Equal("immutable-schema-policy", (string?)governanceChecks[0]?["id"]);
+        Assert.Equal("missing-local-evidence", (string?)governanceChecks[0]?["status"]);
+        Assert.Equal(true, (bool?)governanceChecks[0]?["checkedInCurrentGate"]);
+        Assert.Equal("docs/governance/schema-version-policy.md", (string?)governanceChecks[0]?["evidencePath"]);
+        Assert.Equal("local-policy-file-missing", (string?)governanceChecks[0]?["detail"]);
+        Assert.Equal("semver-version-stream", (string?)governanceChecks[1]?["id"]);
+        Assert.Equal("passed", (string?)governanceChecks[1]?["status"]);
+        Assert.Equal("tool-version", (string?)governanceChecks[1]?["evidencePath"]);
         Assert.Equal("ai-optional-release-path", (string?)governanceChecks[5]?["id"]);
+        Assert.Equal("missing-local-evidence", (string?)governanceChecks[5]?["status"]);
+        Assert.Equal("AGENTS.md", (string?)governanceChecks[5]?["evidencePath"]);
         Assert.Equal(true, (bool?)json["approval"]?["required"]);
         Assert.Equal(false, (bool?)json["approval"]?["provided"]);
         Assert.Equal("missing", (string?)json["approval"]?["status"]);
-        Assert.Equal("Release publish requires validated local governance preflight evidence and explicit human approval; Gate 280 does not publish releases.", (string?)json["refusalReason"]);
+        Assert.Equal("Release publish requires fully validated local schema, capability/environment, package, and governance preflight evidence and explicit human approval; Gate 284 does not publish releases.", (string?)json["refusalReason"]);
         Assert.Equal(false, (bool?)json["reportContract"]?["mutatesFilesystemInCurrentGate"]);
         Assert.Equal(true, (bool?)execution["releasePublishPreflightPlanning"]);
         Assert.Equal(false, (bool?)execution["releasePublishExecution"]);
@@ -7134,7 +7177,10 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)execution["archiveEvidenceDigestRevalidation"]);
         Assert.Equal(true, (bool?)execution["semanticEvidenceValidation"]);
         Assert.Equal(true, (bool?)execution["archiveRevalidation"]);
-        Assert.Equal(false, (bool?)execution["governanceCheckExecution"]);
+        Assert.Equal(true, (bool?)execution["schemaValidationEvidenceEvaluation"]);
+        Assert.Equal(true, (bool?)execution["capabilityEnvironmentEvidenceEvaluation"]);
+        Assert.Equal(true, (bool?)execution["packageValidationEvidenceEvaluation"]);
+        Assert.Equal(true, (bool?)execution["governanceCheckExecution"]);
         Assert.Equal(false, (bool?)execution["filesystemMutation"]);
         Assert.Equal(false, (bool?)execution["outputWrites"]);
         Assert.Equal(false, (bool?)execution["remoteRepositoryCall"]);
@@ -7154,6 +7200,10 @@ public sealed class CliGoldenTests
 
         var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
         var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var governanceChecks = json["governanceChecks"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include governance checks.");
+        var schemaValidationEvidence = json["schemaValidationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include schema validation evidence.");
+        var capabilityEnvironmentEvidence = json["capabilityEnvironmentEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include capability/environment evidence.");
 
         Assert.Equal(0, result.ExitCode);
         Assert.Equal("release publish", (string?)json["command"]);
@@ -7192,6 +7242,24 @@ public sealed class CliGoldenTests
         Assert.Equal(0, (int?)json["archiveEvidenceCrossReference"]?["parsedPaths"]);
         Assert.Equal(8, json["localEvidenceArtifacts"]?.AsArray().Count);
         Assert.Equal("missing", (string?)json["localEvidenceArtifacts"]?[2]?["status"]);
+        Assert.Equal("missing", (string?)requiredEvidence[0]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[0]?["checkedInCurrentGate"]);
+        Assert.Equal("missing", (string?)schemaValidationEvidence["status"]);
+        Assert.Equal(false, (bool?)schemaValidationEvidence["exists"]);
+        Assert.Equal("dist/release-dry-run/validation.json", (string?)schemaValidationEvidence["path"]);
+        Assert.Equal("missing", (string?)requiredEvidence[2]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[2]?["checkedInCurrentGate"]);
+        Assert.Equal("missing", (string?)capabilityEnvironmentEvidence["status"]);
+        Assert.Equal(false, (bool?)capabilityEnvironmentEvidence["exists"]);
+        Assert.Equal("dist/release-dry-run/capabilities-scan.json", (string?)capabilityEnvironmentEvidence["path"]);
+        Assert.Equal(false, (bool?)capabilityEnvironmentEvidence["projectScoped"]);
+        Assert.Equal("capability-scan-report-missing", (string?)capabilityEnvironmentEvidence["detail"]);
+        Assert.Equal("incomplete-governance-evaluated", (string?)requiredEvidence[8]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[8]?["checkedInCurrentGate"]);
+        Assert.Equal(6, governanceChecks.Count);
+        Assert.Equal("missing-local-evidence", (string?)governanceChecks[0]?["status"]);
+        Assert.Equal("passed", (string?)governanceChecks[1]?["status"]);
+        Assert.Equal("missing-local-evidence", (string?)governanceChecks[5]?["status"]);
         Assert.Equal(true, (bool?)json["execution"]?["evidenceArtifactPathCheck"]);
         Assert.Equal(false, (bool?)json["execution"]?["evidenceArtifactRead"]);
         Assert.Equal(true, (bool?)json["execution"]?["artifactExistenceCheck"]);
@@ -7204,9 +7272,362 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["execution"]?["buildManifestDigestRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["archiveRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["schemaValidationEvidenceEvaluation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["capabilityEnvironmentEvidenceEvaluation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["governanceCheckExecution"]);
         Assert.Equal(false, (bool?)json["execution"]?["filesystemMutation"]);
         Assert.Equal(false, (bool?)json["execution"]?["outputWrites"]);
         Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(string.Empty, result.Stderr);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunEvaluatesCleanSchemaValidationEvidenceWithoutPublishing()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-publish-preflight");
+        var evidenceRoot = Path.Combine(projectRoot, "dist", "release-dry-run");
+        Directory.CreateDirectory(evidenceRoot);
+        File.WriteAllText(
+            Path.Combine(evidenceRoot, "validation.json"),
+            """
+            {
+              "formatVersion": "1.0",
+              "tool": {
+                "name": "WastelandForge",
+                "version": "0.1.0"
+              },
+              "command": "validate",
+              "summary": {
+                "errors": 0,
+                "warnings": 1,
+                "notes": 2
+              },
+              "issues": []
+            }
+            """);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var schemaValidationEvidence = json["schemaValidationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include schema validation evidence.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("complete-schema-validated", (string?)requiredEvidence[0]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[0]?["checkedInCurrentGate"]);
+        Assert.Equal("dist/release-dry-run/validation.json", (string?)schemaValidationEvidence["path"]);
+        Assert.Equal(true, (bool?)schemaValidationEvidence["exists"]);
+        Assert.Equal("complete-schema-validated", (string?)schemaValidationEvidence["status"]);
+        Assert.Equal(true, (bool?)schemaValidationEvidence["checkedInCurrentGate"]);
+        Assert.Equal(true, (bool?)schemaValidationEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(0, (int?)schemaValidationEvidence["errors"]);
+        Assert.Equal(1, (int?)schemaValidationEvidence["warnings"]);
+        Assert.Equal(2, (int?)schemaValidationEvidence["notes"]);
+        Assert.Equal(0, (int?)schemaValidationEvidence["issues"]);
+        Assert.Equal(0, (int?)schemaValidationEvidence["schemaIssues"]);
+        Assert.Equal("validation-report-has-no-schema-diagnostics", (string?)schemaValidationEvidence["detail"]);
+        Assert.Equal(true, (bool?)json["execution"]?["schemaValidationEvidenceEvaluation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunReportsSchemaValidationDiagnosticsWithoutPublishing()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-publish-preflight");
+        var evidenceRoot = Path.Combine(projectRoot, "dist", "release-dry-run");
+        Directory.CreateDirectory(evidenceRoot);
+        File.WriteAllText(
+            Path.Combine(evidenceRoot, "validation.json"),
+            """
+            {
+              "formatVersion": "1.0",
+              "tool": {
+                "name": "WastelandForge",
+                "version": "0.1.0"
+              },
+              "command": "validate",
+              "summary": {
+                "errors": 1,
+                "warnings": 0,
+                "notes": 0
+              },
+              "issues": [
+                {
+                  "ruleId": "WF-SCHEMA-001"
+                }
+              ]
+            }
+            """);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var schemaValidationEvidence = json["schemaValidationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include schema validation evidence.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("schema-diagnostics-present", (string?)requiredEvidence[0]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[0]?["checkedInCurrentGate"]);
+        Assert.Equal("schema-diagnostics-present", (string?)schemaValidationEvidence["status"]);
+        Assert.Equal(true, (bool?)schemaValidationEvidence["exists"]);
+        Assert.Equal(true, (bool?)schemaValidationEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(1, (int?)schemaValidationEvidence["errors"]);
+        Assert.Equal(1, (int?)schemaValidationEvidence["issues"]);
+        Assert.Equal(1, (int?)schemaValidationEvidence["schemaIssues"]);
+        Assert.Equal("validation-report-has-schema-diagnostics", (string?)schemaValidationEvidence["detail"]);
+        Assert.Equal(true, (bool?)json["execution"]?["schemaValidationEvidenceEvaluation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunEvaluatesCleanCapabilityEnvironmentEvidenceWithoutPublishing()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var layout = CreateSyntheticCapabilityLayout();
+        var evidencePath = Path.Combine(projectRoot, "dist", "release-dry-run", "capabilities-scan.json");
+
+        var scan = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--game-root",
+            layout.GameRoot,
+            "--format",
+            "json",
+            "--output",
+            evidencePath);
+        Assert.Equal(0, scan.ExitCode);
+        Assert.Equal(string.Empty, scan.Stdout);
+        Assert.Equal(string.Empty, scan.Stderr);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var capabilityEnvironmentEvidence = json["capabilityEnvironmentEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include capability/environment evidence.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("complete-capability-environment-validated", (string?)requiredEvidence[2]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[2]?["checkedInCurrentGate"]);
+        Assert.Equal("dist/release-dry-run/capabilities-scan.json", (string?)capabilityEnvironmentEvidence["path"]);
+        Assert.Equal(true, (bool?)capabilityEnvironmentEvidence["exists"]);
+        Assert.Equal("complete-capability-environment-validated", (string?)capabilityEnvironmentEvidence["status"]);
+        Assert.Equal(true, (bool?)capabilityEnvironmentEvidence["checkedInCurrentGate"]);
+        Assert.Equal(true, (bool?)capabilityEnvironmentEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(true, (bool?)capabilityEnvironmentEvidence["projectScoped"]);
+        Assert.Equal(false, (bool?)capabilityEnvironmentEvidence["runtimeProbesEnabled"]);
+        Assert.Equal(false, (bool?)capabilityEnvironmentEvidence["mo2VfsEnabled"]);
+        Assert.Equal(2, (int?)capabilityEnvironmentEvidence["requirements"]);
+        Assert.Equal(0, (int?)capabilityEnvironmentEvidence["requiredUnavailable"]);
+        Assert.Equal(0, (int?)capabilityEnvironmentEvidence["optionalUnavailable"]);
+        Assert.Equal(0, (int?)capabilityEnvironmentEvidence["capabilityDiagnostics"]);
+        Assert.Equal(5, (int?)capabilityEnvironmentEvidence["doctorAreas"]);
+        Assert.Equal(0, (int?)capabilityEnvironmentEvidence["doctorActionNeededAreas"]);
+        Assert.Equal("capability-scan-report-has-no-required-capability-diagnostics", (string?)capabilityEnvironmentEvidence["detail"]);
+        Assert.Equal(true, (bool?)json["execution"]?["capabilityEnvironmentEvidenceEvaluation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["runtimeProbe"]);
+        Assert.Equal(false, (bool?)json["execution"]?["mo2Automation"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunReportsCapabilityDiagnosticsWithoutPublishing()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var evidencePath = Path.Combine(projectRoot, "dist", "release-dry-run", "capabilities-scan.json");
+
+        var scan = RunCli(
+            "capabilities",
+            "scan",
+            "--project",
+            projectRoot,
+            "--format",
+            "json",
+            "--output",
+            evidencePath);
+        Assert.Equal(4, scan.ExitCode);
+        Assert.Equal(string.Empty, scan.Stdout);
+        Assert.Equal(string.Empty, scan.Stderr);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var capabilityEnvironmentEvidence = json["capabilityEnvironmentEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include capability/environment evidence.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("capability-diagnostics-present", (string?)requiredEvidence[2]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[2]?["checkedInCurrentGate"]);
+        Assert.Equal("capability-diagnostics-present", (string?)capabilityEnvironmentEvidence["status"]);
+        Assert.Equal(true, (bool?)capabilityEnvironmentEvidence["exists"]);
+        Assert.Equal(true, (bool?)capabilityEnvironmentEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(true, (bool?)capabilityEnvironmentEvidence["projectScoped"]);
+        Assert.Equal(2, (int?)capabilityEnvironmentEvidence["requirements"]);
+        Assert.Equal(2, (int?)capabilityEnvironmentEvidence["requiredUnavailable"]);
+        Assert.Equal(2, (int?)capabilityEnvironmentEvidence["diagnostics"]);
+        Assert.Equal(2, (int?)capabilityEnvironmentEvidence["capabilityDiagnostics"]);
+        Assert.Equal("capability-scan-report-has-capability-diagnostics", (string?)capabilityEnvironmentEvidence["detail"]);
+        Assert.Equal(true, (bool?)json["execution"]?["capabilityEnvironmentEvidenceEvaluation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["runtimeProbe"]);
+        Assert.Equal(false, (bool?)json["execution"]?["mo2Automation"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunEvaluatesCleanPackageValidationEvidenceWithoutPublishing()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var evidencePath = Path.Combine(projectRoot, "dist", "release-dry-run", "package-verify.json");
+
+        var package = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, package.ExitCode);
+        Assert.Equal(string.Empty, package.Stderr);
+
+        var verify = RunCli("package", projectRoot, "--verify-existing", "--format", "json", "--no-input");
+        Assert.Equal(0, verify.ExitCode);
+        Assert.Equal(string.Empty, verify.Stderr);
+        Directory.CreateDirectory(Path.GetDirectoryName(evidencePath) ?? throw new InvalidOperationException("Evidence path has no directory."));
+        File.WriteAllText(evidencePath, verify.Stdout);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var packageValidationEvidence = json["packageValidationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include package validation evidence.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("complete-package-validated", (string?)requiredEvidence[3]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[3]?["checkedInCurrentGate"]);
+        Assert.Equal("dist/release-dry-run/package-verify.json", (string?)packageValidationEvidence["path"]);
+        Assert.Equal(true, (bool?)packageValidationEvidence["exists"]);
+        Assert.Equal("complete-package-validated", (string?)packageValidationEvidence["status"]);
+        Assert.Equal(true, (bool?)packageValidationEvidence["checkedInCurrentGate"]);
+        Assert.Equal(true, (bool?)packageValidationEvidence["contentReadInCurrentGate"]);
+        Assert.Equal("mcm-json", (string?)packageValidationEvidence["target"]);
+        Assert.Equal("verify-existing", (string?)packageValidationEvidence["mode"]);
+        Assert.Equal("dist/mcm-json", (string?)packageValidationEvidence["outputRoot"]);
+        Assert.Equal(true, (bool?)packageValidationEvidence["distScoped"]);
+        Assert.Equal(true, (bool?)packageValidationEvidence["packageArchivePresent"]);
+        Assert.Equal(0, (int?)packageValidationEvidence["errors"]);
+        Assert.Equal(0, (int?)packageValidationEvidence["packageIssues"]);
+        Assert.Equal("package-verify-report-has-no-package-diagnostics", (string?)packageValidationEvidence["detail"]);
+        Assert.Equal(true, (bool?)json["execution"]?["packageValidationEvidenceEvaluation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["outputWrites"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunReportsPackageValidationDiagnosticsWithoutPublishing()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var evidencePath = Path.Combine(projectRoot, "dist", "release-dry-run", "package-verify.json");
+
+        var package = RunCli("package", projectRoot, "--format", "json", "--no-input");
+        Assert.Equal(0, package.ExitCode);
+        Assert.Equal(string.Empty, package.Stderr);
+        File.AppendAllText(Path.Combine(projectRoot, "dist", "mcm-json", "MCM", "ExampleMod.json"), Environment.NewLine);
+
+        var verify = RunCli("package", projectRoot, "--verify-existing", "--format", "json", "--no-input");
+        Assert.Equal(1, verify.ExitCode);
+        Assert.Equal(string.Empty, verify.Stderr);
+        Directory.CreateDirectory(Path.GetDirectoryName(evidencePath) ?? throw new InvalidOperationException("Evidence path has no directory."));
+        File.WriteAllText(evidencePath, verify.Stdout);
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var packageValidationEvidence = json["packageValidationEvidence"] ?? throw new InvalidOperationException("Release publish JSON did not include package validation evidence.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("package-diagnostics-present", (string?)requiredEvidence[3]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[3]?["checkedInCurrentGate"]);
+        Assert.Equal("package-diagnostics-present", (string?)packageValidationEvidence["status"]);
+        Assert.Equal(true, (bool?)packageValidationEvidence["exists"]);
+        Assert.Equal(true, (bool?)packageValidationEvidence["contentReadInCurrentGate"]);
+        Assert.Equal(true, (bool?)packageValidationEvidence["distScoped"]);
+        Assert.Equal(true, (bool?)packageValidationEvidence["packageArchivePresent"]);
+        Assert.Equal(3, (int?)packageValidationEvidence["errors"]);
+        Assert.Equal(3, (int?)packageValidationEvidence["issues"]);
+        Assert.Equal(3, (int?)packageValidationEvidence["packageIssues"]);
+        Assert.Equal("package-verify-report-has-package-diagnostics", (string?)packageValidationEvidence["detail"]);
+        Assert.Equal(true, (bool?)json["execution"]?["packageValidationEvidenceEvaluation"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["outputWrites"]);
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void ReleasePublishDryRunEvaluatesGovernanceEvidenceWithoutPublishing()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-publish-preflight");
+        Directory.CreateDirectory(Path.Combine(projectRoot, "docs", "governance"));
+        Directory.CreateDirectory(Path.Combine(projectRoot, ".github", "workflows"));
+        File.WriteAllText(
+            Path.Combine(projectRoot, "docs", "governance", "schema-version-policy.md"),
+            "Schemas are public API. Released schema contents are immutable and every schema declares $id.");
+        File.WriteAllText(
+            Path.Combine(projectRoot, "docs", "governance", "fixture-policy.md"),
+            "Public fixtures are synthetic and redistributable.");
+        File.WriteAllText(
+            Path.Combine(projectRoot, ".github", "workflows", "release.yml"),
+            """
+            name: release
+
+            permissions:
+              contents: read
+
+            jobs:
+              validate:
+                runs-on: ubuntu-latest
+                steps: []
+            """);
+        File.WriteAllText(
+            Path.Combine(projectRoot, ".github", "CODEOWNERS"),
+            """
+            /docs/governance/ @owner
+            /.github/workflows/ @owner
+            /schemas/ @owner
+            """);
+        File.WriteAllText(
+            Path.Combine(projectRoot, "AGENTS.md"),
+            "The release correctness path is AI optional and does not require AI.");
+
+        var result = RunCli("release", "publish", projectRoot, "--dry-run", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Release publish JSON did not parse.");
+        var requiredEvidence = json["requiredEvidence"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include required evidence.");
+        var governanceChecks = json["governanceChecks"]?.AsArray() ?? throw new InvalidOperationException("Release publish JSON did not include governance checks.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("planned", (string?)json["status"]);
+        Assert.Equal("missing", (string?)json["releasePrepareEvidence"]?["status"]);
+        Assert.Equal("complete-governance-evaluated", (string?)requiredEvidence[8]?["status"]);
+        Assert.Equal(true, (bool?)requiredEvidence[8]?["checkedInCurrentGate"]);
+        Assert.Equal(6, governanceChecks.Count);
+        Assert.All(governanceChecks, check =>
+        {
+            Assert.Equal("passed", (string?)check?["status"]);
+            Assert.Equal(true, (bool?)check?["checkedInCurrentGate"]);
+        });
+        Assert.Equal("docs/governance/schema-version-policy.md", (string?)governanceChecks[0]?["evidencePath"]);
+        Assert.Equal("local-policy-evidence-matched", (string?)governanceChecks[0]?["detail"]);
+        Assert.Equal("tool-version", (string?)governanceChecks[1]?["evidencePath"]);
+        Assert.Equal("tool-version-semver:0.1.0", (string?)governanceChecks[1]?["detail"]);
+        Assert.Equal(".github/workflows/release.yml", (string?)governanceChecks[2]?["evidencePath"]);
+        Assert.Equal("workflow-permissions-are-scoped", (string?)governanceChecks[2]?["detail"]);
+        Assert.Equal(".github/CODEOWNERS", (string?)governanceChecks[3]?["evidencePath"]);
+        Assert.Equal("sensitive-path-codeowners-present", (string?)governanceChecks[3]?["detail"]);
+        Assert.Equal("docs/governance/fixture-policy.md", (string?)governanceChecks[4]?["evidencePath"]);
+        Assert.Equal("AGENTS.md", (string?)governanceChecks[5]?["evidencePath"]);
+        Assert.Equal(true, (bool?)json["execution"]?["governanceCheckExecution"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
+        Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
+        Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
         Assert.Equal(string.Empty, result.Stderr);
         Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist")));
     }
@@ -7482,6 +7903,8 @@ public sealed class CliGoldenTests
         Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[5]?["status"]);
         Assert.Equal("complete-digest-revalidated", (string?)json["requiredEvidence"]?[6]?["status"]);
         Assert.Equal("complete-archive-revalidated", (string?)json["requiredEvidence"]?[7]?["status"]);
+        Assert.Equal("incomplete-governance-evaluated", (string?)json["requiredEvidence"]?[8]?["status"]);
+        Assert.Equal(true, (bool?)json["requiredEvidence"]?[8]?["checkedInCurrentGate"]);
         Assert.Equal(true, (bool?)json["execution"]?["evidenceArtifactPathCheck"]);
         Assert.Equal(true, (bool?)json["execution"]?["evidenceArtifactRead"]);
         Assert.Equal(true, (bool?)json["execution"]?["artifactExistenceCheck"]);
@@ -7495,6 +7918,7 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["execution"]?["archiveEvidenceDigestRevalidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["semanticEvidenceValidation"]);
         Assert.Equal(true, (bool?)json["execution"]?["archiveRevalidation"]);
+        Assert.Equal(true, (bool?)json["execution"]?["governanceCheckExecution"]);
         Assert.Equal(false, (bool?)json["execution"]?["releasePublishing"]);
         Assert.Equal(false, (bool?)json["execution"]?["remoteRepositoryCall"]);
         Assert.Equal(false, (bool?)json["execution"]?["releaseUpload"]);
@@ -8025,8 +8449,8 @@ public sealed class CliGoldenTests
 
         Assert.Equal(0, result.ExitCode);
         Assert.Contains("forge release publish", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Gate 280 reports a no-publish governance preflight with local release-prepare evidence shape classification, checksum sidecar entry coverage and digest revalidation, build-manifest output cross-reference and digest revalidation, release-archive-evidence metadata cross-reference, archive digest metadata revalidation, archive entry metadata revalidation, and semantic release-evidence validation.", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("It checks expected release-prepare evidence path existence, parses JSON evidence for well-formed shape, parses checksums.sha256 entries for expected-path coverage, recomputes SHA-256 for expected local checksum entries, cross-references build-manifest outputs to local evidence and checksum sidecar paths, recomputes SHA-256 for expected local build-manifest outputs, cross-references release-archive-evidence output metadata, recomputes archive sha256 and length metadata, reopens the expected local archive to compare entry names, entry order, deterministic timestamps, and stored compression metadata, and validates local evidence kind/status contracts, output path maps, release-summary counters, archive-plan inputs, archive-evidence checks, build-manifest output sets, and no-publish execution boundaries:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Gate 284 reports a no-publish governance preflight with local release-prepare evidence shape classification, checksum sidecar entry coverage and digest revalidation, build-manifest output cross-reference and digest revalidation, release-archive-evidence metadata cross-reference, archive digest metadata revalidation, archive entry metadata revalidation, semantic release-evidence validation, local governance-check evaluation, schema-validation evidence evaluation, capability/environment evidence evaluation, and package-validation evidence evaluation.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("evaluates dist/release-dry-run/validation.json for schema-validation evidence; evaluates dist/release-dry-run/capabilities-scan.json for local project-scoped capability/environment evidence; and evaluates dist/release-dry-run/package-verify.json for package verify-existing evidence.", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("release-archive-evidence.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("schema validation, semantic validation, capability/environment validation, package validation, release verification", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("dist/release-prepare/", result.Stdout, StringComparison.Ordinal);

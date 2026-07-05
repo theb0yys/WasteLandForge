@@ -285,9 +285,12 @@ Gate status:
 - `gates/gate-278-forge-release-publish-archive-evidence-digest-metadata-revalidation.md` - Gate 278, `forge release publish` release-archive-evidence archive SHA-256 and length metadata revalidation for the expected local archive file, still no-publish and no archive reopening.
 - `gates/gate-279-forge-release-publish-archive-revalidation.md` - Gate 279, `forge release publish` release archive reopening/revalidation for entry names, entry order, deterministic timestamps, and stored compression metadata, still no-publish and no payload content validation.
 - `gates/gate-280-forge-release-publish-semantic-evidence-validation.md` - Gate 280, `forge release publish` semantic release-evidence validation for local release-prepare evidence contracts, output maps, counters, archive-plan inputs, archive-evidence checks, build-manifest output sets, and no-publish execution boundaries, still no-publish and no archive payload validation.
+- `gates/gate-281-forge-release-publish-governance-check-evaluation.md` - Gate 281, `forge release publish` local governance-check evaluation for immutable schema policy, SemVer tool versioning, workflow permissions, CODEOWNERS, fixture policy, and AI-optional correctness, still no-publish.
+- `gates/gate-282-forge-release-publish-schema-validation-evidence.md` - Gate 282, `forge release publish` local schema-validation evidence evaluation from `dist/release-dry-run/validation.json`, still no-publish.
+- `gates/gate-283-forge-release-publish-capability-environment-evidence.md` - Gate 283, `forge release publish` local capability/environment evidence evaluation from `dist/release-dry-run/capabilities-scan.json`, still no-publish.
 
 Next gate:
 
-- Gate 281 - `forge release publish` governance check evaluation skeleton, still no-publish by default, stopping before remote repository calls, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
+- Gate 284 - `forge release publish` package-validation evidence evaluation skeleton, still no-publish by default, stopping before remote repository calls, release uploads, attestation/signing, external tool execution, plugin mutation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, or AI behavior.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

@@ -758,3 +758,28 @@ execution-boundary checks in command output only and does not emit
 `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, validate archive payload
 contents, execute external tools, run runtime probes, call remote
 repositories, upload release assets, or use AI.
+
+Gate 281 adds no new rule family or diagnostic ID. Release-publish
+governance-check evaluation reports local immutable schema policy, SemVer
+tool-version, workflow permissions, CODEOWNERS, fixture policy, and
+AI-optional release correctness checks in command output only and does not
+emit `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, execute external
+tools, run runtime probes, call remote repositories, upload release assets,
+sign or attest artifacts, or use AI.
+
+Gate 282 adds no new rule family or diagnostic ID. Release-publish
+schema-validation evidence evaluation reports local
+`dist/release-dry-run/validation.json` presence, diagnostic report shape, and
+`WF-SCHEMA-*` issue counts in command output only and does not emit
+`WF-SCHEMA-*`, `WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, execute
+external tools, run runtime probes, call remote repositories, upload release
+assets, sign or attest artifacts, or use AI.
+
+Gate 283 adds no new rule family or diagnostic ID. Release-publish
+capability/environment evidence evaluation reports local
+`dist/release-dry-run/capabilities-scan.json` presence, capabilities scan
+report shape, project-scoped requirement summary, local-only scan flags, and
+`WF-CAP-*` issue counts in command output only and does not emit `WF-CAP-*`,
+`WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` diagnostics, execute external tools,
+run runtime probes, automate MO2 or GECK, call remote repositories, upload
+release assets, sign or attest artifacts, or use AI.

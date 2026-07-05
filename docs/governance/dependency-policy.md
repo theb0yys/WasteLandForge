@@ -1171,3 +1171,24 @@ available to the CLI. It does not add schema validators, archive payload
 validation dependencies, publishing clients, repository API clients, signing
 or attestation dependencies, external tool integrations, network calls,
 runtime probes, or AI requirements.
+
+Gate 281 adds no package dependency. Release-publish governance-check
+evaluation uses built-in .NET file, directory, string, and version-shape
+checks already available to the CLI. It does not add YAML parsers, GitHub API
+clients, publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, or
+AI requirements.
+
+Gate 282 adds no package dependency. Release-publish schema-validation
+evidence evaluation uses built-in .NET JSON and file APIs already available to
+the CLI. It does not add schema validators, YAML parsers, publishing clients,
+repository API clients, signing or attestation dependencies, external tool
+integrations, network calls, runtime probes, or AI requirements.
+
+Gate 283 adds no package dependency. Release-publish capability/environment
+evidence evaluation uses built-in .NET JSON and file APIs already available to
+the CLI. It consumes prior local `forge capabilities scan --project --format
+json` evidence and does not add provider binaries, detector libraries,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, or AI requirements.

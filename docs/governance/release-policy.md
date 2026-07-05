@@ -128,3 +128,37 @@ and inputs, archive-evidence checks, build-manifest output sets, and no-publish
 execution flags. It still refuses real publish and does not validate archive
 payload contents, call remote repositories, upload releases, sign or attest
 artifacts, execute external tools, run runtime probes, or use AI.
+
+Gate 281 adds local governance-check evaluation to the same no-publish
+preflight. It evaluates immutable schema policy evidence, the Forge tool
+SemVer version string, local workflow least-privilege permission evidence,
+CODEOWNERS coverage for sensitive paths, redistributable fixture policy, and
+AI-optional release correctness evidence. Missing policy files report
+`missing-local-evidence`; matching files report `passed`; incomplete local
+evidence reports `failed`. It still refuses real publish and does not call
+remote repositories, upload releases, sign or attest artifacts, execute
+external tools, run runtime probes, or use AI.
+
+Gate 282 adds local schema-validation evidence evaluation to the same
+no-publish preflight. It reads `dist/release-dry-run/validation.json` as prior
+`forge validate --format json` evidence, checks the diagnostic report identity
+and summary/issue shape, and reports whether any `WF-SCHEMA-*` diagnostics are
+present. Missing validation reports stay `missing`, clean reports are
+`complete-schema-validated`, and schema diagnostics report
+`schema-diagnostics-present`. It still refuses real publish and does not call
+remote repositories, upload releases, sign or attest artifacts, execute
+external tools, run runtime probes, or use AI.
+
+Gate 283 adds local capability/environment evidence evaluation to the same
+no-publish preflight. It reads
+`dist/release-dry-run/capabilities-scan.json` as prior
+`forge capabilities scan --project --format json` evidence, checks the report
+identity, project-scoped requirement summary, local-only scan flags, Doctor
+summary shape, and `WF-CAP-*` diagnostic count. Missing scan reports stay
+`missing`, clean project-scoped reports are
+`complete-capability-environment-validated`, and required-unavailable
+requirements or `WF-CAP-*` diagnostics report
+`capability-diagnostics-present`. It still refuses real publish and does not
+call remote repositories, upload releases, sign or attest artifacts, execute
+external tools, run runtime probes, automate MO2 or GECK, mutate plugins, or
+use AI.
