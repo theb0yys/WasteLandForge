@@ -1519,3 +1519,39 @@ packaging dependencies, publishing clients, repository API clients, signing or
 attestation dependencies, external tool integrations, network calls, runtime
 probes, MO2 or GECK automation, plugin mutation dependencies, generated
 workflow/task mutation, or AI requirements.
+
+Gate 332 adds no package dependency. It creates repository-owned VS Code tasks
+that reuse `eng/Restore-ForgeTool.ps1` and the checked-in local tool manifest,
+but it does not add a new package source. It does not add new NuGet
+dependencies, root `NuGet.config`, NuGet publication, standalone packaging
+dependencies, publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, MO2 or GECK automation, plugin mutation dependencies, generated
+workflow/task mutation, or AI requirements.
+
+Gate 333 adds no package dependency. It closes the repository-owned
+local-tool bootstrap lane and routes package-source policy to Gate 334, but it
+does not add a package source. It does not add new NuGet dependencies, root
+`NuGet.config`, NuGet publication, standalone packaging dependencies,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, plugin mutation dependencies, generated workflow/task
+mutation, or AI requirements.
+
+Gate 334 adds no package dependency. It records that generated consumer
+projects remain source-agnostic and use an existing `forge` command until
+package/feed governance is gated. It does not add new NuGet dependencies, root
+`NuGet.config`, NuGet publication, standalone packaging dependencies,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, plugin mutation dependencies, generated workflow/task
+mutation, or AI requirements.
+
+Gate 335 adds no package dependency. It updates generated consumer-project
+README, task, and workflow templates to check or explain an existing `forge`
+command on `PATH`. It does not add new NuGet dependencies, root `NuGet.config`,
+NuGet publication, package restore, standalone packaging dependencies,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2
+or GECK automation, plugin mutation dependencies, provider installation, or AI
+requirements.

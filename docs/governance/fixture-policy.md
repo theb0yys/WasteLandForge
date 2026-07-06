@@ -1311,3 +1311,30 @@ payload, provider sample, Bethesda asset, third-party mod file, local install
 snapshot, MO2 profile, GECK output, external tool fixture, repository task
 fixture, generated workflow/task fixture, checked-in local tool package
 fixture, or AI-generated fixture. It is a planning gate only.
+
+Gate 332 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, generated
+workflow/task fixture, checked-in local tool package fixture, or AI-generated
+fixture. The repository-owned `.vscode/tasks.json` is developer bootstrap
+metadata, and restore smoke artifacts stay under ignored
+`artifacts/local-tool/`.
+
+Gate 333 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, generated
+workflow/task fixture, checked-in local tool package fixture, or AI-generated
+fixture. It is a docs and prompt routing closeout only.
+
+Gate 334 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, generated
+workflow/task fixture, checked-in local tool package fixture, or AI-generated
+fixture. It is a docs and prompt routing planning gate only.
+
+Gate 335 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, checked-in local tool
+package fixture, or AI-generated fixture. It updates generated scaffold
+templates and exercises them through a temporary synthetic project in golden
+tests.

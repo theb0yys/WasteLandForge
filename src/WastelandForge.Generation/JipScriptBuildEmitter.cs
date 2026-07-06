@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using WastelandForge.Core;
@@ -61,8 +60,7 @@ public sealed class JipScriptBuildEmitter
 
         foreach (var pendingWrite in pendingWrites)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(pendingWrite.FullPath) ?? outputRoot);
-            File.WriteAllText(pendingWrite.FullPath, pendingWrite.Document.Content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            WriteUtf8NoBom(pendingWrite.FullPath, pendingWrite.Document.Content);
         }
 
         var payloadPaths = pendingWrites
@@ -356,8 +354,7 @@ public sealed class JipScriptBuildEmitter
 
     private static void WriteUtf8NoBom(string path, string content)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
-        File.WriteAllText(path, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(path, content);
     }
 
     private static ReproducibleTimestamp ResolveReproducibleTimestamp()

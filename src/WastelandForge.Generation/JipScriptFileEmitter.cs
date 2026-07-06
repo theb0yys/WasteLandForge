@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Schema;
@@ -45,8 +44,7 @@ public sealed class JipScriptFileEmitter
         var generatedFiles = new List<JipScriptGeneratedFile>();
         foreach (var pendingWrite in pendingWrites)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(pendingWrite.FullPath) ?? outputRoot);
-            File.WriteAllText(pendingWrite.FullPath, pendingWrite.Document.Content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            WriteUtf8NoBom(pendingWrite.FullPath, pendingWrite.Document.Content);
             generatedFiles.Add(new JipScriptGeneratedFile(
                 pendingWrite.Document.ScriptId,
                 pendingWrite.Document.OutputFile,
@@ -329,8 +327,7 @@ public sealed class JipScriptFileEmitter
 
     private static void WriteUtf8NoBom(string path, string content)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
-        File.WriteAllText(path, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(path, content);
     }
 
     private static string ToDisplayPath(string root, string path)

@@ -439,6 +439,13 @@ internal static class InitScaffoldWriter
         code . # optional: open VS Code tasks
         ```
 
+        ## Forge Command Availability
+
+        Generated tasks and workflows expect `forge` to already be available on `PATH`.
+        Use your chosen install method before running them. This scaffold does not
+        restore Forge, publish packages, add `NuGet.config`, or assume the
+        WastelandForge source repository exists.
+
         ## Layout
 
         - `wastelandforge.json` is the root project manifest.
@@ -461,6 +468,17 @@ internal static class InitScaffoldWriter
             {
                 new JsonObject
                 {
+                    ["label"] = "Forge: Check Command",
+                    ["type"] = "shell",
+                    ["command"] = "forge",
+                    ["args"] = new JsonArray
+                    {
+                        "--version"
+                    },
+                    ["problemMatcher"] = new JsonArray()
+                },
+                new JsonObject
+                {
                     ["label"] = "Forge: Validate",
                     ["type"] = "shell",
                     ["command"] = "forge",
@@ -472,6 +490,8 @@ internal static class InitScaffoldWriter
                         "plain",
                         "--no-input"
                     },
+                    ["dependsOn"] = "Forge: Check Command",
+                    ["dependsOrder"] = "sequence",
                     ["group"] = new JsonObject
                     {
                         ["kind"] = "test",
@@ -509,7 +529,9 @@ internal static class InitScaffoldWriter
                         "--format",
                         "plain",
                         "--no-input"
-                    }
+                    },
+                    ["dependsOn"] = "Forge: Check Command",
+                    ["dependsOrder"] = "sequence"
                 },
                 new JsonObject
                 {
@@ -526,6 +548,8 @@ internal static class InitScaffoldWriter
                         "plain",
                         "--no-input"
                     },
+                    ["dependsOn"] = "Forge: Check Command",
+                    ["dependsOrder"] = "sequence",
                     ["group"] = "build"
                 }
             }
@@ -673,7 +697,8 @@ internal static class InitScaffoldWriter
                 shell: pwsh
                 run: |
                   if (-not (Get-Command $env:FORGE_COMMAND -ErrorAction SilentlyContinue)) {
-                    Write-Error "Forge CLI is not installed on this runner. Install Forge or provide it on PATH before enabling this workflow."
+                    $message = "Forge command '$env:FORGE_COMMAND' was not found on PATH. Install Forge or set FORGE_COMMAND to an existing executable before enabling this workflow. This generated workflow does not restore Forge or build WastelandForge.Cli."
+                    Write-Error $message
                   }
                   & $env:FORGE_COMMAND --version
 
@@ -719,7 +744,8 @@ internal static class InitScaffoldWriter
                 shell: pwsh
                 run: |
                   if (-not (Get-Command $env:FORGE_COMMAND -ErrorAction SilentlyContinue)) {
-                    Write-Error "Forge CLI is not installed on this runner. Install Forge or provide it on PATH before enabling this workflow."
+                    $message = "Forge command '$env:FORGE_COMMAND' was not found on PATH. Install Forge or set FORGE_COMMAND to an existing executable before enabling this workflow. This generated workflow does not restore Forge or build WastelandForge.Cli."
+                    Write-Error $message
                   }
                   & $env:FORGE_COMMAND --version
 
@@ -762,7 +788,8 @@ internal static class InitScaffoldWriter
                 shell: pwsh
                 run: |
                   if (-not (Get-Command $env:FORGE_COMMAND -ErrorAction SilentlyContinue)) {
-                    Write-Error "Forge CLI is not installed on this runner. Install Forge or provide it on PATH before enabling this workflow."
+                    $message = "Forge command '$env:FORGE_COMMAND' was not found on PATH. Install Forge or set FORGE_COMMAND to an existing executable before enabling this workflow. This generated workflow does not restore Forge or build WastelandForge.Cli."
+                    Write-Error $message
                   }
                   & $env:FORGE_COMMAND --version
 

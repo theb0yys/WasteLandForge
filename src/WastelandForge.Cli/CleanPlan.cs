@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using WastelandForge.Core;
@@ -392,7 +393,7 @@ internal static class CleanPlanPlanner
             var existsBefore = Directory.Exists(root.FullPath);
             if (existsBefore)
             {
-                Directory.Delete(root.FullPath, recursive: true);
+                DeleteDirectoryTree(root.FullPath);
                 removedPaths.Add(root.FullPath);
             }
             else
@@ -437,6 +438,99 @@ internal static class CleanPlanPlanner
 
         var root = roots.Single();
         return removedAny ? $"deleted-{root.Kind}-root" : $"{root.Kind}-root-missing";
+    }
+
+    private static void DeleteDirectoryTree(string path)
+    {
+        try
+        {
+            Directory.Delete(path, recursive: true);
+            return;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            try
+            {
+                DeleteDirectoryTreeBottomUp(path);
+            }
+            catch (Exception retryEx) when (retryEx is IOException or UnauthorizedAccessException)
+            {
+                DeleteDirectoryTreeWithWindowsShell(path, retryEx);
+            }
+        }
+    }
+
+    private static void DeleteDirectoryTreeBottomUp(string path)
+    {
+        if (!Directory.Exists(path))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+        {
+            ClearReadOnlyAttribute(file);
+            File.Delete(file);
+        }
+
+        var directories = Directory
+            .EnumerateDirectories(path, "*", SearchOption.AllDirectories)
+            .OrderByDescending(directory => directory.Length)
+            .ToArray();
+
+        foreach (var directory in directories)
+        {
+            ClearReadOnlyAttribute(directory);
+            Directory.Delete(directory, recursive: false);
+        }
+
+        ClearReadOnlyAttribute(path);
+        Directory.Delete(path, recursive: false);
+    }
+
+    private static void DeleteDirectoryTreeWithWindowsShell(string path, Exception previousException)
+    {
+        if (!OperatingSystem.IsWindows() || !Directory.Exists(path))
+        {
+            throw new IOException($"Could not delete clean target root '{path}'.", previousException);
+        }
+
+        var fullPath = Path.GetFullPath(path);
+        var startInfo = new ProcessStartInfo("cmd.exe")
+        {
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("/c");
+        startInfo.ArgumentList.Add("rmdir");
+        startInfo.ArgumentList.Add("/S");
+        startInfo.ArgumentList.Add("/Q");
+        startInfo.ArgumentList.Add(fullPath);
+
+        using var process = Process.Start(startInfo)
+            ?? throw new IOException($"Could not start Windows directory removal for clean target root '{fullPath}'.", previousException);
+        var stdout = process.StandardOutput.ReadToEnd();
+        var stderr = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+
+        if (process.ExitCode == 0 && !Directory.Exists(fullPath))
+        {
+            return;
+        }
+
+        throw new IOException(
+            $"Could not delete clean target root '{fullPath}' with Windows rmdir. Exit code: {process.ExitCode}. Stdout: {stdout.Trim()} Stderr: {stderr.Trim()}",
+            previousException);
+    }
+
+    private static void ClearReadOnlyAttribute(string path)
+    {
+        var attributes = File.GetAttributes(path);
+        if ((attributes & FileAttributes.ReadOnly) != 0)
+        {
+            File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
+        }
     }
 
     private static IReadOnlyList<CleanPlanRoot> CreateRoots(string projectRoot, string scope)

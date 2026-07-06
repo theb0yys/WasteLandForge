@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 331 repository-owned developer task local-tool bootstrap planning
+Status: Gate 335 generated consumer-project Forge command availability guidance scaffold
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -1450,6 +1450,48 @@ such as help, validation, and capabilities listing. Gate 331 changes no CLI
 runtime behavior, adds no aliases, creates no task file, mutates no generated
 task or workflow templates, publishes nothing, runs no external game tools or
 runtime probes, and adds no AI behavior.
+
+Gate 332 keeps the same canonical command surface and creates the
+source-repository `.vscode/tasks.json` planned in Gate 331. The tasks restore
+the checked-in local tool through `eng/Restore-ForgeTool.ps1`, set
+`NUGET_PACKAGES` to the isolated developer restore cache, and invoke canonical
+read-only commands through `dotnet tool run forge --`: `help`,
+`validate fixtures/projects/ExampleMod --format plain --no-input`, and
+`capabilities list --format plain --no-input`. The validation task includes a
+local plain-output problem matcher. Gate 332 changes no CLI runtime behavior,
+adds no aliases, mutates no generated task or workflow templates, publishes
+nothing, runs no external game tools or runtime probes, and adds no AI
+behavior.
+
+Gate 333 keeps the same canonical command surface and closes the
+repository-owned local-tool bootstrap lane. The accepted source-repository
+bootstrap path now includes source-built runner shims, local tool package
+metadata, the checked-in local tool manifest, `eng/Restore-ForgeTool.ps1`,
+repository-owned CI local-tool restore, and repository-owned VS Code tasks.
+Gate 333 changes no CLI runtime behavior, adds no aliases, mutates no
+generated task or workflow templates, publishes nothing, runs no external game
+tools or runtime probes, and routes Gate 334 to consumer-project
+package-source policy planning.
+
+Gate 334 keeps the same canonical command surface and records the current
+consumer-project package-source policy. Generated projects created by
+`forge init` remain source-agnostic and continue to invoke `forge` as an
+existing command on `PATH`; they do not emit `.config/dotnet-tools.json`, root
+`NuGet.config`, local package-source restore commands, `eng/Restore-ForgeTool.ps1`,
+or `dotnet pack src/WastelandForge.Cli/...`. Gate 334 changes no CLI runtime
+behavior, adds no aliases, mutates no generated task or workflow templates,
+publishes nothing, runs no external game tools or runtime probes, and routes
+Gate 335 to generated command availability guidance.
+
+Gate 335 keeps the same canonical command surface and updates generated
+consumer-project scaffolds so the command prerequisite is explicit. `forge init`
+READMEs now say generated tasks and workflows expect `forge` on `PATH`, generated
+VS Code validate/capability/build tasks depend on a `Forge: Check Command` task
+that runs `forge --version`, and generated workflows explain `FORGE_COMMAND`
+when the command is missing. Gate 335 changes no CLI command names, adds no
+package restore, emits no generated local tool manifest or root `NuGet.config`,
+publishes nothing, runs no external game tools or runtime probes, and routes
+Gate 336 to lane closeout and next-value routing.
 
 ## Docs Evidence
 

@@ -1638,5 +1638,34 @@ security, external-tool, runtime-probe, repository-publish,
 signing/attestation, plugin-mutation, VS Code extension, language-server,
 generated workflow/task, or AI diagnostics.
 
+Gate 332 adds no new diagnostic rule ID. The repository-owned developer tasks
+may expose existing Forge validation diagnostics through a local problem
+matcher, but the task bootstrap itself is not a Forge diagnostic report. It
+does not add schema, semantic, capability, build, release, governance,
+security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server,
+generated workflow/task, or AI diagnostics.
+
+Gate 333 adds no new diagnostic rule ID. Repository-owned local-tool
+bootstrap closeout is a routing decision, not a Forge diagnostic report. It
+does not add schema, semantic, capability, build, release, governance,
+security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server,
+generated workflow/task, or AI diagnostics.
+
+Gate 334 adds no new diagnostic rule ID. Consumer-project package-source
+policy planning is a bootstrap governance decision, not a Forge diagnostic
+report. It does not add schema, semantic, capability, build, release,
+governance, security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server,
+generated workflow/task, or AI diagnostics.
+
+Gate 335 adds no new diagnostic rule ID. The generated VS Code command check
+and generated workflow failure text are scaffold guidance, not Forge diagnostic
+reports. It does not add schema, semantic, capability, build, release,
+governance, security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server, or AI
+diagnostics.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

@@ -51,11 +51,7 @@ public sealed class XEditAuditScriptScaffoldEmitter
 
         foreach (var pendingWrite in pendingWrites)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(pendingWrite.FullPath) ?? plan.ProjectRoot);
-            File.WriteAllText(
-                pendingWrite.FullPath,
-                pendingWrite.Document.Content,
-                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            WriteUtf8NoBom(pendingWrite.FullPath, pendingWrite.Document.Content);
         }
 
         var documents = pendingWrites
@@ -334,8 +330,7 @@ public sealed class XEditAuditScriptScaffoldEmitter
 
     private static void WriteUtf8NoBom(string path, string content)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
-        File.WriteAllText(path, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(path, content);
     }
 
     private static string ToDisplayPath(string root, string path) =>

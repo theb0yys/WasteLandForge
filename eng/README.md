@@ -117,3 +117,33 @@ tool through `Restore-ForgeTool.ps1`, set `NUGET_PACKAGES` to the ignored
 developer restore cache, and run read-only canonical Forge commands through
 `dotnet tool run forge`. Gate 331 does not create the task file; Gate 332 is
 routed to do that scaffold.
+
+Gate 332 adds that source-repository task scaffold:
+
+- `Forge: Restore Local Tool` runs `Restore-ForgeTool.ps1` with the developer
+  restore root.
+- `Forge: Help`, `Forge: Validate ExampleMod`, and
+  `Forge: Capabilities List` depend on restore and run canonical commands
+  through `dotnet tool run forge --`.
+
+Each Forge task sets `NUGET_PACKAGES` to the ignored developer restore cache
+under `artifacts/local-tool/restore/dev/packages`. Generated `forge init`
+workflow and task templates still stay unchanged.
+
+Gate 333 closes the repository-owned local-tool bootstrap lane. The source
+repository now has source-built runner shims, local tool package metadata, the
+checked-in local tool manifest, the restore helper, CI restore integration,
+and VS Code task restore integration. Generated consumer-project workflow and
+task templates still need a package-source policy before they change.
+
+Gate 334 records that policy for the current lane: generated consumer projects
+remain source-agnostic and invoke an existing `forge` command on `PATH`. They
+must not assume `src/WastelandForge.Cli`, use `Restore-ForgeTool.ps1`, emit
+`.config/dotnet-tools.json`, or add a root `NuGet.config` until package/feed
+governance is explicitly gated.
+
+Gate 335 applies that policy to generated consumer-project guidance. `forge init`
+generated READMEs now document the `forge` on `PATH` prerequisite, generated
+VS Code tasks include a `Forge: Check Command` task before validate/capability
+scan/build report tasks, and generated workflows explain `FORGE_COMMAND` without
+restoring Forge or building `WastelandForge.Cli` from source.

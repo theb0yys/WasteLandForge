@@ -167,14 +167,30 @@ public sealed class CliGoldenTests
         Assert.Equal(false, (bool?)config["behavior"]?["aiRequired"]);
         Assert.Equal("2.0.0", (string?)vscodeTasks["version"]);
         var tasks = vscodeTasks["tasks"]?.AsArray() ?? throw new InvalidOperationException("Init VS Code tasks were missing.");
+        var checkTask = tasks
+            .OfType<JsonObject>()
+            .Single(task => StringComparer.Ordinal.Equals("Forge: Check Command", (string?)task["label"]));
         var validateTask = tasks
             .OfType<JsonObject>()
             .Single(task => StringComparer.Ordinal.Equals("Forge: Validate", (string?)task["label"]));
-        Assert.Contains(tasks, task => StringComparer.Ordinal.Equals("Forge: Capabilities Scan", (string?)task?["label"]));
-        Assert.Contains(tasks, task => StringComparer.Ordinal.Equals("Forge: Build Reports", (string?)task?["label"]));
+        var capabilitiesTask = tasks
+            .OfType<JsonObject>()
+            .Single(task => StringComparer.Ordinal.Equals("Forge: Capabilities Scan", (string?)task["label"]));
+        var reportsTask = tasks
+            .OfType<JsonObject>()
+            .Single(task => StringComparer.Ordinal.Equals("Forge: Build Reports", (string?)task["label"]));
+        Assert.Equal("forge", (string?)checkTask["command"]);
+        Assert.Contains(checkTask["args"]?.AsArray() ?? throw new InvalidOperationException("Check task args were missing."),
+            arg => StringComparer.Ordinal.Equals("--version", arg?.GetValue<string>()));
         Assert.Equal("forge", (string?)validateTask["command"]);
         Assert.Contains(validateTask["args"]?.AsArray() ?? throw new InvalidOperationException("Validate task args were missing."),
             arg => StringComparer.Ordinal.Equals("validate", arg?.GetValue<string>()));
+        Assert.Equal("Forge: Check Command", (string?)validateTask["dependsOn"]);
+        Assert.Equal("sequence", (string?)validateTask["dependsOrder"]);
+        Assert.Equal("Forge: Check Command", (string?)capabilitiesTask["dependsOn"]);
+        Assert.Equal("sequence", (string?)capabilitiesTask["dependsOrder"]);
+        Assert.Equal("Forge: Check Command", (string?)reportsTask["dependsOn"]);
+        Assert.Equal("sequence", (string?)reportsTask["dependsOrder"]);
         Assert.Equal("wastelandforge", (string?)validateTask["problemMatcher"]?["owner"]);
         Assert.Equal("^ERR\\s+(WF-[A-Z]+-\\d+)\\s+([^#\\s]+)(?:#\\S+)?\\s+(.*)$", (string?)validateTask["problemMatcher"]?["pattern"]?["regexp"]);
         var jsonSchemas = vscodeSettings["json.schemas"]?.AsArray() ?? throw new InvalidOperationException("VS Code JSON schema associations were missing.");
@@ -196,6 +212,10 @@ public sealed class CliGoldenTests
         Assert.True(ContainsString(yamlSchemas[WastelandForgeSchemaIds.Capability020], "src/registries/capabilities/**/*.yml"));
         Assert.Contains("# Created Mod", readme, StringComparison.Ordinal);
         Assert.Contains("forge validate . --format json --no-input", readme, StringComparison.Ordinal);
+        Assert.Contains("Generated tasks and workflows expect `forge` to already be available on `PATH`.", readme, StringComparison.Ordinal);
+        Assert.Contains("This scaffold does not", readme, StringComparison.Ordinal);
+        Assert.Contains("assume the", readme, StringComparison.Ordinal);
+        Assert.Contains("WastelandForge source repository exists.", readme, StringComparison.Ordinal);
         Assert.Contains(".vscode/tasks.json", readme, StringComparison.Ordinal);
         Assert.Contains(".vscode/settings.json", readme, StringComparison.Ordinal);
         Assert.Contains(".github/workflows/wastelandforge.yml", readme, StringComparison.Ordinal);
@@ -211,7 +231,13 @@ public sealed class CliGoldenTests
         Assert.Contains("validate . --format sarif", workflow, StringComparison.Ordinal);
         Assert.Contains("build . --target reports", workflow, StringComparison.Ordinal);
         Assert.Contains("release verify . --format json", workflow, StringComparison.Ordinal);
-        Assert.Contains("Forge CLI is not installed on this runner", workflow, StringComparison.Ordinal);
+        Assert.Contains("Forge command '$env:FORGE_COMMAND' was not found on PATH", workflow, StringComparison.Ordinal);
+        Assert.Contains("This generated workflow does not restore Forge or build WastelandForge.Cli.", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("Restore-ForgeTool.ps1", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("dotnet pack src", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("dotnet tool restore", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain(".config/dotnet-tools.json", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("NuGet.config", workflow, StringComparison.Ordinal);
 
         var validation = RunCli("validate", projectRoot, "--format", "json");
         var validationJson = JsonNode.Parse(validation.Stdout) ?? throw new InvalidOperationException("Validation JSON did not parse.");
@@ -10011,6 +10037,26 @@ public sealed class CliGoldenTests
         Assert.Equal(false, (bool?)execution["provenanceSidecarRead"]);
         Assert.Equal(false, (bool?)execution["checksumRead"]);
         Assert.Equal(false, (bool?)execution["artifactExistenceCheck"]);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
+        Assert.False(File.Exists(generatedFile));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void CleanJsonDeletesGeneratedScopeWithReadOnlyFile()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "clean-read-only");
+        var generatedFile = Path.Combine(projectRoot, "generated", "reports", "keep.txt");
+        Touch(generatedFile);
+        File.SetAttributes(generatedFile, File.GetAttributes(generatedFile) | FileAttributes.ReadOnly);
+
+        var result = RunCli("clean", projectRoot, "--generated", "--format", "json");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Clean read-only JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("cleaned", (string?)json["status"]);
+        Assert.Equal("deleted-generated-root", (string?)json["operation"]?["status"]);
+        Assert.Equal(true, (bool?)json["safety"]?["filesystemMutation"]);
         Assert.False(Directory.Exists(Path.Combine(projectRoot, "generated")));
         Assert.False(File.Exists(generatedFile));
         Assert.Equal(string.Empty, result.Stderr);

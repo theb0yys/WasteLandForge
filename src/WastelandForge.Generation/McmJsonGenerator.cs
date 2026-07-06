@@ -104,7 +104,7 @@ public sealed class McmJsonGenerator
             return CreateResult(options, projectRoot, "planned", projectId, issues, outputs, sourceDigests, []);
         }
 
-        Directory.CreateDirectory(outputRoot);
+        OutputFileSystem.EnsureDirectory(outputRoot);
         foreach (var menuDocument in menuDocuments.OrderBy(output => ToDisplayPath(projectRoot, output.Output.Path), StringComparer.Ordinal))
         {
             WriteUtf8NoBom(
@@ -119,8 +119,8 @@ public sealed class McmJsonGenerator
 
         foreach (var stagedAsset in stagedAssets.OrderBy(output => ToDisplayPath(projectRoot, output.OutputPath), StringComparer.Ordinal))
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(stagedAsset.OutputPath) ?? ".");
-            File.Copy(stagedAsset.SourcePath, stagedAsset.OutputPath, overwrite: true);
+            OutputFileSystem.EnsureDirectory(Path.GetDirectoryName(stagedAsset.OutputPath) ?? ".");
+            OutputFileSystem.CopyFile(stagedAsset.SourcePath, stagedAsset.OutputPath, overwrite: true);
         }
 
         var menuFiles = menuDocuments
@@ -2190,7 +2190,35 @@ public sealed class McmJsonGenerator
         IReadOnlyList<string> files,
         DateTimeOffset timestamp)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(archivePath) ?? ".");
+        try
+        {
+            WriteZipArchiveToPath(outputRoot, archivePath, files, timestamp);
+        }
+        catch (FileNotFoundException) when (OperatingSystem.IsWindows())
+        {
+            var tempArchivePath = Path.Combine(Path.GetTempPath(), $"{Path.GetRandomFileName()}.zip");
+            try
+            {
+                WriteZipArchiveToPath(outputRoot, tempArchivePath, files, timestamp);
+                OutputFileSystem.CopyFile(tempArchivePath, archivePath, overwrite: true);
+            }
+            finally
+            {
+                if (File.Exists(tempArchivePath))
+                {
+                    File.Delete(tempArchivePath);
+                }
+            }
+        }
+    }
+
+    private static void WriteZipArchiveToPath(
+        string outputRoot,
+        string archivePath,
+        IReadOnlyList<string> files,
+        DateTimeOffset timestamp)
+    {
+        OutputFileSystem.EnsureDirectory(Path.GetDirectoryName(archivePath) ?? ".");
         if (File.Exists(archivePath))
         {
             File.Delete(archivePath);
@@ -2227,8 +2255,7 @@ public sealed class McmJsonGenerator
 
     private static void WriteUtf8NoBom(string path, string content)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
-        File.WriteAllText(path, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(path, content);
     }
 
     private static ReproducibleTimestamp ResolveReproducibleTimestamp()

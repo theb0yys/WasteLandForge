@@ -115,7 +115,7 @@ public sealed class DocsReferenceIndexGenerator
             return CreateResult(options, projectRoot, "planned", projectId, issues, outputs, summary, sections, schemaReferences, registryReferences, ruleReferences, capabilityReferences, providerReferences, commandReferences, sourceDigests, []);
         }
 
-        Directory.CreateDirectory(outputRoot);
+        OutputFileSystem.EnsureDirectory(outputRoot);
 
         var referenceJsonPath = Path.Combine(outputRoot, ReferenceIndexJsonFileName);
         var referenceMarkdownPath = Path.Combine(outputRoot, ReferenceIndexMarkdownFileName);
@@ -1985,8 +1985,7 @@ public sealed class DocsReferenceIndexGenerator
 
     private static void WriteUtf8NoBom(string path, string content)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
-        File.WriteAllText(path, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(path, content);
     }
 
     private static ReproducibleTimestamp ResolveReproducibleTimestamp()

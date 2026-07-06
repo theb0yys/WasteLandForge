@@ -239,8 +239,7 @@ public sealed class XEditAuditReportHandoffEmitter
 
     private static void WriteUtf8NoBom(string path, string content)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
-        File.WriteAllText(path, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(path, content);
     }
 
     private static void WriteChecksums(string outputRoot, string checksumsPath, IReadOnlyList<string> files)

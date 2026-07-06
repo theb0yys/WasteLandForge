@@ -70,7 +70,7 @@ public sealed class ProjectSourceGraphGenerator
             return CreateResult(options, projectRoot, "planned", projectId, issues, outputs, summary, nodes, edges, sourceDigests, []);
         }
 
-        Directory.CreateDirectory(outputRoot);
+        OutputFileSystem.EnsureDirectory(outputRoot);
 
         var graphJsonPath = Path.Combine(outputRoot, GraphJsonFileName);
         var graphMarkdownPath = Path.Combine(outputRoot, GraphMarkdownFileName);
@@ -982,8 +982,7 @@ public sealed class ProjectSourceGraphGenerator
 
     private static void WriteUtf8NoBom(string path, string content)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
-        File.WriteAllText(path, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(path, content);
     }
 
     private static ReproducibleTimestamp ResolveReproducibleTimestamp()

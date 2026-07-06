@@ -1155,3 +1155,39 @@ external tool diagnostics, runtime probe diagnostics, repository publish
 diagnostics, signing/attestation diagnostics, plugin mutation diagnostics,
 generated workflow/task diagnostics, VS Code extension diagnostics,
 language-server diagnostics, or AI requirements.
+
+Gate 332 adds no new rule family or diagnostic ID. Repository-owned developer
+tasks may surface existing Forge diagnostics, but the task bootstrap itself
+does not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`, `WF-CAP-*`,
+`WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`, `WF-GOV-*`, or
+`WF-SEC-*` rules, package validation diagnostics, external tool diagnostics,
+runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, plugin mutation diagnostics, generated
+workflow/task diagnostics, VS Code extension diagnostics, language-server
+diagnostics, or AI requirements.
+
+Gate 333 adds no new rule family or diagnostic ID. Repository-owned
+local-tool bootstrap closeout does not add `WF-LOAD-*`, `WF-SCHEMA-*`,
+`WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`,
+`WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules, package validation diagnostics,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, plugin mutation diagnostics,
+generated workflow/task diagnostics, VS Code extension diagnostics,
+language-server diagnostics, or AI requirements.
+
+Gate 334 adds no new rule family or diagnostic ID. Consumer-project
+package-source policy planning does not add `WF-LOAD-*`, `WF-SCHEMA-*`,
+`WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`,
+`WF-REL-*`, `WF-GOV-*`, or `WF-SEC-*` rules, package validation diagnostics,
+external tool diagnostics, runtime probe diagnostics, repository publish
+diagnostics, signing/attestation diagnostics, plugin mutation diagnostics,
+generated workflow/task diagnostics, VS Code extension diagnostics,
+language-server diagnostics, or AI requirements.
+
+Gate 335 adds no new rule family or diagnostic ID. Generated command
+availability guidance does not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`,
+`WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` rules, package validation diagnostics, external tool
+diagnostics, runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, plugin mutation diagnostics, VS Code extension
+diagnostics, language-server diagnostics, or AI requirements.
