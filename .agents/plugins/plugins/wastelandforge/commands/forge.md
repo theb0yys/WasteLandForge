@@ -792,9 +792,9 @@ repository-owned developer task local-tool bootstrap. Gate 332 scaffolds the
 repository-owned developer task local-tool bootstrap. Gate 333 closes the
 repository-owned local-tool bootstrap lane. Gate 334 plans consumer-project
 Forge package-source policy. Gate 335 implements generated consumer-project
-Forge command availability guidance. Route the next development step to Gate
-336: generated consumer-project Forge command availability guidance closeout
-and next-value routing.
+Forge command availability guidance. Gate 336 closes that guidance lane. Route
+the next development step to Gate 337: local standalone Forge executable
+distribution planning.
 
 - `/forge graph` routes to the real `forge graph` behavior when available.
   Gate 236 implements minimal project source graph evidence under
@@ -928,9 +928,9 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   scaffolds the repository-owned developer task local-tool bootstrap. Gate 333
   closes the repository-owned local-tool bootstrap lane. Gate 334 plans
   consumer-project Forge package-source policy. Gate 335 implements generated
-  consumer-project Forge command availability guidance. Route the next
-  development step to Gate 336: generated consumer-project Forge command
-  availability guidance closeout and next-value routing.
+  consumer-project Forge command availability guidance. Gate 336 closes that
+  guidance lane. Route the next development step to Gate 337: local standalone
+  Forge executable distribution planning.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider

@@ -147,3 +147,9 @@ generated READMEs now document the `forge` on `PATH` prerequisite, generated
 VS Code tasks include a `Forge: Check Command` task before validate/capability
 scan/build report tasks, and generated workflows explain `FORGE_COMMAND` without
 restoring Forge or building `WastelandForge.Cli` from source.
+
+Gate 336 closes that generated guidance lane and routes the next bootstrap value
+slice to local standalone Forge executable distribution planning. The source
+repository bootstrap path stays separate from generated consumer scaffolds, and
+Gate 336 does not add installer, signing, update-channel, NuGet publication, or
+package restore behavior.

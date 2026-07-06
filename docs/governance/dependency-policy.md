@@ -1555,3 +1555,13 @@ publishing clients, repository API clients, signing or attestation
 dependencies, external tool integrations, network calls, runtime probes, MO2
 or GECK automation, plugin mutation dependencies, provider installation, or AI
 requirements.
+
+Gate 336 adds no package dependency. It closes the generated command
+availability guidance lane and routes the next value slice to local standalone
+Forge executable distribution planning, but it does not add executable packaging
+dependencies. It does not add new NuGet dependencies, root `NuGet.config`,
+NuGet publication, package restore, standalone packaging dependencies,
+installer dependencies, publishing clients, repository API clients, signing or
+attestation dependencies, external tool integrations, network calls, runtime
+probes, MO2 or GECK automation, plugin mutation dependencies, provider
+installation, or AI requirements.

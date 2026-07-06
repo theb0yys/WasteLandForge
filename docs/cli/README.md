@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 335 generated consumer-project Forge command availability guidance scaffold
+Status: Gate 336 generated consumer-project Forge command availability guidance closeout
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -1492,6 +1492,14 @@ when the command is missing. Gate 335 changes no CLI command names, adds no
 package restore, emits no generated local tool manifest or root `NuGet.config`,
 publishes nothing, runs no external game tools or runtime probes, and routes
 Gate 336 to lane closeout and next-value routing.
+
+Gate 336 closes the generated consumer-project command availability guidance
+lane without changing CLI runtime behavior or generated templates. Gates 334
+and 335 now make generated projects honest: they expect an existing `forge`
+command and do not pretend to restore Forge from WastelandForge source. The next
+route is Gate 337, local standalone Forge executable distribution planning, so
+the project can define a source-agnostic way for users to satisfy the `forge` on
+`PATH` prerequisite before public package/feed policy is ready.
 
 ## Docs Evidence
 

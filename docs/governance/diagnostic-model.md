@@ -1667,5 +1667,12 @@ governance, security, external-tool, runtime-probe, repository-publish,
 signing/attestation, plugin-mutation, VS Code extension, language-server, or AI
 diagnostics.
 
+Gate 336 adds no new diagnostic rule ID. Generated command availability
+guidance closeout is a routing decision, not a Forge diagnostic report. It does
+not add schema, semantic, capability, build, release, governance, security,
+external-tool, runtime-probe, repository-publish, signing/attestation,
+plugin-mutation, VS Code extension, language-server, installer, executable
+packaging, or AI diagnostics.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

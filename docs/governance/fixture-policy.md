@@ -1338,3 +1338,9 @@ snapshot, MO2 profile, GECK output, external tool fixture, checked-in local tool
 package fixture, or AI-generated fixture. It updates generated scaffold
 templates and exercises them through a temporary synthetic project in golden
 tests.
+
+Gate 336 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, executable package
+fixture, installer fixture, checked-in local tool package fixture, or
+AI-generated fixture. It is a docs and prompt routing closeout only.

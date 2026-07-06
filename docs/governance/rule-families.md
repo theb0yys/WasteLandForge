@@ -1191,3 +1191,12 @@ availability guidance does not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`,
 diagnostics, runtime probe diagnostics, repository publish diagnostics,
 signing/attestation diagnostics, plugin mutation diagnostics, VS Code extension
 diagnostics, language-server diagnostics, or AI requirements.
+
+Gate 336 adds no new rule family or diagnostic ID. Command availability
+guidance closeout does not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`,
+`WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` rules, package validation diagnostics, executable
+packaging diagnostics, installer diagnostics, external tool diagnostics,
+runtime probe diagnostics, repository publish diagnostics, signing/attestation
+diagnostics, plugin mutation diagnostics, VS Code extension diagnostics,
+language-server diagnostics, or AI requirements.
