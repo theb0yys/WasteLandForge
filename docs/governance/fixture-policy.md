@@ -1344,3 +1344,18 @@ payload, provider sample, Bethesda asset, third-party mod file, local install
 snapshot, MO2 profile, GECK output, external tool fixture, executable package
 fixture, installer fixture, checked-in local tool package fixture, or
 AI-generated fixture. It is a docs and prompt routing closeout only.
+
+Gate 337 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, executable package
+fixture, installer fixture, app-shell package fixture, checked-in local tool
+package fixture, or AI-generated fixture. It is a docs and prompt routing
+planning gate only.
+
+Gate 338 commits no new public fixture, private fixture, generated evidence
+payload, provider sample, Bethesda asset, third-party mod file, local install
+snapshot, MO2 profile, GECK output, external tool fixture, checked-in local
+tool package fixture, installer fixture, app-shell package fixture, or
+AI-generated fixture. Its standalone publish outputs are ignored local
+distribution artifacts under `dist/local/forge` or
+`artifacts/standalone-forge/<name>`.

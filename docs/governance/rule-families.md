@@ -1200,3 +1200,23 @@ packaging diagnostics, installer diagnostics, external tool diagnostics,
 runtime probe diagnostics, repository publish diagnostics, signing/attestation
 diagnostics, plugin mutation diagnostics, VS Code extension diagnostics,
 language-server diagnostics, or AI requirements.
+
+Gate 337 adds no new rule family or diagnostic ID. Local standalone executable
+distribution planning does not add `WF-LOAD-*`, `WF-SCHEMA-*`, `WF-SEM-*`,
+`WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` rules, package validation diagnostics, executable
+packaging diagnostics, installer diagnostics, external tool diagnostics,
+runtime probe diagnostics, repository publish diagnostics, signing/attestation
+diagnostics, plugin mutation diagnostics, VS Code extension diagnostics,
+language-server diagnostics, app-shell packaging diagnostics, or AI
+requirements.
+
+Gate 338 adds no new rule family or diagnostic ID. Local standalone executable
+distribution scaffold evidence does not add `WF-LOAD-*`, `WF-SCHEMA-*`,
+`WF-SEM-*`, `WF-CAP-*`, `WF-ASSET-*`, `WF-GEN-*`, `WF-BUILD-*`, `WF-REL-*`,
+`WF-GOV-*`, or `WF-SEC-*` rules, package validation diagnostics, executable
+packaging diagnostics, installer diagnostics, external tool diagnostics,
+runtime probe diagnostics, repository publish diagnostics,
+signing/attestation diagnostics, plugin mutation diagnostics, VS Code extension
+diagnostics, language-server diagnostics, app-shell packaging diagnostics, or
+AI requirements.

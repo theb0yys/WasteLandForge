@@ -1,6 +1,6 @@
 # CLI Contract
 
-Status: Gate 336 generated consumer-project Forge command availability guidance closeout
+Status: Gate 339 local standalone Forge executable distribution lane closeout
 Research classification: Documented
 Source: R006 / ADR-010
 
@@ -1500,6 +1500,24 @@ command and do not pretend to restore Forge from WastelandForge source. The next
 route is Gate 337, local standalone Forge executable distribution planning, so
 the project can define a source-agnostic way for users to satisfy the `forge` on
 `PATH` prerequisite before public package/feed policy is ready.
+
+Gate 337 keeps the same canonical command surface and plans local standalone
+`forge.exe` distribution. The planned handoff is a source-agnostic local folder
+with `forge.exe`, minimal instructions, a build manifest, and SHA-256 checksums
+under an ignored distribution tree. This is not NuGet publication, package
+restore, installer creation, signing, app-shell packaging, or generated
+consumer-template mutation. Gate 338 is routed to scaffold that local standalone
+distribution path for the source repository.
+
+Gate 338 keeps the same canonical command surface and adds the source-repository
+standalone distribution scaffold. `eng/Publish-StandaloneForge.ps1` publishes
+the CLI project as `dist/local/forge/forge.exe`, writes `README.txt`,
+`build-manifest.json`, and `checksums.sha256`, and the repository VS Code task
+`Forge: Publish Standalone` invokes the same helper. This is still not an
+installer, package restore, NuGet publication, signing, attestation, app-shell
+packaging, generated consumer-template mutation, external game-tool execution,
+runtime probing, or AI behavior. Gate 339 is routed to close the standalone
+distribution lane and select the next value slice.
 
 ## Docs Evidence
 

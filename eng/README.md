@@ -153,3 +153,74 @@ slice to local standalone Forge executable distribution planning. The source
 repository bootstrap path stays separate from generated consumer scaffolds, and
 Gate 336 does not add installer, signing, update-channel, NuGet publication, or
 package restore behavior.
+
+Gate 337 plans the local standalone `forge.exe` distribution lane. The planned
+repository-owned output is a local source-agnostic folder with the Forge
+executable, minimal instructions, build-manifest evidence, and checksums under
+an ignored distribution tree. This stays separate from NuGet/local-tool restore
+and from `WastelandForge.exe` app-shell packaging.
+
+Gate 338 adds that source-repository scaffold:
+
+- `Publish-StandaloneForge.ps1` publishes `src/WastelandForge.Cli` as a
+  Windows framework-dependent `forge.exe` apphost under `dist/local/forge/`.
+- The script writes `README.txt`, `build-manifest.json`, and
+  `checksums.sha256` beside the executable.
+- The `Forge: Publish Standalone` VS Code task runs the same helper.
+
+Example:
+
+```text
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Publish-StandaloneForge.ps1
+dist\local\forge\forge.exe help
+```
+
+The helper is for local/manual distribution only. It runs `dotnet publish
+--no-restore`, defaults to a framework-dependent apphost, refuses output roots
+outside `dist/local/forge` or `artifacts/standalone-forge/<name>`, and does
+not create an installer, publish to NuGet, mutate generated consumer projects,
+sign binaries, create attestations, start app-shell packaging, run external
+game tools, run runtime probes, or add AI behavior.
+
+Gate 341 adds the local app-shell publish helper:
+
+- `Publish-AppShell.ps1` publishes `src/WastelandForge.Desktop` under
+  `dist/app/WastelandForge.Desktop/`.
+- The helper publishes or requires the standalone backend first, then bundles
+  it under `ForgeBackend/`.
+- The app output also includes `DemoProjects/ExampleMod`,
+  `app-build-manifest.json`, `checksums.sha256`, and `README.txt`.
+- The `Forge: Publish App Shell` VS Code task runs the same helper.
+
+Example:
+
+```text
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Publish-AppShell.ps1
+dist\app\WastelandForge.Desktop\WastelandForge.exe
+```
+
+The helper is for local/manual app-shell distribution only. It runs
+`dotnet publish --no-restore`, refuses output roots outside
+`dist/app/WastelandForge.Desktop` or `artifacts/app-shell/<name>`, and does
+not create an installer, sign binaries, create attestations, publish releases,
+add an update channel, run external game tools, run runtime probes, or add AI
+behavior.
+
+Gate 343 adds the installer source scaffold without compiling it:
+
+- `installer/inno/WastelandForge.iss` describes the future Inno Setup installer
+  over the existing app-shell publish folder.
+- `installer/inno/README.md` records the source-only boundary and future
+  compiler invocation shape.
+- `Test-AppShellInstallerInputs.ps1` validates the bounded app-shell input
+  folder before any future compiler step.
+
+Example:
+
+```text
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Test-AppShellInstallerInputs.ps1 -AppShellRoot artifacts/app-shell/gate-341
+```
+
+Gate 343 does not run Inno Setup, create a setup executable, sign or timestamp
+artifacts, add an update channel, publish releases, run external game tools,
+run runtime probes, or add AI behavior.

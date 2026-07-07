@@ -834,9 +834,15 @@ repository-owned developer task local-tool bootstrap. Gate 332 scaffolds the
 repository-owned developer task local-tool bootstrap. Gate 333 closes the
 repository-owned local-tool bootstrap lane. Gate 334 plans consumer-project
 Forge package-source policy. Gate 335 implements generated consumer-project
-Forge command availability guidance. Gate 336 closes that guidance lane. Route
-the next development step to Gate 337: local standalone Forge executable
-distribution planning.
+Forge command availability guidance. Gate 336 closes that guidance lane. Gate
+337 plans local standalone Forge executable distribution. Gate 338 scaffolds
+local standalone Forge executable distribution. Gate 339 closes that lane.
+Gate 340 plans premium Windows app-shell distribution and installer readiness.
+Gate 341 scaffolds the local app-shell publish helper and distribution
+evidence. Gate 342 plans Windows installer technology. Gate 343 scaffolds the
+Inno Setup installer script source and app-shell installer input preflight.
+Route the next development step to Gate 344: local Inno Setup compiler
+detection and unsigned installer build helper scaffold.
 
 - `/forge graph` maps to the real `forge graph` behavior when available. Gate
   236 implements minimal project source graph evidence under `generated/graph`,
@@ -971,8 +977,14 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   closes the repository-owned local-tool bootstrap lane. Gate 334 plans
   consumer-project Forge package-source policy. Gate 335 implements generated
   consumer-project Forge command availability guidance. Gate 336 closes that
-  guidance lane. Route the next development step to Gate 337: local standalone
-  Forge executable distribution planning.
+  guidance lane. Gate 337 plans local standalone Forge executable distribution.
+  Gate 338 scaffolds local standalone Forge executable distribution. Gate 339
+  closes that lane. Gate 340 plans premium Windows app-shell distribution and
+  installer readiness. Gate 341 scaffolds the local app-shell publish helper
+  and distribution evidence. Gate 342 plans Windows installer technology. Gate
+  343 scaffolds the Inno Setup installer script source and app-shell installer
+  input preflight. Route the next development step to Gate 344: local Inno
+  Setup compiler detection and unsigned installer build helper scaffold.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a

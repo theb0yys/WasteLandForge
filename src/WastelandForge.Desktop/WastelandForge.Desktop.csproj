@@ -15,15 +15,48 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="..\..\dist\local\forge.exe" Link="forge.exe" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('..\..\dist\local\forge.exe')" />
-    <Content Include="..\..\dist\local\forge.pdb" Link="forge.pdb" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('..\..\dist\local\forge.pdb')" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(HeatSourceRoot)' != '' and Exists('$(HeatSourceRoot)')">
     <Resource Include="$(HeatSourceRoot)\Textures\Borders\Special\Cross Frame.png" Link="Assets\Heat\Cross Frame.png" Condition="Exists('$(HeatSourceRoot)\Textures\Borders\Special\Cross Frame.png')" />
     <Resource Include="$(HeatSourceRoot)\Fonts\RobotoCondensed-Regular.ttf" Link="Assets\Heat\RobotoCondensed-Regular.ttf" Condition="Exists('$(HeatSourceRoot)\Fonts\RobotoCondensed-Regular.ttf')" />
     <Resource Include="$(HeatSourceRoot)\Fonts\RobotoCondensed-Bold.ttf" Link="Assets\Heat\RobotoCondensed-Bold.ttf" Condition="Exists('$(HeatSourceRoot)\Fonts\RobotoCondensed-Bold.ttf')" />
   </ItemGroup>
+
+  <Target Name="CopyForgeBackendToOutputDirectory" AfterTargets="Build" Condition="Exists('$(MSBuildProjectDirectory)\..\..\dist\local\forge')">
+    <ItemGroup>
+      <ForgeBackendOutputFiles Include="$(MSBuildProjectDirectory)\..\..\dist\local\forge\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ForgeBackendOutputFiles)"
+          DestinationFiles="@(ForgeBackendOutputFiles->'$(TargetDir)ForgeBackend\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyForgeBackendToPublishDirectory" AfterTargets="Publish" Condition="Exists('$(MSBuildProjectDirectory)\..\..\dist\local\forge')">
+    <ItemGroup>
+      <ForgeBackendPublishFiles Include="$(MSBuildProjectDirectory)\..\..\dist\local\forge\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ForgeBackendPublishFiles)"
+          DestinationFiles="@(ForgeBackendPublishFiles->'$(PublishDir)ForgeBackend\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyDemoProjectToOutputDirectory" AfterTargets="Build" Condition="Exists('$(MSBuildProjectDirectory)\..\..\fixtures\projects\ExampleMod')">
+    <ItemGroup>
+      <DemoProjectOutputFiles Include="$(MSBuildProjectDirectory)\..\..\fixtures\projects\ExampleMod\**\*.*"
+                              Exclude="$(MSBuildProjectDirectory)\..\..\fixtures\projects\ExampleMod\generated\**\*.*;$(MSBuildProjectDirectory)\..\..\fixtures\projects\ExampleMod\dist\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(DemoProjectOutputFiles)"
+          DestinationFiles="@(DemoProjectOutputFiles->'$(TargetDir)DemoProjects\ExampleMod\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyDemoProjectToPublishDirectory" AfterTargets="Publish" Condition="Exists('$(MSBuildProjectDirectory)\..\..\fixtures\projects\ExampleMod')">
+    <ItemGroup>
+      <DemoProjectPublishFiles Include="$(MSBuildProjectDirectory)\..\..\fixtures\projects\ExampleMod\**\*.*"
+                               Exclude="$(MSBuildProjectDirectory)\..\..\fixtures\projects\ExampleMod\generated\**\*.*;$(MSBuildProjectDirectory)\..\..\fixtures\projects\ExampleMod\dist\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(DemoProjectPublishFiles)"
+          DestinationFiles="@(DemoProjectPublishFiles->'$(PublishDir)DemoProjects\ExampleMod\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

@@ -1565,3 +1565,21 @@ installer dependencies, publishing clients, repository API clients, signing or
 attestation dependencies, external tool integrations, network calls, runtime
 probes, MO2 or GECK automation, plugin mutation dependencies, provider
 installation, or AI requirements.
+
+Gate 337 adds no package dependency. It plans a local standalone `forge.exe`
+distribution handoff, but it does not add executable packaging dependencies yet.
+It does not add new NuGet dependencies, root `NuGet.config`, NuGet publication,
+package restore, standalone packaging dependencies, installer dependencies,
+publishing clients, repository API clients, signing or attestation
+dependencies, external tool integrations, network calls, runtime probes, MO2 or
+GECK automation, plugin mutation dependencies, app-shell packaging
+dependencies, provider installation, or AI requirements.
+
+Gate 338 adds no package dependency. It adds a PowerShell helper that uses the
+existing .NET SDK and `dotnet publish --no-restore` to create a local
+standalone `forge.exe` distribution under an ignored output tree. It does not
+add new NuGet dependencies, root `NuGet.config`, NuGet publication, package
+restore, installer dependencies, publishing clients, repository API clients,
+signing or attestation dependencies, external tool integrations, network calls,
+runtime probes, MO2 or GECK automation, plugin mutation dependencies,
+app-shell packaging dependencies, provider installation, or AI requirements.

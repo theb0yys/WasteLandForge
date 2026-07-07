@@ -1674,5 +1674,19 @@ external-tool, runtime-probe, repository-publish, signing/attestation,
 plugin-mutation, VS Code extension, language-server, installer, executable
 packaging, or AI diagnostics.
 
+Gate 337 adds no new diagnostic rule ID. Local standalone Forge executable
+distribution planning is a bootstrap planning decision, not a Forge diagnostic
+report. It does not add schema, semantic, capability, build, release,
+governance, security, external-tool, runtime-probe, repository-publish,
+signing/attestation, plugin-mutation, VS Code extension, language-server,
+installer, executable packaging, app-shell packaging, or AI diagnostics.
+
+Gate 338 adds no new diagnostic rule ID. The local standalone Forge executable
+distribution scaffold emits local build-manifest and checksum evidence, not
+Forge diagnostics. It does not add schema, semantic, capability, build,
+release, governance, security, external-tool, runtime-probe,
+repository-publish, signing/attestation, plugin-mutation, VS Code extension,
+language-server, installer, app-shell packaging, or AI diagnostics.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

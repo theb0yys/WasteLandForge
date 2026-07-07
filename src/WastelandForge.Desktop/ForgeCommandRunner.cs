@@ -21,19 +21,29 @@ internal sealed class ForgeCommandRunner
 
     public async Task<ForgeCommandResult> RunAsync(params string[] arguments)
     {
+        return await RunCoreAsync(null, arguments).ConfigureAwait(false);
+    }
+
+    public async Task<ForgeCommandResult> RunInWorkingDirectoryAsync(string workingDirectory, params string[] arguments)
+    {
+        return await RunCoreAsync(workingDirectory, arguments).ConfigureAwait(false);
+    }
+
+    private async Task<ForgeCommandResult> RunCoreAsync(string? workingDirectory, IReadOnlyCollection<string> arguments)
+    {
         if (forgePath is null)
         {
             return new ForgeCommandResult(
                 "forge.exe",
                 8,
                 string.Empty,
-                "forge.exe was not found beside the app, in WASTELANDFORGE_EXE, or under dist\\local.");
+                "forge.exe was not found under ForgeBackend, beside the app, in WASTELANDFORGE_EXE, or under dist\\local\\forge.");
         }
 
         var startInfo = new ProcessStartInfo
         {
             FileName = forgePath,
-            WorkingDirectory = repositoryRoot ?? Path.GetDirectoryName(forgePath) ?? AppContext.BaseDirectory,
+            WorkingDirectory = ResolveWorkingDirectory(workingDirectory),
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -71,12 +81,28 @@ internal sealed class ForgeCommandRunner
         }
     }
 
+    private string ResolveWorkingDirectory(string? workingDirectory)
+    {
+        if (!string.IsNullOrWhiteSpace(workingDirectory) && Directory.Exists(workingDirectory))
+        {
+            return Path.GetFullPath(workingDirectory);
+        }
+
+        return repositoryRoot ?? Path.GetDirectoryName(forgePath) ?? AppContext.BaseDirectory;
+    }
+
     private static string? ResolveForgePath(string? repositoryRoot)
     {
         var environmentPath = Environment.GetEnvironmentVariable("WASTELANDFORGE_EXE");
         if (IsUsableFile(environmentPath))
         {
             return Path.GetFullPath(environmentPath!);
+        }
+
+        var bundledBackend = Path.Combine(AppContext.BaseDirectory, "ForgeBackend", "forge.exe");
+        if (File.Exists(bundledBackend))
+        {
+            return bundledBackend;
         }
 
         var besideApp = Path.Combine(AppContext.BaseDirectory, "forge.exe");
@@ -87,10 +113,16 @@ internal sealed class ForgeCommandRunner
 
         if (repositoryRoot is not null)
         {
-            var localDist = Path.Combine(repositoryRoot, "dist", "local", "forge.exe");
+            var localDist = Path.Combine(repositoryRoot, "dist", "local", "forge", "forge.exe");
             if (File.Exists(localDist))
             {
                 return localDist;
+            }
+
+            var legacyLocalDist = Path.Combine(repositoryRoot, "dist", "local", "forge.exe");
+            if (File.Exists(legacyLocalDist))
+            {
+                return legacyLocalDist;
             }
         }
 

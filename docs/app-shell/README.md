@@ -36,13 +36,27 @@ The app shell does not own:
 
 ## Backend Bridge
 
-The implementation uses `forge.exe` beside the app as a backend worker. The
-first bridge commands are:
+The implementation uses `forge.exe` as a backend worker. Local publishes bundle
+the ignored `dist/local/forge/` backend distribution under
+`ForgeBackend/` inside the app output, so build the Forge backend before
+publishing the app shell:
+
+```text
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Publish-AppShell.ps1
+```
+
+The helper writes `README.txt`, `app-build-manifest.json`, and
+`checksums.sha256` into the local app output beside `WastelandForge.exe`.
+
+The first bridge commands are:
 
 ```text
 forge.exe --version
 forge.exe capabilities list --format json
 forge.exe validate <project-root> --format json
+forge.exe generate <project-root> --target mcm-json --format json
+forge.exe package <project-root> --target mcm-json --format json
+forge.exe package <project-root> --target mcm-json --verify-existing --format json
 ```
 
 The GUI consumes JSON and other machine-readable reports. Human console text is
@@ -55,6 +69,8 @@ The first MVP view set is:
 - splash/application chrome,
 - project selector,
 - Doctor/capability dashboard,
+- MCM package builder,
+- bundled demo source copied to `%LOCALAPPDATA%\WastelandForge\DemoProjects\ExampleMod`,
 - validation report view,
 - advanced log panel.
 
@@ -83,9 +99,31 @@ distribution.
 
 See `asset-license-audit.md` for the current Heat 1.1.8 boundary.
 
+## Installer Route
+
+Gate 342 selects Inno Setup script scaffolding as the next installer lane. The
+first installer step should author source installer metadata over the existing
+local app output without producing a setup executable, signing binaries, or
+adding an update channel.
+
+Gate 343 adds that source scaffold under `installer/inno/` and a local
+preflight helper:
+
+```text
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Test-AppShellInstallerInputs.ps1
+```
+
+The preflight checks the app publish folder for `WastelandForge.exe`,
+`ForgeBackend/forge.exe`, bundled demo source, `app-build-manifest.json`, and
+`checksums.sha256` before any future installer compiler step.
+
+MSIX remains a later option after signing, package identity, and update policy
+are settled. WiX/MSI remains a later option if enterprise MSI governance becomes
+necessary.
+
 ## Open Implementation Checks
 
-- Installer technology.
+- Gate 344 Inno Setup compiler detection and unsigned local installer build helper.
 - Code signing and update channel.
 - Final Heat Restricted Asset status before public release.
 - Seat/license coverage for every contributor who uses the Heat asset source.
