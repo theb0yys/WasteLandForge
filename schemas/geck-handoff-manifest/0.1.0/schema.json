@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/geck-handoff-manifest/0.1.0/schema.json",
+  "title": "WastelandForge GECK Authoring Handoff Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "handoffType", "command", "target", "tool", "project", "summary", "sources", "files", "unresolvedActions", "safety"],
+  "properties": {
+    "formatVersion": { "const": "0.1" },
+    "kind": { "const": "wastelandforge.geck-handoff-manifest" },
+    "handoffType": { "const": "wastelandforge/geck-authoring-handoff/v1" },
+    "command": { "const": "package" },
+    "target": { "const": "geck-handoff" },
+    "tool": { "type": "object", "additionalProperties": false, "required": ["name", "version"], "properties": { "name": { "const": "WastelandForge" }, "version": { "$ref": "#/$defs/text" } } },
+    "project": { "type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": { "id": { "$ref": "#/$defs/text" }, "version": { "$ref": "#/$defs/text" } } },
+    "summary": { "type": "object", "additionalProperties": false, "required": ["quests", "dialogueLines", "voiceRows", "jipScripts", "worklists", "unresolvedActions"], "properties": { "quests": { "type": "integer", "minimum": 0 }, "dialogueLines": { "type": "integer", "minimum": 0 }, "voiceRows": { "type": "integer", "minimum": 0 }, "jipScripts": { "type": "integer", "minimum": 0 }, "worklists": { "type": "integer", "minimum": 1 }, "unresolvedActions": { "type": "integer", "minimum": 1 } } },
+    "sources": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/digest" } },
+    "files": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/digest" } },
+    "unresolvedActions": { "type": "object", "additionalProperties": false, "required": ["count", "categories"], "properties": { "count": { "type": "integer", "minimum": 1 }, "categories": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/text" } } } },
+    "safety": { "type": "object", "additionalProperties": false, "required": ["launchesGeck", "launchesXEdit", "mutatesPlugins", "createsPluginRecords", "compilesScripts", "writesToGameData", "writesToMo2", "executesExternalTools"], "properties": { "launchesGeck": { "const": false }, "launchesXEdit": { "const": false }, "mutatesPlugins": { "const": false }, "createsPluginRecords": { "const": false }, "compilesScripts": { "const": false }, "writesToGameData": { "const": false }, "writesToMo2": { "const": false }, "executesExternalTools": { "const": false } } }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "digest": { "type": "object", "additionalProperties": false, "required": ["path", "sha256", "length"], "properties": { "path": { "$ref": "#/$defs/text" }, "sha256": { "$ref": "#/$defs/sha256" }, "length": { "type": "integer", "minimum": 0 } } }
+  }
+}

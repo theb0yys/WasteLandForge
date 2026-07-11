@@ -33,6 +33,7 @@ internal static class SetupPathValidator
         ValidateDirectory("Data root", settings.DataRoot, issues, ref readyCore);
 
         ValidateOptionalFile("MO2", settings.Mo2Path, issues, ref readyTools);
+        ValidateOptionalDirectory("MO2 mods root", settings.Mo2ModsRoot, settings.DataRoot, issues);
         ValidateOptionalFile("GECK", settings.ToolPaths.GetValueOrDefault("geck", string.Empty), issues, ref readyTools);
         ValidateOptionalFile("xEdit", settings.ToolPaths.GetValueOrDefault("xedit", string.Empty), issues, ref readyTools);
 
@@ -69,6 +70,7 @@ internal static class SetupPathValidator
             ("Game root", settings.GameRoot),
             ("Data root", settings.DataRoot),
             ("MO2", settings.Mo2Path),
+            ("MO2 mods root", settings.Mo2ModsRoot),
             ("GECK", settings.ToolPaths.GetValueOrDefault("geck", string.Empty)),
             ("xEdit", settings.ToolPaths.GetValueOrDefault("xedit", string.Empty))
         };
@@ -139,5 +141,12 @@ internal static class SetupPathValidator
         {
             ready++;
         }
+    }
+
+    private static void ValidateOptionalDirectory(string label, string? path, string? gameDataRoot, ICollection<SetupPathIssue> issues)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+        var reason = Mo2InstanceDiscovery.ValidateModsRoot(path, gameDataRoot);
+        if (reason is not null) issues.Add(new SetupPathIssue($"{label} is invalid: {reason}", IsInvalid: true));
     }
 }

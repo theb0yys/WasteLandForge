@@ -415,6 +415,44 @@ public sealed class ProjectValidationPipeline
             audits);
     }
 
+    public ProjectGeckHandoffSourceReadResult ReadGeckHandoffSources(string projectPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectPath);
+        var projectRoot = Path.GetFullPath(projectPath);
+        var validation = Validate(projectRoot);
+        if (validation.HasErrors)
+            return new(projectRoot, validation.ProjectId, null, validation, [], [], [], []);
+
+        var issues = new List<DiagnosticIssue>();
+        var manifestLoad = LoadManifest(projectRoot, issues);
+        if (manifestLoad is null)
+            return new(projectRoot, validation.ProjectId, null, new DiagnosticReport(validation.ProjectId, issues), [], [], [], []);
+
+        var registries = manifestLoad.Manifest["registries"] as JsonObject;
+        var quests = Read("quests", "quest");
+        var dialogue = Read("dialogue", "dialogue");
+        var assets = Read("assets", "asset");
+        var jipScripts = Read("jipScripts", "jip-script");
+        return new(
+            projectRoot,
+            validation.ProjectId,
+            GetString(manifestLoad.Manifest, "version"),
+            new DiagnosticReport(validation.ProjectId, issues),
+            quests,
+            dialogue,
+            assets,
+            jipScripts);
+
+        IReadOnlyList<ProjectRegistrySourceDocument> Read(string key, string kind)
+        {
+            var declaredPath = GetString(registries, key);
+            if (declaredPath is null) return [];
+            return LoadRegistryDocuments(projectRoot, declaredPath, kind, key, issues, validation.ProjectId)
+                .Select(document => new ProjectRegistrySourceDocument(document.Path, document.DisplayPath, (JsonObject)document.Root.DeepClone()))
+                .ToArray();
+        }
+    }
+
     private static LoadedManifest? LoadManifest(string projectRoot, List<DiagnosticIssue> issues)
     {
         if (!Directory.Exists(projectRoot))

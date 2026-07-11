@@ -6,6 +6,65 @@ namespace WastelandForge.UnitTests;
 public sealed class ModPackageAssemblerTests
 {
     [Fact]
+    public void ExportsCombinedPackageAsOneNamedMo2ModWithEvidence()
+    {
+        var source = FindFixture();
+        var root = Path.Combine(Path.GetTempPath(), "WastelandForge.Mo2ExportTests", Guid.NewGuid().ToString("N"));
+        var modsRoot = Path.Combine(root, "mo2", "mods");
+        CopyDirectory(source, root);
+        Directory.CreateDirectory(modsRoot);
+        try
+        {
+            var package = new ModPackageAssembler().Package(new(root, null, "0.1.0", false));
+            var export = new Mo2ModExporter().Export(package, new(modsRoot, "Combined Mod Example", "0.1.0", false));
+
+            Assert.False(export.HasErrors, string.Join(Environment.NewLine, export.Diagnostics.Issues.Select(issue => issue.Message)));
+            Assert.Equal("exported", export.Status);
+            Assert.Equal(3, export.Entries.Count);
+            var destination = Path.Combine(modsRoot, "Combined Mod Example");
+            Assert.True(File.Exists(Path.Combine(destination, "MCM", "CombinedModExample.json")));
+            Assert.True(File.Exists(Path.Combine(destination, "MCM", "Translations", "io.github.theboyyss.combinedmodexample.mcm.main.ini")));
+            Assert.True(File.Exists(Path.Combine(destination, "nvse", "plugins", "scripts", "gr_combined_bootstrap.txt")));
+            Assert.False(Directory.Exists(Path.Combine(destination, "Data")));
+            Assert.NotNull(export.Outputs?.Manifest);
+            Assert.True(File.Exists(export.Outputs.Manifest));
+            Assert.True(File.Exists(export.Outputs.Checksums));
+            Assert.All(export.Entries, entry => Assert.Equal(entry.SourceSha256, entry.DestinationSha256));
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void Mo2ExportDryRunWritesNothingAndUnsafeDestinationsAreRefused()
+    {
+        var source = FindFixture();
+        var root = Path.Combine(Path.GetTempPath(), "WastelandForge.Mo2ExportTests", Guid.NewGuid().ToString("N"));
+        var modsRoot = Path.Combine(root, "mo2", "mods");
+        CopyDirectory(source, root);
+        Directory.CreateDirectory(modsRoot);
+        try
+        {
+            var package = new ModPackageAssembler().Package(new(root, null, "0.1.0", true));
+            var preview = new Mo2ModExporter().Export(package, new(modsRoot, "Preview Mod", "0.1.0", true));
+            Assert.False(preview.HasErrors);
+            Assert.Equal("planned", preview.Status);
+            Assert.Equal(3, preview.Entries.Count);
+            Assert.False(Directory.Exists(Path.Combine(modsRoot, "Preview Mod")));
+
+            Directory.CreateDirectory(Path.Combine(modsRoot, "Existing"));
+            var built = new ModPackageAssembler().Package(new(root, null, "0.1.0", false));
+            var existing = new Mo2ModExporter().Export(built, new(modsRoot, "Existing", "0.1.0", false));
+            Assert.Contains(existing.Diagnostics.Issues, issue => issue.RuleId.ToString() == "WF-BUILD-013");
+            var overwriteRoot = Path.Combine(root, "MO2", "Overwrite");
+            Directory.CreateDirectory(overwriteRoot);
+            var overwrite = new Mo2ModExporter().Export(built, new(overwriteRoot, "Refused", "0.1.0", false));
+            Assert.Contains(overwrite.Diagnostics.Issues, issue => issue.RuleId.ToString() == "WF-BUILD-012");
+            Assert.False(Directory.Exists(Path.Combine(overwriteRoot, "Refused")));
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    [Fact]
     public void RefusesCaseInsensitiveCollisionsAndUnsafePaths()
     {
         var issues = ModPackageAssembler.ValidateDestinationPaths([

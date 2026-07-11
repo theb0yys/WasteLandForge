@@ -21,6 +21,10 @@
     <Resource Include="$(HeatSourceRoot)\Fonts\RobotoCondensed-Bold.ttf" Link="Assets\Heat\RobotoCondensed-Bold.ttf" Condition="Exists('$(HeatSourceRoot)\Fonts\RobotoCondensed-Bold.ttf')" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\WastelandForge.Validation\WastelandForge.Validation.csproj" />
+  </ItemGroup>
+
   <Target Name="CopyForgeBackendToOutputDirectory" AfterTargets="Build" Condition="Exists('$(MSBuildProjectDirectory)\..\..\dist\local\forge')">
     <ItemGroup>
       <ForgeBackendOutputFiles Include="$(MSBuildProjectDirectory)\..\..\dist\local\forge\**\*.*" />

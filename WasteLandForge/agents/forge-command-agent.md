@@ -1153,8 +1153,9 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   input preflight. Gate 344 adds local Inno Setup compiler detection and an
   unsigned installer build helper scaffold. Gate 345 closes the installer
   helper lane and routes back to app-shell product value. Route the next
-  development step to Gate 393: implement the backend and Project Outputs
-  named-MO2 export vertical slice with evidence, rollback, and refusal tests.
+  development step to Gate 415: implement source-backed dialogue branching
+  authoring, validation rollback, Narrative Author controls, GECK-handoff
+  rebuild, focused tests, and published-app regression.
 
 ## Required output
 

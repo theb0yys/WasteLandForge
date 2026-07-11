@@ -249,7 +249,7 @@ necessary.
 
 ## Open Implementation Checks
 
-- Gate 393 named MO2 mod export backend and Project Outputs preview/export/handoff implementation.
+- Gate 415 source-backed dialogue branching authoring implementation.
 - Code signing and update channel.
 - Final Heat Restricted Asset status before public release.
 - Seat/license coverage for every contributor who uses the Heat asset source.

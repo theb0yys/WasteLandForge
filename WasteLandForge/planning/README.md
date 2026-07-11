@@ -396,10 +396,32 @@ Gate status:
 - `gates/gate-390-fnv-framework-combined-scaffold-implementation.md` - Gate 390, implemented 12-file runtime-enabled framework scaffold with create, validate, combined-package, stability, and refusal coverage.
 - `gates/gate-391-installed-framework-new-project-regression.md` - Gate 391, isolated installed New Project framework preview/create/validation/package regression plus complete uninstall cleanup.
 - `gates/gate-392-named-mo2-mod-export-contract.md` - Gate 392, explicit named MO2 mod export command, destination safety, atomic copy/rollback, evidence, disabled mutation, and app-shell contract.
+- `gates/gate-393-named-mo2-mod-export-vertical-slice.md` - Gate 393, implemented schema-backed named MO2 mod export backend, CLI options, refusal safety, evidence, tests, and Project Outputs workflow.
+- `gates/gate-394-installed-named-mo2-export-regression.md` - Gate 394, rebuilt unsigned installer and completed isolated installed backend/UI export, evidence, refusal, uninstall, and cleanup regression.
+- `gates/gate-395-mo2-export-settings-and-discovery-contract.md` - Gate 395, local MO2 mods-root persistence/precedence contract and evidence gate for deterministic instance discovery.
+- `gates/gate-396-mo2-instance-configuration-evidence.md` - Gate 396, official-source MO2 portable/global INI evidence, bounded discovery authorization, and synthetic fixtures.
+- `gates/gate-397-mo2-settings-and-discovery-implementation.md` - Gate 397, implemented separate MO2 mods-root persistence, bounded INI discovery, explicit candidate selection, validation, UI, and tests.
+- `gates/gate-398-installed-mo2-settings-discovery-regression.md` - Gate 398, installed settings/discovery/selection/preview-invalidation/reset regression with uninstall and cleanup.
+- `gates/gate-399-geck-authoring-handoff-contract.md` - Gate 399, deterministic quest/dialogue/voice/JIP GECK work-package command, layout, evidence, unresolved actions, and no-plugin-mutation contract.
+- `gates/gate-400-geck-authoring-handoff-implementation.md` - Gate 400, implemented the schema-backed deterministic GECK handoff, worklists, evidence, CLI target, Project Outputs workflow, and tests.
+- `gates/gate-401-installed-geck-handoff-regression.md` - Gate 401, refreshed the unsigned installer and proved the installed GECK handoff workflow, evidence, refusal, output actions, uninstall, and cleanup.
+- `gates/gate-402-desktop-narrative-authoring-contract.md` - Gate 402, defined the preview-gated transactional desktop quest/dialogue authoring workflow and direct canonical GECK-handoff route.
+- `gates/gate-403-narrative-authoring-vertical-slice.md` - Gate 403, implemented preview-gated Narrative Author source creation, validation, GECK handoff packaging, tests, and published-app regression.
+- `gates/gate-404-installed-narrative-author-regression.md` - Gate 404, refreshed the unsigned installer and proved installed Narrative Author creation, validation, handoff, no-overwrite refusal, uninstall, and cleanup.
+- `gates/gate-405-existing-narrative-append-contract.md` - Gate 405, defined preview-gated existing quest/dialogue append, preservation, rollback, validation, handoff, and refusal behavior.
+- `gates/gate-406-existing-narrative-append-implementation.md` - Gate 406, implemented source-backed existing narrative append, rollback validation, desktop controls, tests, and published-app regression.
+- `gates/gate-407-installed-narrative-append-regression.md` - Gate 407, refreshed the unsigned installer and proved installed narrative append, handoff, duplicate refusal, evidence, uninstall, and cleanup.
+- `gates/gate-408-dialogue-gate-result-intent-contract.md` - Gate 408, defined source-backed dialogue stage-gate and quest-variable result-intent authoring, rollback, validation, handoff, and safety behavior.
+- `gates/gate-409-dialogue-behavior-authoring-implementation.md` - Gate 409, implemented source-backed dialogue condition/result-intent authoring, rollback, desktop controls, tests, and published-app handoff regression.
+- `gates/gate-410-installed-dialogue-behavior-regression.md` - Gate 410, refreshed the unsigned installer and proved installed dialogue behavior authoring, manual handoff evidence, duplicate refusal, uninstall, and cleanup.
+- `gates/gate-411-dialogue-voice-work-item-authoring-contract.md` - Gate 411, defined source-backed voice work-item and complete WAV/OGG/LIP asset authoring, rollback, validation, handoff, and safety behavior.
+- `gates/gate-412-dialogue-voice-work-item-implementation.md` - Gate 412, implemented complete-trio voice authoring modes, rollback, desktop controls, tests, and published-app handoff regression.
+- `gates/gate-413-installed-voice-work-item-regression.md` - Gate 413, verified the installed complete-trio voice binding workflow, handoff safety and checksums, and isolated uninstall cleanup.
+- `gates/gate-414-dialogue-branching-authoring-contract.md` - Gate 414, defined source-backed topic-link and opaque response-route authoring, transactional validation, handoff, refusals, and evidence boundaries.
 
 Next gates:
 
 - Gate 315 - harden the WPF app-shell scaffold and backend bridge after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
-- Gate 393 - implement the backend and Project Outputs named-MO2 export vertical slice with immutable evidence, rollback, refusal tests, and exact folder handoff.
+- Gate 415 - implement source-backed dialogue branching authoring, validation rollback, Narrative Author controls, GECK-handoff rebuild, focused tests, and published-app regression.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

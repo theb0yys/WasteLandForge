@@ -565,10 +565,26 @@ internal static class ForgeCli
                 parse.OutputDirectory,
                 CliConstants.Version,
                 parse.DryRun));
+            Mo2ExportResult? exportResult = null;
+            if (parse.Mo2ModsRoot is not null && parse.Mo2ModName is not null && !modResult.HasErrors)
+            {
+                exportResult = new Mo2ModExporter().Export(modResult, new Mo2ExportOptions(
+                    parse.Mo2ModsRoot,
+                    parse.Mo2ModName,
+                    CliConstants.Version,
+                    parse.DryRun));
+            }
             Console.Write(CliConstants.IsMachineFormat(parse.Format)
-                ? ModPackageResultWriter.Json(modResult)
-                : ModPackageResultWriter.Text(modResult));
-            return modResult.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+                ? ModPackageResultWriter.Json(modResult, exportResult)
+                : ModPackageResultWriter.Text(modResult, exportResult));
+            return modResult.HasErrors || exportResult?.HasErrors == true ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+        }
+
+        if (StringComparer.Ordinal.Equals(parse.Target, GeckHandoffEmitter.Target))
+        {
+            var handoff = new GeckHandoffEmitter().Package(new GeckHandoffOptions(parse.ProjectPath, parse.OutputDirectory, CliConstants.Version, parse.DryRun));
+            Console.Write(CliConstants.IsMachineFormat(parse.Format) ? GeckHandoffResultWriter.Json(handoff) : GeckHandoffResultWriter.Text(handoff));
+            return handoff.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
         }
 
         var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
@@ -1903,6 +1919,8 @@ internal static class ForgeCli
         var target = McmJsonGenerator.Target;
         string? outputDirectory = null;
         string? summaryPath = null;
+        string? mo2ModsRoot = null;
+        string? mo2ModName = null;
         var dryRun = false;
         var verifyExisting = false;
         var projectWasSet = false;
@@ -1952,9 +1970,10 @@ internal static class ForgeCli
                 if (!StringComparer.Ordinal.Equals(target, McmJsonGenerator.Target) &&
                     !StringComparer.Ordinal.Equals(target, ReportsPackageEmitter.Target) &&
                     !StringComparer.Ordinal.Equals(target, JipScriptPackageEmitter.Target) &&
-                    !StringComparer.Ordinal.Equals(target, ModPackageAssembler.Target))
+                    !StringComparer.Ordinal.Equals(target, ModPackageAssembler.Target) &&
+                    !StringComparer.Ordinal.Equals(target, GeckHandoffEmitter.Target))
                 {
-                    return PackageParseResult.Fail(format, $"Only targets '{ReportsPackageEmitter.Target}', '{McmJsonGenerator.Target}', '{JipScriptPackageEmitter.Target}', and '{ModPackageAssembler.Target}' are implemented for forge package in the current gate.");
+                    return PackageParseResult.Fail(format, $"Only targets '{ReportsPackageEmitter.Target}', '{McmJsonGenerator.Target}', '{JipScriptPackageEmitter.Target}', '{ModPackageAssembler.Target}', and '{GeckHandoffEmitter.Target}' are implemented for forge package in the current gate.");
                 }
 
                 continue;
@@ -2000,6 +2019,18 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--mo2-mods-root"))
+            {
+                if (!TryReadValue(args, ref index, out mo2ModsRoot)) return PackageParseResult.Fail(format, "Missing value for --mo2-mods-root.");
+                continue;
+            }
+
+            if (StringComparer.Ordinal.Equals(arg, "--mo2-mod-name"))
+            {
+                if (!TryReadValue(args, ref index, out mo2ModName)) return PackageParseResult.Fail(format, "Missing value for --mo2-mod-name.");
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--no-input"))
             {
                 continue;
@@ -2024,6 +2055,19 @@ internal static class ForgeCli
             return PackageParseResult.Fail(format, "Cannot combine --verify-existing with --dry-run.");
         }
 
+        if ((mo2ModsRoot is null) != (mo2ModName is null))
+        {
+            return PackageParseResult.Fail(format, "--mo2-mods-root and --mo2-mod-name must be supplied together.");
+        }
+        if (mo2ModsRoot is not null && !StringComparer.Ordinal.Equals(target, ModPackageAssembler.Target))
+        {
+            return PackageParseResult.Fail(format, "Named MO2 export is only available with --target mod-package.");
+        }
+        if (verifyExisting && mo2ModsRoot is not null)
+        {
+            return PackageParseResult.Fail(format, "Named MO2 export cannot be combined with --verify-existing.");
+        }
+
         if (!verifyExisting &&
             (StringComparer.Ordinal.Equals(format, "sarif") ||
                 StringComparer.Ordinal.Equals(format, "github")))
@@ -2036,7 +2080,7 @@ internal static class ForgeCli
             return PackageParseResult.Fail(format, "--summary is only available for package verify-existing diagnostics in the current gate.");
         }
 
-        return PackageParseResult.Ok(projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, format);
+        return PackageParseResult.Ok(projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, mo2ModsRoot, mo2ModName, format);
     }
 
     private static bool TryResolvePackageEvidencePaths(
@@ -3688,14 +3732,16 @@ internal static class ForgeCli
         string Target,
         bool DryRun,
         bool VerifyExisting,
+        string? Mo2ModsRoot,
+        string? Mo2ModName,
         string Format,
         string Message)
     {
-        public static PackageParseResult Ok(string projectPath, string? outputDirectory, string? summaryPath, string target, bool dryRun, bool verifyExisting, string format) =>
-            new(true, projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, format, string.Empty);
+        public static PackageParseResult Ok(string projectPath, string? outputDirectory, string? summaryPath, string target, bool dryRun, bool verifyExisting, string? mo2ModsRoot, string? mo2ModName, string format) =>
+            new(true, projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, mo2ModsRoot, mo2ModName, format, string.Empty);
 
         public static PackageParseResult Fail(string format, string message) =>
-            new(false, string.Empty, null, null, McmJsonGenerator.Target, false, false, format, message);
+            new(false, string.Empty, null, null, McmJsonGenerator.Target, false, false, null, null, format, message);
     }
 
     private sealed record PackageEvidencePaths(

@@ -69,10 +69,10 @@ public sealed class ModPackageAssembler
             if (hasMcm)
             {
                 var componentRoot = Path.Combine(workRoot, "components", McmJsonGenerator.Target);
-                var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions("package", projectRoot, componentRoot, options.ToolVersion, options.DryRun));
+                var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions("package", projectRoot, componentRoot, options.ToolVersion, false));
                 issues.AddRange(result.Diagnostics.Issues);
                 sourceDigests.AddRange(result.SourceDigests);
-                if (!result.HasErrors && !options.DryRun && result.Outputs is not null)
+                if (!result.HasErrors && result.Outputs is not null)
                 {
                     foreach (var file in result.Outputs.Menus.Concat(result.Outputs.Translations).Concat(result.Outputs.Assets))
                     {
@@ -85,10 +85,10 @@ public sealed class ModPackageAssembler
             if (hasJip)
             {
                 var componentRoot = Path.Combine(workRoot, "components", JipScriptPackageEmitter.Target);
-                var result = new JipScriptPackageEmitter().Package(new JipScriptPackageOptions(projectRoot, componentRoot, options.ToolVersion, options.DryRun));
+                var result = new JipScriptPackageEmitter().Package(new JipScriptPackageOptions(projectRoot, componentRoot, options.ToolVersion, false));
                 issues.AddRange(result.Diagnostics.Issues);
                 sourceDigests.AddRange(result.SourceDigests);
-                if (!result.HasErrors && !options.DryRun)
+                if (!result.HasErrors)
                 {
                     foreach (var file in result.PackageFiles)
                     {
@@ -102,16 +102,22 @@ public sealed class ModPackageAssembler
                 return Result(projectRoot, options, projectId, "failed", issues, included, excluded, [], null, []);
             }
 
-            if (options.DryRun)
-            {
-                var plannedOutputs = CreateOutputs(projectRoot, outputRoot);
-                return Result(projectRoot, options, projectId, "planned", issues, included, excluded, [], plannedOutputs, []);
-            }
-
             issues.AddRange(ValidateDestinationPaths(candidates.Select(candidate => (candidate.Component, candidate.DataPath, candidate.SourceFile)), projectId));
             if (issues.Any(issue => issue.Severity == DiagnosticSeverity.Error))
             {
                 return Result(projectRoot, options, projectId, "failed", issues, included, excluded, [], null, []);
+            }
+
+            if (options.DryRun)
+            {
+                var plannedEntries = candidates.OrderBy(item => item.DataPath, StringComparer.Ordinal).Select(candidate =>
+                {
+                    var info = new FileInfo(candidate.FullPath);
+                    using var stream = info.OpenRead();
+                    var sha256 = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+                    return new ModPackageEntry(candidate.Component, candidate.Kind, candidate.Id, NormalizeRelative(candidate.SourceFile), candidate.DataPath, $"dist/mod-package/staging/Data/{candidate.DataPath}", candidate.MediaType, info.Length, sha256);
+                }).ToArray();
+                return Result(projectRoot, options, projectId, "planned", issues, included, excluded, plannedEntries, CreateOutputs(projectRoot, outputRoot), []);
             }
 
             var finalRoot = Path.Combine(workRoot, "final");

@@ -75,6 +75,16 @@ public static class WastelandForgeSchemaCatalog
             "0.1.0",
             "schemas/mod-package-manifest/0.1.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.Mo2ExportManifest010,
+            "mo2-export-manifest",
+            "0.1.0",
+            "schemas/mo2-export-manifest/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.GeckHandoffManifest010,
+            "geck-handoff-manifest",
+            "0.1.0",
+            "schemas/geck-handoff-manifest/0.1.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.InstallPreview010,
             "install-preview",
             "0.1.0",

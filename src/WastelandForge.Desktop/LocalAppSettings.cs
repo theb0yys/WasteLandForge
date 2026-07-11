@@ -13,6 +13,8 @@ internal sealed class LocalAppSettings
 
     public string Mo2Path { get; set; } = string.Empty;
 
+    public string Mo2ModsRoot { get; set; } = string.Empty;
+
     public Dictionary<string, string> ToolPaths { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 

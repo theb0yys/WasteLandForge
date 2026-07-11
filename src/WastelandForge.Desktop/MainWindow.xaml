@@ -824,6 +824,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
 
               <StackPanel Grid.ColumnSpan="3" Margin="0,0,0,18">
@@ -881,15 +882,19 @@
               <TextBox x:Name="Mo2PathTextBox" Grid.Row="5" Grid.Column="1" Margin="12,5" TextChanged="SettingsPathChanged" />
               <Button Grid.Row="5" Grid.Column="2" Content="Browse" Margin="8,5,0,5" Tag="mo2" Click="BrowseSettingsFileClicked" />
 
-              <TextBlock Grid.Row="6" Text="GECK" VerticalAlignment="Center" FontWeight="SemiBold" />
-              <TextBox x:Name="GeckPathTextBox" Grid.Row="6" Grid.Column="1" Margin="12,5" TextChanged="SettingsPathChanged" />
-              <Button Grid.Row="6" Grid.Column="2" Content="Browse" Margin="8,5,0,5" Tag="geck" Click="BrowseSettingsFileClicked" />
+              <TextBlock Grid.Row="6" Text="MO2 mods folder" VerticalAlignment="Center" FontWeight="SemiBold" />
+              <TextBox x:Name="SettingsMo2ModsRootTextBox" Grid.Row="6" Grid.Column="1" Margin="12,5" TextChanged="SettingsPathChanged" />
+              <Button Grid.Row="6" Grid.Column="2" Content="Browse" Margin="8,5,0,5" Tag="mo2mods" Click="BrowseSettingsFolderClicked" />
 
-              <TextBlock Grid.Row="7" Text="xEdit" VerticalAlignment="Center" FontWeight="SemiBold" />
-              <TextBox x:Name="XEditPathTextBox" Grid.Row="7" Grid.Column="1" Margin="12,5" TextChanged="SettingsPathChanged" />
-              <Button Grid.Row="7" Grid.Column="2" Content="Browse" Margin="8,5,0,5" Tag="xedit" Click="BrowseSettingsFileClicked" />
+              <TextBlock Grid.Row="7" Text="GECK" VerticalAlignment="Center" FontWeight="SemiBold" />
+              <TextBox x:Name="GeckPathTextBox" Grid.Row="7" Grid.Column="1" Margin="12,5" TextChanged="SettingsPathChanged" />
+              <Button Grid.Row="7" Grid.Column="2" Content="Browse" Margin="8,5,0,5" Tag="geck" Click="BrowseSettingsFileClicked" />
 
-              <Grid Grid.Row="8" Grid.ColumnSpan="3" Margin="0,20,0,0">
+              <TextBlock Grid.Row="8" Text="xEdit" VerticalAlignment="Center" FontWeight="SemiBold" />
+              <TextBox x:Name="XEditPathTextBox" Grid.Row="8" Grid.Column="1" Margin="12,5" TextChanged="SettingsPathChanged" />
+              <Button Grid.Row="8" Grid.Column="2" Content="Browse" Margin="8,5,0,5" Tag="xedit" Click="BrowseSettingsFileClicked" />
+
+              <Grid Grid.Row="9" Grid.ColumnSpan="3" Margin="0,20,0,0">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="Auto" />
@@ -968,6 +973,93 @@
                      VerticalScrollBarVisibility="Auto"
                      IsReadOnly="True"
                      TextWrapping="NoWrap" />
+          </Grid>
+        </TabItem>
+
+        <TabItem Header="Narrative Author">
+          <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="420" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,18,0">
+              <StackPanel>
+                <TextBlock Text="Quest and dialogue source" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock Text="Quest" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" Margin="0,16,0,4" />
+                <TextBlock Text="Slug" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeQuestSlugTextBox" Text="intro" TextChanged="NarrativeInputChanged" />
+                <TextBlock Text="Title" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeQuestTitleTextBox" Text="Intro Quest" TextChanged="NarrativeInputChanged" />
+                <TextBlock Text="Summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeQuestSummaryTextBox" TextChanged="NarrativeInputChanged" />
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Text="Start stage" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeStartTitleTextBox" Text="Started" TextChanged="NarrativeInputChanged" /></StackPanel>
+                  <StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Number" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeStartNumberTextBox" Text="10" TextChanged="NarrativeInputChanged" /></StackPanel>
+                </Grid>
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Text="Completion stage" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeCompleteTitleTextBox" Text="Complete" TextChanged="NarrativeInputChanged" /></StackPanel>
+                  <StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Number" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeCompleteNumberTextBox" Text="100" TextChanged="NarrativeInputChanged" /></StackPanel>
+                </Grid>
+                <TextBlock Text="Objective" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeObjectiveTextBox" Text="Speak to the greeter." TextChanged="NarrativeInputChanged" />
+                <TextBlock Text="Dialogue" Foreground="{StaticResource InfoBrush}" FontWeight="Bold" Margin="0,16,0,4" />
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="130" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Text="Topic slug" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeTopicSlugTextBox" Text="greeting" TextChanged="NarrativeInputChanged" /></StackPanel>
+                  <StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Topic title" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeTopicTitleTextBox" Text="Greeting" TextChanged="NarrativeInputChanged" /></StackPanel>
+                </Grid>
+                <TextBlock Text="Line slug" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeLineSlugTextBox" Text="hello" TextChanged="NarrativeInputChanged" />
+                <TextBlock Text="Response" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeResponseTextBox" Text="Hello, traveler." TextChanged="NarrativeInputChanged" />
+                <TextBlock Text="Speaker (optional)" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeSpeakerTextBox" TextChanged="NarrativeInputChanged" />
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Text="Prompt (optional)" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativePromptTextBox" TextChanged="NarrativeInputChanged" /></StackPanel>
+                  <StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Priority" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativePriorityTextBox" TextChanged="NarrativeInputChanged" /></StackPanel>
+                </Grid>
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <StackPanel><TextBlock Text="Plugin (optional pair)" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativePluginTextBox" TextChanged="NarrativeInputChanged" /></StackPanel>
+                  <StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Quest EditorID" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeEditorIdTextBox" TextChanged="NarrativeInputChanged" /></StackPanel>
+                </Grid>
+                <WrapPanel Margin="0,16,0,0"><Button Content="Preview Narrative Source" Click="PreviewNarrativeSourceClicked" /><Button x:Name="CreateNarrativeSourceButton" Content="Create, Validate and Build Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="CreateNarrativeSourceClicked" /></WrapPanel>
+                <TextBlock x:Name="NarrativeAuthorStatusTextBlock" Text="Preview before creating source." Foreground="{StaticResource TextMuted}" Margin="0,10,0,0" TextWrapping="Wrap" />
+                <Separator Margin="0,20,0,14" />
+                <TextBlock Text="Extend existing narrative" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Existing Narrative" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadNarrativeExtensionClicked" />
+                <TextBlock Text="Quest" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="NarrativeExistingQuestComboBox" DisplayMemberPath="Display" SelectionChanged="NarrativeExtensionQuestChanged" />
+                <TextBlock Text="Source stage" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="NarrativeExistingStageComboBox" DisplayMemberPath="Display" SelectionChanged="NarrativeExtensionInputChanged" />
+                <CheckBox x:Name="NarrativeNewTopicCheckBox" Content="Create new topic" Margin="0,10,0,0" Checked="NarrativeExtensionInputChanged" Unchecked="NarrativeExtensionInputChanged" />
+                <TextBlock Text="Existing topic" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="NarrativeExistingTopicComboBox" DisplayMemberPath="Display" SelectionChanged="NarrativeExtensionInputChanged" />
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="New topic slug" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeExtensionTopicSlugTextBox" Text="aftermath" TextChanged="NarrativeExtensionInputChanged" /></StackPanel><StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="New topic title" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeExtensionTopicTitleTextBox" Text="Aftermath" TextChanged="NarrativeExtensionInputChanged" /></StackPanel></Grid>
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="New stage slug / title" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeExtensionStageSlugTextBox" Text="aftermath" TextChanged="NarrativeExtensionInputChanged" /><TextBox x:Name="NarrativeExtensionStageTitleTextBox" Text="Aftermath" Margin="0,4,0,0" TextChanged="NarrativeExtensionInputChanged" /></StackPanel><StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Number" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeExtensionStageNumberTextBox" Text="120" TextChanged="NarrativeExtensionInputChanged" /></StackPanel></Grid>
+                <TextBlock Text="Stage summary (optional)" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeExtensionStageSummaryTextBox" TextChanged="NarrativeExtensionInputChanged" />
+                <TextBlock Text="Objective slug / text" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeExtensionObjectiveSlugTextBox" Text="aftermath" TextChanged="NarrativeExtensionInputChanged" /><TextBox x:Name="NarrativeExtensionObjectiveTextBox" Text="Review the aftermath." Margin="0,4,0,0" TextChanged="NarrativeExtensionInputChanged" />
+                <TextBlock Text="Transition slug / title / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeExtensionTransitionSlugTextBox" Text="aftermath" TextChanged="NarrativeExtensionInputChanged" /><TextBox x:Name="NarrativeExtensionTransitionTitleTextBox" Text="Continue" Margin="0,4,0,0" TextChanged="NarrativeExtensionInputChanged" /><TextBox x:Name="NarrativeExtensionTransitionSummaryTextBox" Margin="0,4,0,0" TextChanged="NarrativeExtensionInputChanged" />
+                <TextBlock Text="Line slug / response" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeExtensionLineSlugTextBox" Text="aftermath" TextChanged="NarrativeExtensionInputChanged" /><TextBox x:Name="NarrativeExtensionResponseTextBox" Text="The aftermath is clear." Margin="0,4,0,0" TextChanged="NarrativeExtensionInputChanged" />
+                <TextBlock Text="Speaker (optional)" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeExtensionSpeakerTextBox" TextChanged="NarrativeExtensionInputChanged" />
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Prompt (optional)" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeExtensionPromptTextBox" TextChanged="NarrativeExtensionInputChanged" /></StackPanel><StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Priority" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeExtensionPriorityTextBox" TextChanged="NarrativeExtensionInputChanged" /></StackPanel></Grid>
+                <WrapPanel Margin="0,14,0,0"><Button Content="Preview Narrative Extension" Click="PreviewNarrativeExtensionClicked" /><Button x:Name="AppendNarrativeExtensionButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendNarrativeExtensionClicked" /></WrapPanel>
+                <Separator Margin="0,20,0,14" />
+                <TextBlock Text="Add dialogue behavior" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Dialogue Behavior Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadDialogueBehaviorClicked" />
+                <TextBlock Text="Dialogue line" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBehaviorLineComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBehaviorLineChanged" />
+                <TextBlock Text="Required quest stage" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBehaviorStageComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBehaviorInputChanged" />
+                <TextBlock Text="Quest variable to increment" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBehaviorVariableComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBehaviorInputChanged" />
+                <TextBlock Text="Condition slug / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="DialogueBehaviorConditionSlugTextBox" Text="behaviorstage" TextChanged="DialogueBehaviorInputChanged" /><TextBox x:Name="DialogueBehaviorConditionSummaryTextBox" Margin="0,4,0,0" TextChanged="DialogueBehaviorInputChanged" />
+                <TextBlock Text="Result slug / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="DialogueBehaviorResultSlugTextBox" Text="behavioradvance" TextChanged="DialogueBehaviorInputChanged" /><TextBox x:Name="DialogueBehaviorResultSummaryTextBox" Margin="0,4,0,0" TextChanged="DialogueBehaviorInputChanged" />
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Mutation slug / summary" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="DialogueBehaviorMutationSlugTextBox" Text="behaviorphase" TextChanged="DialogueBehaviorInputChanged" /><TextBox x:Name="DialogueBehaviorMutationSummaryTextBox" Margin="0,4,0,0" TextChanged="DialogueBehaviorInputChanged" /></StackPanel><StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Delta" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="DialogueBehaviorDeltaTextBox" Text="1" TextChanged="DialogueBehaviorInputChanged" /></StackPanel></Grid>
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Dialogue Behavior" Click="PreviewDialogueBehaviorClicked" /><Button x:Name="AppendDialogueBehaviorButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendDialogueBehaviorClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                <TextBlock Text="Add dialogue branch" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Dialogue Branch Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadDialogueBranchClicked" />
+                <TextBlock Text="Dialogue line" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBranchLineComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBranchInputChanged" />
+                <TextBlock Text="Branch kind" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBranchModeComboBox" SelectionChanged="DialogueBranchInputChanged"><ComboBoxItem Content="Link To" IsSelected="True" /><ComboBoxItem Content="Link From" /><ComboBoxItem Content="Response Route" /></ComboBox>
+                <TextBlock Text="Referenced topic" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBranchTopicComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBranchInputChanged" />
+                <TextBlock Text="Branch slug / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="DialogueBranchSlugTextBox" Text="nexttopic" TextChanged="DialogueBranchInputChanged" /><TextBox x:Name="DialogueBranchSummaryTextBox" Margin="0,4,0,0" TextChanged="DialogueBranchInputChanged" />
+                <TextBlock Text="Response route key" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="DialogueBranchRouteKeyTextBox" Text="authored-route" TextChanged="DialogueBranchInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Dialogue Branch" Click="PreviewDialogueBranchClicked" /><Button x:Name="AppendDialogueBranchButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendDialogueBranchClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                <TextBlock Text="Add voice work item" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Voice Work-Item Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadVoiceWorkItemClicked" />
+                <TextBlock Text="Unvoiced dialogue line" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="VoiceWorkItemLineComboBox" DisplayMemberPath="Display" SelectionChanged="VoiceWorkItemInputChanged" />
+                <CheckBox x:Name="VoiceWorkItemDeclareFilesCheckBox" Content="Declare project files instead of binding a declared trio" Margin="0,10,0,0" Checked="VoiceWorkItemInputChanged" Unchecked="VoiceWorkItemInputChanged" />
+                <TextBlock Text="Declared complete trio" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="VoiceWorkItemTrioComboBox" DisplayMemberPath="Display" SelectionChanged="VoiceWorkItemInputChanged" />
+                <TextBlock Text="Plugin / voice type / file stem" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="VoiceWorkItemPluginTextBox" Text="ExampleMod.esm" TextChanged="VoiceWorkItemInputChanged" /><TextBox x:Name="VoiceWorkItemVoiceTypeTextBox" Text="ExampleVoice" Margin="0,4,0,0" TextChanged="VoiceWorkItemInputChanged" /><TextBox x:Name="VoiceWorkItemFileStemTextBox" Text="followup_voice" Margin="0,4,0,0" TextChanged="VoiceWorkItemInputChanged" />
+                <TextBlock Text="Project-relative WAV / OGG / LIP source paths" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="VoiceWorkItemWavSourceTextBox" Text="src/assets/voice/followup_voice.wav" TextChanged="VoiceWorkItemInputChanged" /><TextBox x:Name="VoiceWorkItemOggSourceTextBox" Text="src/assets/voice/followup_voice.ogg" Margin="0,4,0,0" TextChanged="VoiceWorkItemInputChanged" /><TextBox x:Name="VoiceWorkItemLipSourceTextBox" Text="src/assets/voice/followup_voice.lip" Margin="0,4,0,0" TextChanged="VoiceWorkItemInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Voice Work Item" Click="PreviewVoiceWorkItemClicked" /><Button x:Name="AppendVoiceWorkItemButton" Content="Append Voice and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendVoiceWorkItemClicked" /></WrapPanel>
+              </StackPanel>
+            </ScrollViewer>
+            <TextBox x:Name="NarrativeAuthorOutputTextBox" Grid.Column="1" AcceptsReturn="True" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" />
           </Grid>
         </TabItem>
 
@@ -1078,7 +1170,7 @@
 
         <TabItem Header="Project Outputs">
           <Grid Margin="0,18,0,0">
-            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="180" /></Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="180" /></Grid.RowDefinitions>
             <Grid>
               <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
               <TextBlock Text="Buildable project outputs" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
@@ -1097,21 +1189,42 @@
               </DataGrid.Columns>
             </DataGrid>
             <Grid Grid.Row="2">
-              <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
               <ComboBox x:Name="ProjectOutputWorkflowComboBox" SelectedIndex="0" Padding="8">
                 <ComboBoxItem Content="Package MCM" Tag="mcm-json" />
                 <ComboBoxItem Content="Package JIP scripts" Tag="jip-scripts" />
                 <ComboBoxItem Content="Generate xEdit audit" Tag="xedit-audit" />
                 <ComboBoxItem Content="Build combined mod package" Tag="mod-package" />
+                <ComboBoxItem Content="Build GECK authoring handoff" Tag="geck-handoff" />
               </ComboBox>
               <Button Grid.Column="1" Content="Run Selected Workflow" Style="{StaticResource PrimaryButton}" Margin="12,0,0,0" Click="RunProjectOutputWorkflowClicked" />
               <Button Grid.Column="2" Content="Open Generated" Margin="12,0,0,0" Click="OpenSelectedGeneratedOutputClicked" />
               <Button Grid.Column="3" Content="Open Distribution" Margin="8,0,0,0" Click="OpenSelectedDistributionOutputClicked" />
               <Button Grid.Column="4" Content="Open Staging" Margin="8,0,0,0" Click="OpenSelectedStagingOutputClicked" />
               <Button Grid.Column="5" Content="Open Package ZIP" Margin="8,0,0,0" Click="OpenSelectedPackageArchiveClicked" />
-              <TextBlock x:Name="ProjectOutputsStatusTextBlock" Grid.Column="6" Text="Refresh to inspect the selected project." Foreground="{StaticResource TextMuted}" Margin="16,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
+              <Button Grid.Column="6" Content="Open Handoff" Margin="8,0,0,0" Click="OpenSelectedGeckHandoffClicked" />
+              <Button Grid.Column="7" Content="Open Worklist" Margin="8,0,0,0" Click="OpenSelectedGeckWorklistClicked" />
+              <TextBlock x:Name="ProjectOutputsStatusTextBlock" Grid.Column="8" Text="Refresh to inspect the selected project." Foreground="{StaticResource TextMuted}" Margin="16,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
             </Grid>
-            <TextBox x:Name="ProjectOutputDetailsTextBox" Grid.Row="3" Margin="0,14,0,0" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
+            <Grid Grid.Row="3" Margin="0,14,0,0">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="220" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <TextBlock Text="MO2 mods folder" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" />
+              <TextBox x:Name="Mo2ModsRootTextBox" Grid.Column="1" Margin="10,0,8,0" Padding="8" TextChanged="Mo2ExportInputChanged" />
+              <Button Grid.Column="2" Content="Browse" Click="BrowseMo2ModsRootClicked" />
+              <TextBlock Grid.Column="3" Text="Mod name" Margin="14,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" />
+              <TextBox x:Name="Mo2ModNameTextBox" Grid.Column="4" Padding="8" TextChanged="Mo2ExportInputChanged" />
+              <Button Grid.Column="5" Content="Preview" Margin="10,0,0,0" Click="PreviewMo2ExportClicked" />
+              <Button x:Name="ExportMo2ModButton" Grid.Column="6" Content="Export" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="ExportMo2ModClicked" />
+              <Button x:Name="OpenExportedMo2ModButton" Grid.Column="7" Content="Open Export" Margin="8,0,0,0" IsEnabled="False" Click="OpenExportedMo2ModClicked" />
+            </Grid>
+            <Grid Grid.Row="4" Margin="0,8,0,0">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <Button Content="Discover MO2 Instances" Click="DiscoverMo2InstancesClicked" />
+              <ComboBox x:Name="Mo2DiscoveryComboBox" Grid.Column="1" Margin="10,0" Padding="8" DisplayMemberPath="Display" />
+              <Button Grid.Column="2" Content="Use Selected" Click="UseSelectedMo2CandidateClicked" />
+              <TextBlock x:Name="Mo2DiscoveryStatusTextBlock" Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Text="Discovery is read-only." />
+            </Grid>
+            <TextBox x:Name="ProjectOutputDetailsTextBox" Grid.Row="5" Margin="0,14,0,0" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
           </Grid>
         </TabItem>
 

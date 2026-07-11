@@ -5971,6 +5971,28 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void PackageGeckHandoffReportsWorklistsAndSafetyEvidence()
+    {
+        var projectRoot = CopyFixtureProject("ExampleMod");
+        var dryRun = RunCli("package", projectRoot, "--target", "geck-handoff", "--dry-run", "--format", "json", "--no-input");
+        var planned = JsonNode.Parse(dryRun.Stdout)!;
+        Assert.Equal(0, dryRun.ExitCode);
+        Assert.Equal("planned", (string?)planned["status"]);
+        Assert.Equal(1, (int?)planned["summary"]?["quests"]);
+        Assert.Equal(2, (int?)planned["summary"]?["dialogueLines"]);
+        Assert.False(Directory.Exists(Path.Combine(projectRoot, "dist", "geck-handoff")));
+
+        var result = RunCli("package", projectRoot, "--target", "geck-handoff", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout)!;
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.True((int?)json["summary"]?["unresolvedActions"] > 0);
+        var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "geck-handoff", "handoff-manifest.json")))!;
+        Assert.Equal(false, (bool?)manifest["safety"]?["createsPluginRecords"]);
+        Assert.Equal(false, (bool?)manifest["safety"]?["launchesGeck"]);
+    }
+
+    [Fact]
     public void BuildMcmJsonWritesManifestAndChecksums()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");

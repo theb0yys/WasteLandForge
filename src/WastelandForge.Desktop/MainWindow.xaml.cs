@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -26,9 +27,20 @@ public partial class MainWindow
     private string? selectedDocsReferencePath;
     private DocsReferenceIndexView? currentDocsIndex;
     private string? mcmAppendPreviewToken;
+    private string? narrativePreviewToken;
+    private string? narrativeExtensionPreviewToken;
+    private NarrativeExtensionLoadResult? currentNarrativeExtension;
+    private string? dialogueBehaviorPreviewToken;
+    private DialogueBehaviorLoadResult? currentDialogueBehavior;
+    private string? dialogueBranchPreviewToken;
+    private DialogueBranchLoadResult? currentDialogueBranches;
+    private string? voiceWorkItemPreviewToken;
+    private VoiceWorkItemLoadResult? currentVoiceWorkItems;
     private string? jipAppendPreviewToken;
     private string? jipPackageFolder;
     private string? xeditAuditOutputFolder;
+    private string? mo2ExportPreviewToken;
+    private string? exportedMo2ModFolder;
 
     public MainWindow()
     {
@@ -299,6 +311,189 @@ public partial class MainWindow
 
     private async void CreateNewProjectClicked(object sender, RoutedEventArgs e) =>
         await RunNewProjectInitAsync(dryRun: false);
+
+    private void NarrativeInputChanged(object sender, RoutedEventArgs e)
+    {
+        narrativePreviewToken = null;
+        if (CreateNarrativeSourceButton is not null) CreateNarrativeSourceButton.IsEnabled = false;
+    }
+
+    private void PreviewNarrativeSourceClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        var preview = NarrativeSourceAuthoring.Preview(root, CaptureNarrativeInput());
+        narrativePreviewToken = preview.Token;
+        CreateNarrativeSourceButton.IsEnabled = preview.Success;
+        NarrativeAuthorStatusTextBlock.Text = preview.Message;
+        NarrativeAuthorOutputTextBox.Text = preview.Success
+            ? "== Quest: src/registries/quests/main.json ==" + Environment.NewLine + preview.QuestJson + Environment.NewLine +
+              "== Dialogue: src/registries/dialogue/main.json ==" + Environment.NewLine + preview.DialogueJson + Environment.NewLine +
+              "== Manifest: wastelandforge.json ==" + Environment.NewLine + preview.ManifestJson
+            : string.Empty;
+    }
+
+    private async void CreateNarrativeSourceClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null || narrativePreviewToken is null) return;
+        var result = NarrativeSourceAuthoring.Create(root, CaptureNarrativeInput(), narrativePreviewToken);
+        narrativePreviewToken = null; CreateNarrativeSourceButton.IsEnabled = false; NarrativeAuthorStatusTextBlock.Text = result.Message;
+        if (!result.Success) return;
+        SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
+        try
+        {
+            var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input");
+            AppendNarrativeResult("Validate", validation);
+            if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Narrative source created; validation blocked the handoff."; return; }
+            var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input");
+            AppendNarrativeResult("Build GECK handoff", package);
+            NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Narrative source validated and GECK authoring handoff completed." : "Narrative source validated; GECK handoff failed.";
+        }
+        finally { SetBusy(false); }
+    }
+
+    private NarrativeAuthoringInput CaptureNarrativeInput() => new(
+        NarrativeQuestSlugTextBox.Text, NarrativeQuestTitleTextBox.Text, NarrativeQuestSummaryTextBox.Text,
+        NarrativeStartTitleTextBox.Text, NarrativeStartNumberTextBox.Text, NarrativeCompleteTitleTextBox.Text,
+        NarrativeCompleteNumberTextBox.Text, NarrativeObjectiveTextBox.Text, NarrativeTopicSlugTextBox.Text,
+        NarrativeTopicTitleTextBox.Text, NarrativeLineSlugTextBox.Text, NarrativeResponseTextBox.Text,
+        NarrativeSpeakerTextBox.Text, NarrativePromptTextBox.Text, NarrativePriorityTextBox.Text,
+        NarrativePluginTextBox.Text, NarrativeEditorIdTextBox.Text);
+
+    private void AppendNarrativeResult(string label, ForgeCommandResult result)
+    {
+        NarrativeAuthorOutputTextBox.AppendText("== " + label + " ==" + Environment.NewLine + result.CommandLine + " -> exit " + result.ExitCode + Environment.NewLine + FormatJsonOrText(result.StandardOutput) + Environment.NewLine + Environment.NewLine);
+        NarrativeAuthorOutputTextBox.ScrollToEnd();
+    }
+
+    private void LoadNarrativeExtensionClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        currentNarrativeExtension = NarrativeExtensionAuthoring.Load(root);
+        NarrativeAuthorStatusTextBlock.Text = currentNarrativeExtension.Message;
+        NarrativeExistingQuestComboBox.ItemsSource = currentNarrativeExtension.Quests;
+        NarrativeExistingTopicComboBox.ItemsSource = currentNarrativeExtension.Topics;
+        NarrativeExistingQuestComboBox.SelectedIndex = currentNarrativeExtension.Quests.Count > 0 ? 0 : -1;
+        NarrativeExistingTopicComboBox.SelectedIndex = currentNarrativeExtension.Topics.Count > 0 ? 0 : -1;
+        RefreshNarrativeStageChoices();
+    }
+
+    private void NarrativeExtensionQuestChanged(object sender, RoutedEventArgs e) { InvalidateNarrativeExtension(); RefreshNarrativeStageChoices(); }
+    private void NarrativeExtensionInputChanged(object sender, RoutedEventArgs e) => InvalidateNarrativeExtension();
+    private void InvalidateNarrativeExtension() { narrativeExtensionPreviewToken = null; if (AppendNarrativeExtensionButton is not null) AppendNarrativeExtensionButton.IsEnabled = false; }
+    private void RefreshNarrativeStageChoices()
+    {
+        if (currentNarrativeExtension is null || NarrativeExistingQuestComboBox.SelectedItem is not NarrativeChoice quest) return;
+        NarrativeExistingStageComboBox.ItemsSource = currentNarrativeExtension.Stages.Where(stage => stage.Id.StartsWith(quest.Id + ".stage.", StringComparison.Ordinal)).ToArray();
+        NarrativeExistingStageComboBox.SelectedIndex = NarrativeExistingStageComboBox.Items.Count > 0 ? 0 : -1;
+    }
+
+    private void PreviewNarrativeExtensionClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        var preview = NarrativeExtensionAuthoring.Preview(root, CaptureNarrativeExtensionInput());
+        narrativeExtensionPreviewToken = preview.Token; AppendNarrativeExtensionButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message;
+        NarrativeAuthorOutputTextBox.Text = preview.Success ? "== Proposed quest source ==" + Environment.NewLine + preview.QuestJson + Environment.NewLine + "== Proposed dialogue source ==" + Environment.NewLine + preview.DialogueJson : string.Empty;
+    }
+
+    private async void AppendNarrativeExtensionClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null || narrativeExtensionPreviewToken is null) return;
+        var result = NarrativeExtensionAuthoring.Append(root, CaptureNarrativeExtensionInput(), narrativeExtensionPreviewToken);
+        InvalidateNarrativeExtension(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return;
+        SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
+        try
+        {
+            var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate extension", validation);
+            if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Extension validation unexpectedly failed."; return; }
+            var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package);
+            NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Narrative extension validated and GECK handoff rebuilt." : "Narrative extension is valid; handoff rebuild failed.";
+        }
+        finally { SetBusy(false); }
+    }
+
+    private NarrativeExtensionInput CaptureNarrativeExtensionInput() => new(
+        (NarrativeExistingQuestComboBox.SelectedItem as NarrativeChoice)?.Id ?? "", (NarrativeExistingStageComboBox.SelectedItem as NarrativeChoice)?.Id ?? "",
+        NarrativeNewTopicCheckBox.IsChecked == true, (NarrativeExistingTopicComboBox.SelectedItem as NarrativeChoice)?.Id ?? "", NarrativeExtensionTopicSlugTextBox.Text, NarrativeExtensionTopicTitleTextBox.Text,
+        NarrativeExtensionStageSlugTextBox.Text, NarrativeExtensionStageNumberTextBox.Text, NarrativeExtensionStageTitleTextBox.Text, NarrativeExtensionStageSummaryTextBox.Text,
+        NarrativeExtensionObjectiveSlugTextBox.Text, NarrativeExtensionObjectiveTextBox.Text, NarrativeExtensionTransitionSlugTextBox.Text, NarrativeExtensionTransitionTitleTextBox.Text, NarrativeExtensionTransitionSummaryTextBox.Text,
+        NarrativeExtensionLineSlugTextBox.Text, NarrativeExtensionResponseTextBox.Text, NarrativeExtensionSpeakerTextBox.Text, NarrativeExtensionPromptTextBox.Text, NarrativeExtensionPriorityTextBox.Text);
+
+    private void LoadDialogueBehaviorClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        currentDialogueBehavior = DialogueBehaviorAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = currentDialogueBehavior.Message;
+        DialogueBehaviorLineComboBox.ItemsSource = currentDialogueBehavior.Lines; DialogueBehaviorLineComboBox.SelectedIndex = currentDialogueBehavior.Lines.Count > 0 ? 0 : -1; RefreshDialogueBehaviorChoices();
+    }
+
+    private void DialogueBehaviorLineChanged(object sender, RoutedEventArgs e) { InvalidateDialogueBehavior(); RefreshDialogueBehaviorChoices(); }
+    private void DialogueBehaviorInputChanged(object sender, RoutedEventArgs e) => InvalidateDialogueBehavior();
+    private void InvalidateDialogueBehavior() { dialogueBehaviorPreviewToken = null; if (AppendDialogueBehaviorButton is not null) AppendDialogueBehaviorButton.IsEnabled = false; }
+    private void RefreshDialogueBehaviorChoices()
+    {
+        if (currentDialogueBehavior is null || DialogueBehaviorLineComboBox.SelectedItem is not DialogueBehaviorChoice line) return;
+        DialogueBehaviorStageComboBox.ItemsSource = currentDialogueBehavior.Stages.Where(x => x.QuestId == line.QuestId).ToArray(); DialogueBehaviorStageComboBox.SelectedIndex = DialogueBehaviorStageComboBox.Items.Count > 0 ? 0 : -1;
+        DialogueBehaviorVariableComboBox.ItemsSource = currentDialogueBehavior.Variables.Where(x => x.QuestId == line.QuestId).ToArray(); DialogueBehaviorVariableComboBox.SelectedIndex = DialogueBehaviorVariableComboBox.Items.Count > 0 ? 0 : -1;
+        if (DialogueBehaviorVariableComboBox.Items.Count == 0) NarrativeAuthorStatusTextBlock.Text = "The selected line quest has no integer variable to mutate.";
+    }
+
+    private void PreviewDialogueBehaviorClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return; var preview = DialogueBehaviorAuthoring.Preview(root, CaptureDialogueBehaviorInput());
+        dialogueBehaviorPreviewToken = preview.Token; AppendDialogueBehaviorButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = preview.DialogueJson ?? string.Empty;
+    }
+
+    private async void AppendDialogueBehaviorClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null || dialogueBehaviorPreviewToken is null) return; var result = DialogueBehaviorAuthoring.Append(root, CaptureDialogueBehaviorInput(), dialogueBehaviorPreviewToken);
+        InvalidateDialogueBehavior(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
+        try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate behavior", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Behavior validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Dialogue behavior validated and GECK handoff rebuilt." : "Dialogue behavior is valid; handoff rebuild failed."; }
+        finally { SetBusy(false); }
+    }
+
+    private DialogueBehaviorInput CaptureDialogueBehaviorInput() => new((DialogueBehaviorLineComboBox.SelectedItem as DialogueBehaviorChoice)?.Id ?? "", (DialogueBehaviorStageComboBox.SelectedItem as DialogueBehaviorChoice)?.Id ?? "", (DialogueBehaviorVariableComboBox.SelectedItem as DialogueBehaviorChoice)?.Id ?? "", DialogueBehaviorConditionSlugTextBox.Text, DialogueBehaviorConditionSummaryTextBox.Text, DialogueBehaviorResultSlugTextBox.Text, DialogueBehaviorResultSummaryTextBox.Text, DialogueBehaviorMutationSlugTextBox.Text, DialogueBehaviorMutationSummaryTextBox.Text, DialogueBehaviorDeltaTextBox.Text);
+
+    private void LoadDialogueBranchClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return; currentDialogueBranches = DialogueBranchAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = currentDialogueBranches.Message;
+        DialogueBranchLineComboBox.ItemsSource = currentDialogueBranches.Lines; DialogueBranchLineComboBox.SelectedIndex = currentDialogueBranches.Lines.Count > 0 ? 0 : -1; DialogueBranchTopicComboBox.ItemsSource = currentDialogueBranches.Topics; DialogueBranchTopicComboBox.SelectedIndex = currentDialogueBranches.Topics.Count > 0 ? 0 : -1;
+    }
+
+    private void DialogueBranchInputChanged(object sender, RoutedEventArgs e) { dialogueBranchPreviewToken = null; if (AppendDialogueBranchButton is not null) AppendDialogueBranchButton.IsEnabled = false; }
+    private void PreviewDialogueBranchClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return; var preview = DialogueBranchAuthoring.Preview(root, CaptureDialogueBranchInput()); dialogueBranchPreviewToken = preview.Token; AppendDialogueBranchButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = preview.DialogueJson ?? string.Empty;
+    }
+
+    private async void AppendDialogueBranchClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null || dialogueBranchPreviewToken is null) return; var result = DialogueBranchAuthoring.Append(root, CaptureDialogueBranchInput(), dialogueBranchPreviewToken); dialogueBranchPreviewToken = null; AppendDialogueBranchButton.IsEnabled = false; NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
+        try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate dialogue branch", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Dialogue branch validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Dialogue branch validated and GECK handoff rebuilt." : "Dialogue branch is valid; handoff rebuild failed."; }
+        finally { SetBusy(false); }
+    }
+
+    private DialogueBranchInput CaptureDialogueBranchInput() => new((DialogueBranchLineComboBox.SelectedItem as DialogueBranchChoice)?.Id ?? "", (DialogueBranchModeComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "", (DialogueBranchTopicComboBox.SelectedItem as DialogueBranchChoice)?.Id ?? "", DialogueBranchSlugTextBox.Text, DialogueBranchSummaryTextBox.Text, DialogueBranchRouteKeyTextBox.Text);
+
+    private void LoadVoiceWorkItemClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return; currentVoiceWorkItems = VoiceWorkItemAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = currentVoiceWorkItems.Message;
+        VoiceWorkItemLineComboBox.ItemsSource = currentVoiceWorkItems.Lines; VoiceWorkItemLineComboBox.SelectedIndex = currentVoiceWorkItems.Lines.Count > 0 ? 0 : -1; VoiceWorkItemTrioComboBox.ItemsSource = currentVoiceWorkItems.Trios; VoiceWorkItemTrioComboBox.SelectedIndex = currentVoiceWorkItems.Trios.Count > 0 ? 0 : -1;
+    }
+
+    private void VoiceWorkItemInputChanged(object sender, RoutedEventArgs e) { voiceWorkItemPreviewToken = null; if (AppendVoiceWorkItemButton is not null) AppendVoiceWorkItemButton.IsEnabled = false; }
+    private void PreviewVoiceWorkItemClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return; var preview = VoiceWorkItemAuthoring.Preview(root, CaptureVoiceWorkItemInput()); voiceWorkItemPreviewToken = preview.Token; AppendVoiceWorkItemButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message;
+        NarrativeAuthorOutputTextBox.Text = (preview.ManifestJson is null ? "" : "== Manifest ==" + Environment.NewLine + preview.ManifestJson + Environment.NewLine) + "== Dialogue ==" + Environment.NewLine + (preview.DialogueJson ?? "") + (preview.AssetJson is null ? "" : Environment.NewLine + "== Assets ==" + Environment.NewLine + preview.AssetJson);
+    }
+
+    private async void AppendVoiceWorkItemClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null || voiceWorkItemPreviewToken is null) return; var result = VoiceWorkItemAuthoring.Append(root, CaptureVoiceWorkItemInput(), voiceWorkItemPreviewToken); voiceWorkItemPreviewToken = null; AppendVoiceWorkItemButton.IsEnabled = false; NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
+        try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate voice work item", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Voice work-item validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Voice work item validated and GECK handoff rebuilt." : "Voice work item is valid; handoff rebuild failed."; }
+        finally { SetBusy(false); }
+    }
+
+    private VoiceWorkItemInput CaptureVoiceWorkItemInput() => new((VoiceWorkItemLineComboBox.SelectedItem as NarrativeChoice)?.Id ?? "", VoiceWorkItemDeclareFilesCheckBox.IsChecked == true, (VoiceWorkItemTrioComboBox.SelectedItem as VoiceTargetChoice)?.Stem ?? "", VoiceWorkItemPluginTextBox.Text, VoiceWorkItemVoiceTypeTextBox.Text, VoiceWorkItemFileStemTextBox.Text, VoiceWorkItemWavSourceTextBox.Text, VoiceWorkItemOggSourceTextBox.Text, VoiceWorkItemLipSourceTextBox.Text);
 
     private async void CreateMcmSourceClicked(object sender, RoutedEventArgs e)
     {
@@ -577,6 +772,109 @@ public partial class MainWindow
         var result = ProjectOutputWorkspace.Inspect(root);
         ProjectOutputsDataGrid.ItemsSource = result.Lanes;
         ProjectOutputsStatusTextBlock.Text = result.Message;
+        if (string.IsNullOrWhiteSpace(Mo2ModNameTextBox.Text)) Mo2ModNameTextBox.Text = Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar));
+    }
+
+    private void Mo2ExportInputChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        mo2ExportPreviewToken = null;
+        if (ExportMo2ModButton is not null) ExportMo2ModButton.IsEnabled = false;
+    }
+
+    private void BrowseMo2ModsRootClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Title = "Select the existing Mod Organizer 2 mods folder", InitialDirectory = Directory.Exists(Mo2ModsRootTextBox.Text) ? Mo2ModsRootTextBox.Text : Environment.CurrentDirectory };
+        if (dialog.ShowDialog(this) == true)
+        {
+            Mo2ModsRootTextBox.Text = dialog.FolderName;
+            SettingsMo2ModsRootTextBox.Text = dialog.FolderName;
+        }
+    }
+
+    private void DiscoverMo2InstancesClicked(object sender, RoutedEventArgs e)
+    {
+        var settings = CaptureLocalSettings();
+        var result = Mo2InstanceDiscovery.Discover(settings.Mo2Path, gameDataRoot: settings.DataRoot);
+        Mo2DiscoveryComboBox.ItemsSource = result.Candidates;
+        Mo2DiscoveryComboBox.SelectedIndex = result.Candidates.Count > 0 ? 0 : -1;
+        Mo2DiscoveryStatusTextBlock.Text = result.Candidates.Count == 0 ? "No bounded MO2 instance candidates found." : $"Found {result.Candidates.Count} candidate(s). Select one explicitly.";
+    }
+
+    private void UseSelectedMo2CandidateClicked(object sender, RoutedEventArgs e)
+    {
+        if (Mo2DiscoveryComboBox.SelectedItem is not Mo2InstanceCandidate candidate || candidate.Status != "candidate" || candidate.ModsRoot is null)
+        {
+            Mo2DiscoveryStatusTextBlock.Text = "Select a valid candidate before using it.";
+            return;
+        }
+        Mo2ModsRootTextBox.Text = candidate.ModsRoot;
+        SettingsMo2ModsRootTextBox.Text = candidate.ModsRoot;
+        Mo2DiscoveryStatusTextBlock.Text = "Selected for this session. Save Settings to persist it.";
+    }
+
+    private async void PreviewMo2ExportClicked(object sender, RoutedEventArgs e) => await RunMo2ExportAsync(preview: true);
+    private async void ExportMo2ModClicked(object sender, RoutedEventArgs e)
+    {
+        var signature = Mo2ExportSignature();
+        if (mo2ExportPreviewToken is null || !StringComparer.Ordinal.Equals(signature, mo2ExportPreviewToken))
+        {
+            ProjectOutputsStatusTextBlock.Text = "Run a current successful MO2 export preview first.";
+            ExportMo2ModButton.IsEnabled = false;
+            return;
+        }
+        await RunMo2ExportAsync(preview: false);
+    }
+
+    private async Task RunMo2ExportAsync(bool preview)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        if (!Directory.Exists(Mo2ModsRootTextBox.Text) || string.IsNullOrWhiteSpace(Mo2ModNameTextBox.Text))
+        {
+            ProjectOutputsStatusTextBlock.Text = "Select an existing MO2 mods folder and enter a mod name.";
+            return;
+        }
+        SetBusy(true);
+        try
+        {
+            var args = new List<string> { "package", ".", "--target", "mod-package", "--mo2-mods-root", Mo2ModsRootTextBox.Text, "--mo2-mod-name", Mo2ModNameTextBox.Text, "--format", "json", "--no-input" };
+            if (preview) args.Add("--dry-run");
+            var result = await RunProjectCommandAsync(root, args.ToArray());
+            ProjectOutputDetailsTextBox.Text = result.CommandLine + " -> exit " + result.ExitCode + Environment.NewLine + FormatJsonOrText(result.StandardOutput);
+            if (result.ExitCode != 0)
+            {
+                mo2ExportPreviewToken = null; ExportMo2ModButton.IsEnabled = false;
+                ProjectOutputsStatusTextBlock.Text = preview ? "MO2 export preview was refused." : "MO2 export failed.";
+                return;
+            }
+            var json = JsonNode.Parse(result.StandardOutput)?.AsObject();
+            var export = json?["export"]?.AsObject();
+            var destination = export?["destination"]?.GetValue<string>();
+            var count = export?["entryCount"]?.GetValue<int>() ?? 0;
+            if (preview)
+            {
+                mo2ExportPreviewToken = Mo2ExportSignature(); ExportMo2ModButton.IsEnabled = true;
+                ProjectOutputsStatusTextBlock.Text = $"Preview ready: {count} files to {destination}.";
+            }
+            else
+            {
+                mo2ExportPreviewToken = null; ExportMo2ModButton.IsEnabled = false;
+                exportedMo2ModFolder = destination; OpenExportedMo2ModButton.IsEnabled = destination is not null && Directory.Exists(destination);
+                ProjectOutputsStatusTextBlock.Text = $"Exported {count} files to {destination}. MO2 profile state was not changed.";
+                RefreshProjectOutputs();
+            }
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException)
+        {
+            ProjectOutputsStatusTextBlock.Text = "MO2 export result could not be read: " + ex.Message;
+        }
+        finally { SetBusy(false); }
+    }
+
+    private string Mo2ExportSignature() => string.Join("|", Path.GetFullPath(ProjectPathTextBox.Text), Path.GetFullPath(Mo2ModsRootTextBox.Text), Mo2ModNameTextBox.Text);
+    private void OpenExportedMo2ModClicked(object sender, RoutedEventArgs e)
+    {
+        if (exportedMo2ModFolder is null || !Directory.Exists(exportedMo2ModFolder)) { OpenExportedMo2ModButton.IsEnabled = false; ProjectOutputsStatusTextBlock.Text = "The exported MO2 mod folder is unavailable."; return; }
+        OpenFolder(exportedMo2ModFolder);
     }
 
     private async void RunProjectOutputWorkflowClicked(object sender, RoutedEventArgs e)
@@ -622,6 +920,19 @@ public partial class MainWindow
         }
         try { Process.Start(new ProcessStartInfo { FileName = lane.ArchivePath, UseShellExecute = true }); }
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { ProjectOutputsStatusTextBlock.Text = "Could not open package ZIP: " + ex.Message; }
+    }
+
+    private void OpenSelectedGeckHandoffClicked(object sender, RoutedEventArgs e)
+    {
+        if (ProjectOutputsDataGrid.SelectedItem is not ProjectOutputLane { HandoffPath: { } path } || !Directory.Exists(path)) { ProjectOutputsStatusTextBlock.Text = "Select a completed GECK authoring handoff."; return; }
+        OpenFolder(path);
+    }
+
+    private void OpenSelectedGeckWorklistClicked(object sender, RoutedEventArgs e)
+    {
+        if (ProjectOutputsDataGrid.SelectedItem is not ProjectOutputLane { WorklistPath: { } path } || !File.Exists(path)) { ProjectOutputsStatusTextBlock.Text = "Select a completed GECK handoff with an unresolved-actions worklist."; return; }
+        try { Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true }); }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { ProjectOutputsStatusTextBlock.Text = "Could not open GECK worklist: " + ex.Message; }
     }
 
     private void OpenSelectedProjectOutput(bool distribution)
@@ -1105,6 +1416,7 @@ public partial class MainWindow
             var settings = CaptureLocalSettings();
             settingsStore.Save(settings);
             ProjectPathTextBox.Text = settings.ProjectRoot;
+            Mo2ModsRootTextBox.Text = settings.Mo2ModsRoot;
             SettingsStatusTextBlock.Text = "Saved locally to " + settingsStore.SettingsPath;
             SettingsStatusTextBlock.Foreground = (Brush)FindResource("OkBrush");
             AppendLog("Local app settings saved.");
@@ -1146,6 +1458,7 @@ public partial class MainWindow
             GameRootTextBox is null ||
             DataRootTextBox is null ||
             Mo2PathTextBox is null ||
+            SettingsMo2ModsRootTextBox is null ||
             GeckPathTextBox is null ||
             XEditPathTextBox is null)
         {
@@ -1197,6 +1510,7 @@ public partial class MainWindow
         GameRoot = GameRootTextBox.Text.Trim(),
         DataRoot = DataRootTextBox.Text.Trim(),
         Mo2Path = Mo2PathTextBox.Text.Trim(),
+        Mo2ModsRoot = SettingsMo2ModsRootTextBox.Text.Trim(),
         ToolPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["geck"] = GeckPathTextBox.Text.Trim(),
@@ -1211,6 +1525,8 @@ public partial class MainWindow
         GameRootTextBox.Text = settings.GameRoot;
         DataRootTextBox.Text = settings.DataRoot;
         Mo2PathTextBox.Text = settings.Mo2Path;
+        SettingsMo2ModsRootTextBox.Text = settings.Mo2ModsRoot;
+        Mo2ModsRootTextBox.Text = Mo2InstanceDiscovery.ValidateModsRoot(settings.Mo2ModsRoot, settings.DataRoot) is null ? settings.Mo2ModsRoot : string.Empty;
         GeckPathTextBox.Text = settings.ToolPaths.GetValueOrDefault("geck", string.Empty);
         XEditPathTextBox.Text = settings.ToolPaths.GetValueOrDefault("xedit", string.Empty);
     }
@@ -1221,6 +1537,7 @@ public partial class MainWindow
         "game" => GameRootTextBox,
         "data" => DataRootTextBox,
         "mo2" => Mo2PathTextBox,
+        "mo2mods" => SettingsMo2ModsRootTextBox,
         "geck" => GeckPathTextBox,
         "xedit" => XEditPathTextBox,
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Unknown settings path.")
@@ -1232,6 +1549,7 @@ public partial class MainWindow
         "game" => "Fallout: New Vegas root",
         "data" => "Fallout: New Vegas Data root",
         "mo2" => "Mod Organizer 2 executable",
+        "mo2mods" => "Mod Organizer 2 mods folder",
         "geck" => "GECK executable",
         "xedit" => "xEdit executable",
         _ => "path"
@@ -1810,6 +2128,11 @@ public partial class MainWindow
         PreviewNewProjectButton.IsEnabled = !isBusy;
         CreateProjectButton.IsEnabled = !isBusy && newProjectPreviewSignature is not null;
         CreateMcmSourceButton.IsEnabled = !isBusy;
+        CreateNarrativeSourceButton.IsEnabled = !isBusy && narrativePreviewToken is not null;
+        AppendNarrativeExtensionButton.IsEnabled = !isBusy && narrativeExtensionPreviewToken is not null;
+        AppendDialogueBehaviorButton.IsEnabled = !isBusy && dialogueBehaviorPreviewToken is not null;
+        AppendDialogueBranchButton.IsEnabled = !isBusy && dialogueBranchPreviewToken is not null;
+        AppendVoiceWorkItemButton.IsEnabled = !isBusy && voiceWorkItemPreviewToken is not null;
         PreviewMcmAppendButton.IsEnabled = !isBusy;
         AppendMcmSettingButton.IsEnabled = !isBusy && mcmAppendPreviewToken is not null;
     }

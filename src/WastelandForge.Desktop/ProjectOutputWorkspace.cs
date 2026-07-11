@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 
 namespace WastelandForge.Desktop;
 
-internal sealed record ProjectOutputLane(string Id, string Title, bool SourceDeclared, bool GeneratedExists, bool DistributionExists, string Command, string? GeneratedPath, string? DistributionPath, string? StagingPath = null, string? ArchivePath = null, string Components = "-", int? EntryCount = null);
+internal sealed record ProjectOutputLane(string Id, string Title, bool SourceDeclared, bool GeneratedExists, bool DistributionExists, string Command, string? GeneratedPath, string? DistributionPath, string? StagingPath = null, string? ArchivePath = null, string Components = "-", int? EntryCount = null, string? HandoffPath = null, string? WorklistPath = null);
 internal sealed record ProjectOutputWorkspaceResult(bool Success, string Message, IReadOnlyList<ProjectOutputLane> Lanes);
 
 internal static class ProjectOutputWorkspace
@@ -21,7 +21,8 @@ internal static class ProjectOutputWorkspace
                 Lane(projectRoot, registries, "mcm", "mcm-json", "MCM package", "forge package --target mcm-json"),
                 Lane(projectRoot, registries, "jipScripts", "jip-scripts", "JIP script package", "forge package --target jip-scripts"),
                 Lane(projectRoot, registries, "xeditAudit", "xedit-audit", "xEdit audit scaffold", "forge generate --target xedit-audit"),
-                ModPackageLane(projectRoot, registries)
+                ModPackageLane(projectRoot, registries),
+                GeckHandoffLane(projectRoot, registries)
             };
             return new(true, $"Inspected {lanes.Length} project output lanes.", lanes);
         }
@@ -29,6 +30,25 @@ internal static class ProjectOutputWorkspace
         {
             return new(false, "Project output inspection failed: " + ex.Message, []);
         }
+    }
+
+    private static ProjectOutputLane GeckHandoffLane(string root, JsonObject registries)
+    {
+        var distribution = Path.GetFullPath(Path.Combine(root, "dist", "geck-handoff"));
+        var manifestPath = Path.Combine(distribution, "handoff-manifest.json");
+        var worklist = Path.Combine(distribution, "worklists", "unresolved-actions.tsv");
+        var components = "-";
+        int? actions = null;
+        if (File.Exists(manifestPath))
+        {
+            var summary = JsonNode.Parse(File.ReadAllText(manifestPath))?["summary"];
+            components = $"{summary?["quests"]?.GetValue<int>() ?? 0} quests, {summary?["dialogueLines"]?.GetValue<int>() ?? 0} lines";
+            actions = summary?["unresolvedActions"]?.GetValue<int>();
+        }
+        return new("geck-handoff", "GECK authoring handoff", registries["quests"] is not null && registries["dialogue"] is not null, false, Directory.Exists(distribution), "forge package --target geck-handoff", null,
+            Directory.Exists(distribution) ? distribution : null, Components: components, EntryCount: actions,
+            HandoffPath: Directory.Exists(distribution) ? distribution : null,
+            WorklistPath: File.Exists(worklist) ? worklist : null);
     }
 
     private static ProjectOutputLane ModPackageLane(string root, JsonObject registries)
