@@ -71,6 +71,19 @@ public sealed class ManifestSchemaTests
     }
 
     [Fact]
+    public void BuiltInCatalogResolvesCombinedModPackageManifestSchema()
+    {
+        var found = WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.ModPackageManifest010, out var resource);
+
+        Assert.True(found);
+        Assert.NotNull(resource);
+        Assert.Equal("mod-package-manifest", resource.Kind);
+        Assert.Equal("0.1.0", resource.Version);
+        var schema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(resource)) as JsonObject;
+        Assert.Equal(WastelandForgeSchemaIds.ModPackageManifest010, (string?)schema?["$id"]);
+    }
+
+    [Fact]
     public void JipScriptSchemaDefinesOpaqueBodyLines()
     {
         var schemaPath = Path.Combine(RepositoryRoot(), "schemas", "jip-scripts", "0.1.0", "schema.json");

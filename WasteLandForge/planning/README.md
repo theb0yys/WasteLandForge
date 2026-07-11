@@ -364,10 +364,37 @@ Gate status:
 - `gates/gate-358-installer-refresh-first-run-regression.md` - Gate 358, refreshed local app and unsigned installer plus complete guarded first-run setup regression, routing Gate 359 to an app-shell New Project surface over canonical `forge init`.
 - `gates/gate-359-app-shell-new-project-forge-init.md` - Gate 359, app-shell New Project preview and safe creation through canonical `forge init`, with four documented templates, input-signature confirmation, existing-path refusal, and published-app UI regression coverage.
 - `gates/gate-360-post-create-validation-project-handoff.md` - Gate 360, automatic canonical validation after project creation with shared structured evidence and direct Mod Builder handoff, without additional scaffold or settings writes.
+- `gates/gate-361-installer-refresh-installed-new-project-regression.md` - Gate 361, refreshed unsigned installer and isolated installed-app regression covering New Project preview, creation, validation, Mod Builder handoff, uninstall, and complete cleanup.
+- `gates/gate-362-init-template-semantics-audit.md` - Gate 362, audited all four init template IDs, proved their eight-file outputs are currently identical, and corrected CLI/app documentation without inventing specialized scaffold contracts.
+- `gates/gate-363-forge-init-post-create-next-steps.md` - Gate 363, added ordered canonical post-create commands to init JSON and human/plain output with dry-run and refusal-safe behavior.
+- `gates/gate-364-app-shell-post-create-actions.md` - Gate 364, gated Mod Builder capability-scan and docs actions from parsed canonical init next-step metadata, with published-app UI coverage.
+- `gates/gate-365-structured-docs-result-folder-handoff.md` - Gate 365, structured docs summary/path presentation and an exact-output-constrained Open Docs Folder handoff with published-app Explorer regression coverage.
+- `gates/gate-366-in-app-docs-reference-index-browser.md` - Gate 366, strict read-only parsing and grouped in-app browsing of generated docs reference-index sections and entries, with published-app immutability coverage.
+- `gates/gate-367-docs-entry-detail-reference-handoff.md` - Gate 367, canonical entry-to-Markdown mapping, selection details, and existing generated/docs-contained Open Reference gating.
+- `gates/gate-368-in-app-generated-markdown-preview.md` - Gate 368, contained generated Markdown loading as uninterpreted read-only text with published-app content and immutability coverage.
+- `gates/gate-369-docs-index-local-filtering.md` - Gate 369, case-insensitive in-memory Docs Index filtering with match counts, stale-selection clearing, restoration, and generated-index immutability coverage.
+- `gates/gate-370-app-shell-mcm-source-authoring.md` - Gate 370, first real app-shell MCM toggle source authoring with guarded manifest/dependency updates, canonical validation/generation, generated output, and no-overwrite regression.
+- `gates/gate-371-mcm-existing-source-append-setting.md` - Gate 371, preview-token-gated existing MCM setting append with stale-source refusal, preservation, canonical validation, and regeneration.
+- `gates/gate-372-mcm-checkbox-slider-authoring.md` - Gate 372, checkbox and slider source authoring through the app-shell preview/save/validate/generate workflow with numeric and stale-type safeguards.
+- `gates/gate-373-mcm-choice-keybind-authoring.md` - Gate 373, choice and keybind source authoring with ordered-choice, default-membership, scancode, validation, and generated-output safeguards.
+- `gates/gate-374-mcm-header-static-text-authoring.md` - Gate 374, variable-free header and static-text source authoring with canonical validation, generation, and no-write safeguards.
+- `gates/gate-375-mcm-string-toggle-authoring.md` - Gate 375, INI-backed string-toggle authoring with optional on/off label pass-through and omission safeguards.
+- `gates/gate-376-mcm-authoring-lane-closeout-sample-workflow.md` - Gate 376, MCM authoring lane closeout with a contained, resettable bundled sample-project workflow.
+- `gates/gate-377-app-shell-jip-script-authoring.md` - Gate 377, first app-shell JIP LN source authoring with canonical validation, generation, and loose-file packaging.
+- `gates/gate-378-jip-existing-source-append.md` - Gate 378, preview-token-gated JIP script append with stale-source and duplicate ID/output safeguards.
+- `gates/gate-379-jip-output-review-package-handoff.md` - Gate 379, read-only generated JIP script review and exact staged-package folder handoff.
+- `gates/gate-380-app-shell-xedit-audit-workspace.md` - Gate 380, non-executing app-shell xEdit audit sample, scaffold generation, report handoff, and generated-evidence review workspace.
+- `gates/gate-381-xedit-audit-workspace-closeout.md` - Gate 381, deterministic xEdit audit evidence review, contained folder handoff, named sample coverage, and app-shell lane closeout.
+- `gates/gate-382-consolidated-project-output-workspace.md` - Gate 382, consolidated MCM/JIP/xEdit source and output status with canonical selected-workflow execution.
+- `gates/gate-383-project-workflow-completion-output-handoff.md` - Gate 383, structured command completion evidence and exact selected-lane generated/distribution folder handoffs.
+- `gates/gate-384-installed-project-output-workspace-regression-closeout.md` - Gate 384, isolated installed-app regression for MCM, JIP, xEdit, and Project Outputs plus consolidated workspace lane closeout.
+- `gates/gate-385-combined-mod-package-assembly-contract.md` - Gate 385, deterministic combined MCM/JIP mod-package command, layout, collision, evidence, and no-install contract.
+- `gates/gate-386-combined-mod-package-vertical-slice.md` - Gate 386, implemented deterministic combined MCM/JIP package target, immutable schema, collision refusal, fixture, and evidence.
+- `gates/gate-387-app-shell-combined-mod-package-workflow.md` - Gate 387, combined package Project Outputs lane, bundled sample, structured evidence, and exact staging/ZIP handoffs.
 
 Next gates:
 
 - Gate 315 - harden the WPF app-shell scaffold and backend bridge after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
-- Gate 361 - refresh the unsigned local installer and regress the installed New Project preview, creation, validation, and Mod Builder handoff workflow.
+- Gate 388 - rebuild the unsigned installer and run an isolated installed-app combined-sample package and cleanup regression.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "jip-script",
+  "id": "io.github.theboyyss.combinedmodexample.jip_scripts",
+  "scripts": [{
+    "id": "io.github.theboyyss.combinedmodexample.jip_scripts.bootstrap",
+    "summary": "Synthetic combined-package script fixture.",
+    "lifecyclePrefix": "gr_",
+    "outputFile": "gr_combined_bootstrap.txt",
+    "requires": { "capabilities": [{ "id": "runtime.scripting.jip_script_runner" }] },
+    "sizePolicy": { "maxBytes": 16384 },
+    "formIdResolution": { "strategy": "explicitReferences" },
+    "body": { "lineMode": "opaqueText", "lines": [{ "text": "synthetic combined package line" }] }
+  }]
+}

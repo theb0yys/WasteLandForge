@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "capability",
+  "id": "runtime.scripting.jip_script_runner",
+  "title": "JIP LN Script Runner text scripts",
+  "satisfiedBy": [{ "id": "provider.runtime.jip_ln", "providerType": "runtime-extension" }],
+  "requires": { "capabilities": [{ "id": "runtime.scripting.xnvse" }] },
+  "scope": "data-managed",
+  "stability": "community-standard",
+  "features": ["text-script-runner"]
+}

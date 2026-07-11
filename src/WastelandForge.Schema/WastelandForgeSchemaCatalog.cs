@@ -70,6 +70,11 @@ public static class WastelandForgeSchemaCatalog
             "0.1.0",
             "schemas/package-manifest/0.1.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.ModPackageManifest010,
+            "mod-package-manifest",
+            "0.1.0",
+            "schemas/mod-package-manifest/0.1.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.InstallPreview010,
             "install-preview",
             "0.1.0",

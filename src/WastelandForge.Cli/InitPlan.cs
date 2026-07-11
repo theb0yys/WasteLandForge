@@ -96,6 +96,7 @@ internal sealed record InitPlanResult(
     IReadOnlyList<InitPlannedPath> PlannedPaths,
     InitSafety Safety,
     InitValidationPlan Validation,
+    IReadOnlyList<string> NextSteps,
     InitExecutionState Execution,
     IReadOnlyList<string> Templates,
     IReadOnlyList<string> Boundaries)
@@ -114,6 +115,13 @@ internal static class InitPlanPlanner
         "fnv-framework",
         "fnv-quest-pack",
         "fnv-docs-only"
+    ];
+
+    public static readonly string[] PostCreateNextSteps =
+    [
+        "forge validate .",
+        "forge capabilities scan --project .",
+        "forge docs ."
     ];
 
     private static readonly string[] BoundaryLines =
@@ -179,6 +187,7 @@ internal static class InitPlanPlanner
                 $"forge validate \"{projectRoot}\" --format json --no-input",
                 RunsInCurrentGate: false,
                 Status: "available-after-scaffold-write"),
+            PostCreateNextSteps,
             InitExecutionState.None,
             SupportedTemplates,
             BoundaryLines);
@@ -890,6 +899,7 @@ internal static class InitPlanJsonSerializer
                 ["runsInCurrentGate"] = result.Validation.RunsInCurrentGate,
                 ["status"] = result.Validation.Status
             },
+            ["nextSteps"] = ToStringArray(result.NextSteps),
             ["reportContract"] = new JsonObject
             {
                 ["writesScaffoldInCurrentGate"] = result.Execution.ScaffoldWrites,
@@ -1023,6 +1033,19 @@ internal static class InitPlanTextRenderer
         builder.AppendLine();
         builder.Append("Validate after scaffold: ");
         builder.AppendLine(result.Validation.Command);
+        if (!result.IsRefused)
+        {
+            builder.AppendLine();
+            builder.AppendLine(result.PlanningOnly ? "Planned next steps:" : "Next steps:");
+            for (var index = 0; index < result.NextSteps.Count; index++)
+            {
+                builder.Append("  ");
+                builder.Append(index + 1);
+                builder.Append(". ");
+                builder.AppendLine(result.NextSteps[index]);
+            }
+        }
+
         builder.AppendLine();
         builder.AppendLine("Execution:");
         builder.Append("  scaffold writes: ");

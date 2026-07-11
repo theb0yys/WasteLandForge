@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "dependency",
+  "id": "io.github.theboyyss.combinedmodexample.dependencies",
+  "requires": {
+    "capabilities": [
+      { "id": "runtime.ui.mcm_json", "phase": ["generation"] },
+      { "id": "runtime.scripting.jip_script_runner", "phase": ["generation"] }
+    ]
+  }
+}

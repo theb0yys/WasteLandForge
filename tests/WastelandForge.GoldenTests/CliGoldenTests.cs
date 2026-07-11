@@ -33,6 +33,7 @@ public sealed class CliGoldenTests
         Assert.Contains(".vscode/tasks.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains(".vscode/settings.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains(".github/workflows/wastelandforge.yml", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("same validated baseline scaffold", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Gate 320 does not install providers", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
@@ -57,6 +58,7 @@ public sealed class CliGoldenTests
             "--no-input");
         var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Init JSON did not parse.");
         var plannedPaths = json["plannedPaths"]?.AsArray() ?? throw new InvalidOperationException("Init planned paths were missing.");
+        var nextSteps = json["nextSteps"]?.AsArray() ?? throw new InvalidOperationException("Init next steps were missing.");
 
         Assert.Equal(0, result.ExitCode);
         Assert.Equal("init", (string?)json["command"]);
@@ -71,6 +73,9 @@ public sealed class CliGoldenTests
         Assert.Equal(false, (bool?)json["execution"]?["scaffoldWrites"]);
         Assert.Equal(false, (bool?)json["execution"]?["externalToolExecution"]);
         Assert.Equal(false, (bool?)json["execution"]?["aiRequired"]);
+        Assert.Equal(
+            ["forge validate .", "forge capabilities scan --project .", "forge docs ."],
+            nextSteps.Select(step => step?.GetValue<string>() ?? throw new InvalidOperationException("Init next step was null.")).ToArray());
         Assert.Contains(plannedPaths, path =>
             StringComparer.Ordinal.Equals((string?)path?["path"], "src/registries/dependencies/main.json") &&
             (bool?)path?["wouldWriteInCurrentGate"] == true);
@@ -83,6 +88,30 @@ public sealed class CliGoldenTests
         Assert.Contains(plannedPaths, path =>
             StringComparer.Ordinal.Equals((string?)path?["path"], ".github/workflows/wastelandforge.yml") &&
             (bool?)path?["wouldWriteInCurrentGate"] == true);
+        Assert.False(Directory.Exists(projectRoot));
+        Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void InitPlainDryRunListsPostCreateNextStepsWithoutWriting()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "planned-mod");
+
+        var result = RunCli(
+            "init",
+            projectRoot,
+            "--name",
+            "Planned Mod",
+            "--dry-run",
+            "--format",
+            "plain",
+            "--no-input");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Planned next steps:", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("1. forge validate .", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("2. forge capabilities scan --project .", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("3. forge docs .", result.Stdout, StringComparison.Ordinal);
         Assert.False(Directory.Exists(projectRoot));
         Assert.Equal(string.Empty, result.Stderr);
     }
@@ -119,6 +148,9 @@ public sealed class CliGoldenTests
         Assert.Equal(true, (bool?)json["execution"]?["editorSchemaAssociationWrites"]);
         Assert.Equal(true, (bool?)json["execution"]?["workflowWrites"]);
         Assert.Equal(false, (bool?)json["execution"]?["validationExecution"]);
+        Assert.Equal("forge validate .", (string?)json["nextSteps"]?[0]);
+        Assert.Equal("forge capabilities scan --project .", (string?)json["nextSteps"]?[1]);
+        Assert.Equal("forge docs .", (string?)json["nextSteps"]?[2]);
         Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), "wastelandforge.json"));
         Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), "src/registries/dependencies/main.json"));
         Assert.Contains(writtenPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), "src/registries/capabilities/runtime.json"));
@@ -5844,6 +5876,26 @@ public sealed class CliGoldenTests
         Assert.Contains("package/Data/nvse/plugins/scripts/gr_example_bootstrap.txt", checksums, StringComparison.Ordinal);
         Assert.True(json["outputDigests"]?.AsArray().Any(digest =>
             StringComparer.Ordinal.Equals("dist/jip-scripts/checksums.sha256", (string?)digest?["path"])) ?? false);
+    }
+
+    [Fact]
+    public void PackageModPackageCombinesMcmAndJipPayloads()
+    {
+        var projectRoot = CopyFixtureProject("CombinedModExample");
+        var result = RunCli("package", projectRoot, "--target", "mod-package", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("Combined package JSON did not parse.");
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("mod-package", (string?)json["target"]);
+        Assert.Equal(2, (int?)json["summary"]?["components"]);
+        Assert.Equal(3, (int?)json["summary"]?["entries"]);
+        Assert.Equal("dist/mod-package/package.zip", (string?)json["outputs"]?["packageArchive"]);
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mod-package", "package.zip")));
+        var installPlan = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "mod-package", "install-plan.json")));
+        Assert.Equal(false, (bool?)installPlan?["writesToGameData"]);
+        Assert.Equal(false, (bool?)installPlan?["writesToMo2Profile"]);
+        Assert.Equal(false, (bool?)installPlan?["executesExternalTools"]);
     }
 
     [Fact]

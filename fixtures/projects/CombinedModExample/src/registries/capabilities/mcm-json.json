@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "capability",
+  "id": "runtime.ui.mcm_json",
+  "title": "MCM Extender JSON authoring",
+  "satisfiedBy": [{ "id": "provider.runtime.mcm_extender", "providerType": "runtime-ui" }],
+  "requires": { "capabilities": [{ "id": "runtime.scripting.xnvse" }] },
+  "scope": "data-managed",
+  "stability": "community-standard",
+  "features": ["json-menu-authoring"]
+}

@@ -1153,8 +1153,8 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   input preflight. Gate 344 adds local Inno Setup compiler detection and an
   unsigned installer build helper scaffold. Gate 345 closes the installer
   helper lane and routes back to app-shell product value. Route the next
-  development step to Gate 361: refresh the unsigned local installer and
-  regress New Project creation, validation, and Mod Builder handoff.
+  development step to Gate 388: rebuild the unsigned installer and run the
+  isolated installed-app combined-sample package and cleanup regression.
 
 ## Required output
 

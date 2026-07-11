@@ -15,6 +15,7 @@ public static class WastelandForgeSchemaIds
     public const string XEditAudit010 = "https://schemas.wastelandforge.dev/fnv/xedit-audit/0.1.0/schema.json";
     public const string McmExtenderOutput010 = "https://schemas.wastelandforge.dev/fnv/mcm-extender-output/0.1.0/schema.json";
     public const string PackageManifest010 = "https://schemas.wastelandforge.dev/fnv/package-manifest/0.1.0/schema.json";
+    public const string ModPackageManifest010 = "https://schemas.wastelandforge.dev/fnv/mod-package-manifest/0.1.0/schema.json";
     public const string InstallPreview010 = "https://schemas.wastelandforge.dev/fnv/install-preview/0.1.0/schema.json";
     public const string InstallPlan010 = "https://schemas.wastelandforge.dev/fnv/install-plan/0.1.0/schema.json";
     public const string PackageVerification010 = "https://schemas.wastelandforge.dev/fnv/package-verification/0.1.0/schema.json";

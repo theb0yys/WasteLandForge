@@ -348,6 +348,21 @@
                         Content="Validate"
                         Margin="0,10,0,0"
                         Click="ValidateProjectClicked" />
+                <Button x:Name="PostCreateCapabilityScanButton"
+                        Content="Scan Project Capabilities"
+                        Margin="0,10,0,0"
+                        IsEnabled="False"
+                        Click="PostCreateCapabilityScanClicked" />
+                <Button x:Name="PostCreateDocsButton"
+                        Content="Generate Project Docs"
+                        Margin="0,10,0,0"
+                        IsEnabled="False"
+                        Click="PostCreateDocsClicked" />
+                <Button x:Name="OpenDocsFolderButton"
+                        Content="Open Docs Folder"
+                        Margin="0,10,0,0"
+                        IsEnabled="False"
+                        Click="OpenDocsFolderClicked" />
                 <Button x:Name="ModBuilderGenerateButton"
                         Content="Generate MCM"
                         Margin="0,10,0,0"
@@ -364,6 +379,24 @@
                         Content="Open Package Folder"
                         Margin="0,10,0,0"
                         Click="OpenPackageClicked" />
+
+                <Separator Margin="0,22,0,18" />
+
+                <TextBlock Text="Project docs"
+                           Foreground="{StaticResource TextMuted}"
+                           FontSize="12"
+                           FontWeight="Bold" />
+                <TextBlock x:Name="DocsStatusTextBlock"
+                           Text="Not generated"
+                           Foreground="{StaticResource TextPrimary}"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Margin="0,8,0,0" />
+                <TextBlock x:Name="DocsPathTextBlock"
+                           Text="generated/docs"
+                           Foreground="{StaticResource TextMuted}"
+                           Margin="0,8,0,0"
+                           TextWrapping="Wrap" />
 
                 <Separator Margin="0,22,0,18" />
 
@@ -389,16 +422,113 @@
               </StackPanel>
             </Border>
 
-            <TextBox x:Name="BuilderOutputTextBox"
-                     Grid.Column="1"
-                     AcceptsReturn="True"
-                     AcceptsTab="True"
-                     FontFamily="Cascadia Mono, Consolas"
-                     FontSize="13"
-                     HorizontalScrollBarVisibility="Auto"
-                     VerticalScrollBarVisibility="Auto"
-                     IsReadOnly="True"
-                     TextWrapping="NoWrap" />
+            <TabControl Grid.Column="1">
+              <TabItem Header="Command Output">
+                <TextBox x:Name="BuilderOutputTextBox"
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         FontFamily="Cascadia Mono, Consolas"
+                         FontSize="13"
+                         HorizontalScrollBarVisibility="Auto"
+                         VerticalScrollBarVisibility="Auto"
+                         IsReadOnly="True"
+                         TextWrapping="NoWrap" />
+              </TabItem>
+              <TabItem x:Name="DocsIndexTabItem" Header="Docs Index" IsEnabled="False">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                  <StackPanel Margin="16">
+                    <TextBlock x:Name="DocsIndexSummaryTextBlock"
+                               Text="Generate project docs to load the reference index."
+                               Foreground="{StaticResource TextMuted}"
+                               Margin="0,0,0,8" />
+                    <TextBox x:Name="DocsIndexFilterTextBox"
+                             Margin="0,0,0,14"
+                             ToolTip="Filter reference title, ID, kind, source, version, or description"
+                             TextChanged="DocsIndexFilterChanged" />
+                    <Border Background="{StaticResource PanelBackground}"
+                            BorderBrush="{StaticResource BorderMuted}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="14"
+                            Margin="0,0,0,18">
+                      <Grid>
+                        <Grid.RowDefinitions>
+                          <RowDefinition Height="Auto" />
+                          <RowDefinition Height="220" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                          <TextBlock x:Name="SelectedDocsReferenceTitleTextBlock" Text="No reference selected" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                          <TextBlock x:Name="SelectedDocsReferenceIdTextBlock" Text="Select an entry below." Foreground="{StaticResource TextMuted}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                          <TextBlock x:Name="SelectedDocsReferenceSourceTextBlock" Foreground="{StaticResource TextMuted}" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap" />
+                          <TextBlock x:Name="SelectedDocsReferencePathTextBlock" Foreground="{StaticResource TextMuted}" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button x:Name="OpenDocsReferenceButton"
+                                Grid.Column="1"
+                                Content="Open Reference"
+                                Margin="16,0,0,0"
+                                VerticalAlignment="Center"
+                                IsEnabled="False"
+                                Click="OpenDocsReferenceClicked" />
+                        <TextBox x:Name="MarkdownPreviewTextBox"
+                                 Grid.Row="1"
+                                 Grid.ColumnSpan="2"
+                                 Margin="0,14,0,0"
+                                 AcceptsReturn="True"
+                                 AcceptsTab="True"
+                                 FontFamily="Cascadia Mono, Consolas"
+                                 FontSize="12"
+                                 HorizontalScrollBarVisibility="Auto"
+                                 VerticalScrollBarVisibility="Auto"
+                                 IsReadOnly="True"
+                                 Text="Select a reference to preview its generated Markdown."
+                                 TextWrapping="NoWrap" />
+                      </Grid>
+                    </Border>
+                    <ItemsControl x:Name="DocsIndexSectionsItemsControl">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="{Binding Title}"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       FontSize="18"
+                                       FontWeight="SemiBold" />
+                            <ListBox ItemsSource="{Binding Entries}"
+                                     Margin="0,8,0,0"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     SelectionChanged="DocsReferenceSelectionChanged">
+                              <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                  <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                      <ColumnDefinition Width="220" />
+                                      <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                      <TextBlock Text="{Binding Title}" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                      <TextBlock Text="{Binding Kind}" Foreground="{StaticResource TextMuted}" FontSize="12" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                                      <TextBlock Text="{Binding Id}" Foreground="{StaticResource TextPrimary}" FontFamily="Cascadia Mono, Consolas" TextWrapping="Wrap" />
+                                      <TextBlock Text="{Binding Source}" Foreground="{StaticResource TextMuted}" FontSize="12" TextWrapping="Wrap" />
+                                      <TextBlock Text="{Binding Detail}" Foreground="{StaticResource TextMuted}" FontSize="12" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                  </Grid>
+                                </DataTemplate>
+                              </ListBox.ItemTemplate>
+                            </ListBox>
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </ScrollViewer>
+              </TabItem>
+            </TabControl>
           </Grid>
         </TabItem>
 
@@ -806,6 +936,11 @@
                   <ComboBoxItem Content="FNV Quest Pack" Tag="fnv-quest-pack" />
                   <ComboBoxItem Content="FNV Docs Only" Tag="fnv-docs-only" />
                 </ComboBox>
+                <TextBlock Text="All template IDs currently create the same validated baseline scaffold. Specialized framework, quest-pack, and docs-only contents are not defined yet."
+                           Foreground="{StaticResource TextMuted}"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           Margin="0,8,0,0" />
 
                 <Button x:Name="PreviewNewProjectButton"
                         Content="Preview"
@@ -833,6 +968,150 @@
                      VerticalScrollBarVisibility="Auto"
                      IsReadOnly="True"
                      TextWrapping="NoWrap" />
+          </Grid>
+        </TabItem>
+
+        <TabItem Header="MCM Author">
+          <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="380" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,18,0">
+              <StackPanel>
+                <TextBlock Text="MCM setting source" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock Text="Menu title" Foreground="{StaticResource TextMuted}" Margin="0,16,0,0" /><TextBox x:Name="McmMenuTitleTextBox" Text="My Mod Settings" Margin="0,6,0,0" />
+                <TextBlock Text="Output filename" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmOutputFileTextBox" Text="MyMod.json" Margin="0,6,0,0" />
+                <TextBlock Text="Page title" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmPageTitleTextBox" Text="General" Margin="0,6,0,0" />
+                <TextBlock Text="Setting ID" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmSettingIdTextBox" Text="enabled" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                <TextBlock Text="Setting type" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" />
+                <ComboBox x:Name="McmSettingTypeComboBox" SelectedIndex="0" Margin="0,6,0,0" SelectionChanged="McmSettingTypeChanged">
+                  <ComboBoxItem Content="Toggle" Tag="toggle" />
+                  <ComboBoxItem Content="Checkbox" Tag="checkbox" />
+                  <ComboBoxItem Content="String toggle" Tag="stringToggle" />
+                  <ComboBoxItem Content="Slider" Tag="slider" />
+                  <ComboBoxItem Content="Choice" Tag="choice" />
+                  <ComboBoxItem Content="Keybind" Tag="keybind" />
+                  <ComboBoxItem Content="Header" Tag="header" />
+                  <ComboBoxItem Content="Static text" Tag="text" />
+                </ComboBox>
+                <TextBlock Text="Setting label" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmSettingLabelTextBox" Text="Enable feature" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                <StackPanel x:Name="McmIniFieldsPanel">
+                  <TextBlock Text="INI file" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmIniFileTextBox" Text="Config/MyMod.ini" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                  <TextBlock Text="INI section" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmIniSectionTextBox" Text="General" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                  <TextBlock Text="INI key" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmIniKeyTextBox" Text="bEnabled" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                </StackPanel>
+                <CheckBox x:Name="McmDefaultValueCheckBox" Content="Enabled by default" IsChecked="True" Margin="0,14,0,0" Checked="McmAppendInputChanged" Unchecked="McmAppendInputChanged" />
+                <StackPanel x:Name="McmSliderFieldsPanel" Visibility="Collapsed">
+                  <TextBlock Text="Default value" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmSliderDefaultTextBox" Text="1" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                  <TextBlock Text="Minimum" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmSliderMinimumTextBox" Text="0" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                  <TextBlock Text="Maximum" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmSliderMaximumTextBox" Text="10" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                  <TextBlock Text="Increment" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmSliderIncrementTextBox" Text="0.5" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                  <TextBlock Text="Decimal places" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmSliderDecimalsTextBox" Text="1" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                </StackPanel>
+                <StackPanel x:Name="McmChoiceFieldsPanel" Visibility="Collapsed">
+                  <TextBlock Text="Choices (one per line)" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" />
+                  <TextBox x:Name="McmChoiceValuesTextBox" Text="Low&#x0a;Medium&#x0a;High" AcceptsReturn="True" Height="82" VerticalScrollBarVisibility="Auto" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                  <TextBlock Text="Default choice" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmChoiceDefaultTextBox" Text="Medium" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                </StackPanel>
+                <StackPanel x:Name="McmKeybindFieldsPanel" Visibility="Collapsed">
+                  <TextBlock Text="Default DirectX scancode" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmKeybindDefaultTextBox" Text="33" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                </StackPanel>
+                <StackPanel x:Name="McmStaticTextFieldsPanel" Visibility="Collapsed">
+                  <TextBlock Text="Displayed text" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmStaticTextTextBox" Text="Configuration changes apply immediately." AcceptsReturn="True" Height="64" TextWrapping="Wrap" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                </StackPanel>
+                <StackPanel x:Name="McmStringToggleFieldsPanel" Visibility="Collapsed">
+                  <TextBlock Text="On label (optional)" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmStringToggleTextOnTextBox" Text="Enabled" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                  <TextBlock Text="Off label (optional)" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="McmStringToggleTextOffTextBox" Text="Disabled" Margin="0,6,0,0" TextChanged="McmAppendInputChanged" />
+                </StackPanel>
+                <Button x:Name="CreateMcmSourceButton" Content="Create, Validate and Generate" Style="{StaticResource PrimaryButton}" Margin="0,18,0,0" Click="CreateMcmSourceClicked" />
+                <Button x:Name="LoadMcmSampleButton" Content="Load Sample Project" Margin="0,10,0,0" Click="LoadMcmSampleClicked" />
+                <Button x:Name="PreviewMcmAppendButton" Content="Preview Append" Margin="0,10,0,0" Click="PreviewMcmAppendClicked" />
+                <Button x:Name="AppendMcmSettingButton" Content="Append, Validate and Generate" Margin="0,10,0,0" IsEnabled="False" Click="AppendMcmSettingClicked" />
+                <TextBlock x:Name="McmAuthorStatusTextBlock" Text="Ready to create a new MCM source registry." Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" TextWrapping="Wrap" />
+              </StackPanel>
+            </ScrollViewer>
+            <TextBox x:Name="McmAuthorOutputTextBox" Grid.Column="1" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="13" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
+          </Grid>
+        </TabItem>
+
+        <TabItem Header="JIP Author">
+          <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="380" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,18,0">
+              <StackPanel>
+                <TextBlock Text="JIP LN text script" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock Text="Script ID" Foreground="{StaticResource TextMuted}" Margin="0,16,0,0" /><TextBox x:Name="JipScriptIdTextBox" Text="bootstrap" Margin="0,6,0,0" TextChanged="JipAppendInputChanged" />
+                <TextBlock Text="Summary" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="JipSummaryTextBox" Text="Project bootstrap script." Margin="0,6,0,0" TextChanged="JipAppendInputChanged" />
+                <TextBlock Text="Lifecycle prefix" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" />
+                <ComboBox x:Name="JipLifecycleComboBox" SelectedIndex="0" Margin="0,6,0,0" SelectionChanged="JipAppendInputChanged">
+                  <ComboBoxItem Content="gr_" Tag="gr_" /><ComboBoxItem Content="gl_" Tag="gl_" /><ComboBoxItem Content="gs_" Tag="gs_" />
+                  <ComboBoxItem Content="gx_" Tag="gx_" /><ComboBoxItem Content="gn_" Tag="gn_" /><ComboBoxItem Content="ln_" Tag="ln_" />
+                </ComboBox>
+                <TextBlock Text="Output filename stem" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="JipOutputStemTextBox" Text="project_bootstrap" Margin="0,6,0,0" TextChanged="JipAppendInputChanged" />
+                <TextBlock Text="Opaque source lines" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" />
+                <TextBox x:Name="JipBodyTextBox" Text="synthetic opaque source line" AcceptsReturn="True" Height="180" FontFamily="Cascadia Mono, Consolas" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextWrapping="NoWrap" Margin="0,6,0,0" TextChanged="JipAppendInputChanged" />
+                <Button Content="Create, Validate and Package" Style="{StaticResource PrimaryButton}" Margin="0,18,0,0" Click="CreateJipSourceClicked" />
+                <Button Content="Preview Append" Margin="0,10,0,0" Click="PreviewJipAppendClicked" />
+                <Button x:Name="AppendJipScriptButton" Content="Append, Validate and Package" Margin="0,10,0,0" IsEnabled="False" Click="AppendJipScriptClicked" />
+                <Button Content="Review Generated Scripts" Margin="0,10,0,0" Click="ReviewJipOutputsClicked" />
+                <Button x:Name="OpenJipPackageButton" Content="Open Package Folder" Margin="0,10,0,0" IsEnabled="False" Click="OpenJipPackageClicked" />
+                <TextBlock x:Name="JipAuthorStatusTextBlock" Text="Ready to create a JIP script source registry." Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" TextWrapping="Wrap" />
+              </StackPanel>
+            </ScrollViewer>
+            <TextBox x:Name="JipAuthorOutputTextBox" Grid.Column="1" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="13" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
+          </Grid>
+        </TabItem>
+
+        <TabItem Header="xEdit Audit">
+          <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="340" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <StackPanel Margin="0,0,18,0">
+              <TextBlock Text="xEdit audit workspace" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+              <Button Content="Load Audit Sample" Style="{StaticResource PrimaryButton}" Margin="0,18,0,0" Click="LoadXEditAuditSampleClicked" />
+              <Button Content="Generate Audit Scaffold" Margin="0,10,0,0" Click="GenerateXEditAuditClicked" />
+              <Button Content="Process Existing Report" Margin="0,10,0,0" Click="ProcessXEditReportClicked" />
+              <Button Content="Review Generated Evidence" Margin="0,10,0,0" Click="ReviewXEditAuditClicked" />
+              <Button x:Name="OpenXEditAuditFolderButton" Content="Open Generated Audit Folder" Margin="0,10,0,0" IsEnabled="False" Click="OpenXEditAuditFolderClicked" />
+              <TextBlock x:Name="XEditAuditStatusTextBlock" Text="Ready. xEdit is never launched by this workspace." Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+            <TextBox x:Name="XEditAuditOutputTextBox" Grid.Column="1" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="13" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
+          </Grid>
+        </TabItem>
+
+        <TabItem Header="Project Outputs">
+          <Grid Margin="0,18,0,0">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="180" /></Grid.RowDefinitions>
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <TextBlock Text="Buildable project outputs" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Content="Load Combined Sample" Click="LoadCombinedPackageSampleClicked" />
+              <Button Grid.Column="2" Content="Refresh" Margin="8,0,0,0" Click="RefreshProjectOutputsClicked" />
+            </Grid>
+            <DataGrid x:Name="ProjectOutputsDataGrid" Grid.Row="1" Margin="0,16,0,16" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" HeadersVisibility="Column">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Output" Binding="{Binding Title}" Width="*" />
+                <DataGridCheckBoxColumn Header="Source" Binding="{Binding SourceDeclared}" Width="90" />
+                <DataGridCheckBoxColumn Header="Generated" Binding="{Binding GeneratedExists}" Width="100" />
+                <DataGridCheckBoxColumn Header="Distribution" Binding="{Binding DistributionExists}" Width="110" />
+                <DataGridTextColumn Header="Canonical command" Binding="{Binding Command}" Width="280" />
+                <DataGridTextColumn Header="Components" Binding="{Binding Components}" Width="150" />
+                <DataGridTextColumn Header="Entries" Binding="{Binding EntryCount}" Width="70" />
+              </DataGrid.Columns>
+            </DataGrid>
+            <Grid Grid.Row="2">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <ComboBox x:Name="ProjectOutputWorkflowComboBox" SelectedIndex="0" Padding="8">
+                <ComboBoxItem Content="Package MCM" Tag="mcm-json" />
+                <ComboBoxItem Content="Package JIP scripts" Tag="jip-scripts" />
+                <ComboBoxItem Content="Generate xEdit audit" Tag="xedit-audit" />
+                <ComboBoxItem Content="Build combined mod package" Tag="mod-package" />
+              </ComboBox>
+              <Button Grid.Column="1" Content="Run Selected Workflow" Style="{StaticResource PrimaryButton}" Margin="12,0,0,0" Click="RunProjectOutputWorkflowClicked" />
+              <Button Grid.Column="2" Content="Open Generated" Margin="12,0,0,0" Click="OpenSelectedGeneratedOutputClicked" />
+              <Button Grid.Column="3" Content="Open Distribution" Margin="8,0,0,0" Click="OpenSelectedDistributionOutputClicked" />
+              <Button Grid.Column="4" Content="Open Staging" Margin="8,0,0,0" Click="OpenSelectedStagingOutputClicked" />
+              <Button Grid.Column="5" Content="Open Package ZIP" Margin="8,0,0,0" Click="OpenSelectedPackageArchiveClicked" />
+              <TextBlock x:Name="ProjectOutputsStatusTextBlock" Grid.Column="6" Text="Refresh to inspect the selected project." Foreground="{StaticResource TextMuted}" Margin="16,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </Grid>
+            <TextBox x:Name="ProjectOutputDetailsTextBox" Grid.Row="3" Margin="0,14,0,0" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
           </Grid>
         </TabItem>
 

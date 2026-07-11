@@ -193,13 +193,63 @@ creation, shares its structured result with the existing validation views and
 Mod Builder output, and opens the created project in Mod Builder. The handoff
 does not persist settings or add files beyond the eight-file init scaffold.
 
+Gate 361 refreshes the unsigned installer and validates the complete workflow
+from an isolated installed copy. Preview, eight-file creation, post-create
+validation, Mod Builder handoff, and uninstall passed with no residual project,
+install, registry, process, or settings state.
+
+Gate 362 audits template semantics. All four currently produce the same valid
+eight-file baseline scaffold, so New Project now states that specialization is
+not yet defined instead of implying different framework, quest-pack, or
+docs-only contents.
+
+Gate 363 adds ordered canonical next-step commands to `forge init` JSON and
+human output. The app's bundled backend is refreshed with that contract; init
+still does not execute the guidance commands itself.
+
+Gate 364 exposes capability scan and docs actions in Mod Builder only after a
+successful init result advertises their exact canonical commands. The actions
+remain user-triggered; capability evidence updates existing Doctor views and
+docs output stays under the selected project's `generated/docs` tree.
+
+Gate 365 renders canonical docs summary counts and the resolved generated docs
+path in Mod Builder. Open Docs Folder remains disabled until successful JSON
+evidence reports the exact selected-project `generated/docs` directory and that
+directory exists.
+
+Gate 366 adds a read-only Docs Index tab to Mod Builder. It strictly parses the
+generated reference index and groups schema, registry, rule, capability,
+provider, and command entries while preserving raw command output separately.
+
+Gate 367 maps every selectable index entry to its canonical generated Markdown
+reference array entry. The detail view enables Open Reference only for an
+existing `.md` file contained by the selected project's generated docs root.
+
+Gate 368 previews the selected generated Markdown reference as uninterpreted
+plain text in a read-only in-app control after the same mapping, containment,
+extension, and existence checks pass.
+
+Gate 369 adds case-insensitive in-memory filtering across reference metadata,
+with match counts, empty-section removal, stale-selection clearing, and full
+restoration without rereading or modifying generated files.
+
+Gate 370 adds the first real source-authoring workflow. MCM Author creates a
+minimal toggle registry, updates only required manifest/dependency declarations,
+then validates and generates deterministic MCM Extender JSON through Forge.
+Existing MCM source is refused rather than overwritten.
+
+Gate 371 adds preview-gated append editing for an existing MCM registry. The
+preview binds current source bytes and proposed setting data; changed inputs or
+source refuse save until previewed again, and successful append validates and
+regenerates.
+
 MSIX remains a later option after signing, package identity, and update policy
 are settled. WiX/MSI remains a later option if enterprise MSI governance becomes
 necessary.
 
 ## Open Implementation Checks
 
-- Gate 361 installed-app New Project workflow regression and installer refresh.
+- Gate 388 isolated installed-app combined-package workflow and cleanup regression.
 - Code signing and update channel.
 - Final Heat Restricted Asset status before public release.
 - Seat/license coverage for every contributor who uses the Heat asset source.

@@ -266,6 +266,10 @@ Gate 116 adds `WF-BUILD-007` for generated `install-plan.json` schema
 validation failures. Existing package evidence revalidation still uses
 `WF-BUILD-006`.
 
+Gate 386 reserves `WF-BUILD-008` for missing supported combined-package
+source, `WF-BUILD-009` for unsafe Data-relative package paths, and
+`WF-BUILD-010` for normalized combined-package destination collisions.
+
 Gate 117 adds no new diagnostic rule family or rule ID. Install-plan
 verify-existing content failures continue to use `WF-BUILD-006`.
 

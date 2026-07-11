@@ -21,6 +21,14 @@ public partial class MainWindow
     private bool initialized;
     private DoctorScanView? currentDoctorScan;
     private string? newProjectPreviewSignature;
+    private HashSet<string> createdProjectNextSteps = new(StringComparer.Ordinal);
+    private string? generatedDocsRoot;
+    private string? selectedDocsReferencePath;
+    private DocsReferenceIndexView? currentDocsIndex;
+    private string? mcmAppendPreviewToken;
+    private string? jipAppendPreviewToken;
+    private string? jipPackageFolder;
+    private string? xeditAuditOutputFolder;
 
     public MainWindow()
     {
@@ -67,6 +75,154 @@ public partial class MainWindow
 
     private async void ScanEnvironmentClicked(object sender, RoutedEventArgs e) =>
         await ScanEnvironmentAsync();
+
+    private async void PostCreateCapabilityScanClicked(object sender, RoutedEventArgs e) =>
+        await RunPostCreateActionAsync(
+            "forge capabilities scan --project .",
+            "Project capability scan",
+            "capabilities",
+            "scan",
+            "--project",
+            ".",
+            "--format",
+            "json",
+            "--no-input");
+
+    private async void PostCreateDocsClicked(object sender, RoutedEventArgs e) =>
+        await RunPostCreateActionAsync(
+            "forge docs .",
+            "Project docs",
+            "docs",
+            ".",
+            "--format",
+            "json",
+            "--no-input");
+
+    private void OpenDocsFolderClicked(object sender, RoutedEventArgs e)
+    {
+        var projectRoot = GetProjectRootOrReport();
+        if (projectRoot is null || generatedDocsRoot is null)
+        {
+            return;
+        }
+
+        var expectedRoot = Path.GetFullPath(Path.Combine(projectRoot, "generated", "docs"));
+        if (!StringComparer.OrdinalIgnoreCase.Equals(expectedRoot, generatedDocsRoot) || !Directory.Exists(generatedDocsRoot))
+        {
+            generatedDocsRoot = null;
+            DocsStatusTextBlock.Text = "Docs folder unavailable";
+            OpenDocsFolderButton.IsEnabled = false;
+            return;
+        }
+
+        OpenFolder(generatedDocsRoot);
+    }
+
+    private void DocsReferenceSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.ListBox { SelectedItem: DocsReferenceEntryView entry } ||
+            generatedDocsRoot is null)
+        {
+            return;
+        }
+
+        selectedDocsReferencePath = null;
+        MarkdownPreviewTextBox.Text = "Reference preview unavailable.";
+        SelectedDocsReferenceTitleTextBlock.Text = entry.Title;
+        SelectedDocsReferenceIdTextBlock.Text = entry.Id;
+        SelectedDocsReferenceSourceTextBlock.Text = entry.Source;
+        SelectedDocsReferencePathTextBlock.Text = entry.MarkdownPath;
+        var projectRoot = GetProjectRootOrReport();
+        if (projectRoot is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var path = Path.GetFullPath(Path.Combine(projectRoot, entry.MarkdownPath));
+            if (StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(path), ".md") &&
+                IsUnderDirectory(path, generatedDocsRoot) &&
+                File.Exists(path))
+            {
+                selectedDocsReferencePath = path;
+                MarkdownPreviewTextBox.Text = File.ReadAllText(path);
+            }
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException or IOException or UnauthorizedAccessException)
+        {
+            AppendLog("Docs reference path could not be resolved: " + ex.Message);
+        }
+
+        OpenDocsReferenceButton.IsEnabled = selectedDocsReferencePath is not null;
+    }
+
+    private void DocsIndexFilterChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        ApplyDocsIndexFilter();
+    }
+
+    private void ApplyDocsIndexFilter()
+    {
+        if (DocsIndexSectionsItemsControl is null || DocsIndexSummaryTextBlock is null || currentDocsIndex is null)
+        {
+            return;
+        }
+
+        ResetDocsReferenceSelection();
+        var query = DocsIndexFilterTextBox.Text.Trim();
+        if (query.Length == 0)
+        {
+            DocsIndexSectionsItemsControl.ItemsSource = currentDocsIndex.Sections;
+            DocsIndexSummaryTextBlock.Text =
+                $"{currentDocsIndex.ProjectId}: {currentDocsIndex.Sections.Count} sections, {currentDocsIndex.EntryCount} entries";
+            return;
+        }
+
+        var sections = currentDocsIndex.Sections
+            .Select(section => section with
+            {
+                Entries = section.Entries.Where(entry => DocsReferenceMatches(entry, query)).ToArray()
+            })
+            .Where(section => section.Entries.Count > 0)
+            .ToArray();
+        var matchCount = sections.Sum(section => section.Entries.Count);
+        DocsIndexSectionsItemsControl.ItemsSource = sections;
+        DocsIndexSummaryTextBlock.Text =
+            $"{currentDocsIndex.ProjectId}: {matchCount} of {currentDocsIndex.EntryCount} entries in {sections.Length} sections";
+    }
+
+    private static bool DocsReferenceMatches(DocsReferenceEntryView entry, string query) =>
+        entry.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+        entry.Id.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+        entry.Kind.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+        entry.Source.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+        entry.Detail.Contains(query, StringComparison.OrdinalIgnoreCase);
+
+    private void ResetDocsReferenceSelection()
+    {
+        selectedDocsReferencePath = null;
+        SelectedDocsReferenceTitleTextBlock.Text = "No reference selected";
+        SelectedDocsReferenceIdTextBlock.Text = "Select an entry below.";
+        SelectedDocsReferenceSourceTextBlock.Text = string.Empty;
+        SelectedDocsReferencePathTextBlock.Text = string.Empty;
+        MarkdownPreviewTextBox.Text = "Select a reference to preview its generated Markdown.";
+        OpenDocsReferenceButton.IsEnabled = false;
+    }
+
+    private void OpenDocsReferenceClicked(object sender, RoutedEventArgs e)
+    {
+        if (selectedDocsReferencePath is null || generatedDocsRoot is null ||
+            !IsUnderDirectory(selectedDocsReferencePath, generatedDocsRoot) ||
+            !File.Exists(selectedDocsReferencePath))
+        {
+            selectedDocsReferencePath = null;
+            OpenDocsReferenceButton.IsEnabled = false;
+            return;
+        }
+
+        OpenFolder(selectedDocsReferencePath);
+    }
 
     private void ViewDoctorEvidenceClicked(object sender, RoutedEventArgs e)
     {
@@ -144,6 +300,346 @@ public partial class MainWindow
     private async void CreateNewProjectClicked(object sender, RoutedEventArgs e) =>
         await RunNewProjectInitAsync(dryRun: false);
 
+    private async void CreateMcmSourceClicked(object sender, RoutedEventArgs e)
+    {
+        var projectRoot = GetProjectRootOrReport();
+        if (projectRoot is null) return;
+        SetBusy(true);
+        McmAuthorOutputTextBox.Clear();
+        try
+        {
+            var authored = McmSourceAuthoring.Create(projectRoot, CaptureMcmAuthoringInput());
+            McmAuthorStatusTextBlock.Text = authored.Message;
+            if (!authored.Success) return;
+
+            var validation = await RunProjectCommandAsync(projectRoot, "validate", ".", "--format", "json", "--no-input");
+            UpdateValidationResult(validation);
+            AppendMcmAuthorResult("Validate", validation);
+            if (validation.ExitCode != 0)
+            {
+                McmAuthorStatusTextBlock.Text = "Source created; validation blocked generation.";
+                return;
+            }
+
+            var generation = await RunProjectCommandAsync(projectRoot, "generate", ".", "--target", "mcm-json", "--format", "json", "--no-input");
+            AppendMcmAuthorResult("Generate MCM", generation);
+            McmAuthorStatusTextBlock.Text = generation.ExitCode == 0
+                ? "MCM source validated and generated."
+                : "Source validated; generation exited with code " + generation.ExitCode + ".";
+            UpdatePackageSummary(projectRoot);
+        }
+        finally { SetBusy(false); }
+    }
+
+    private void LoadMcmSampleClicked(object sender, RoutedEventArgs e)
+    {
+        var demoProject = EnsureDemoProject(reset: true, out var error);
+        if (demoProject is null)
+        {
+            McmAuthorStatusTextBlock.Text = error ?? "Sample project could not be prepared.";
+            return;
+        }
+
+        ProjectPathTextBox.Text = demoProject;
+        McmSettingIdTextBox.Text = "sample_setting";
+        McmSettingLabelTextBox.Text = "Sample setting";
+        var source = Path.Combine(demoProject, "src", "registries", "mcm", "main.json");
+        McmAuthorOutputTextBox.Text = File.Exists(source) ? File.ReadAllText(source) : string.Empty;
+        McmAuthorStatusTextBlock.Text = "Sample project loaded. Choose a setting type and preview an append.";
+        AppendLog("MCM sample project prepared at " + demoProject);
+    }
+
+    private void McmAppendInputChanged(object sender, RoutedEventArgs e)
+    {
+        mcmAppendPreviewToken = null;
+        if (AppendMcmSettingButton is not null) AppendMcmSettingButton.IsEnabled = false;
+    }
+
+    private void McmSettingTypeChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (McmSliderFieldsPanel is null || McmChoiceFieldsPanel is null || McmKeybindFieldsPanel is null ||
+            McmStaticTextFieldsPanel is null || McmStringToggleFieldsPanel is null ||
+            McmIniFieldsPanel is null || McmDefaultValueCheckBox is null) return;
+        var settingType = GetMcmSettingType();
+        var slider = settingType == "slider";
+        McmSliderFieldsPanel.Visibility = slider ? Visibility.Visible : Visibility.Collapsed;
+        McmChoiceFieldsPanel.Visibility = settingType == "choice" ? Visibility.Visible : Visibility.Collapsed;
+        McmKeybindFieldsPanel.Visibility = settingType == "keybind" ? Visibility.Visible : Visibility.Collapsed;
+        McmStaticTextFieldsPanel.Visibility = settingType == "text" ? Visibility.Visible : Visibility.Collapsed;
+        McmStringToggleFieldsPanel.Visibility = settingType == "stringToggle" ? Visibility.Visible : Visibility.Collapsed;
+        McmIniFieldsPanel.Visibility = settingType is "header" or "text" ? Visibility.Collapsed : Visibility.Visible;
+        McmDefaultValueCheckBox.Visibility = settingType is "toggle" or "checkbox" or "stringToggle" ? Visibility.Visible : Visibility.Collapsed;
+        McmAppendInputChanged(sender, e);
+    }
+
+    private void PreviewMcmAppendClicked(object sender, RoutedEventArgs e)
+    {
+        var projectRoot = GetProjectRootOrReport(); if (projectRoot is null) return;
+        var preview = McmSourceAuthoring.PreviewAppend(projectRoot, CaptureMcmAuthoringInput());
+        mcmAppendPreviewToken = preview.Token;
+        McmAuthorStatusTextBlock.Text = preview.Message;
+        McmAuthorOutputTextBox.Text = preview.Json ?? string.Empty;
+        AppendMcmSettingButton.IsEnabled = preview.Success;
+    }
+
+    private async void AppendMcmSettingClicked(object sender, RoutedEventArgs e)
+    {
+        var projectRoot = GetProjectRootOrReport(); if (projectRoot is null || mcmAppendPreviewToken is null) return;
+        SetBusy(true);
+        try
+        {
+            var result = McmSourceAuthoring.Append(projectRoot, CaptureMcmAuthoringInput(), mcmAppendPreviewToken);
+            mcmAppendPreviewToken = null; McmAuthorStatusTextBlock.Text = result.Message;
+            if (!result.Success) return;
+            var validation = await RunProjectCommandAsync(projectRoot, "validate", ".", "--format", "json", "--no-input");
+            McmAuthorOutputTextBox.Clear(); AppendMcmAuthorResult("Validate", validation);
+            if (validation.ExitCode != 0) { McmAuthorStatusTextBlock.Text = "Setting appended; validation blocked generation."; return; }
+            var generation = await RunProjectCommandAsync(projectRoot, "generate", ".", "--target", "mcm-json", "--format", "json", "--no-input");
+            AppendMcmAuthorResult("Generate MCM", generation);
+            McmAuthorStatusTextBlock.Text = generation.ExitCode == 0 ? "Setting appended, validated and generated." : "Setting appended; generation failed.";
+        }
+        finally { SetBusy(false); }
+    }
+
+    private McmAuthoringInput CaptureMcmAuthoringInput() => new(
+        McmMenuTitleTextBox.Text, McmOutputFileTextBox.Text, McmPageTitleTextBox.Text,
+        McmSettingIdTextBox.Text, McmSettingLabelTextBox.Text, McmIniFileTextBox.Text,
+        McmIniSectionTextBox.Text, McmIniKeyTextBox.Text, GetMcmSettingType(),
+        McmDefaultValueCheckBox.IsChecked == true, McmSliderDefaultTextBox.Text,
+        McmSliderMinimumTextBox.Text, McmSliderMaximumTextBox.Text,
+        McmSliderIncrementTextBox.Text, McmSliderDecimalsTextBox.Text,
+        McmChoiceValuesTextBox.Text, McmChoiceDefaultTextBox.Text, McmKeybindDefaultTextBox.Text,
+        McmStaticTextTextBox.Text, McmStringToggleTextOnTextBox.Text, McmStringToggleTextOffTextBox.Text);
+
+    private string GetMcmSettingType() =>
+        (McmSettingTypeComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? "toggle";
+
+    private void AppendMcmAuthorResult(string label, ForgeCommandResult result)
+    {
+        McmAuthorOutputTextBox.AppendText("== " + label + " ==" + Environment.NewLine);
+        McmAuthorOutputTextBox.AppendText(result.CommandLine + " -> exit " + result.ExitCode + Environment.NewLine);
+        McmAuthorOutputTextBox.AppendText(FormatJsonOrText(result.StandardOutput) + Environment.NewLine + Environment.NewLine);
+        McmAuthorOutputTextBox.ScrollToEnd();
+    }
+
+    private async void CreateJipSourceClicked(object sender, RoutedEventArgs e)
+    {
+        var projectRoot = GetProjectRootOrReport(); if (projectRoot is null) return;
+        var prefix = (JipLifecycleComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? "gr_";
+        SetBusy(true); JipAuthorOutputTextBox.Clear();
+        try
+        {
+            var authored = JipSourceAuthoring.Create(projectRoot, new(JipScriptIdTextBox.Text, JipSummaryTextBox.Text, prefix, JipOutputStemTextBox.Text, JipBodyTextBox.Text));
+            JipAuthorStatusTextBlock.Text = authored.Message; if (!authored.Success) return;
+            foreach (var command in new[] { new[] { "validate", ".", "--format", "json", "--no-input" }, new[] { "generate", ".", "--target", "jip-scripts", "--format", "json", "--no-input" }, new[] { "package", ".", "--target", "jip-scripts", "--format", "json", "--no-input" } })
+            {
+                var result = await RunProjectCommandAsync(projectRoot, command);
+                JipAuthorOutputTextBox.AppendText(result.CommandLine + " -> exit " + result.ExitCode + Environment.NewLine + FormatJsonOrText(result.StandardOutput) + Environment.NewLine + Environment.NewLine);
+                if (result.ExitCode != 0) { JipAuthorStatusTextBlock.Text = "JIP source created; pipeline stopped at exit " + result.ExitCode + "."; return; }
+            }
+            JipAuthorStatusTextBlock.Text = "JIP script source validated, generated, and packaged.";
+        }
+        finally { SetBusy(false); }
+    }
+
+    private JipAuthoringInput CaptureJipInput() => new(JipScriptIdTextBox.Text, JipSummaryTextBox.Text,
+        (JipLifecycleComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? "gr_",
+        JipOutputStemTextBox.Text, JipBodyTextBox.Text);
+
+    private void JipAppendInputChanged(object sender, RoutedEventArgs e)
+    {
+        jipAppendPreviewToken = null;
+        if (AppendJipScriptButton is not null) AppendJipScriptButton.IsEnabled = false;
+    }
+
+    private void PreviewJipAppendClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        var preview = JipSourceAuthoring.PreviewAppend(root, CaptureJipInput());
+        jipAppendPreviewToken = preview.Token; JipAuthorStatusTextBlock.Text = preview.Message;
+        JipAuthorOutputTextBox.Text = preview.Json ?? string.Empty; AppendJipScriptButton.IsEnabled = preview.Success;
+    }
+
+    private async void AppendJipScriptClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null || jipAppendPreviewToken is null) return;
+        var result = JipSourceAuthoring.Append(root, CaptureJipInput(), jipAppendPreviewToken);
+        jipAppendPreviewToken = null; AppendJipScriptButton.IsEnabled = false; JipAuthorStatusTextBlock.Text = result.Message;
+        if (!result.Success) return;
+        SetBusy(true); JipAuthorOutputTextBox.Clear();
+        try
+        {
+            foreach (var command in new[] { new[] { "validate", ".", "--format", "json", "--no-input" }, new[] { "generate", ".", "--target", "jip-scripts", "--format", "json", "--no-input" }, new[] { "package", ".", "--target", "jip-scripts", "--format", "json", "--no-input" } })
+            {
+                var commandResult = await RunProjectCommandAsync(root, command);
+                JipAuthorOutputTextBox.AppendText(commandResult.CommandLine + " -> exit " + commandResult.ExitCode + Environment.NewLine + FormatJsonOrText(commandResult.StandardOutput) + Environment.NewLine + Environment.NewLine);
+                if (commandResult.ExitCode != 0) { JipAuthorStatusTextBlock.Text = "Script appended; pipeline stopped at exit " + commandResult.ExitCode + "."; return; }
+            }
+            JipAuthorStatusTextBlock.Text = "JIP script appended, validated, generated, and packaged.";
+        }
+        finally { SetBusy(false); }
+    }
+
+    private void ReviewJipOutputsClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        var review = JipOutputReview.Read(root);
+        jipPackageFolder = review.PackageFolder;
+        OpenJipPackageButton.IsEnabled = jipPackageFolder is not null;
+        JipAuthorStatusTextBlock.Text = review.Message;
+        JipAuthorOutputTextBox.Text = JipOutputReview.Render(review);
+    }
+
+    private void OpenJipPackageClicked(object sender, RoutedEventArgs e)
+    {
+        if (jipPackageFolder is null || !Directory.Exists(jipPackageFolder))
+        {
+            OpenJipPackageButton.IsEnabled = false;
+            JipAuthorStatusTextBlock.Text = "The staged JIP package folder is not available.";
+            return;
+        }
+        OpenFolder(jipPackageFolder);
+    }
+
+    private void LoadXEditAuditSampleClicked(object sender, RoutedEventArgs e)
+    {
+        var source = Path.Combine(AppContext.BaseDirectory, "DemoProjects", "XEditAuditExample");
+        var demoRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WastelandForge", "DemoProjects");
+        var result = DemoProjectProvisioner.Prepare(source, demoRoot, reset: true, projectName: "XEditAuditExample");
+        XEditAuditStatusTextBlock.Text = result.Success ? "Synthetic audit sample loaded." : result.Error;
+        if (result.Success) ProjectPathTextBox.Text = result.ProjectPath!;
+    }
+
+    private async void GenerateXEditAuditClicked(object sender, RoutedEventArgs e) =>
+        await RunXEditAuditCommandAsync("xedit-audit", "Audit scaffold generated. xEdit was not executed.");
+
+    private async void ProcessXEditReportClicked(object sender, RoutedEventArgs e) =>
+        await RunXEditAuditCommandAsync("xedit-audit-report-handoff", "Existing audit report processed. xEdit was not executed.");
+
+    private async Task RunXEditAuditCommandAsync(string target, string successMessage)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        SetBusy(true); XEditAuditOutputTextBox.Clear();
+        try
+        {
+            var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input");
+            XEditAuditOutputTextBox.Text = validation.CommandLine + " -> exit " + validation.ExitCode + Environment.NewLine + FormatJsonOrText(validation.StandardOutput);
+            if (validation.ExitCode != 0) { XEditAuditStatusTextBlock.Text = "Validation blocked audit generation."; return; }
+            var generated = await RunProjectCommandAsync(root, "generate", ".", "--target", target, "--format", "json", "--no-input");
+            XEditAuditOutputTextBox.AppendText(Environment.NewLine + Environment.NewLine + generated.CommandLine + " -> exit " + generated.ExitCode + Environment.NewLine + FormatJsonOrText(generated.StandardOutput));
+            XEditAuditStatusTextBlock.Text = generated.ExitCode == 0 ? successMessage : "Audit command exited with code " + generated.ExitCode + ".";
+        }
+        finally { SetBusy(false); }
+    }
+
+    private void ReviewXEditAuditClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        var review = XEditAuditOutputReview.Read(root);
+        xeditAuditOutputFolder = review.OutputRoot;
+        OpenXEditAuditFolderButton.IsEnabled = xeditAuditOutputFolder is not null;
+        XEditAuditStatusTextBlock.Text = review.Message;
+        XEditAuditOutputTextBox.Text = XEditAuditOutputReview.Render(review);
+    }
+
+    private void OpenXEditAuditFolderClicked(object sender, RoutedEventArgs e)
+    {
+        if (xeditAuditOutputFolder is null || !Directory.Exists(xeditAuditOutputFolder))
+        {
+            OpenXEditAuditFolderButton.IsEnabled = false;
+            XEditAuditStatusTextBlock.Text = "The generated xEdit audit folder is not available.";
+            return;
+        }
+        OpenFolder(xeditAuditOutputFolder);
+    }
+
+    private void RefreshProjectOutputsClicked(object sender, RoutedEventArgs e) => RefreshProjectOutputs();
+
+    private void LoadCombinedPackageSampleClicked(object sender, RoutedEventArgs e)
+    {
+        var source = Path.Combine(AppContext.BaseDirectory, "DemoProjects", "CombinedModExample");
+        if (!Directory.Exists(source))
+        {
+            var repository = FindRepositoryRoot();
+            if (repository is not null) source = Path.Combine(repository, "fixtures", "projects", "CombinedModExample");
+        }
+        var demoRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WastelandForge", "DemoProjects");
+        var result = DemoProjectProvisioner.Prepare(source, demoRoot, reset: false, projectName: "CombinedModExample");
+        if (!result.Success || result.ProjectPath is null) { ProjectOutputsStatusTextBlock.Text = result.Error ?? "Combined sample could not be prepared."; return; }
+        ProjectPathTextBox.Text = result.ProjectPath;
+        RefreshProjectOutputs();
+        ProjectOutputsStatusTextBlock.Text = "Combined MCM and JIP sample loaded.";
+    }
+
+    private void RefreshProjectOutputs()
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        var result = ProjectOutputWorkspace.Inspect(root);
+        ProjectOutputsDataGrid.ItemsSource = result.Lanes;
+        ProjectOutputsStatusTextBlock.Text = result.Message;
+    }
+
+    private async void RunProjectOutputWorkflowClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        var inspection = ProjectOutputWorkspace.Inspect(root);
+        var target = (ProjectOutputWorkflowComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? "mcm-json";
+        var lane = inspection.Lanes.FirstOrDefault(item => item.Id == target);
+        if (lane is null || !lane.SourceDeclared) { ProjectOutputsStatusTextBlock.Text = "The selected project does not declare source for that workflow."; return; }
+        SetBusy(true);
+        try
+        {
+            var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input");
+            ProjectOutputDetailsTextBox.Text = validation.CommandLine + " -> exit " + validation.ExitCode + Environment.NewLine + FormatJsonOrText(validation.StandardOutput);
+            if (validation.ExitCode != 0) { ProjectOutputsStatusTextBlock.Text = "Validation blocked the selected workflow."; return; }
+            var verb = target == "xedit-audit" ? "generate" : "package";
+            var result = await RunProjectCommandAsync(root, verb, ".", "--target", target, "--format", "json", "--no-input");
+            ProjectOutputDetailsTextBox.AppendText(Environment.NewLine + Environment.NewLine + result.CommandLine + " -> exit " + result.ExitCode + Environment.NewLine + FormatJsonOrText(result.StandardOutput));
+            RefreshProjectOutputs();
+            ProjectOutputsStatusTextBlock.Text = result.ExitCode == 0 ? lane.Title + " completed." : lane.Title + " exited with code " + result.ExitCode + ".";
+        }
+        finally { SetBusy(false); }
+    }
+
+    private void OpenSelectedGeneratedOutputClicked(object sender, RoutedEventArgs e) => OpenSelectedProjectOutput(distribution: false);
+    private void OpenSelectedDistributionOutputClicked(object sender, RoutedEventArgs e) => OpenSelectedProjectOutput(distribution: true);
+    private void OpenSelectedStagingOutputClicked(object sender, RoutedEventArgs e)
+    {
+        if (ProjectOutputsDataGrid.SelectedItem is not ProjectOutputLane lane || lane.StagingPath is null || !Directory.Exists(lane.StagingPath))
+        {
+            ProjectOutputsStatusTextBlock.Text = "Select a completed combined package with an existing staging folder.";
+            return;
+        }
+        OpenFolder(lane.StagingPath);
+    }
+
+    private void OpenSelectedPackageArchiveClicked(object sender, RoutedEventArgs e)
+    {
+        if (ProjectOutputsDataGrid.SelectedItem is not ProjectOutputLane lane || lane.ArchivePath is null || !File.Exists(lane.ArchivePath))
+        {
+            ProjectOutputsStatusTextBlock.Text = "Select a completed combined package with an existing package ZIP.";
+            return;
+        }
+        try { Process.Start(new ProcessStartInfo { FileName = lane.ArchivePath, UseShellExecute = true }); }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { ProjectOutputsStatusTextBlock.Text = "Could not open package ZIP: " + ex.Message; }
+    }
+
+    private void OpenSelectedProjectOutput(bool distribution)
+    {
+        if (ProjectOutputsDataGrid.SelectedItem is not ProjectOutputLane lane)
+        {
+            ProjectOutputsStatusTextBlock.Text = "Select an output lane first.";
+            return;
+        }
+        var path = distribution ? lane.DistributionPath : lane.GeneratedPath;
+        if (path is null || !Directory.Exists(path))
+        {
+            ProjectOutputsStatusTextBlock.Text = distribution ? "That distribution output does not exist." : "That generated output does not exist.";
+            return;
+        }
+        OpenFolder(path);
+    }
+
     private async Task RunNewProjectInitAsync(bool dryRun)
     {
         var input = GetNewProjectInput();
@@ -212,6 +708,17 @@ public partial class MainWindow
             else
             {
                 newProjectPreviewSignature = null;
+                createdProjectNextSteps = ParseInitNextSteps(result.StandardOutput);
+                generatedDocsRoot = null;
+                selectedDocsReferencePath = null;
+                currentDocsIndex = null;
+                DocsStatusTextBlock.Text = "Not generated";
+                DocsPathTextBlock.Text = "generated/docs";
+                DocsIndexTabItem.IsEnabled = false;
+                DocsIndexSectionsItemsControl.ItemsSource = null;
+                DocsIndexSummaryTextBlock.Text = "Generate project docs to load the reference index.";
+                DocsIndexFilterTextBox.Text = string.Empty;
+                ResetDocsReferenceSelection();
                 ProjectPathTextBox.Text = input.Value.Path;
                 SettingsProjectRootTextBox.Text = input.Value.Path;
                 UpdatePackageSummary(input.Value.Path);
@@ -251,6 +758,132 @@ public partial class MainWindow
         {
             SetBusy(false);
         }
+    }
+
+    private async Task RunPostCreateActionAsync(string requiredNextStep, string label, params string[] arguments)
+    {
+        if (!createdProjectNextSteps.Contains(requiredNextStep))
+        {
+            BuilderStatusTextBlock.Text = "Action unavailable";
+            BuilderSummaryTextBlock.Text = "The selected project was not created from an init result advertising this action.";
+            return;
+        }
+
+        var projectRoot = GetProjectRootOrReport();
+        if (projectRoot is null)
+        {
+            return;
+        }
+
+        SetBusy(true);
+        BuilderStatusTextBlock.Text = label;
+        BuilderSummaryTextBlock.Text = "Running canonical Forge command.";
+        try
+        {
+            var result = await RunProjectCommandAsync(projectRoot, arguments);
+            AppendBuilderResult(label, result);
+            BuilderStatusTextBlock.Text = result.ExitCode == 0 ? label + " complete" : label + " action required";
+            BuilderSummaryTextBlock.Text = SummarizeCommandResult(result);
+
+            if (StringComparer.Ordinal.Equals(requiredNextStep, "forge capabilities scan --project ."))
+            {
+                CapabilityJsonTextBox.Text = FormatJsonOrText(result.StandardOutput);
+                if (!string.IsNullOrWhiteSpace(result.StandardError))
+                {
+                    CapabilityJsonTextBox.AppendText(Environment.NewLine + result.StandardError.Trim());
+                }
+
+                var summary = SummarizeDoctor(result.StandardOutput, result.ExitCode);
+                CapabilityStatusTextBlock.Text = result.ExitCode == 0 ? "Project scan complete" : "Project scan action required";
+                CapabilitySummaryTextBlock.Text = summary;
+                DoctorSummaryTextBlock.Text = summary;
+                UpdateDoctorAreas(result.StandardOutput);
+            }
+            else if (StringComparer.Ordinal.Equals(requiredNextStep, "forge docs ."))
+            {
+                UpdateDocsResult(projectRoot, result);
+            }
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    private void UpdateDocsResult(string projectRoot, ForgeCommandResult result)
+    {
+        generatedDocsRoot = null;
+        currentDocsIndex = null;
+        DocsIndexSectionsItemsControl.ItemsSource = null;
+        DocsIndexTabItem.IsEnabled = false;
+        ResetDocsReferenceSelection();
+        DocsStatusTextBlock.Text = result.ExitCode == 0 ? "Docs result invalid" : "Generation failed";
+        DocsPathTextBlock.Text = "generated/docs";
+        if (result.ExitCode != 0)
+        {
+            return;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(result.StandardOutput);
+            var root = document.RootElement;
+            var relativeRoot = root.GetProperty("outputs").GetProperty("root").GetString();
+            if (string.IsNullOrWhiteSpace(relativeRoot))
+            {
+                return;
+            }
+
+            var expectedRoot = Path.GetFullPath(Path.Combine(projectRoot, "generated", "docs"));
+            var reportedRoot = Path.GetFullPath(Path.Combine(projectRoot, relativeRoot));
+            if (!StringComparer.OrdinalIgnoreCase.Equals(expectedRoot, reportedRoot) || !Directory.Exists(reportedRoot))
+            {
+                return;
+            }
+
+            var summary = root.GetProperty("summary");
+            DocsStatusTextBlock.Text =
+                $"Ready: {summary.GetProperty("schemas").GetInt32()} schemas, " +
+                $"{summary.GetProperty("registries").GetInt32()} registries, " +
+                $"{summary.GetProperty("capabilities").GetInt32()} capabilities";
+            DocsPathTextBlock.Text = reportedRoot;
+            var indexPath = Path.Combine(reportedRoot, "reference-index.json");
+            var index = DocsReferenceIndexViewParser.Parse(File.ReadAllText(indexPath));
+            currentDocsIndex = index;
+            DocsIndexFilterTextBox.Text = string.Empty;
+            ApplyDocsIndexFilter();
+            DocsIndexTabItem.IsEnabled = true;
+            generatedDocsRoot = reportedRoot;
+        }
+        catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            AppendLog("Docs result could not be presented: " + ex.Message);
+        }
+    }
+
+    private static HashSet<string> ParseInitNextSteps(string json)
+    {
+        var nextSteps = new HashSet<string>(StringComparer.Ordinal);
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            if (document.RootElement.TryGetProperty("nextSteps", out var element) && element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.String && item.GetString() is { Length: > 0 } value)
+                    {
+                        nextSteps.Add(value);
+                    }
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            // A malformed backend result cannot authorize post-create actions.
+        }
+
+        return nextSteps;
     }
 
     private (string Path, string Name, string Template)? GetNewProjectInput()
@@ -1159,6 +1792,11 @@ public partial class MainWindow
         ModBuilderBuildButton.IsEnabled = !isBusy;
         ModBuilderDemoButton.IsEnabled = !isBusy;
         ModBuilderValidateButton.IsEnabled = !isBusy;
+        PostCreateCapabilityScanButton.IsEnabled = !isBusy &&
+            createdProjectNextSteps.Contains("forge capabilities scan --project .");
+        PostCreateDocsButton.IsEnabled = !isBusy && createdProjectNextSteps.Contains("forge docs .");
+        OpenDocsFolderButton.IsEnabled = !isBusy && generatedDocsRoot is not null && Directory.Exists(generatedDocsRoot);
+        OpenDocsReferenceButton.IsEnabled = !isBusy && selectedDocsReferencePath is not null && File.Exists(selectedDocsReferencePath);
         ModBuilderGenerateButton.IsEnabled = !isBusy;
         ModBuilderPackageButton.IsEnabled = !isBusy;
         ModBuilderVerifyButton.IsEnabled = !isBusy;
@@ -1171,6 +1809,9 @@ public partial class MainWindow
         ProviderEvidenceItemsControl.IsEnabled = !isBusy;
         PreviewNewProjectButton.IsEnabled = !isBusy;
         CreateProjectButton.IsEnabled = !isBusy && newProjectPreviewSignature is not null;
+        CreateMcmSourceButton.IsEnabled = !isBusy;
+        PreviewMcmAppendButton.IsEnabled = !isBusy;
+        AppendMcmSettingButton.IsEnabled = !isBusy && mcmAppendPreviewToken is not null;
     }
 
     private static string FormatJsonOrText(string value)
@@ -1359,41 +2000,10 @@ public partial class MainWindow
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "WastelandForge",
             "DemoProjects");
-        var demoProject = Path.Combine(demoRoot, "ExampleMod");
-
-        try
-        {
-            if (sourceProject is null)
-            {
-                error = "Bundled demo project was not found.";
-                return null;
-            }
-
-            if (reset && Directory.Exists(demoProject))
-            {
-                var fullDemo = Path.GetFullPath(demoProject);
-                var fullDemoRoot = Path.GetFullPath(demoRoot);
-                if (!IsUnderDirectory(fullDemo, fullDemoRoot))
-                {
-                    error = "Refusing to reset demo project outside local app data.";
-                    return null;
-                }
-
-                Directory.Delete(fullDemo, recursive: true);
-            }
-
-            if (!Directory.Exists(demoProject))
-            {
-                CopyProjectDirectory(sourceProject, demoProject, skipProjectOutputRoots: true);
-            }
-
-            return demoProject;
-        }
-        catch (Exception ex)
-        {
-            error = ex.Message;
-            return null;
-        }
+        if (sourceProject is null) { error = "Bundled demo project was not found."; return null; }
+        var result = DemoProjectProvisioner.Prepare(sourceProject, demoRoot, reset);
+        error = result.Error;
+        return result.ProjectPath;
     }
 
     private static string? FindDemoSourceProject()
@@ -1412,32 +2022,6 @@ public partial class MainWindow
 
         var fixture = Path.Combine(root, "fixtures", "projects", "ExampleMod");
         return Directory.Exists(fixture) ? fixture : null;
-    }
-
-    private static void CopyProjectDirectory(string sourceDirectory, string targetDirectory, bool skipProjectOutputRoots)
-    {
-        Directory.CreateDirectory(targetDirectory);
-
-        foreach (var file in Directory.EnumerateFiles(sourceDirectory))
-        {
-            File.Copy(file, Path.Combine(targetDirectory, Path.GetFileName(file)), overwrite: true);
-        }
-
-        foreach (var directory in Directory.EnumerateDirectories(sourceDirectory))
-        {
-            var directoryName = Path.GetFileName(directory);
-            if (skipProjectOutputRoots
-                && (string.Equals(directoryName, "generated", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(directoryName, "dist", StringComparison.OrdinalIgnoreCase)))
-            {
-                continue;
-            }
-
-            CopyProjectDirectory(
-                directory,
-                Path.Combine(targetDirectory, directoryName),
-                skipProjectOutputRoots: false);
-        }
     }
 
     private static bool IsUnderDirectory(string path, string parent)

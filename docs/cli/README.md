@@ -43,7 +43,12 @@ forge --version
   fnv-basic|fnv-framework|fnv-quest-pack|fnv-docs-only`, `--name`, `--game
   falloutnv`, `--format human|plain|json`, `--dry-run`, `--project`, and
   `--no-input`. `--dry-run` emits the plan without writes. Existing planned
-  scaffold paths return exit code `6`.
+  scaffold paths return exit code `6`. All four template IDs currently emit
+  the same validated baseline scaffold; specialized framework, quest-pack, and
+  docs-only contents remain undefined by the current research and implementation.
+  JSON output includes ordered `nextSteps` for `forge validate .`,
+  `forge capabilities scan --project .`, and `forge docs .`. Human output
+  prints the same commands after creation or as planned guidance during dry-run.
 - `forge validate` runs the Gate 5 loader and validation pipeline.
 - `forge validate --geck-dialogue-export <path>` checks that a GECK dialogue
   export text file exists, is readable as text, and is non-empty. This is a
@@ -742,7 +747,7 @@ digest, and output digest evidence. Custom `--output` values must stay under
 - `--format github` for verify-existing diagnostics only
 - `--summary <path>` for verify-existing diagnostics only
 - `--project <path>`
-- `--target reports|mcm-json|jip-scripts`
+- `--target reports|mcm-json|jip-scripts|mod-package`
 - `--output <path>`
 - `--dry-run`
 - `--verify-existing`
@@ -762,6 +767,13 @@ default and stages scripts under
 script, package-manifest, install-plan, build-manifest, checksum, diagnostic,
 source digest, and output digest evidence. Custom `--output` values must stay
 under `dist/`. `--verify-existing` remains implemented only for `mcm-json`.
+
+For `--target mod-package`, `forge package` validates and rebuilds declared MCM
+and JIP source in one invocation, rejects normalized Data-path collisions, and
+writes `dist/mod-package/staging/Data`, a Data-relative deterministic
+`package.zip`, immutable-schema-validated `package-manifest.json`, evidence-only
+`install-plan.json`, `build-manifest.json`, and `checksums.sha256`. It does not
+read existing component distributions or install into the game or MO2.
 
 Unimplemented reserved skeleton commands support human/plain text and JSON status output.
 SARIF and GitHub formats are available only for diagnostic commands in the
