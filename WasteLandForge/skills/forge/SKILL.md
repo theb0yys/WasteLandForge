@@ -841,8 +841,10 @@ Gate 340 plans premium Windows app-shell distribution and installer readiness.
 Gate 341 scaffolds the local app-shell publish helper and distribution
 evidence. Gate 342 plans Windows installer technology. Gate 343 scaffolds the
 Inno Setup installer script source and app-shell installer input preflight.
-Route the next development step to Gate 344: local Inno Setup compiler
-detection and unsigned installer build helper scaffold.
+Gate 344 adds local Inno Setup compiler detection and an unsigned installer
+build helper scaffold. Gate 345 closes the installer helper lane and routes
+back to app-shell product value. Route the next development step to Gate 346:
+app-shell local setup/settings surface skeleton.
 
 - `/forge graph` maps to the real `forge graph` behavior when available. Gate
   236 implements minimal project source graph evidence under `generated/graph`,
@@ -983,8 +985,11 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   installer readiness. Gate 341 scaffolds the local app-shell publish helper
   and distribution evidence. Gate 342 plans Windows installer technology. Gate
   343 scaffolds the Inno Setup installer script source and app-shell installer
-  input preflight. Route the next development step to Gate 344: local Inno
-  Setup compiler detection and unsigned installer build helper scaffold.
+  input preflight. Gate 344 adds local Inno Setup compiler detection and an
+  unsigned installer build helper scaffold. Gate 345 closes the installer
+  helper lane and routes back to app-shell product value. Route the next
+  development step to Gate 350: add structured provider-evidence drill-down
+  for selected Doctor areas from the existing scan JSON contract.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a

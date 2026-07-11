@@ -261,6 +261,7 @@ try {
         '--self-contained',
         $selfContainedValue,
         '--no-restore',
+        '-m:1',
         '-o',
         $outputRootPath,
         '/p:UseAppHost=true',

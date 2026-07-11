@@ -164,6 +164,8 @@ Gate 338 adds that source-repository scaffold:
 
 - `Publish-StandaloneForge.ps1` publishes `src/WastelandForge.Cli` as a
   Windows framework-dependent `forge.exe` apphost under `dist/local/forge/`.
+- The helper uses single-node MSBuild to keep local publish behavior bounded on
+  machines where parallel `dotnet publish` workers are unstable.
 - The script writes `README.txt`, `build-manifest.json`, and
   `checksums.sha256` beside the executable.
 - The `Forge: Publish Standalone` VS Code task runs the same helper.
@@ -186,6 +188,8 @@ Gate 341 adds the local app-shell publish helper:
 
 - `Publish-AppShell.ps1` publishes `src/WastelandForge.Desktop` under
   `dist/app/WastelandForge.Desktop/`.
+- The helper uses single-node MSBuild for the desktop publish for the same
+  bounded local-build behavior.
 - The helper publishes or requires the standalone backend first, then bundles
   it under `ForgeBackend/`.
 - The app output also includes `DemoProjects/ExampleMod`,
@@ -224,3 +228,43 @@ pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Test-AppShellInstaller
 Gate 343 does not run Inno Setup, create a setup executable, sign or timestamp
 artifacts, add an update channel, publish releases, run external game tools,
 run runtime probes, or add AI behavior.
+
+Gate 344 adds the local unsigned installer helper:
+
+- `Build-AppShellInstaller.ps1` runs the Gate 343 input preflight, detects the
+  local Inno Setup compiler, and can build an unsigned local installer under
+  `artifacts/installer/inno/<name>` when `ISCC.exe` is available.
+- The `Forge: Build App Installer` VS Code task publishes the app shell first,
+  then runs the helper.
+- `-DetectOnly` validates inputs and compiler discovery without producing an
+  installer.
+
+Examples:
+
+```text
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Build-AppShellInstaller.ps1 -DetectOnly
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Build-AppShellInstaller.ps1
+```
+
+Gate 344 does not install Inno Setup. If the compiler is missing, the helper
+reports that status and does not create a setup executable. Any setup
+executable created by the helper is local and unsigned; it is not timestamped,
+not signed, not an update channel, not an attestation, and not a published
+release.
+
+After maintainer request, this machine installed Inno Setup 6.7.3 through
+`winget` under the per-user path:
+
+```text
+C:\Users\kane0\AppData\Local\Programs\Inno Setup 6\ISCC.exe
+```
+
+`Build-AppShellInstaller.ps1` now checks standard machine and per-user Inno
+Setup install paths.
+
+Gate 345 closes the current installer helper lane. The next app-shell value
+route is Gate 346 local setup/settings surface skeleton for project root,
+Fallout: New Vegas game root, Data root, MO2 path, and external tool paths.
+That route keeps settings local-only and does not run provider probes, install
+providers, automate MO2 or GECK, execute xEdit, sign or timestamp artifacts,
+publish releases, or add AI behavior.

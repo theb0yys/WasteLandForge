@@ -55,6 +55,25 @@
       "problemMatcher": []
     },
     {
+      "label": "Forge: Build App Installer",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoLogo",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/eng/Build-AppShellInstaller.ps1"
+      ],
+      "dependsOn": "Forge: Publish App Shell",
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Forge: Help",
       "type": "shell",
       "command": "dotnet",

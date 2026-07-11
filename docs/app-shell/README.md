@@ -117,13 +117,44 @@ The preflight checks the app publish folder for `WastelandForge.exe`,
 `ForgeBackend/forge.exe`, bundled demo source, `app-build-manifest.json`, and
 `checksums.sha256` before any future installer compiler step.
 
+Gate 344 adds `eng/Build-AppShellInstaller.ps1`, which detects the local Inno
+Setup compiler and can build an unsigned local installer under ignored
+`artifacts/installer/inno/<name>` when `ISCC.exe` is available:
+
+```text
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Build-AppShellInstaller.ps1 -DetectOnly
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Build-AppShellInstaller.ps1
+```
+
+This machine has Inno Setup 6.7.3 installed in the per-user program location.
+The helper detects it and can produce the ignored unsigned local installer at
+`artifacts/installer/inno/local/WastelandForge-Setup-local.exe`.
+
+Gate 345 closes the current installer helper lane. Gate 346 adds the local
+Settings tab and persists project, game, Data, MO2, GECK, and xEdit paths to
+`%LOCALAPPDATA%\WastelandForge\app-settings.json`. These paths remain outside
+canonical project truth and do not trigger provider probes or external tools.
+
+Gate 347 adds explicit settings-backed environment scanning. The Dashboard and
+Capabilities views invoke `forge capabilities scan` with saved project, game,
+Data, MO2, GECK, and xEdit paths, show Doctor readiness counts, and retain the
+full JSON report. The scan does not execute those external tools.
+
+Gate 348 refreshes the local app distribution and unsigned installer with the
+Gate 346/347 UI. Launch and UI Automation smoke checks confirmed the Settings
+tab, Capabilities scan action, visible Doctor summary, and responsive window.
+
+Gate 349 renders Doctor readiness areas, statuses, coverage counts, and
+immediate actions directly in the Capabilities view. Full scan JSON remains
+available under `Advanced JSON`.
+
 MSIX remains a later option after signing, package identity, and update policy
 are settled. WiX/MSI remains a later option if enterprise MSI governance becomes
 necessary.
 
 ## Open Implementation Checks
 
-- Gate 344 Inno Setup compiler detection and unsigned local installer build helper.
+- Gate 350 structured provider-evidence drill-down for selected Doctor areas.
 - Code signing and update channel.
 - Final Heat Restricted Asset status before public release.
 - Seat/license coverage for every contributor who uses the Heat asset source.
