@@ -20,6 +20,7 @@ public partial class MainWindow
 
     private bool initialized;
     private DoctorScanView? currentDoctorScan;
+    private string? newProjectPreviewSignature;
 
     public MainWindow()
     {
@@ -105,6 +106,195 @@ public partial class MainWindow
         }
 
         await ExplainProviderAsync(providerId);
+    }
+
+    private void NewProjectInputChanged(object sender, RoutedEventArgs e)
+    {
+        newProjectPreviewSignature = null;
+        if (CreateProjectButton is not null)
+        {
+            CreateProjectButton.IsEnabled = false;
+            NewProjectStatusTextBlock.Text = "Preview required for the current inputs.";
+            NewProjectStatusTextBlock.Foreground = (Brush)FindResource("TextMuted");
+        }
+    }
+
+    private void BrowseNewProjectParentClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Select parent folder for the new Forge project",
+            InitialDirectory = FindExistingDirectory(NewProjectPathTextBox.Text) ?? Environment.CurrentDirectory
+        };
+
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        var folderName = ToProjectFolderName(NewProjectNameTextBox.Text);
+        NewProjectPathTextBox.Text = string.IsNullOrWhiteSpace(folderName)
+            ? dialog.FolderName
+            : Path.Combine(dialog.FolderName, folderName);
+    }
+
+    private async void PreviewNewProjectClicked(object sender, RoutedEventArgs e) =>
+        await RunNewProjectInitAsync(dryRun: true);
+
+    private async void CreateNewProjectClicked(object sender, RoutedEventArgs e) =>
+        await RunNewProjectInitAsync(dryRun: false);
+
+    private async Task RunNewProjectInitAsync(bool dryRun)
+    {
+        var input = GetNewProjectInput();
+        if (input is null)
+        {
+            return;
+        }
+
+        var signature = CreateNewProjectSignature(input.Value.Path, input.Value.Name, input.Value.Template);
+        if (!dryRun && !StringComparer.Ordinal.Equals(signature, newProjectPreviewSignature))
+        {
+            NewProjectStatusTextBlock.Text = "Inputs changed. Preview again before creating files.";
+            NewProjectStatusTextBlock.Foreground = (Brush)FindResource("ErrorBrush");
+            CreateProjectButton.IsEnabled = false;
+            return;
+        }
+
+        var arguments = new List<string>
+        {
+            "init",
+            input.Value.Path,
+            "--template",
+            input.Value.Template,
+            "--name",
+            input.Value.Name,
+            "--game",
+            "falloutnv",
+            "--format",
+            "json",
+            "--no-input"
+        };
+        if (dryRun)
+        {
+            arguments.Add("--dry-run");
+        }
+
+        SetBusy(true);
+        NewProjectStatusTextBlock.Text = dryRun ? "Planning project scaffold..." : "Creating project scaffold...";
+        NewProjectOutputTextBox.Clear();
+        try
+        {
+            var result = await forge.RunAsync(arguments.ToArray());
+            AppendResult(result);
+            NewProjectOutputTextBox.Text = FormatJsonOrText(result.StandardOutput);
+            if (!string.IsNullOrWhiteSpace(result.StandardError))
+            {
+                NewProjectOutputTextBox.AppendText(Environment.NewLine + result.StandardError.Trim());
+            }
+
+            if (result.ExitCode != 0)
+            {
+                newProjectPreviewSignature = null;
+                NewProjectStatusTextBlock.Text = dryRun
+                    ? "Preview refused with exit code " + result.ExitCode + "."
+                    : "Creation refused with exit code " + result.ExitCode + ".";
+                NewProjectStatusTextBlock.Foreground = (Brush)FindResource("ErrorBrush");
+                return;
+            }
+
+            if (dryRun)
+            {
+                newProjectPreviewSignature = signature;
+                NewProjectStatusTextBlock.Text = "Preview ready. Review the plan, then create the project.";
+                NewProjectStatusTextBlock.Foreground = (Brush)FindResource("OkBrush");
+            }
+            else
+            {
+                newProjectPreviewSignature = null;
+                ProjectPathTextBox.Text = input.Value.Path;
+                SettingsProjectRootTextBox.Text = input.Value.Path;
+                UpdatePackageSummary(input.Value.Path);
+
+                NewProjectStatusTextBlock.Text = "Project created. Validating scaffold...";
+                NewProjectStatusTextBlock.Foreground = (Brush)FindResource("TextMuted");
+                var validation = await RunProjectCommandAsync(
+                    input.Value.Path,
+                    "validate",
+                    ".",
+                    "--format",
+                    "json",
+                    "--no-input");
+                UpdateValidationResult(validation);
+                AppendBuilderResult("Post-create validation", validation);
+                NewProjectOutputTextBox.AppendText(
+                    Environment.NewLine +
+                    Environment.NewLine +
+                    "== Post-create validation ==" +
+                    Environment.NewLine +
+                    FormatJsonOrText(validation.StandardOutput));
+                if (!string.IsNullOrWhiteSpace(validation.StandardError))
+                {
+                    NewProjectOutputTextBox.AppendText(Environment.NewLine + validation.StandardError.Trim());
+                }
+
+                BuilderStatusTextBlock.Text = validation.ExitCode == 0 ? "Project ready" : "Validation action required";
+                BuilderSummaryTextBlock.Text = SummarizeValidation(validation.StandardOutput, validation.ExitCode);
+                NewProjectStatusTextBlock.Text = validation.ExitCode == 0
+                    ? "Project created, validated, and opened in Mod Builder."
+                    : "Project created and opened in Mod Builder; validation exited with code " + validation.ExitCode + ".";
+                NewProjectStatusTextBlock.Foreground = (Brush)FindResource(validation.ExitCode == 0 ? "OkBrush" : "AccentBrush");
+                MainTabControl.SelectedItem = ModBuilderTabItem;
+            }
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    private (string Path, string Name, string Template)? GetNewProjectInput()
+    {
+        var path = NewProjectPathTextBox.Text.Trim();
+        var name = NewProjectNameTextBox.Text.Trim();
+        var template = (NewProjectTemplateComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag as string;
+        if (string.IsNullOrWhiteSpace(path) || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(template))
+        {
+            NewProjectStatusTextBlock.Text = "Project name, target folder, and template are required.";
+            NewProjectStatusTextBlock.Foreground = (Brush)FindResource("ErrorBrush");
+            return null;
+        }
+
+        try
+        {
+            return (Path.GetFullPath(path), name, template);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            NewProjectStatusTextBlock.Text = "Target project folder is not a valid path.";
+            NewProjectStatusTextBlock.Foreground = (Brush)FindResource("ErrorBrush");
+            return null;
+        }
+    }
+
+    private static string CreateNewProjectSignature(string path, string name, string template) =>
+        path + "\n" + name + "\n" + template;
+
+    private static string? FindExistingDirectory(string path)
+    {
+        var current = string.IsNullOrWhiteSpace(path) ? null : new DirectoryInfo(path);
+        while (current is not null && !current.Exists)
+        {
+            current = current.Parent;
+        }
+
+        return current?.FullName;
+    }
+
+    private static string ToProjectFolderName(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        return new string(name.Trim().Where(character => !invalid.Contains(character)).ToArray());
     }
 
     private void ResetDemoProjectClicked(object sender, RoutedEventArgs e)
@@ -208,6 +398,40 @@ public partial class MainWindow
         {
             target.Text = dialog.FileName;
         }
+    }
+
+    private void UseGameDataClicked(object sender, RoutedEventArgs e)
+    {
+        var gameRoot = GameRootTextBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(gameRoot))
+        {
+            SettingsStatusTextBlock.Text = "Enter or browse to the game root before deriving Data root.";
+            SettingsStatusTextBlock.Foreground = (Brush)FindResource("AccentBrush");
+            return;
+        }
+
+        string dataRoot;
+        try
+        {
+            dataRoot = Path.GetFullPath(Path.Combine(gameRoot, "Data"));
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            SettingsStatusTextBlock.Text = "Game root cannot be used to derive Data root.";
+            SettingsStatusTextBlock.Foreground = (Brush)FindResource("ErrorBrush");
+            return;
+        }
+
+        if (!Directory.Exists(dataRoot))
+        {
+            SettingsStatusTextBlock.Text = "Derived Data root does not exist: " + dataRoot;
+            SettingsStatusTextBlock.Foreground = (Brush)FindResource("ErrorBrush");
+            return;
+        }
+
+        DataRootTextBox.Text = dataRoot;
+        SettingsStatusTextBlock.Text = "Data root derived from the game root.";
+        SettingsStatusTextBlock.Foreground = (Brush)FindResource("OkBrush");
     }
 
     private void SaveSettingsClicked(object sender, RoutedEventArgs e)
@@ -943,7 +1167,10 @@ public partial class MainWindow
         CapabilitiesDoctorScanButton.IsEnabled = !isBusy;
         SaveSettingsButton.IsEnabled = !isBusy;
         SaveAndScanButton.IsEnabled = !isBusy;
+        UseGameDataButton.IsEnabled = !isBusy;
         ProviderEvidenceItemsControl.IsEnabled = !isBusy;
+        PreviewNewProjectButton.IsEnabled = !isBusy;
+        CreateProjectButton.IsEnabled = !isBusy && newProjectPreviewSignature is not null;
     }
 
     private static string FormatJsonOrText(string value)

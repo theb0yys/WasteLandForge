@@ -318,7 +318,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem Header="Mod Builder">
+        <TabItem x:Name="ModBuilderTabItem" Header="Mod Builder">
           <Grid Margin="0,18,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="360" />
@@ -739,7 +739,13 @@
 
               <TextBlock Grid.Row="4" Text="Data root" VerticalAlignment="Center" FontWeight="SemiBold" />
               <TextBox x:Name="DataRootTextBox" Grid.Row="4" Grid.Column="1" Margin="12,5" TextChanged="SettingsPathChanged" />
-              <Button Grid.Row="4" Grid.Column="2" Content="Browse" Margin="8,5,0,5" Tag="data" Click="BrowseSettingsFolderClicked" />
+              <StackPanel Grid.Row="4" Grid.Column="2" Orientation="Horizontal" Margin="8,5,0,5">
+                <Button x:Name="UseGameDataButton"
+                        Content="Use Game\Data"
+                        Margin="0,0,8,0"
+                        Click="UseGameDataClicked" />
+                <Button Content="Browse" Tag="data" Click="BrowseSettingsFolderClicked" />
+              </StackPanel>
 
               <TextBlock Grid.Row="5" Text="Mod Organizer 2" VerticalAlignment="Center" FontWeight="SemiBold" />
               <TextBox x:Name="Mo2PathTextBox" Grid.Row="5" Grid.Column="1" Margin="12,5" TextChanged="SettingsPathChanged" />
@@ -765,6 +771,69 @@
               </Grid>
             </Grid>
           </ScrollViewer>
+        </TabItem>
+
+        <TabItem Header="New Project">
+          <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="360" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Background="{StaticResource PanelBackground}"
+                    BorderBrush="{StaticResource BorderMuted}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20"
+                    Margin="0,0,18,0">
+              <StackPanel>
+                <TextBlock Text="New Forge project" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+
+                <TextBlock Text="Project name" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" Margin="0,18,0,0" />
+                <TextBox x:Name="NewProjectNameTextBox" Margin="0,7,0,0" TextChanged="NewProjectInputChanged" />
+
+                <TextBlock Text="Target project folder" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" Margin="0,14,0,0" />
+                <TextBox x:Name="NewProjectPathTextBox" Margin="0,7,0,0" TextChanged="NewProjectInputChanged" />
+                <Button Content="Choose Parent Folder" Margin="0,8,0,0" Click="BrowseNewProjectParentClicked" />
+
+                <TextBlock Text="Template" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" Margin="0,14,0,0" />
+                <ComboBox x:Name="NewProjectTemplateComboBox"
+                          Margin="0,7,0,0"
+                          Padding="8"
+                          SelectedIndex="0"
+                          SelectionChanged="NewProjectInputChanged">
+                  <ComboBoxItem Content="FNV Basic" Tag="fnv-basic" />
+                  <ComboBoxItem Content="FNV Framework" Tag="fnv-framework" />
+                  <ComboBoxItem Content="FNV Quest Pack" Tag="fnv-quest-pack" />
+                  <ComboBoxItem Content="FNV Docs Only" Tag="fnv-docs-only" />
+                </ComboBox>
+
+                <Button x:Name="PreviewNewProjectButton"
+                        Content="Preview"
+                        Margin="0,20,0,0"
+                        Click="PreviewNewProjectClicked" />
+                <Button x:Name="CreateProjectButton"
+                        Content="Create Project"
+                        Style="{StaticResource PrimaryButton}"
+                        Margin="0,10,0,0"
+                        IsEnabled="False"
+                        Click="CreateNewProjectClicked" />
+                <TextBlock x:Name="NewProjectStatusTextBlock"
+                           Text="Preview the current inputs before creating files."
+                           Foreground="{StaticResource TextMuted}"
+                           Margin="0,12,0,0" />
+              </StackPanel>
+            </Border>
+            <TextBox x:Name="NewProjectOutputTextBox"
+                     Grid.Column="1"
+                     AcceptsReturn="True"
+                     AcceptsTab="True"
+                     FontFamily="Cascadia Mono, Consolas"
+                     FontSize="13"
+                     HorizontalScrollBarVisibility="Auto"
+                     VerticalScrollBarVisibility="Auto"
+                     IsReadOnly="True"
+                     TextWrapping="NoWrap" />
+          </Grid>
         </TabItem>
 
         <TabItem Header="Advanced Logs">

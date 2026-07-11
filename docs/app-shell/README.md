@@ -171,13 +171,35 @@ Gate 355 validates project, game, and Data roots as existing directories and
 supplied MO2, GECK, and xEdit paths as existing files. Drafts may still save,
 but invalid inputs block Save & Scan with explicit local messages.
 
+Gate 356 adds non-blocking warnings for game roots under Program Files and for
+configured paths at or above the inferred 240-character pressure threshold.
+
+Gate 357 adds explicit existing-only `Use Game\\Data` derivation. Missing
+derived directories are refused without changing the current Data root or
+saving settings.
+
+Gate 358 refreshes the local app and unsigned installer with Gates 354-357.
+The guarded first-run regression passed readiness, validation, warnings,
+derivation, draft blocking, valid Save & Scan, and cleanup assertions.
+
+Gate 359 adds a `New Project` surface over canonical `forge init`. Users select
+one of the four documented templates, preview the exact dry-run plan, and can
+create only while that preview still matches the current inputs. Existing
+planned paths remain refused. Published-app automation verified no-write
+preview, all eight scaffold files, refusal without mutation, and cleanup.
+
+Gate 360 runs canonical `forge validate` immediately after successful project
+creation, shares its structured result with the existing validation views and
+Mod Builder output, and opens the created project in Mod Builder. The handoff
+does not persist settings or add files beyond the eight-file init scaffold.
+
 MSIX remains a later option after signing, package identity, and update policy
 are settled. WiX/MSI remains a later option if enterprise MSI governance becomes
 necessary.
 
 ## Open Implementation Checks
 
-- Gate 356 Program Files and long-path-pressure setup warnings.
+- Gate 361 installed-app New Project workflow regression and installer refresh.
 - Code signing and update channel.
 - Final Heat Restricted Asset status before public release.
 - Seat/license coverage for every contributor who uses the Heat asset source.

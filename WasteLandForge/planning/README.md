@@ -359,10 +359,15 @@ Gate status:
 - `gates/gate-353-installer-refresh-doctor-workflow-regression.md` - Gate 353, refreshed local app and unsigned installer plus complete structured Doctor workflow regression coverage, routing Gate 354 to first-run guided setup.
 - `gates/gate-354-first-run-guided-local-setup.md` - Gate 354, first-run Settings routing, setup readiness, and local Save-and-Scan workflow, routing Gate 355 to path existence and type validation.
 - `gates/gate-355-setup-path-existence-type-validation.md` - Gate 355, required directory and optional supplied-file validation with draft saving and invalid scan blocking, routing Gate 356 to Windows path-risk guidance.
+- `gates/gate-356-windows-path-risk-guidance.md` - Gate 356, non-blocking Program Files and 240-character path-pressure warnings grounded in R006, routing Gate 357 to explicit Game/Data-root derivation.
+- `gates/gate-357-explicit-game-data-root-derivation.md` - Gate 357, explicit existing-only Game/Data derivation with failure preservation and no implicit save, routing Gate 358 to installer refresh and first-run regression.
+- `gates/gate-358-installer-refresh-first-run-regression.md` - Gate 358, refreshed local app and unsigned installer plus complete guarded first-run setup regression, routing Gate 359 to an app-shell New Project surface over canonical `forge init`.
+- `gates/gate-359-app-shell-new-project-forge-init.md` - Gate 359, app-shell New Project preview and safe creation through canonical `forge init`, with four documented templates, input-signature confirmation, existing-path refusal, and published-app UI regression coverage.
+- `gates/gate-360-post-create-validation-project-handoff.md` - Gate 360, automatic canonical validation after project creation with shared structured evidence and direct Mod Builder handoff, without additional scaffold or settings writes.
 
 Next gates:
 
 - Gate 315 - harden the WPF app-shell scaffold and backend bridge after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
-- Gate 356 - add non-blocking Program Files and long-path-pressure warnings to setup readiness, without moving, rewriting, installing, or executing user files.
+- Gate 361 - refresh the unsigned local installer and regress the installed New Project preview, creation, validation, and Mod Builder handoff workflow.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.
