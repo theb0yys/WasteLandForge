@@ -148,13 +148,36 @@ Gate 349 renders Doctor readiness areas, statuses, coverage counts, and
 immediate actions directly in the Capabilities view. Full scan JSON remains
 available under `Advanced JSON`.
 
+Gate 350 adds per-area provider evidence drill-down with provider status,
+install scope, detector kind, inspected path, and the backend evidence message.
+
+Gate 351 adds `Configure Paths` navigation to Settings and per-provider
+`Explain` actions backed by canonical `forge capabilities explain` JSON using
+the same persisted path context as environment scanning.
+
+Gate 352 renders explanation target status, description, next actions, related
+capabilities, and grouped evidence directly in the app. Full output remains
+under `Advanced Explanation JSON`.
+
+Gate 353 refreshes the local app and unsigned installer with Gates 349-352.
+The complete published-app Doctor workflow passed UI Automation regression,
+including Settings navigation and structured provider explanations.
+
+Gate 354 adds first-run routing to Settings when local settings are absent,
+live core/tool path readiness counts, and a local `Save & Scan` workflow that
+persists settings before invoking the existing deterministic scan.
+
+Gate 355 validates project, game, and Data roots as existing directories and
+supplied MO2, GECK, and xEdit paths as existing files. Drafts may still save,
+but invalid inputs block Save & Scan with explicit local messages.
+
 MSIX remains a later option after signing, package identity, and update policy
 are settled. WiX/MSI remains a later option if enterprise MSI governance becomes
 necessary.
 
 ## Open Implementation Checks
 
-- Gate 350 structured provider-evidence drill-down for selected Doctor areas.
+- Gate 356 Program Files and long-path-pressure setup warnings.
 - Code signing and update channel.
 - Final Heat Restricted Asset status before public release.
 - Seat/license coverage for every contributor who uses the Heat asset source.

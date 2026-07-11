@@ -26,6 +26,10 @@ public partial class MainWindow
         InitializeComponent();
 
         LoadLocalSettings();
+        if (!File.Exists(settingsStore.SettingsPath))
+        {
+            MainTabControl.SelectedItem = SettingsTabItem;
+        }
         ForgePathTextBlock.Text = forge.ForgePathDisplay;
         ApplyHeatSkin();
         UpdatePackageSummary(ProjectPathTextBox.Text);
@@ -83,6 +87,24 @@ public partial class MainWindow
         ProviderEvidenceTitleTextBlock.Text = area.Title + " provider evidence";
         ProviderEvidenceItemsControl.ItemsSource = providers;
         ProviderEvidencePanel.Visibility = Visibility.Visible;
+        ProviderExplanationPanel.Visibility = Visibility.Collapsed;
+        ProviderEvidencePanel.BringIntoView();
+    }
+
+    private void ConfigurePathsClicked(object sender, RoutedEventArgs e)
+    {
+        MainTabControl.SelectedItem = SettingsTabItem;
+        SettingsProjectRootTextBox.Focus();
+    }
+
+    private async void ExplainProviderClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string providerId })
+        {
+            return;
+        }
+
+        await ExplainProviderAsync(providerId);
     }
 
     private void ResetDemoProjectClicked(object sender, RoutedEventArgs e)
@@ -190,6 +212,37 @@ public partial class MainWindow
 
     private void SaveSettingsClicked(object sender, RoutedEventArgs e)
     {
+        TrySaveLocalSettings();
+    }
+
+    private async void SaveAndScanClicked(object sender, RoutedEventArgs e)
+    {
+        if (!TrySaveLocalSettings())
+        {
+            return;
+        }
+
+        var validation = SetupPathValidator.Validate(CaptureLocalSettings());
+        if (!validation.CanScan)
+        {
+            SettingsStatusTextBlock.Text = "Draft saved. Scan blocked: " +
+                string.Join(" ", validation.Issues.Select(issue => issue.Message));
+            SettingsStatusTextBlock.Foreground = (Brush)FindResource("ErrorBrush");
+            AppendLog("Save & Scan blocked by invalid local setup paths.");
+            return;
+        }
+
+        MainTabControl.SelectedIndex = 3;
+        await ScanEnvironmentAsync();
+    }
+
+    private void SettingsPathChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        UpdateSetupReadiness();
+    }
+
+    private bool TrySaveLocalSettings()
+    {
         try
         {
             var settings = CaptureLocalSettings();
@@ -199,12 +252,15 @@ public partial class MainWindow
             SettingsStatusTextBlock.Foreground = (Brush)FindResource("OkBrush");
             AppendLog("Local app settings saved.");
             UpdatePackageSummary(settings.ProjectRoot);
+            UpdateSetupReadiness();
+            return true;
         }
         catch (Exception ex)
         {
             SettingsStatusTextBlock.Text = "Save failed: " + ex.Message;
             SettingsStatusTextBlock.Foreground = (Brush)FindResource("ErrorBrush");
             AppendLog("Local app settings save failed: " + ex.Message);
+            return false;
         }
     }
 
@@ -217,12 +273,40 @@ public partial class MainWindow
             SettingsStatusTextBlock.Text = "Local settings reset to defaults.";
             SettingsStatusTextBlock.Foreground = (Brush)FindResource("TextMuted");
             AppendLog("Local app settings reset.");
+            UpdateSetupReadiness();
         }
         catch (Exception ex)
         {
             SettingsStatusTextBlock.Text = "Reset failed: " + ex.Message;
             SettingsStatusTextBlock.Foreground = (Brush)FindResource("ErrorBrush");
         }
+    }
+
+    private void UpdateSetupReadiness()
+    {
+        if (SetupReadinessTextBlock is null ||
+            SettingsProjectRootTextBox is null ||
+            GameRootTextBox is null ||
+            DataRootTextBox is null ||
+            Mo2PathTextBox is null ||
+            GeckPathTextBox is null ||
+            XEditPathTextBox is null)
+        {
+            return;
+        }
+
+        var validation = SetupPathValidator.Validate(CaptureLocalSettings());
+        var issueSummary = validation.Issues.Count == 0
+            ? "Ready to scan."
+            : string.Join(" ", validation.Issues.Select(issue => issue.Message));
+        var warningSummary = validation.Warnings.Count == 0
+            ? string.Empty
+            : " Warning: " + string.Join(" ", validation.Warnings);
+        SetupReadinessTextBlock.Text =
+            $"{validation.ReadyCorePaths}/3 core paths ready; {validation.ReadyToolPaths}/3 tool paths ready. {issueSummary}{warningSummary}";
+        SetupReadinessTextBlock.Foreground = (Brush)FindResource(validation.CanScan
+            ? validation.HasWarnings ? "AccentBrush" : "OkBrush"
+            : validation.HasInvalidPaths ? "ErrorBrush" : "AccentBrush");
     }
 
     private void LoadLocalSettings()
@@ -236,6 +320,7 @@ public partial class MainWindow
             }
 
             ApplyLocalSettings(settings);
+            UpdateSetupReadiness();
             SettingsStatusTextBlock.Text = File.Exists(settingsStore.SettingsPath)
                 ? "Loaded local settings."
                 : "Using defaults. Save to create local settings.";
@@ -243,6 +328,7 @@ public partial class MainWindow
         catch (Exception ex)
         {
             ApplyLocalSettings(new LocalAppSettings { ProjectRoot = FindDefaultProjectPath() });
+            UpdateSetupReadiness();
             SettingsStatusTextBlock.Text = "Settings could not be loaded: " + ex.Message;
             SettingsStatusTextBlock.Foreground = (Brush)FindResource("ErrorBrush");
         }
@@ -430,20 +516,7 @@ public partial class MainWindow
         }
 
         var arguments = new List<string> { "capabilities", "scan" };
-        if (!string.IsNullOrWhiteSpace(settings.ProjectRoot) && Directory.Exists(settings.ProjectRoot))
-        {
-            arguments.AddRange(["--project", settings.ProjectRoot]);
-        }
-
-        AddPathOption(arguments, "--game-root", settings.GameRoot);
-        AddPathOption(arguments, "--data-root", settings.DataRoot);
-        AddPathOption(arguments, "--tool-path", settings.Mo2Path);
-        foreach (var toolPath in settings.ToolPaths.Values
-                     .Where(path => !string.IsNullOrWhiteSpace(path))
-                     .Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            AddPathOption(arguments, "--tool-path", toolPath);
-        }
+        AddSavedScanOptions(arguments, settings);
 
         arguments.AddRange(["--format", "json", "--no-input"]);
         SetBusy(true);
@@ -485,6 +558,91 @@ public partial class MainWindow
         }
     }
 
+    private async Task ExplainProviderAsync(string providerId)
+    {
+        LocalAppSettings settings;
+        try
+        {
+            settings = settingsStore.Load();
+        }
+        catch (Exception ex)
+        {
+            ProviderExplanationPanel.Visibility = Visibility.Visible;
+            ProviderExplanationStatusTextBlock.Text = "Settings unavailable: " + ex.Message;
+            return;
+        }
+
+        var arguments = new List<string> { "capabilities", "explain", providerId };
+        AddSavedScanOptions(arguments, settings);
+        arguments.AddRange(["--format", "json", "--no-input"]);
+        ProviderExplanationPanel.Visibility = Visibility.Visible;
+        ProviderExplanationTitleTextBlock.Text = providerId + " explanation";
+        ProviderExplanationStatusTextBlock.Text = "Loading explanation...";
+        ProviderExplanationTextBox.Clear();
+        SetBusy(true);
+        AppendLog("Explaining provider " + providerId + ".");
+
+        try
+        {
+            var result = await forge.RunAsync(arguments.ToArray());
+            AppendResult(result);
+            ProviderExplanationTextBox.Text = FormatJsonOrText(result.StandardOutput);
+            if (!string.IsNullOrWhiteSpace(result.StandardError))
+            {
+                ProviderExplanationTextBox.AppendText(Environment.NewLine + result.StandardError.Trim());
+            }
+
+            ProviderExplanationStatusTextBlock.Text = result.ExitCode == 0
+                ? "Explanation loaded from forge.exe."
+                : "Explanation command exited with code " + result.ExitCode + ".";
+            UpdateProviderExplanation(result.StandardOutput);
+            ProviderExplanationPanel.BringIntoView();
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    private void UpdateProviderExplanation(string json)
+    {
+        try
+        {
+            var explanation = ProviderExplanationViewParser.Parse(json);
+            ProviderExplanationTitleTextBlock.Text = explanation.Title + " explanation";
+            ProviderExplanationStatusTextBlock.Text = explanation.Status + " - loaded from forge.exe.";
+            ProviderExplanationDescriptionTextBlock.Text = explanation.Description;
+            ProviderExplanationActionsItemsControl.ItemsSource = explanation.Actions;
+            ProviderExplanationCapabilitiesItemsControl.ItemsSource = explanation.RelatedCapabilities;
+            ProviderExplanationGroupsItemsControl.ItemsSource = explanation.EvidenceGroups;
+        }
+        catch (JsonException ex)
+        {
+            ProviderExplanationDescriptionTextBlock.Text = "Structured explanation unavailable: " + ex.Message;
+            ProviderExplanationActionsItemsControl.ItemsSource = Array.Empty<string>();
+            ProviderExplanationCapabilitiesItemsControl.ItemsSource = Array.Empty<string>();
+            ProviderExplanationGroupsItemsControl.ItemsSource = Array.Empty<ProviderExplanationGroupView>();
+        }
+    }
+
+    private static void AddSavedScanOptions(List<string> arguments, LocalAppSettings settings)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.ProjectRoot) && Directory.Exists(settings.ProjectRoot))
+        {
+            arguments.AddRange(["--project", settings.ProjectRoot]);
+        }
+
+        AddPathOption(arguments, "--game-root", settings.GameRoot);
+        AddPathOption(arguments, "--data-root", settings.DataRoot);
+        AddPathOption(arguments, "--tool-path", settings.Mo2Path);
+        foreach (var toolPath in settings.ToolPaths.Values
+                     .Where(path => !string.IsNullOrWhiteSpace(path))
+                     .Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            AddPathOption(arguments, "--tool-path", toolPath);
+        }
+    }
+
     private static void AddPathOption(List<string> arguments, string option, string? path)
     {
         if (!string.IsNullOrWhiteSpace(path))
@@ -501,12 +659,14 @@ public partial class MainWindow
             currentDoctorScan = DoctorScanViewParser.Parse(json);
             DoctorAreasItemsControl.ItemsSource = currentDoctorScan.Areas;
             ProviderEvidencePanel.Visibility = Visibility.Collapsed;
+            ProviderExplanationPanel.Visibility = Visibility.Collapsed;
         }
         catch (JsonException ex)
         {
             DoctorAreasItemsControl.ItemsSource = Array.Empty<DoctorAreaView>();
             currentDoctorScan = null;
             ProviderEvidencePanel.Visibility = Visibility.Collapsed;
+            ProviderExplanationPanel.Visibility = Visibility.Collapsed;
             DoctorSummaryTextBlock.Text += " Structured Doctor view unavailable: " + ex.Message;
         }
     }
@@ -782,6 +942,8 @@ public partial class MainWindow
         DashboardDoctorScanButton.IsEnabled = !isBusy;
         CapabilitiesDoctorScanButton.IsEnabled = !isBusy;
         SaveSettingsButton.IsEnabled = !isBusy;
+        SaveAndScanButton.IsEnabled = !isBusy;
+        ProviderEvidenceItemsControl.IsEnabled = !isBusy;
     }
 
     private static string FormatJsonOrText(string value)

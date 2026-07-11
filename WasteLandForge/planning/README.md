@@ -353,10 +353,16 @@ Gate status:
 - `gates/gate-347-app-shell-settings-backed-doctor-capability-scan.md` - Gate 347, explicit settings-backed Doctor/capability scan integration in the desktop app with readiness summaries and full JSON output, routing Gate 348 to local publish, installer refresh, and UI smoke validation.
 - `gates/gate-348-local-app-installer-refresh-ui-smoke.md` - Gate 348, refreshed local app publish and unsigned installer plus launch and settings-backed scan UI smoke validation, routing Gate 349 to a structured Doctor results view.
 - `gates/gate-349-structured-doctor-results-view.md` - Gate 349, structured Doctor readiness rows and immediate actions from existing scan JSON with raw JSON retained as an advanced view, routing Gate 350 to provider-evidence drill-down.
+- `gates/gate-350-doctor-provider-evidence-drilldown.md` - Gate 350, structured provider status, install scope, inspected path, and evidence-message drill-down for Doctor areas, routing Gate 351 to Settings navigation and canonical provider explanation.
+- `gates/gate-351-doctor-remediation-navigation-provider-explain.md` - Gate 351, Doctor remediation navigation to Settings and canonical settings-backed provider explanation JSON, routing Gate 352 to structured explanation presentation.
+- `gates/gate-352-structured-provider-explanation-view.md` - Gate 352, structured provider explanation status, actions, related capabilities, and evidence groups with full JSON retained, routing Gate 353 to local installer refresh and Doctor workflow regression smoke.
+- `gates/gate-353-installer-refresh-doctor-workflow-regression.md` - Gate 353, refreshed local app and unsigned installer plus complete structured Doctor workflow regression coverage, routing Gate 354 to first-run guided setup.
+- `gates/gate-354-first-run-guided-local-setup.md` - Gate 354, first-run Settings routing, setup readiness, and local Save-and-Scan workflow, routing Gate 355 to path existence and type validation.
+- `gates/gate-355-setup-path-existence-type-validation.md` - Gate 355, required directory and optional supplied-file validation with draft saving and invalid scan blocking, routing Gate 356 to Windows path-risk guidance.
 
 Next gates:
 
 - Gate 315 - harden the WPF app-shell scaffold and backend bridge after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
-- Gate 350 - add structured provider status, install-scope, evidence-path, and evidence-message drill-down for selected Doctor areas while keeping provider installation and external-tool execution gated.
+- Gate 356 - add non-blocking Program Files and long-path-pressure warnings to setup readiness, without moving, rewriting, installing, or executing user files.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.
