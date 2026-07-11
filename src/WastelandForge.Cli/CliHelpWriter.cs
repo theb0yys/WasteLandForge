@@ -166,7 +166,7 @@ internal static class CliHelpWriter
         writer.WriteLine("  forge init [project-root] [--project <path>] [--template fnv-basic|fnv-framework|fnv-quest-pack|fnv-docs-only] [--name <name>] [--game falloutnv] [--format human|plain|json] [--dry-run] [--no-input]");
         writer.WriteLine();
         writer.WriteLine("Creates a WastelandForge source scaffold when safe. Gate 320 writes the root manifest, dependency/capability registry scaffold, repo-local Forge config, README, VS Code tasks, VS Code schema associations, and GitHub Actions workflow; use --dry-run to emit the plan without writing files.");
-        writer.WriteLine("All supported template IDs currently create this same validated baseline scaffold. Specialized framework, quest-pack, and docs-only contents remain undefined.");
+        writer.WriteLine("fnv-framework creates a validated 12-file runtime-enabled MCM/JIP source scaffold. fnv-basic, fnv-quest-pack, and fnv-docs-only retain the validated eight-file baseline scaffold.");
         writer.WriteLine("Existing planned paths are refused unless a later gate adds an explicit overwrite policy.");
         writer.WriteLine();
         writer.WriteLine("Written in the current gate:");
@@ -186,6 +186,7 @@ internal static class CliHelpWriter
         writer.WriteLine();
         writer.WriteLine("Examples:");
         writer.WriteLine("  forge init MyMod --template fnv-basic --name \"My Mod\" --game falloutnv --format json");
+        writer.WriteLine("  forge init MyFramework --template fnv-framework --name \"My Framework\" --format json");
         writer.WriteLine("  forge init --project . --format plain --no-input");
         writer.WriteLine();
         writer.WriteLine("Boundaries:");

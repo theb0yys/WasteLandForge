@@ -33,7 +33,7 @@ public sealed class CliGoldenTests
         Assert.Contains(".vscode/tasks.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains(".vscode/settings.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains(".github/workflows/wastelandforge.yml", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("same validated baseline scaffold", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("fnv-framework creates a validated 12-file runtime-enabled MCM/JIP source scaffold", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("Gate 320 does not install providers", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
@@ -114,6 +114,78 @@ public sealed class CliGoldenTests
         Assert.Contains("3. forge docs .", result.Stdout, StringComparison.Ordinal);
         Assert.False(Directory.Exists(projectRoot));
         Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void InitFrameworkCreatesValidCombinedPackageReadySource()
+    {
+        var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "framework");
+        try
+        {
+            var dryRun = RunCli("init", projectRoot, "--template", "fnv-framework", "--name", "Created Framework", "--dry-run", "--format", "json", "--no-input");
+            var dryJson = JsonNode.Parse(dryRun.Stdout)!;
+            Assert.Equal(0, dryRun.ExitCode);
+            Assert.Equal(12, (int?)dryJson["template"]?["writtenFileCount"]);
+            Assert.Equal(true, (bool?)dryJson["template"]?["specialized"]);
+            Assert.False(Directory.Exists(projectRoot));
+
+            var created = RunCli("init", projectRoot, "--template", "fnv-framework", "--name", "Created Framework", "--format", "json", "--no-input");
+            var createdJson = JsonNode.Parse(created.Stdout)!;
+            Assert.Equal(0, created.ExitCode);
+            Assert.Equal(12, createdJson["execution"]?["writtenPaths"]?.AsArray().Count);
+            Assert.Equal(12, Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories).Length);
+            var manifest = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "wastelandforge.json")))!;
+            Assert.Equal("src/registries/mcm/", (string?)manifest["registries"]?["mcm"]);
+            Assert.Equal("src/registries/jip-scripts/", (string?)manifest["registries"]?["jipScripts"]);
+
+            var validation = RunCli("validate", projectRoot, "--format", "json", "--no-input");
+            Assert.Equal(0, validation.ExitCode);
+            Assert.Equal(0, (int?)JsonNode.Parse(validation.Stdout)?["summary"]?["errors"]);
+
+            var package = RunCli("package", projectRoot, "--target", "mod-package", "--format", "json", "--no-input");
+            var packageJson = JsonNode.Parse(package.Stdout)!;
+            Assert.Equal(0, package.ExitCode);
+            Assert.Equal(2, (int?)packageJson["summary"]?["components"]);
+            Assert.Equal(3, (int?)packageJson["summary"]?["entries"]);
+            Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "mod-package", "package.zip")));
+        }
+        finally
+        {
+            var parent = Directory.GetParent(projectRoot)?.FullName;
+            if (parent is not null && Directory.Exists(parent)) Directory.Delete(parent, true);
+        }
+    }
+
+    [Fact]
+    public void InitNonFrameworkTemplatesRetainIdenticalBaselineAndFrameworkRefusesSpecializedConflict()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            string[]? expectedPaths = null;
+            string[]? expectedContents = null;
+            foreach (var template in new[] { "fnv-basic", "fnv-quest-pack", "fnv-docs-only" })
+            {
+                var project = Path.Combine(root, template);
+                var result = RunCli("init", project, "--template", template, "--name", "Stable Baseline", "--format", "json", "--no-input");
+                Assert.Equal(0, result.ExitCode);
+                var files = Directory.GetFiles(project, "*", SearchOption.AllDirectories).OrderBy(path => Path.GetRelativePath(project, path), StringComparer.Ordinal).ToArray();
+                var paths = files.Select(path => Path.GetRelativePath(project, path).Replace('\\', '/')).ToArray();
+                var contents = files.Select(File.ReadAllText).ToArray();
+                Assert.Equal(8, files.Length);
+                if (expectedPaths is null) { expectedPaths = paths; expectedContents = contents; }
+                else { Assert.Equal(expectedPaths, paths); Assert.Equal(expectedContents, contents); }
+            }
+
+            var conflictProject = Path.Combine(root, "conflict");
+            Directory.CreateDirectory(Path.Combine(conflictProject, "src", "registries", "mcm"));
+            File.WriteAllText(Path.Combine(conflictProject, "src", "registries", "mcm", "main.json"), "existing");
+            var refused = RunCli("init", conflictProject, "--template", "fnv-framework", "--name", "Conflict", "--format", "json", "--no-input");
+            Assert.Equal(6, refused.ExitCode);
+            Assert.False(File.Exists(Path.Combine(conflictProject, "wastelandforge.json")));
+            Assert.Equal("existing", File.ReadAllText(Path.Combine(conflictProject, "src", "registries", "mcm", "main.json")));
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
     }
 
     [Fact]

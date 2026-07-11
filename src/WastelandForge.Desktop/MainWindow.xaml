@@ -936,7 +936,7 @@
                   <ComboBoxItem Content="FNV Quest Pack" Tag="fnv-quest-pack" />
                   <ComboBoxItem Content="FNV Docs Only" Tag="fnv-docs-only" />
                 </ComboBox>
-                <TextBlock Text="All template IDs currently create the same validated baseline scaffold. Specialized framework, quest-pack, and docs-only contents are not defined yet."
+                <TextBlock Text="FNV Framework creates runtime-enabled MCM and JIP source ready for combined packaging. The other templates retain the validated baseline scaffold."
                            Foreground="{StaticResource TextMuted}"
                            FontSize="12"
                            TextWrapping="Wrap"

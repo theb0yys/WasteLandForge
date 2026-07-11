@@ -249,7 +249,7 @@ necessary.
 
 ## Open Implementation Checks
 
-- Gate 388 isolated installed-app combined-package workflow and cleanup regression.
+- Gate 393 named MO2 mod export backend and Project Outputs preview/export/handoff implementation.
 - Code signing and update channel.
 - Final Heat Restricted Asset status before public release.
 - Seat/license coverage for every contributor who uses the Heat asset source.

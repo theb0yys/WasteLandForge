@@ -108,6 +108,7 @@ internal static class InitPlanPlanner
 {
     public const string DefaultTemplate = "fnv-basic";
     public const string DefaultGame = "falloutnv";
+    public const string FrameworkTemplate = "fnv-framework";
 
     public static readonly string[] SupportedTemplates =
     [
@@ -152,7 +153,7 @@ internal static class InitPlanPlanner
         var projectRoot = Path.GetFullPath(options.ProjectRoot);
         var projectName = options.ProjectName.Trim();
         var projectId = CreateProjectId(projectName);
-        var plannedPaths = CreatePlannedPaths(projectRoot);
+        var plannedPaths = CreatePlannedPaths(projectRoot, options.Template);
         var existing = plannedPaths
             .Where(path => path.Exists && !StringComparer.Ordinal.Equals(path.Kind, "project-root"))
             .Select(path => path.Path)
@@ -193,17 +194,17 @@ internal static class InitPlanPlanner
             BoundaryLines);
     }
 
-    public static IReadOnlyList<InitPlannedPath> CreatePlannedPaths(string projectRoot)
+    public static IReadOnlyList<InitPlannedPath> CreatePlannedPaths(string projectRoot, string template = DefaultTemplate)
     {
-        return
-        [
+        var paths = new List<InitPlannedPath>
+        {
             Directory("project-root", ".", "Project root directory.", projectRoot, writesInCurrentGate: true),
             File("manifest", "wastelandforge.json", "Root WastelandForge manifest accepted by forge validate.", projectRoot, writesInCurrentGate: true),
             Directory("source-root", "src/", "Source-controlled project source root.", projectRoot, writesInCurrentGate: true),
             Directory("dependency-registry-root", "src/registries/dependencies/", "Dependency registry directory.", projectRoot, writesInCurrentGate: true),
             File("dependency-registry", "src/registries/dependencies/main.json", "Minimal dependency registry document.", projectRoot, writesInCurrentGate: true),
             Directory("capability-registry-root", "src/registries/capabilities/", "Capability registry directory.", projectRoot, writesInCurrentGate: true),
-            File("capability-registry", "src/registries/capabilities/runtime.json", "Minimal capability registry document.", projectRoot, writesInCurrentGate: true),
+            File("capability-registry", "src/registries/capabilities/runtime.json", StringComparer.Ordinal.Equals(template, FrameworkTemplate) ? "xNVSE runtime capability declaration." : "Minimal capability registry document.", projectRoot, writesInCurrentGate: true),
             Directory("generated-root", "generated/", "Disposable generated-output root.", projectRoot, writesInCurrentGate: false),
             Directory("dist-root", "dist/", "Disposable distribution-output root.", projectRoot, writesInCurrentGate: false),
             Directory("forge-config-root", ".wastelandforge/", "Repo-local Forge configuration root.", projectRoot, writesInCurrentGate: true),
@@ -215,7 +216,20 @@ internal static class InitPlanPlanner
             Directory("github-workflows-root", ".github/workflows/", "GitHub Actions workflow root.", projectRoot, writesInCurrentGate: true),
             File("github-actions", ".github/workflows/wastelandforge.yml", "Example GitHub Actions validation workflow.", projectRoot, writesInCurrentGate: true),
             File("readme", "README.md", "Project README with validate/build next steps.", projectRoot, writesInCurrentGate: true)
-        ];
+        };
+        if (StringComparer.Ordinal.Equals(template, FrameworkTemplate))
+        {
+            paths.InsertRange(7,
+            [
+                File("mcm-capability-registry", "src/registries/capabilities/mcm-json.json", "MCM JSON generation capability declaration.", projectRoot, true),
+                File("jip-capability-registry", "src/registries/capabilities/jip-script-runner.json", "JIP script runner capability declaration.", projectRoot, true),
+                Directory("mcm-registry-root", "src/registries/mcm/", "MCM source registry directory.", projectRoot, true),
+                File("mcm-registry", "src/registries/mcm/main.json", "Starter MCM toggle source.", projectRoot, true),
+                Directory("jip-script-registry-root", "src/registries/jip-scripts/", "JIP script source registry directory.", projectRoot, true),
+                File("jip-script-registry", "src/registries/jip-scripts/main.json", "Starter inert JIP script source.", projectRoot, true)
+            ]);
+        }
+        return paths;
     }
 
     private static InitPlannedPath File(string kind, string relativePath, string description, string projectRoot, bool writesInCurrentGate) =>
@@ -279,6 +293,11 @@ internal static class InitScaffoldWriter
         CreateDirectory(Path.Combine(plan.ProjectRoot, "src"), "src/", createdDirectories);
         CreateDirectory(Path.Combine(plan.ProjectRoot, "src", "registries", "dependencies"), "src/registries/dependencies/", createdDirectories);
         CreateDirectory(Path.Combine(plan.ProjectRoot, "src", "registries", "capabilities"), "src/registries/capabilities/", createdDirectories);
+        if (IsFramework(plan))
+        {
+            CreateDirectory(Path.Combine(plan.ProjectRoot, "src", "registries", "mcm"), "src/registries/mcm/", createdDirectories);
+            CreateDirectory(Path.Combine(plan.ProjectRoot, "src", "registries", "jip-scripts"), "src/registries/jip-scripts/", createdDirectories);
+        }
         CreateDirectory(Path.Combine(plan.ProjectRoot, ".wastelandforge"), ".wastelandforge/", createdDirectories);
         CreateDirectory(Path.Combine(plan.ProjectRoot, ".vscode"), ".vscode/", createdDirectories);
         CreateDirectory(Path.Combine(plan.ProjectRoot, ".github", "workflows"), ".github/workflows/", createdDirectories);
@@ -298,6 +317,13 @@ internal static class InitScaffoldWriter
             "src/registries/capabilities/runtime.json",
             CreateCapabilityRegistry(plan),
             writtenPaths);
+        if (IsFramework(plan))
+        {
+            WriteJsonFile(Path.Combine(plan.ProjectRoot, "src", "registries", "capabilities", "mcm-json.json"), "src/registries/capabilities/mcm-json.json", CreateMcmCapabilityRegistry(), writtenPaths);
+            WriteJsonFile(Path.Combine(plan.ProjectRoot, "src", "registries", "capabilities", "jip-script-runner.json"), "src/registries/capabilities/jip-script-runner.json", CreateJipCapabilityRegistry(), writtenPaths);
+            WriteJsonFile(Path.Combine(plan.ProjectRoot, "src", "registries", "mcm", "main.json"), "src/registries/mcm/main.json", CreateMcmRegistry(plan), writtenPaths);
+            WriteJsonFile(Path.Combine(plan.ProjectRoot, "src", "registries", "jip-scripts", "main.json"), "src/registries/jip-scripts/main.json", CreateJipScriptRegistry(plan), writtenPaths);
+        }
         WriteJsonFile(
             Path.Combine(plan.ProjectRoot, ".wastelandforge", "config.jsonc"),
             ".wastelandforge/config.jsonc",
@@ -311,7 +337,7 @@ internal static class InitScaffoldWriter
         WriteJsonFile(
             Path.Combine(plan.ProjectRoot, ".vscode", "tasks.json"),
             ".vscode/tasks.json",
-            CreateVscodeTasks(),
+            CreateVscodeTasks(plan),
             writtenPaths);
         WriteJsonFile(
             Path.Combine(plan.ProjectRoot, ".vscode", "settings.json"),
@@ -328,7 +354,7 @@ internal static class InitScaffoldWriter
         {
             Status = "created",
             PlanningOnly = false,
-            PlannedPaths = InitPlanPlanner.CreatePlannedPaths(plan.ProjectRoot),
+            PlannedPaths = InitPlanPlanner.CreatePlannedPaths(plan.ProjectRoot, plan.Template),
             Validation = plan.Validation with { Status = "available-after-scaffold-write" },
             Execution = new InitExecutionState(
                 InitExecution: true,
@@ -356,8 +382,19 @@ internal static class InitScaffoldWriter
         };
     }
 
-    private static JsonObject CreateManifest(InitPlanResult plan) =>
-        new()
+    private static JsonObject CreateManifest(InitPlanResult plan)
+    {
+        var registries = new JsonObject
+        {
+            ["dependencies"] = "src/registries/dependencies/",
+            ["capabilities"] = "src/registries/capabilities/"
+        };
+        if (IsFramework(plan))
+        {
+            registries["mcm"] = "src/registries/mcm/";
+            registries["jipScripts"] = "src/registries/jip-scripts/";
+        }
+        return new JsonObject
         {
             ["schemaVersion"] = "0.2.0",
             ["kind"] = "manifest",
@@ -365,12 +402,9 @@ internal static class InitScaffoldWriter
             ["name"] = plan.ProjectName,
             ["version"] = "0.1.0",
             ["game"] = plan.Game,
-            ["registries"] = new JsonObject
-            {
-                ["dependencies"] = "src/registries/dependencies/",
-                ["capabilities"] = "src/registries/capabilities/"
-            }
+            ["registries"] = registries
         };
+    }
 
     private static JsonObject CreateDependencyRegistry(InitPlanResult plan) =>
         new()
@@ -380,12 +414,19 @@ internal static class InitScaffoldWriter
             ["id"] = $"{plan.ProjectId}.dependencies",
             ["requires"] = new JsonObject
             {
-                ["capabilities"] = new JsonArray()
+                ["capabilities"] = IsFramework(plan)
+                    ? new JsonArray
+                    {
+                        new JsonObject { ["id"] = "runtime.ui.mcm_json", ["phase"] = new JsonArray("generation"), ["reason"] = "Generate the combined MCM payload." },
+                        new JsonObject { ["id"] = "runtime.scripting.jip_script_runner", ["phase"] = new JsonArray("generation"), ["reason"] = "Generate the combined JIP script payload." }
+                    }
+                    : new JsonArray()
             }
         };
 
-    private static JsonObject CreateCapabilityRegistry(InitPlanResult plan) =>
-        new()
+    private static JsonObject CreateCapabilityRegistry(InitPlanResult plan) => IsFramework(plan)
+        ? CreateXnvseCapabilityRegistry()
+        : new JsonObject
         {
             ["schemaVersion"] = "0.2.0",
             ["kind"] = "capability",
@@ -411,6 +452,75 @@ internal static class InitScaffoldWriter
             }
         };
 
+    private static JsonObject CreateXnvseCapabilityRegistry() => new()
+    {
+        ["schemaVersion"] = "0.2.0", ["kind"] = "capability", ["id"] = "runtime.scripting.xnvse", ["title"] = "xNVSE runtime scripting",
+        ["satisfiedBy"] = new JsonArray { new JsonObject { ["id"] = "provider.runtime.xnvse", ["providerType"] = "runtime-extension" } },
+        ["requires"] = new JsonObject { ["capabilities"] = new JsonArray() }, ["scope"] = "runtime-session", ["stability"] = "community-standard", ["features"] = new JsonArray("script-extender")
+    };
+
+    private static JsonObject CreateMcmCapabilityRegistry() => new()
+    {
+        ["schemaVersion"] = "0.2.0", ["kind"] = "capability", ["id"] = "runtime.ui.mcm_json", ["title"] = "MCM Extender JSON authoring",
+        ["satisfiedBy"] = new JsonArray { new JsonObject { ["id"] = "provider.runtime.mcm_extender", ["providerType"] = "runtime-ui" } },
+        ["requires"] = new JsonObject { ["capabilities"] = new JsonArray { new JsonObject { ["id"] = "runtime.scripting.xnvse" } } }, ["scope"] = "data-managed", ["stability"] = "community-standard", ["features"] = new JsonArray("json-menu-authoring")
+    };
+
+    private static JsonObject CreateJipCapabilityRegistry() => new()
+    {
+        ["schemaVersion"] = "0.2.0", ["kind"] = "capability", ["id"] = "runtime.scripting.jip_script_runner", ["title"] = "JIP LN Script Runner text scripts",
+        ["satisfiedBy"] = new JsonArray { new JsonObject { ["id"] = "provider.runtime.jip_ln", ["providerType"] = "runtime-extension" } },
+        ["requires"] = new JsonObject { ["capabilities"] = new JsonArray { new JsonObject { ["id"] = "runtime.scripting.xnvse" } } }, ["scope"] = "data-managed", ["stability"] = "community-standard", ["features"] = new JsonArray("text-script-runner")
+    };
+
+    private static JsonObject CreateMcmRegistry(InitPlanResult plan)
+    {
+        var slug = ProjectSlug(plan);
+        return new JsonObject
+        {
+            ["schemaVersion"] = "0.1.0", ["kind"] = "mcm", ["id"] = $"{plan.ProjectId}.mcm",
+            ["menus"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["id"] = $"{plan.ProjectId}.mcm.main", ["title"] = "$ModName", ["outputFile"] = $"{slug}.json", ["minMCMVersion"] = 1.0,
+                    ["requires"] = new JsonObject { ["capabilities"] = new JsonArray { new JsonObject { ["id"] = "runtime.ui.mcm_json" } } },
+                    ["translations"] = new JsonObject { ["$ModName"] = plan.ProjectName, ["$General"] = "General", ["$Enabled"] = "Enabled" },
+                    ["pages"] = new JsonArray
+                    {
+                        new JsonObject
+                        {
+                            ["id"] = $"{plan.ProjectId}.mcm.general", ["title"] = "$General",
+                            ["settings"] = new JsonArray
+                            {
+                                new JsonObject { ["id"] = $"{plan.ProjectId}.mcm.general.enabled", ["label"] = "$Enabled", ["settingType"] = "toggle", ["default"] = false, ["ini"] = new JsonObject { ["file"] = $"Config/{slug}.ini", ["section"] = "General", ["key"] = "bEnabled" } }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    private static JsonObject CreateJipScriptRegistry(InitPlanResult plan)
+    {
+        var slug = ProjectSlug(plan);
+        return new JsonObject
+        {
+            ["schemaVersion"] = "0.1.0", ["kind"] = "jip-script", ["id"] = $"{plan.ProjectId}.jip_scripts",
+            ["scripts"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["id"] = $"{plan.ProjectId}.jip_scripts.bootstrap", ["summary"] = "Inert starter JIP LN text script.", ["lifecyclePrefix"] = "gr_", ["outputFile"] = $"gr_{slug}_bootstrap.txt",
+                    ["requires"] = new JsonObject { ["capabilities"] = new JsonArray { new JsonObject { ["id"] = "runtime.scripting.jip_script_runner" } } },
+                    ["sizePolicy"] = new JsonObject { ["maxBytes"] = 16384 }, ["formIdResolution"] = new JsonObject { ["strategy"] = "explicitReferences" },
+                    ["body"] = new JsonObject { ["lineMode"] = "opaqueText", ["lines"] = new JsonArray { new JsonObject { ["text"] = "; TODO: add inert JIP LN script body." } } }
+                }
+            }
+        };
+    }
+
     private static JsonObject CreateForgeConfig(InitPlanResult plan) =>
         new()
         {
@@ -433,8 +543,15 @@ internal static class InitScaffoldWriter
             }
         };
 
-    private static string CreateReadme(InitPlanResult plan) =>
-        $"""
+    private static string CreateReadme(InitPlanResult plan)
+    {
+        var packageCommands = IsFramework(plan)
+            ? """
+              forge package . --target mod-package --dry-run --format json --no-input
+              forge package . --target mod-package --format json --no-input
+              """
+            : "forge build . --target reports --format json --no-input";
+        return $"""
         # {plan.ProjectName}
 
         WastelandForge project scaffold for Fallout: New Vegas.
@@ -444,7 +561,7 @@ internal static class InitScaffoldWriter
         ```text
         forge validate . --format json --no-input
         forge capabilities list --format plain
-        forge build . --target reports --format json --no-input
+        {packageCommands}
         code . # optional: open VS Code tasks
         ```
 
@@ -468,26 +585,32 @@ internal static class InitScaffoldWriter
         Generated outputs are disposable and belong under `generated/` or `dist/`.
         Forge correctness remains offline-first and AI-optional.
         """ + Environment.NewLine;
+    }
 
-    private static JsonObject CreateVscodeTasks() =>
-        new()
+    private static JsonObject CreateVscodeTasks(InitPlanResult plan)
+    {
+        var tasks = new JsonArray
+        {
+            CreateCheckCommandTask(),
+            CreateValidateTask(),
+            CreateCapabilityScanTask(),
+            IsFramework(plan) ? CreateCombinedPackageTask(dryRun: true) : CreateReportsBuildTask()
+        };
+        if (IsFramework(plan)) tasks.Add(CreateCombinedPackageTask(dryRun: false));
+        return new JsonObject
         {
             ["version"] = "2.0.0",
-            ["tasks"] = new JsonArray
-            {
-                new JsonObject
-                {
-                    ["label"] = "Forge: Check Command",
-                    ["type"] = "shell",
-                    ["command"] = "forge",
-                    ["args"] = new JsonArray
-                    {
-                        "--version"
-                    },
-                    ["problemMatcher"] = new JsonArray()
-                },
-                new JsonObject
-                {
+            ["tasks"] = tasks
+        };
+    }
+
+    private static JsonObject CreateCheckCommandTask() => new()
+    {
+        ["label"] = "Forge: Check Command", ["type"] = "shell", ["command"] = "forge", ["args"] = new JsonArray("--version"), ["problemMatcher"] = new JsonArray()
+    };
+
+    private static JsonObject CreateValidateTask() => new()
+    {
                     ["label"] = "Forge: Validate",
                     ["type"] = "shell",
                     ["command"] = "forge",
@@ -523,9 +646,10 @@ internal static class InitScaffoldWriter
                             ["message"] = 3
                         }
                     }
-                },
-                new JsonObject
-                {
+    };
+
+    private static JsonObject CreateCapabilityScanTask() => new()
+    {
                     ["label"] = "Forge: Capabilities Scan",
                     ["type"] = "shell",
                     ["command"] = "forge",
@@ -541,9 +665,10 @@ internal static class InitScaffoldWriter
                     },
                     ["dependsOn"] = "Forge: Check Command",
                     ["dependsOrder"] = "sequence"
-                },
-                new JsonObject
-                {
+    };
+
+    private static JsonObject CreateReportsBuildTask() => new()
+    {
                     ["label"] = "Forge: Build Reports",
                     ["type"] = "shell",
                     ["command"] = "forge",
@@ -560,9 +685,23 @@ internal static class InitScaffoldWriter
                     ["dependsOn"] = "Forge: Check Command",
                     ["dependsOrder"] = "sequence",
                     ["group"] = "build"
-                }
-            }
+    };
+
+    private static JsonObject CreateCombinedPackageTask(bool dryRun)
+    {
+        var args = new JsonArray("package", ".", "--target", "mod-package");
+        if (dryRun) args.Add("--dry-run");
+        args.Add("--format"); args.Add("plain"); args.Add("--no-input");
+        return new JsonObject
+        {
+            ["label"] = dryRun ? "Forge: Plan Combined Package" : "Forge: Build Combined Package",
+            ["type"] = "shell", ["command"] = "forge", ["args"] = args,
+            ["dependsOn"] = "Forge: Check Command", ["dependsOrder"] = "sequence", ["group"] = dryRun ? "test" : "build", ["problemMatcher"] = new JsonArray()
         };
+    }
+
+    private static bool IsFramework(InitPlanResult plan) => StringComparer.Ordinal.Equals(plan.Template, InitPlanPlanner.FrameworkTemplate);
+    private static string ProjectSlug(InitPlanResult plan) => plan.ProjectId[(plan.ProjectId.LastIndexOf('.') + 1)..];
 
     private static JsonObject CreateVscodeSettings() =>
         new()
@@ -883,6 +1022,9 @@ internal static class InitPlanJsonSerializer
             ["template"] = new JsonObject
             {
                 ["id"] = result.Template,
+                ["category"] = StringComparer.Ordinal.Equals(result.Template, InitPlanPlanner.FrameworkTemplate) ? "runtime-enabled" : "baseline",
+                ["specialized"] = StringComparer.Ordinal.Equals(result.Template, InitPlanPlanner.FrameworkTemplate),
+                ["writtenFileCount"] = result.PlannedPaths.Count(path => !path.Directory && path.WouldWriteInCurrentGate),
                 ["supported"] = ToStringArray(result.Templates)
             },
             ["manifest"] = new JsonObject
@@ -997,6 +1139,8 @@ internal static class InitPlanTextRenderer
         builder.AppendLine(result.ProjectRoot);
         builder.Append("Template: ");
         builder.AppendLine(result.Template);
+        builder.Append("Template category: ");
+        builder.AppendLine(StringComparer.Ordinal.Equals(result.Template, InitPlanPlanner.FrameworkTemplate) ? "runtime-enabled combined MCM/JIP" : "baseline");
         builder.Append("Name: ");
         builder.AppendLine(result.ProjectName);
         builder.Append("Project ID: ");

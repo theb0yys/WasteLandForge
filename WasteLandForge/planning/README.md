@@ -391,10 +391,15 @@ Gate status:
 - `gates/gate-385-combined-mod-package-assembly-contract.md` - Gate 385, deterministic combined MCM/JIP mod-package command, layout, collision, evidence, and no-install contract.
 - `gates/gate-386-combined-mod-package-vertical-slice.md` - Gate 386, implemented deterministic combined MCM/JIP package target, immutable schema, collision refusal, fixture, and evidence.
 - `gates/gate-387-app-shell-combined-mod-package-workflow.md` - Gate 387, combined package Project Outputs lane, bundled sample, structured evidence, and exact staging/ZIP handoffs.
+- `gates/gate-388-installed-combined-mod-package-regression.md` - Gate 388, isolated installed-app combined workflow regression, completion-status correction, installer evidence, uninstall, and cleanup.
+- `gates/gate-389-fnv-framework-combined-project-contract.md` - Gate 389, source-only `fnv-framework` combined MCM/JIP template identity, 12-file scaffold, starter content, safety, and workflow contract.
+- `gates/gate-390-fnv-framework-combined-scaffold-implementation.md` - Gate 390, implemented 12-file runtime-enabled framework scaffold with create, validate, combined-package, stability, and refusal coverage.
+- `gates/gate-391-installed-framework-new-project-regression.md` - Gate 391, isolated installed New Project framework preview/create/validation/package regression plus complete uninstall cleanup.
+- `gates/gate-392-named-mo2-mod-export-contract.md` - Gate 392, explicit named MO2 mod export command, destination safety, atomic copy/rollback, evidence, disabled mutation, and app-shell contract.
 
 Next gates:
 
 - Gate 315 - harden the WPF app-shell scaffold and backend bridge after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
-- Gate 388 - rebuild the unsigned installer and run an isolated installed-app combined-sample package and cleanup regression.
+- Gate 393 - implement the backend and Project Outputs named-MO2 export vertical slice with immutable evidence, rollback, refusal tests, and exact folder handoff.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

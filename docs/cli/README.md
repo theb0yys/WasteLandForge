@@ -43,9 +43,10 @@ forge --version
   fnv-basic|fnv-framework|fnv-quest-pack|fnv-docs-only`, `--name`, `--game
   falloutnv`, `--format human|plain|json`, `--dry-run`, `--project`, and
   `--no-input`. `--dry-run` emits the plan without writes. Existing planned
-  scaffold paths return exit code `6`. All four template IDs currently emit
-  the same validated baseline scaffold; specialized framework, quest-pack, and
-  docs-only contents remain undefined by the current research and implementation.
+  scaffold paths return exit code `6`. `fnv-framework` emits a 12-file
+  runtime-enabled MCM/JIP source scaffold that validates and can be packaged by
+  `forge package --target mod-package`. The other three selectors retain the
+  validated eight-file baseline scaffold.
   JSON output includes ordered `nextSteps` for `forge validate .`,
   `forge capabilities scan --project .`, and `forge docs .`. Human output
   prints the same commands after creation or as planned guidance during dry-run.
