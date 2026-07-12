@@ -50,6 +50,11 @@ public static class WastelandForgeSchemaCatalog
             "0.1.0",
             "schemas/plugin-artifacts/0.1.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.PluginReviewEvidence010,
+            "plugin-review-evidence",
+            "0.1.0",
+            "schemas/plugin-review-evidence/0.1.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.Mcm010,
             "mcm",
             "0.1.0",

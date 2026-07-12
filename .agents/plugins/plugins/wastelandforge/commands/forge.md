@@ -946,10 +946,9 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   input preflight. Gate 344 adds local Inno Setup compiler detection and an
   unsigned installer build helper scaffold. Gate 345 closes the installer
   helper lane and routes back to app-shell product value. Route the next
-  development step to Gate 457: define plugin review-evidence attachment and
-  promotion so a pending imported artifact can attach contained xEdit evidence,
-  verify artifact identity, become reviewed transactionally, and pass release
-  verification without Forge interpreting or editing plugin records.
+  development step to Gate 461: implement and verify the end-to-end desktop
+  Release Candidate workspace defined by Gate 460, including published and
+  installed regression coverage.
 
 - `/forge capabilities scan` routes to the real `forge capabilities scan`
   behavior when available. Treat its output as local path-based provider

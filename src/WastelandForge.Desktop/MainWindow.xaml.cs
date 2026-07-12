@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
+using WastelandForge.Validation;
 
 namespace WastelandForge.Desktop;
 
@@ -1317,12 +1318,19 @@ public partial class MainWindow
     private string? geckWorkspaceProject;
     private GeckHandoffWorkspaceResult? geckWorkspaceSession;
     private string? pluginArtifactPreviewToken;
+    private string? pluginReviewPreviewToken;
 
     private void PluginIntakeInputChanged(object sender, EventArgs e) { pluginArtifactPreviewToken = null; if (ImportPluginArtifactButton is not null) ImportPluginArtifactButton.IsEnabled = false; }
     private void BrowsePluginArtifactClicked(object sender, RoutedEventArgs e) { var dialog = new Microsoft.Win32.OpenFileDialog { Title = "Select a human-authored plugin", Filter = "Fallout plugins (*.esp;*.esm)|*.esp;*.esm" }; if (dialog.ShowDialog(this) == true) PluginSourcePathTextBox.Text = dialog.FileName; }
     private PluginArtifactInput PluginInput() => new(PluginSourcePathTextBox.Text, PluginArtifactIdTextBox.Text, (PluginAuthoringToolComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "geck");
     private void PreviewPluginArtifactClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = PluginArtifactIntake.Preview(root, PluginInput()); pluginArtifactPreviewToken = preview.Token; ImportPluginArtifactButton.IsEnabled = preview.Success; PluginIntakeStatusTextBlock.Text = preview.Message; PluginIntakeDetailsTextBox.Text = preview.Details ?? preview.Message; }
     private void ImportPluginArtifactClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || pluginArtifactPreviewToken is null) return; var result = PluginArtifactIntake.Import(root, PluginInput(), pluginArtifactPreviewToken); pluginArtifactPreviewToken = null; ImportPluginArtifactButton.IsEnabled = false; PluginIntakeStatusTextBlock.Text = result.Message; if (result.Success) RefreshProjectOutputs(); }
+    private void PluginReviewInputChanged(object sender, EventArgs e) { pluginReviewPreviewToken = null; if (PromotePluginReviewButton is not null) PromotePluginReviewButton.IsEnabled = false; }
+    private void LoadPendingPluginsClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var read = PluginReviewPromotion.Load(root); PluginReviewArtifactComboBox.ItemsSource = read.Plugins.Where(plugin => plugin.ReviewStatus == "pending").ToArray(); PluginReviewArtifactComboBox.SelectedIndex = read.Plugins.Any(plugin => plugin.ReviewStatus == "pending") ? 0 : -1; PluginIntakeStatusTextBlock.Text = read.HasErrors ? read.Diagnostics.Issues[0].Message : $"Loaded {read.Plugins.Count(plugin => plugin.ReviewStatus == "pending")} pending plugin(s)."; }
+    private void BrowsePluginReviewReportClicked(object sender, RoutedEventArgs e) { var dialog = new Microsoft.Win32.OpenFileDialog { Title = "Select existing xEdit review evidence", Filter = "Review evidence (*.json;*.txt;*.md)|*.json;*.txt;*.md|All files (*.*)|*.*" }; if (dialog.ShowDialog(this) == true) PluginReviewReportPathTextBox.Text = dialog.FileName; }
+    private PluginReviewInput ReviewInput() => new((PluginReviewArtifactComboBox.SelectedItem as PluginArtifactDefinition)?.Id ?? "", PluginReviewReportPathTextBox.Text, PluginReviewerTextBox.Text, PluginReviewApprovalCheckBox.IsChecked == true);
+    private void PreviewPluginReviewClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = PluginReviewPromotion.Preview(root, ReviewInput()); pluginReviewPreviewToken = preview.Token; PromotePluginReviewButton.IsEnabled = preview.Success; PluginIntakeStatusTextBlock.Text = preview.Message; PluginIntakeDetailsTextBox.Text = preview.Details ?? preview.Message; }
+    private void PromotePluginReviewClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || pluginReviewPreviewToken is null) return; var result = PluginReviewPromotion.Promote(root, ReviewInput(), pluginReviewPreviewToken); pluginReviewPreviewToken = null; PromotePluginReviewButton.IsEnabled = false; PluginIntakeStatusTextBlock.Text = result.Message; if (result.Success) LoadPendingPluginsClicked(sender, e); }
 
     private void LoadGeckHandoffWorkspaceClicked(object sender, RoutedEventArgs e)
     {

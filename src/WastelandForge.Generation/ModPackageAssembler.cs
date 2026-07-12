@@ -107,6 +107,8 @@ public sealed class ModPackageAssembler
                 {
                     candidates.Add(new Candidate("plugin-artifacts", "plugin-artifact", plugin.Id, plugin.FullPath, plugin.DataPath, "application/octet-stream", plugin.RegistryFile));
                     sourceDigests.Add(new FileDigest(plugin.File, plugin.Sha256, plugin.Length));
+                    if (plugin.ReviewEvidence is not null && plugin.EvidenceSha256 is not null) sourceDigests.Add(new FileDigest(plugin.ReviewEvidence, plugin.EvidenceSha256, new FileInfo(Path.Combine(projectRoot, plugin.ReviewEvidence.Replace('/', Path.DirectorySeparatorChar))).Length));
+                    if (plugin.ReportPath is not null && plugin.ReportSha256 is not null) sourceDigests.Add(new FileDigest(plugin.ReportPath, plugin.ReportSha256, new FileInfo(Path.Combine(projectRoot, plugin.ReportPath.Replace('/', Path.DirectorySeparatorChar))).Length));
                     if (plugin.ReviewStatus == "pending") issues.Add(Warning("WF-REL-001", "Plugin review required", $"Opaque plugin '{plugin.DataPath}' is packaged for local iteration but still requires xEdit review before release.", plugin.RegistryFile, projectId));
                 }
             }

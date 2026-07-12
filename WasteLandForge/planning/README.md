@@ -460,10 +460,14 @@ Gate status:
 - `gates/gate-454-human-authored-plugin-artifact-intake-contract.md` - Gate 454, defined opaque ESP/ESM intake, project containment and digests, xEdit review handoff, combined packaging, and release-review gating without plugin parsing or mutation.
 - `gates/gate-455-human-authored-plugin-artifact-vertical-slice.md` - Gate 455, implemented immutable plugin intake schemas, opaque validation, preview-gated desktop import, package integration, pending-release refusal, tests, and published regression.
 - `gates/gate-456-installed-plugin-artifact-intake-package-regression.md` - Gate 456, proved installed plugin intake, duplicate refusal, validation/package success, pending-release refusal, exact-byte ZIP integrity, uninstall, and cleanup.
+- `gates/gate-457-plugin-review-evidence-promotion-contract.md` - Gate 457, defined digest-bound xEdit report snapshotting, explicit human approval, transactional reviewed promotion, and release-policy integration without plugin interpretation or mutation.
+- `gates/gate-458-plugin-review-evidence-promotion-implementation.md` - Gate 458, implemented digest-bound review evidence, explicit human approval, transactional reviewed promotion, package/release provenance, tests, and published tamper regression.
+- `gates/gate-459-installed-plugin-review-promotion-regression.md` - Gate 459, proved installed stale-preview rollback, reviewed promotion, restart visibility, release pass, evidence/report tamper blocking, uninstall, and cleanup.
+- `gates/gate-460-desktop-release-candidate-workspace-contract.md` - Gate 460, defined the ordered desktop validate/package/release-verification workflow, exact blocking diagnostics, reviewed-plugin provenance, freshness, contained evidence actions, and no-publish boundary.
 
 Next gates:
 
 - Gate 315 - harden the WPF app-shell scaffold and backend bridge after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
-- Gate 457 - define the plugin review-evidence attachment and promotion workflow so a pending imported artifact can attach contained xEdit evidence, verify artifact identity, become reviewed transactionally, and pass release verification without Forge interpreting or editing plugin records.
+- Gate 461 - implement and verify the end-to-end desktop Release Candidate workspace, including published and installed regression coverage.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

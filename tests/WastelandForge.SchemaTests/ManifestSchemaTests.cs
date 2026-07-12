@@ -59,6 +59,13 @@ public sealed class ManifestSchemaTests
     }
 
     [Fact]
+    public void BuiltInCatalogResolvesPluginReviewEvidenceSchema()
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.PluginReviewEvidence010, out var resource));
+        Assert.NotNull(resource); Assert.Equal("plugin-review-evidence", resource.Kind); Assert.NotNull(JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(resource)));
+    }
+
+    [Fact]
     public void BuiltInCatalogResolvesManifest020Schema()
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest020, out var resource);

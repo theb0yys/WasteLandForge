@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/plugin-review-evidence/0.1.0/schema.json",
+  "title": "WastelandForge Plugin Review Evidence",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "id", "plugin", "report", "review", "safety"],
+  "properties": {
+    "schemaVersion": { "const": "0.1.0" }, "kind": { "const": "plugin-review-evidence" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$" },
+    "plugin": { "$ref": "#/$defs/plugin" }, "report": { "$ref": "#/$defs/report" },
+    "review": { "$ref": "#/$defs/review" }, "safety": { "$ref": "#/$defs/safety" }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 }, "sha": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "path": { "type": "string", "minLength": 1, "not": { "pattern": "^(?:[a-zA-Z]:|/|\\\\)" } },
+    "plugin": { "type": "object", "additionalProperties": false, "required": ["artifactId", "dataPath", "sha256", "length"], "properties": { "artifactId": { "$ref": "#/$defs/text" }, "dataPath": { "$ref": "#/$defs/text" }, "sha256": { "$ref": "#/$defs/sha" }, "length": { "type": "integer", "minimum": 1 } } },
+    "report": { "type": "object", "additionalProperties": false, "required": ["path", "sha256", "length", "kind", "targetPlugin"], "properties": { "path": { "$ref": "#/$defs/path" }, "sha256": { "$ref": "#/$defs/sha" }, "length": { "type": "integer", "minimum": 1 }, "kind": { "enum": ["wastelandforge.xedit-audit-report", "external-xedit-review"] }, "targetPlugin": { "$ref": "#/$defs/text" } } },
+    "review": { "type": "object", "additionalProperties": false, "required": ["decision", "reviewer", "approvedUtc", "statement"], "properties": { "decision": { "const": "approved" }, "reviewer": { "$ref": "#/$defs/text" }, "approvedUtc": { "type": "string", "format": "date-time" }, "statement": { "const": "I reviewed this exact plugin artifact with xEdit evidence and accept responsibility for release approval. Forge does not guarantee plugin validity." } } },
+    "safety": { "type": "object", "additionalProperties": false, "required": ["xeditExecutedByForge", "pluginMutatedByForge", "validityGuaranteed"], "properties": { "xeditExecutedByForge": { "const": false }, "pluginMutatedByForge": { "const": false }, "validityGuaranteed": { "const": false } } }
+  }
+}
