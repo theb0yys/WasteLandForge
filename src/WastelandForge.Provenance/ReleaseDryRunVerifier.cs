@@ -18,6 +18,8 @@ public sealed class ReleaseDryRunVerifier
         var projectRoot = Path.GetFullPath(options.ProjectRoot);
         var validationReport = new ProjectValidationPipeline().Validate(projectRoot);
         var issues = new List<DiagnosticIssue>(validationReport.Issues);
+        var pluginArtifacts = PluginArtifactRegistryReader.Read(projectRoot);
+        issues.AddRange(pluginArtifacts.Diagnostics.Issues);
 
         var metadata = ProjectReleaseMetadata.Read(projectRoot);
         var projectId = validationReport.ProjectId;
@@ -26,7 +28,12 @@ public sealed class ReleaseDryRunVerifier
             projectId = parsedProjectId;
         }
 
-        if (validationReport.HasErrors)
+        foreach (var plugin in pluginArtifacts.Plugins.Where(plugin => plugin.ReviewStatus == "pending"))
+        {
+            issues.Add(CreateIssue("WF-REL-001", "Plugin review is pending", $"Opaque plugin artifact '{plugin.DataPath}' requires contained xEdit review evidence before release verification can pass.", new SourceLocation(plugin.RegistryFile), projectId, "Complete xEdit review and declare reviewStatus 'reviewed' with a contained reviewEvidence file."));
+        }
+
+        if (issues.Any(issue => issue.Severity == DiagnosticSeverity.Error))
         {
             return CreateResult(projectId, metadata, projectRoot, "failed", issues, null, [], []);
         }

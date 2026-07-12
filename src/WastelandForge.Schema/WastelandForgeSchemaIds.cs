@@ -4,11 +4,13 @@ public static class WastelandForgeSchemaIds
 {
     public const string Manifest010 = "https://schemas.wastelandforge.dev/fnv/manifest/0.1.0/schema.json";
     public const string Manifest020 = "https://schemas.wastelandforge.dev/fnv/manifest/0.2.0/schema.json";
+    public const string Manifest030 = "https://schemas.wastelandforge.dev/fnv/manifest/0.3.0/schema.json";
     public const string Dependency010 = "https://schemas.wastelandforge.dev/fnv/dependencies/0.1.0/schema.json";
     public const string Dependency020 = "https://schemas.wastelandforge.dev/fnv/dependencies/0.2.0/schema.json";
     public const string Capability010 = "https://schemas.wastelandforge.dev/fnv/capabilities/0.1.0/schema.json";
     public const string Capability020 = "https://schemas.wastelandforge.dev/fnv/capabilities/0.2.0/schema.json";
     public const string Asset010 = "https://schemas.wastelandforge.dev/fnv/assets/0.1.0/schema.json";
+    public const string PluginArtifact010 = "https://schemas.wastelandforge.dev/fnv/plugin-artifacts/0.1.0/schema.json";
     public const string Mcm010 = "https://schemas.wastelandforge.dev/fnv/mcm/0.1.0/schema.json";
     public const string JipScript010 = "https://schemas.wastelandforge.dev/fnv/jip-scripts/0.1.0/schema.json";
     public const string JipScriptEmissionManifest010 = "https://schemas.wastelandforge.dev/fnv/jip-script-emission-manifest/0.1.0/schema.json";

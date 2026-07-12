@@ -45,6 +45,20 @@ public sealed class ManifestSchemaTests
     }
 
     [Fact]
+    public void BuiltInCatalogResolvesPluginArtifactSchema()
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.PluginArtifact010, out var resource));
+        Assert.NotNull(resource); Assert.Equal("plugin-artifact", resource.Kind); Assert.NotNull(JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(resource)));
+    }
+
+    [Fact]
+    public void Manifest030DeclaresPluginArtifactsWithoutChangingOlderSchemas()
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest030, out var resource));
+        var schema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(resource!)); Assert.NotNull(schema?["properties"]?["registries"]?["properties"]?["pluginArtifacts"]);
+    }
+
+    [Fact]
     public void BuiltInCatalogResolvesManifest020Schema()
     {
         var found = WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest020, out var resource);

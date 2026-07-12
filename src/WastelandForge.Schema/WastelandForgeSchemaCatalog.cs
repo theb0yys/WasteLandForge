@@ -15,6 +15,11 @@ public static class WastelandForgeSchemaCatalog
             "0.2.0",
             "schemas/manifest/0.2.0/schema.json"),
         new(
+            WastelandForgeSchemaIds.Manifest030,
+            "manifest",
+            "0.3.0",
+            "schemas/manifest/0.3.0/schema.json"),
+        new(
             WastelandForgeSchemaIds.Dependency010,
             "dependency",
             "0.1.0",
@@ -39,6 +44,11 @@ public static class WastelandForgeSchemaCatalog
             "asset",
             "0.1.0",
             "schemas/assets/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.PluginArtifact010,
+            "plugin-artifact",
+            "0.1.0",
+            "schemas/plugin-artifacts/0.1.0/schema.json"),
         new(
             WastelandForgeSchemaIds.Mcm010,
             "mcm",

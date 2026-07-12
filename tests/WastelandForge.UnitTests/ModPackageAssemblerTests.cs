@@ -6,6 +6,23 @@ namespace WastelandForge.UnitTests;
 public sealed class ModPackageAssemblerTests
 {
     [Fact]
+    public void PackagesOpaquePluginArtifactByteForByte()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "WastelandForge.PluginPackage", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(Path.Combine(root, "src", "plugins")); Directory.CreateDirectory(Path.Combine(root, "src", "registries", "plugin-artifacts"));
+        try
+        {
+            var bytes = new byte[] { 0x53, 0x59, 0x4e, 0x54, 0x48 }; var plugin = Path.Combine(root, "src", "plugins", "Synthetic.esp"); File.WriteAllBytes(plugin, bytes); var sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant();
+            File.WriteAllText(Path.Combine(root, "wastelandforge.json"), """{"schemaVersion":"0.2.0","kind":"manifest","id":"io.test.pluginpackage","name":"Plugin Package","version":"0.1.0","game":"falloutnv","registries":{"dependencies":"src/registries/dependencies/","capabilities":"src/registries/capabilities/","pluginArtifacts":"src/registries/plugin-artifacts/"}}""");
+            File.WriteAllText(Path.Combine(root, "src", "registries", "plugin-artifacts", "main.json"), $$"""{"schemaVersion":"0.1.0","kind":"plugin-artifact","id":"io.test.pluginpackage.plugins","plugins":[{"id":"io.test.plugin.synthetic","file":"src/plugins/Synthetic.esp","pluginType":"esp","dataPath":"Synthetic.esp","sha256":"{{sha}}","length":5,"authoringTool":"geck","reviewStatus":"pending"}]}""");
+            var result = new ModPackageAssembler().Package(new(root, null, "0.1.0", false)); Assert.False(result.HasErrors, string.Join("\n", result.Diagnostics.Issues.Select(issue => issue.Message))); Assert.Contains("plugin-artifacts", result.IncludedComponents); Assert.Single(result.Entries); Assert.Equal(sha, result.Entries[0].Sha256);
+            Assert.Contains(result.Diagnostics.Issues, issue => issue.Severity == WastelandForge.Core.DiagnosticSeverity.Warning && issue.RuleId.ToString() == "WF-REL-001");
+            var release = new WastelandForge.Provenance.ReleaseDryRunVerifier().Verify(new(root, null, "0.1.0")); Assert.True(release.HasErrors); Assert.Contains(release.Diagnostics.Issues, issue => issue.Title == "Plugin review is pending");
+            Assert.Equal(bytes, File.ReadAllBytes(Path.Combine(root, "dist", "mod-package", "staging", "Data", "Synthetic.esp")));
+            using var archive = ZipFile.OpenRead(Path.Combine(root, "dist", "mod-package", "package.zip")); Assert.Equal("Synthetic.esp", Assert.Single(archive.Entries).FullName);
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+    [Fact]
     public void ExportsCombinedPackageAsOneNamedMo2ModWithEvidence()
     {
         var source = FindFixture();

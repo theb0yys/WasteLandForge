@@ -6,6 +6,7 @@ using Json.Schema;
 using WastelandForge.Core;
 using WastelandForge.Provenance;
 using WastelandForge.Schema;
+using WastelandForge.Validation;
 
 namespace WastelandForge.Generation;
 
@@ -45,13 +46,14 @@ public sealed class ModPackageAssembler
         var registries = manifest["registries"] as JsonObject;
         var hasMcm = registries?["mcm"] is not null;
         var hasJip = registries?["jipScripts"] is not null;
-        var included = new[] { hasMcm ? McmJsonGenerator.Target : null, hasJip ? JipScriptPackageEmitter.Target : null }
+        var hasPlugins = registries?["pluginArtifacts"] is not null;
+        var included = new[] { hasMcm ? McmJsonGenerator.Target : null, hasJip ? JipScriptPackageEmitter.Target : null, hasPlugins ? "plugin-artifacts" : null }
             .Where(value => value is not null).Cast<string>().ToArray();
-        var excluded = new[] { hasMcm ? null : McmJsonGenerator.Target, hasJip ? null : JipScriptPackageEmitter.Target, "xedit-audit" }
+        var excluded = new[] { hasMcm ? null : McmJsonGenerator.Target, hasJip ? null : JipScriptPackageEmitter.Target, hasPlugins ? null : "plugin-artifacts", "xedit-audit" }
             .Where(value => value is not null).Cast<string>().ToArray();
         if (included.Length == 0)
         {
-            issues.Add(Issue("WF-BUILD-008", "No supported mod package source", "Declare registries.mcm or registries.jipScripts before packaging target 'mod-package'.", "wastelandforge.json", projectId));
+            issues.Add(Issue("WF-BUILD-008", "No supported mod package source", "Declare registries.mcm, registries.jipScripts, or registries.pluginArtifacts before packaging target 'mod-package'.", "wastelandforge.json", projectId));
             return Result(projectRoot, options, projectId, "failed", issues, included, excluded, [], null, []);
         }
 
@@ -94,6 +96,18 @@ public sealed class ModPackageAssembler
                     {
                         candidates.Add(new Candidate(JipScriptPackageEmitter.Target, "jip-script", file.ScriptId, ResolveProjectPath(projectRoot, file.StagedPath), NormalizeRelative(file.DataPath), "text/plain; charset=utf-8", file.Source.File));
                     }
+                }
+            }
+
+            if (hasPlugins)
+            {
+                var result = PluginArtifactRegistryReader.Read(projectRoot);
+                issues.AddRange(result.Diagnostics.Issues);
+                foreach (var plugin in result.Plugins)
+                {
+                    candidates.Add(new Candidate("plugin-artifacts", "plugin-artifact", plugin.Id, plugin.FullPath, plugin.DataPath, "application/octet-stream", plugin.RegistryFile));
+                    sourceDigests.Add(new FileDigest(plugin.File, plugin.Sha256, plugin.Length));
+                    if (plugin.ReviewStatus == "pending") issues.Add(Warning("WF-REL-001", "Plugin review required", $"Opaque plugin '{plugin.DataPath}' is packaged for local iteration but still requires xEdit review before release.", plugin.RegistryFile, projectId));
                 }
             }
 
@@ -225,7 +239,7 @@ public sealed class ModPackageAssembler
         ["tool"] = new JsonObject { ["name"] = "WastelandForge", ["version"] = options.ToolVersion },
         ["project"] = new JsonObject { ["id"] = projectId, ["version"] = version },
         ["components"] = new JsonObject { ["included"] = new JsonArray(included.Select(value => JsonValue.Create(value)).ToArray()), ["excluded"] = new JsonArray(excluded.Select(value => JsonValue.Create(value)).ToArray()) },
-        ["generators"] = new JsonArray(included.Select(component => new JsonObject { ["id"] = component == McmJsonGenerator.Target ? "wf.mcm_json" : "wf.jip_scripts", ["version"] = options.ToolVersion, ["target"] = component }).ToArray()),
+        ["generators"] = new JsonArray(included.Select(component => new JsonObject { ["id"] = component == McmJsonGenerator.Target ? "wf.mcm_json" : component == JipScriptPackageEmitter.Target ? "wf.jip_scripts" : "wf.plugin_artifacts", ["version"] = options.ToolVersion, ["target"] = component }).ToArray()),
         ["sources"] = new JsonArray(sources.Select(DigestJson).ToArray()),
         ["entries"] = new JsonArray(entries.Select(EntryJson).ToArray()),
         ["archive"] = new JsonObject { ["path"] = "package.zip", ["mediaType"] = "application/zip", ["compression"] = "store", ["entryCount"] = entries.Count, ["length"] = archive.Length, ["sha256"] = archive.Sha256, ["timestampSource"] = timestamp.Source, ["entriesValidated"] = true },
@@ -302,6 +316,7 @@ public sealed class ModPackageAssembler
     private static void WriteJson(string path, JsonObject value) { Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllText(path, value.ToJsonString(JsonOptions) + "\n", new System.Text.UTF8Encoding(false)); }
     private static void WriteChecksums(string path, string root, IEnumerable<string> files) { var lines = files.Select(file => Digest(file, root)).OrderBy(item => item.Path, StringComparer.Ordinal).Select(item => $"{item.Sha256}  {item.Path}"); File.WriteAllText(path, string.Join("\n", lines) + "\n", new System.Text.UTF8Encoding(false)); }
     private static DiagnosticIssue Issue(string rule, string title, string message, string file, string? projectId = null) => new(RuleId.Parse(rule), DiagnosticSeverity.Error, "build", title, message, new SourceLocation(NormalizeRelative(file)), projectId is null ? null : LogicalId.Parse(projectId), docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{rule}"));
+    private static DiagnosticIssue Warning(string rule, string title, string message, string file, string? projectId = null) => new(RuleId.Parse(rule), DiagnosticSeverity.Warning, "build", title, message, new SourceLocation(NormalizeRelative(file)), projectId is null ? null : LogicalId.Parse(projectId), docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{rule}"));
     private static ModPackageResult Result(string root, ModPackageOptions options, string? projectId, string status, IReadOnlyList<DiagnosticIssue> issues, IReadOnlyList<string> included, IReadOnlyList<string> excluded, IReadOnlyList<ModPackageEntry> entries, ModPackageOutputs? outputs, IReadOnlyList<FileDigest> digests) => new(root, Target, status, options.DryRun, projectId, new DiagnosticReport(projectId is null ? null : LogicalId.Parse(projectId), issues), included, excluded, entries, outputs, digests);
     private sealed record Candidate(string Component, string Kind, string Id, string FullPath, string DataPath, string MediaType, string SourceFile);
     private sealed record Timestamp(string Source, long UnixTime, DateTimeOffset Value);

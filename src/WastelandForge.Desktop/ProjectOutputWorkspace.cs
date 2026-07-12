@@ -65,7 +65,7 @@ internal static class ProjectOutputWorkspace
             components = string.Join(", ", manifest?["components"]?["included"]?.AsArray().Select(node => node?.GetValue<string>()).Where(value => value is not null) ?? []);
             entryCount = manifest?["entries"]?.AsArray().Count;
         }
-        return new("mod-package", "Combined mod package", registries["mcm"] is not null || registries["jipScripts"] is not null, false, Directory.Exists(distribution), "forge package --target mod-package", null,
+        return new("mod-package", "Combined mod package", registries["mcm"] is not null || registries["jipScripts"] is not null || registries["pluginArtifacts"] is not null, false, Directory.Exists(distribution), "forge package --target mod-package", null,
             Directory.Exists(distribution) ? distribution : null,
             Directory.Exists(staging) ? staging : null,
             File.Exists(archive) ? archive : null,

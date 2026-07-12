@@ -992,6 +992,11 @@
                   </StackPanel>
                   <Button x:Name="RefreshNarrativeInventoryButton" Grid.Column="1" Content="Refresh inventory" Click="RefreshNarrativeInventoryClicked" VerticalAlignment="Top" />
                 </Grid>
+                <Grid Margin="0,6,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                  <TextBlock x:Name="NarrativeJournalStatusTextBlock" Text="Last change: none" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                  <Button x:Name="ReviewNarrativeUndoButton" Grid.Column="1" Content="Review undo" Margin="8,0,0,0" Click="ReviewNarrativeUndoClicked" />
+                  <Button x:Name="ApplyNarrativeUndoButton" Grid.Column="2" Content="Undo last change" Margin="8,0,0,0" IsEnabled="False" Click="ApplyNarrativeUndoClicked" />
+                </Grid>
                 <Expander x:Name="NarrativeExplorerExpander" Header="Project explorer" Margin="0,8,0,0" IsExpanded="True" IsEnabled="False">
                   <StackPanel Margin="0,6,0,0">
                     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="120" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -1368,6 +1373,53 @@
               <TextBlock x:Name="Mo2DiscoveryStatusTextBlock" Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Text="Discovery is read-only." />
             </Grid>
             <TextBox x:Name="ProjectOutputDetailsTextBox" Grid.Row="5" Margin="0,14,0,0" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
+          </Grid>
+        </TabItem>
+
+        <TabItem Header="Plugin Intake">
+          <Grid Margin="0,18,0,0">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+            <StackPanel><TextBlock Text="Human-authored plugin intake" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" /><TextBlock Text="Import opaque ESP/ESM bytes into project source. Forge does not parse or edit plugin records." Foreground="{StaticResource TextMuted}" Margin="0,4,0,0" /></StackPanel>
+            <Grid Grid.Row="1" Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBox x:Name="PluginSourcePathTextBox" Padding="8" TextChanged="PluginIntakeInputChanged" /><Button Grid.Column="1" Content="Browse Plugin" Margin="8,0,0,0" Click="BrowsePluginArtifactClicked" /></Grid>
+            <Grid Grid.Row="2" Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="180" /></Grid.ColumnDefinitions><TextBox x:Name="PluginArtifactIdTextBox" Padding="8" TextChanged="PluginIntakeInputChanged" ToolTip="Dotted lowercase plugin artifact ID" /><ComboBox x:Name="PluginAuthoringToolComboBox" Grid.Column="1" Margin="8,0,0,0" Padding="8" SelectionChanged="PluginIntakeInputChanged"><ComboBoxItem Content="geck" IsSelected="True" /><ComboBoxItem Content="xedit" /><ComboBoxItem Content="other" /></ComboBox></Grid>
+            <WrapPanel Grid.Row="3" Margin="0,12,0,10"><Button Content="Preview Import" Click="PreviewPluginArtifactClicked" /><Button x:Name="ImportPluginArtifactButton" Content="Import Plugin" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="ImportPluginArtifactClicked" /><TextBlock x:Name="PluginIntakeStatusTextBlock" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Text="Select an ESP or ESM to begin." /></WrapPanel>
+            <TextBox x:Name="PluginIntakeDetailsTextBox" Grid.Row="4" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" Padding="10" />
+          </Grid>
+        </TabItem>
+
+        <TabItem Header="GECK Handoff">
+          <Grid Margin="0,18,0,0">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="2*" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <StackPanel><TextBlock Text="GECK authoring handoff" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" /><TextBlock Text="Generated manual work only. Forge does not launch GECK or modify plugins." Foreground="{StaticResource TextMuted}" Margin="0,4,0,0" /></StackPanel>
+              <Button Grid.Column="1" Content="Load Handoff" Click="LoadGeckHandoffWorkspaceClicked" />
+              <Button x:Name="OpenGeckWorkspaceFolderButton" Grid.Column="2" Content="Open Output Folder" Margin="8,0,0,0" IsEnabled="False" Click="OpenGeckWorkspaceFolderClicked" />
+              <Button x:Name="OpenGeckWorkspaceWorklistButton" Grid.Column="3" Content="Open Task Worklist" Margin="8,0,0,0" IsEnabled="False" Click="OpenGeckWorkspaceWorklistClicked" />
+            </Grid>
+            <Grid Grid.Row="1" Margin="0,12,0,8">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="210" /><ColumnDefinition Width="150" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <TextBox x:Name="GeckTaskSearchTextBox" Padding="8" ToolTip="Filter GECK tasks" TextChanged="GeckTaskFilterChanged" />
+              <ComboBox x:Name="GeckTaskCategoryComboBox" Grid.Column="1" Margin="8,0,0,0" Padding="8" SelectionChanged="GeckTaskFilterChanged" />
+              <ComboBox x:Name="GeckTaskStatusComboBox" Grid.Column="2" Margin="8,0,0,0" Padding="8" SelectionChanged="GeckTaskFilterChanged"><ComboBoxItem Content="All" IsSelected="True" /><ComboBoxItem Content="Pending" /><ComboBoxItem Content="Completed" /></ComboBox>
+              <TextBlock x:Name="GeckTaskCountTextBlock" Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Text="0 / 0" />
+            </Grid>
+            <Grid Grid.Row="2">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="3*" /><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions>
+              <DataGrid x:Name="GeckHandoffTasksDataGrid" Margin="0,0,10,10" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionChanged="GeckTaskSelectionChanged">
+                <DataGrid.Columns><DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="90" /><DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="140" /><DataGridTextColumn Header="Owner" Binding="{Binding OwnerId}" Width="160" /><DataGridTextColumn Header="Required action" Binding="{Binding RequiredAction}" Width="*" /></DataGrid.Columns>
+              </DataGrid>
+              <Grid Grid.Column="1" Margin="10,0,0,10">
+                <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                <TextBox x:Name="GeckTaskDetailTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Padding="10" />
+                <WrapPanel Grid.Row="1" Margin="0,8,0,0"><Button x:Name="CompleteGeckTaskButton" Content="Mark Complete" IsEnabled="False" Click="CompleteGeckTaskClicked" /><Button x:Name="ReopenGeckTaskButton" Content="Reopen" Margin="8,0,0,0" IsEnabled="False" Click="ReopenGeckTaskClicked" /></WrapPanel>
+              </Grid>
+            </Grid>
+            <TextBlock Grid.Row="3" Text="Source provenance" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" />
+            <DataGrid x:Name="GeckHandoffSourcesDataGrid" Grid.Row="4" Margin="0,8,0,10" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+              <DataGrid.Columns><DataGridTextColumn Header="State" Binding="{Binding Status}" Width="90" /><DataGridTextColumn Header="Source path" Binding="{Binding Path}" Width="*" /><DataGridTextColumn Header="SHA-256" Binding="{Binding Sha256}" Width="360" /><DataGridTextColumn Header="Bytes" Binding="{Binding Length}" Width="90" /></DataGrid.Columns>
+            </DataGrid>
+            <TextBlock x:Name="GeckHandoffWorkspaceStatusTextBlock" Grid.Row="5" Text="Load a completed GECK handoff to inspect its tasks and provenance." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" />
           </Grid>
         </TabItem>
 

@@ -448,10 +448,22 @@ Gate status:
 - `gates/gate-442-installed-narrative-inventory-regression.md` - Gate 442, closed stale-state coverage and proved installed inventory refresh, mutation, recovery, uninstall, and cleanup.
 - `gates/gate-443-narrative-author-explorer-contract.md` - Gate 443, defined a validated read-only quest/dialogue hierarchy and explicit routing into supported existing workflows.
 - `gates/gate-444-narrative-author-explorer-implementation.md` - Gate 444, implemented validated hierarchy snapshots, search, workflow routing, preselection, tests, and published-app regression.
+- `gates/gate-445-installed-narrative-explorer-regression.md` - Gate 445, fixed installed explorer startup/accessibility and proved routed transaction, stale gating, validation, uninstall, and cleanup.
+- `gates/gate-446-narrative-author-change-journal-contract.md` - Gate 446, defined a private one-entry authoring journal and hash-gated transactional undo contract.
+- `gates/gate-447-narrative-author-change-journal-implementation.md` - Gate 447, implemented one-entry journaling across all Narrative Author workflows, preview-gated exact-byte undo, tests, and published regression.
+- `gates/gate-448-installed-narrative-journal-regression.md` - Gate 448, proved installed journal commit, intervening-edit refusal, exact-hash undo, entry consumption, uninstall, and cleanup.
+- `gates/gate-449-geck-handoff-execution-workspace.md` - Gate 449, added a read-only desktop GECK handoff workspace for manual tasks, status, provenance, safety evidence, and contained output access.
+- `gates/gate-450-installed-geck-handoff-workspace-regression.md` - Gate 450, proved installed GECK task/provenance visibility, safety-evidence refusal, responsiveness, uninstall, and cleanup.
+- `gates/gate-451-guided-geck-work-session-contract.md` - Gate 451, defined digest-backed handoff freshness, composable task filtering/detail, and an atomic LocalAppData completion ledger that cannot mutate canonical source or generated evidence.
+- `gates/gate-452-guided-geck-work-session-implementation.md` - Gate 452, implemented digest-backed freshness, task filtering/detail, LocalAppData completion persistence, stale gating, tests, and published regression.
+- `gates/gate-453-installed-guided-geck-session-regression.md` - Gate 453, proved the installed guided GECK session's filtering, detail, completion persistence, reopen, stale/invalid refusal, uninstall, and cleanup.
+- `gates/gate-454-human-authored-plugin-artifact-intake-contract.md` - Gate 454, defined opaque ESP/ESM intake, project containment and digests, xEdit review handoff, combined packaging, and release-review gating without plugin parsing or mutation.
+- `gates/gate-455-human-authored-plugin-artifact-vertical-slice.md` - Gate 455, implemented immutable plugin intake schemas, opaque validation, preview-gated desktop import, package integration, pending-release refusal, tests, and published regression.
+- `gates/gate-456-installed-plugin-artifact-intake-package-regression.md` - Gate 456, proved installed plugin intake, duplicate refusal, validation/package success, pending-release refusal, exact-byte ZIP integrity, uninstall, and cleanup.
 
 Next gates:
 
 - Gate 315 - harden the WPF app-shell scaffold and backend bridge after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
-- Gate 445 - rebuild the unsigned installer and verify the installed Narrative Author explorer hierarchy, search, routing, preselection, transaction-to-stale behavior, uninstall, and isolated cleanup.
+- Gate 457 - define the plugin review-evidence attachment and promotion workflow so a pending imported artifact can attach contained xEdit evidence, verify artifact identity, become reviewed transactionally, and pass release verification without Forge interpreting or editing plugin records.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

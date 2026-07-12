@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/plugin-artifacts/0.1.0/schema.json",
+  "title": "WastelandForge Opaque Plugin Artifact Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "id", "plugins"],
+  "properties": {
+    "schemaVersion": { "const": "0.1.0" },
+    "kind": { "const": "plugin-artifact" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$" },
+    "plugins": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/plugin" } }
+  },
+  "$defs": {
+    "path": { "type": "string", "minLength": 1, "not": { "pattern": "^(?:[a-zA-Z]:|/|\\\\)" } },
+    "plugin": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "file", "pluginType", "dataPath", "sha256", "length", "authoringTool", "reviewStatus"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$" },
+        "file": { "$ref": "#/$defs/path" },
+        "pluginType": { "enum": ["esp", "esm"] },
+        "dataPath": { "type": "string", "pattern": "^[^/\\\\]+\\.(?:esp|esm)$" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "length": { "type": "integer", "minimum": 1 },
+        "authoringTool": { "enum": ["geck", "xedit", "other"] },
+        "reviewStatus": { "enum": ["pending", "reviewed"] },
+        "reviewEvidence": { "$ref": "#/$defs/path" }
+      }
+    }
+  }
+}

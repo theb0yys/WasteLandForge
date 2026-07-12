@@ -48,6 +48,9 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> ManifestSchema020 = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Manifest020,
         "Manifest schema 0.2.0"));
+    private static readonly Lazy<JsonSchema> ManifestSchema030 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.Manifest030,
+        "Manifest schema 0.3.0"));
     private static readonly Lazy<JsonSchema> DependencyRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Dependency010,
         "Dependency registry schema 0.1.0"));
@@ -875,9 +878,8 @@ public sealed class ProjectValidationPipeline
 
     private static void ValidateManifestSchema(LoadedManifest manifestLoad, List<DiagnosticIssue> issues, LogicalId? projectId)
     {
-        var schema = StringComparer.Ordinal.Equals(GetString(manifestLoad.Manifest, "schemaVersion"), "0.2.0")
-            ? ManifestSchema020.Value
-            : ManifestSchema.Value;
+        var version = GetString(manifestLoad.Manifest, "schemaVersion");
+        var schema = StringComparer.Ordinal.Equals(version, "0.3.0") ? ManifestSchema030.Value : StringComparer.Ordinal.Equals(version, "0.2.0") ? ManifestSchema020.Value : ManifestSchema.Value;
 
         ValidateSourceSchema(
             "Manifest",
@@ -1080,6 +1082,7 @@ public sealed class ProjectValidationPipeline
         var mcmPath = GetString(registries, "mcm");
         var jipScriptsPath = GetString(registries, "jipScripts");
         var xeditAuditPath = GetString(registries, "xeditAudit");
+        var pluginArtifactsPath = GetString(registries, "pluginArtifacts");
         if (dependencyPath is null || capabilityPath is null)
         {
             return;
@@ -1165,6 +1168,10 @@ public sealed class ProjectValidationPipeline
                 "xeditAudit",
                 issues,
                 projectId);
+        }
+        if (pluginArtifactsPath is not null)
+        {
+            issues.AddRange(PluginArtifactRegistryReader.Read(manifestLoad.ProjectRoot).Diagnostics.Issues);
         }
 
         if (HasErrorSince(issues, registryIssueStart))
