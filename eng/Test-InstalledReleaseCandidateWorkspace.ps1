@@ -101,6 +101,8 @@ $xeditStubRoot = Join-Path $env:TEMP "WastelandForge-Gate482-Stub-$runId"
 $process = $null
 $installed = $false
 $failure = $null
+$createdMo2Requests = @()
+$createdMo2Receipts = @()
 
 try {
     $install = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installRoot") -Wait -PassThru -WindowStyle Hidden
@@ -145,6 +147,15 @@ try {
     $window = [System.Windows.Automation.AutomationElement]::FromHandle($process.MainWindowHandle)
     Set-Value (Require-Control $window 'ProjectPathTextBox') $readyRoot
     Select-Tab $window 'Project Outputs'
+    $mo2PackageRoot = Join-Path $installRoot 'Integrations\MO2\Package'
+    $mo2PackageArchive = Join-Path $mo2PackageRoot 'WastelandForge-MO2-Bridge-0.1.0.zip'
+    foreach ($relative in @('WastelandForge-MO2-Bridge-0.1.0.zip','WastelandForge-MO2-Bridge-0.1.0.zip.sha256','package-build-manifest.json','INSTALL.md')) { if (-not (Test-Path -LiteralPath (Join-Path $mo2PackageRoot $relative) -PathType Leaf)) { throw "Installed MO2 companion package evidence is missing: $relative" } }
+    $mo2PackageBuild = Get-Content -LiteralPath (Join-Path $mo2PackageRoot 'package-build-manifest.json') -Raw | ConvertFrom-Json
+    if ((Get-FileHash -LiteralPath $mo2PackageArchive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $mo2PackageBuild.sha256) { throw 'Installed MO2 companion package digest is invalid.' }
+    foreach ($controlId in @('OpenMo2CompanionFolderButton','OpenMo2CompanionArchiveButton','OpenMo2CompanionGuideButton')) { if (-not (Require-Control $window $controlId).Current.IsEnabled) { throw "Installed verified MO2 companion handoff action was disabled: $controlId" } }
+    $mo2CompanionStatus = Require-Control $window 'Mo2CompanionPackageStatusTextBlock'
+    if ($mo2CompanionStatus.Current.Name -ne 'Verified optional MO2 companion package ready.') { throw "Installed MO2 companion handoff was not verified: $($mo2CompanionStatus.Current.Name)" }
+    Write-Host 'Gate 486 UI regression: verified contained MO2 companion package handoff ready without MO2 execution.'
     $workflow = Require-Control $window 'ProjectOutputWorkflowComboBox'
     Select-ComboItem $workflow 'Build FOMOD installer package'
     Invoke-Control (Require-Control $window 'RunProjectOutputWorkflowButton')
@@ -239,6 +250,19 @@ try {
     Wait-Until { $launchGeck.Current.IsEnabled } "Installed GECK launch preview did not enable launch; status: $($geckStatus.Current.Name)" | Out-Null
     $geckDetails = (Require-Control $window 'GeckLaunchDetailsTextBox').GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
     foreach ($expected in @('GECK.exe', 'Arguments: none', 'Direct physical launch only', 'MO2 VFS is not used')) { if (-not $geckDetails.Contains($expected, [StringComparison]::Ordinal)) { throw "GECK launch preview did not expose: $expected" } }
+    $previewGeckMo2 = Require-Control $window 'PreviewGeckMo2RequestButton'
+    $createGeckMo2 = Require-Control $window 'CreateGeckMo2RequestButton'
+    Invoke-Control $previewGeckMo2
+    Wait-Until { $createGeckMo2.Current.IsEnabled } "Installed GECK MO2-request preview did not enable creation; status: $($geckStatus.Current.Name)" | Out-Null
+    $geckMo2Details = (Require-Control $window 'GeckLaunchDetailsTextBox').GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
+    $geckMo2RequestPath = ($geckMo2Details -split "`r?`n" | Where-Object { $_.StartsWith('MO2 request: ', [StringComparison]::Ordinal) } | Select-Object -First 1).Substring(13)
+    $expectedMo2RequestRoot = [IO.Path]::GetFullPath((Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)) 'WastelandForge\Mo2LaunchRequests'))
+    if ([IO.Path]::GetFullPath((Split-Path -Parent $geckMo2RequestPath)) -ne $expectedMo2RequestRoot) { throw "Installed GECK MO2 request preview escaped the private request root: $geckMo2RequestPath" }
+    Invoke-Control $createGeckMo2
+    Wait-Until { Test-Path -LiteralPath $geckMo2RequestPath -PathType Leaf } 'Installed GECK MO2 launch request was not created.' | Out-Null
+    $createdMo2Requests += $geckMo2RequestPath
+    $geckMo2Request = Get-Content -LiteralPath $geckMo2RequestPath -Raw | ConvertFrom-Json
+    if ($geckMo2Request.tool.kind -ne 'geck' -or $geckMo2Request.tool.arguments.Count -ne 0 -or $geckMo2Request.safety.automaticLaunch -ne $false) { throw 'Installed GECK MO2 launch request contract is invalid.' }
     Invoke-Control $launchGeck
     Wait-Until { $geckStatus.Current.Name -like 'GECK process created (PID*' } "Installed controlled GECK stub was not launched; status: $($geckStatus.Current.Name)" | Out-Null
     if ((Get-FileHash -LiteralPath $geckManifest -Algorithm SHA256).Hash -ne $geckManifestBefore -or (Get-FileHash -LiteralPath $geckWorklist -Algorithm SHA256).Hash -ne $geckWorklistBefore) { throw 'GECK launch changed deterministic handoff evidence.' }
@@ -258,10 +282,41 @@ try {
     Wait-Until { $launchXEdit.Current.IsEnabled } "Installed xEdit launch preview did not enable launch; status: $($pluginStatus.Current.Name)" | Out-Null
     $xeditDetails = (Require-Control $window 'XEditLaunchDetailsTextBox').GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
     foreach ($expected in @('xEdit.exe', 'Arguments: none', 'ReviewTarget.esp', 'not passed as an argument', 'MO2 VFS is not used')) { if (-not $xeditDetails.Contains($expected, [StringComparison]::Ordinal)) { throw "xEdit launch preview did not expose: $expected" } }
+    $previewXEditMo2 = Require-Control $window 'PreviewXEditMo2RequestButton'
+    $createXEditMo2 = Require-Control $window 'CreateXEditMo2RequestButton'
+    Invoke-Control $previewXEditMo2
+    Wait-Until { $createXEditMo2.Current.IsEnabled } "Installed xEdit MO2-request preview did not enable creation; status: $($pluginStatus.Current.Name)" | Out-Null
+    $xeditMo2Details = (Require-Control $window 'XEditLaunchDetailsTextBox').GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
+    $xeditMo2RequestPath = ($xeditMo2Details -split "`r?`n" | Where-Object { $_.StartsWith('MO2 request: ', [StringComparison]::Ordinal) } | Select-Object -First 1).Substring(13)
+    if ([IO.Path]::GetFullPath((Split-Path -Parent $xeditMo2RequestPath)) -ne $expectedMo2RequestRoot) { throw "Installed xEdit MO2 request preview escaped the private request root: $xeditMo2RequestPath" }
+    Invoke-Control $createXEditMo2
+    Wait-Until { Test-Path -LiteralPath $xeditMo2RequestPath -PathType Leaf } 'Installed xEdit MO2 launch request was not created.' | Out-Null
+    $createdMo2Requests += $xeditMo2RequestPath
+    $xeditMo2Request = Get-Content -LiteralPath $xeditMo2RequestPath -Raw | ConvertFrom-Json
+    if ($null -eq $xeditMo2Request -or $xeditMo2Request.project.contextKind -ne 'pending-plugin-review' -or $xeditMo2Request.tool.arguments.Count -ne 0 -or $xeditMo2Request.safety.automaticLaunch -ne $false) { throw 'Installed xEdit MO2 launch request contract is invalid.' }
     Invoke-Control $launchXEdit
     Wait-Until { $pluginStatus.Current.Name -like 'xEdit process created (PID*' } "Installed controlled xEdit stub was not launched; status: $($pluginStatus.Current.Name)" | Out-Null
     if ((Get-FileHash -LiteralPath $xeditPlugin -Algorithm SHA256).Hash -ne $xeditPluginBefore -or (Get-FileHash -LiteralPath $xeditRegistry -Algorithm SHA256).Hash -ne $xeditRegistryBefore) { throw 'xEdit launch changed plugin or registry bytes.' }
     Write-Host 'Gate 482 UI regression: preview-gated controlled xEdit stub process created with plugin and registry unchanged.'
+    foreach ($requestPath in $createdMo2Requests) { if (Test-Path -LiteralPath ($requestPath -replace '\.json$', '.receipt.json')) { throw 'Desktop request generation unexpectedly created an MO2 receipt.' } }
+    if (-not (Test-Path -LiteralPath (Join-Path $installRoot 'Integrations\MO2\wastelandforge_bridge\core.py') -PathType Leaf)) { throw 'Installed optional MO2 companion source is missing.' }
+    Write-Host 'Gate 484 UI regression: GECK/xEdit MO2 requests created without MO2 execution; companion source installed.'
+    $syntheticReceiptPath = $xeditMo2RequestPath -replace '\.json$', '.receipt.json'
+    $syntheticReceipt = [ordered]@{
+        formatVersion='0.1'; kind='wastelandforge.mo2-launch-receipt'; requestId=$xeditMo2Request.requestId
+        requestSha256=(Get-FileHash -LiteralPath $xeditMo2RequestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        instance='Synthetic FNV'; profile='Testing'; toolKind='xedit'; executableSha256=$xeditMo2Request.tool.sha256
+        processId=9001; processCreated=$true; createdUtc=[DateTimeOffset]::UtcNow.ToString('O'); handleCloseError=$null
+    }
+    $syntheticReceipt | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $syntheticReceiptPath -Encoding utf8NoBOM
+    $createdMo2Receipts += $syntheticReceiptPath
+    Select-Tab $window 'Project Outputs'
+    Invoke-Control (Require-Control $window 'RefreshMo2LaunchReceiptsButton')
+    $receiptStatus = Require-Control $window 'Mo2LaunchReceiptStatusTextBlock'
+    Wait-Until { $receiptStatus.Current.Name -like 'Verified * MO2 process-created receipt(s); refused *.' } "Installed receipt verification failed: $($receiptStatus.Current.Name)" | Out-Null
+    $receiptDetails = (Require-Control $window 'Mo2LaunchReceiptDetailsTextBox').GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
+    foreach ($expected in @('MO2 instance: Synthetic FNV','Profile: Testing','PID: 9001','does not prove VFS contents')) { if (-not $receiptDetails.Contains($expected,[StringComparison]::Ordinal)) { throw "Installed receipt details did not expose: $expected" } }
+    Write-Host 'Gate 487 UI regression: synthetic process-created receipt verified read-only with limitations visible.'
     Write-Host 'Installed Release Candidate and external-tool launch regression passed.'
     Write-Host 'Candidate gating, local handoff, MO2 test copy, controlled GECK/xEdit process creation, unchanged evidence, and cleanup verified.'
 }
@@ -270,6 +325,16 @@ catch {
     Write-Host ("Installed Release Candidate and external-tool launch regression failed: " + $_.Exception.Message)
 }
 finally {
+    foreach ($receiptPath in $createdMo2Receipts) {
+        $fullReceiptPath = [IO.Path]::GetFullPath($receiptPath)
+        $privateRootPrefix = [IO.Path]::GetFullPath((Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)) 'WastelandForge\Mo2LaunchRequests')).TrimEnd('\') + '\'
+        if ($fullReceiptPath.StartsWith($privateRootPrefix, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $fullReceiptPath -PathType Leaf)) { Remove-Item -LiteralPath $fullReceiptPath -Force }
+    }
+    foreach ($requestPath in $createdMo2Requests) {
+        $fullRequestPath = [IO.Path]::GetFullPath($requestPath)
+        $privateRootPrefix = [IO.Path]::GetFullPath((Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)) 'WastelandForge\Mo2LaunchRequests')).TrimEnd('\') + '\'
+        if ($fullRequestPath.StartsWith($privateRootPrefix, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $fullRequestPath -PathType Leaf)) { Remove-Item -LiteralPath $fullRequestPath -Force }
+    }
     if ($null -ne $process -and -not $process.HasExited) {
         $process.Kill($true)
         $process.WaitForExit(5000) | Out-Null

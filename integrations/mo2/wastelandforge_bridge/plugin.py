@@ -6,7 +6,10 @@ import mobase
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFileDialog, QInputDialog, QMessageBox
 
-from .core import CompanionError, Mo2LaunchCompanion
+try:
+    from .core import CompanionError, Mo2LaunchCompanion
+except ImportError:  # MO2 may load plugin.py directly from its plugin folder.
+    from core import CompanionError, Mo2LaunchCompanion
 
 
 class NativeHandles:

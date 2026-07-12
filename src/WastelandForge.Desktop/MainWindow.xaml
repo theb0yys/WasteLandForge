@@ -1319,7 +1319,7 @@
 
         <TabItem x:Name="ProjectOutputsTabItem" Header="Project Outputs">
           <Grid Margin="0,18,0,0">
-            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="180" /></Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="125" /><RowDefinition Height="180" /></Grid.RowDefinitions>
             <Grid>
               <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
               <TextBlock Text="Buildable project outputs" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
@@ -1374,7 +1374,19 @@
               <Button Grid.Column="2" Content="Use Selected" Click="UseSelectedMo2CandidateClicked" />
               <TextBlock x:Name="Mo2DiscoveryStatusTextBlock" Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Text="Discovery is read-only." />
             </Grid>
-            <TextBox x:Name="ProjectOutputDetailsTextBox" Grid.Row="5" Margin="0,14,0,0" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
+            <Grid Grid.Row="5" Margin="0,10,0,0">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <StackPanel><TextBlock Text="Optional MO2 companion" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" /><TextBlock x:Name="Mo2CompanionPackageStatusTextBlock" Text="Checking published package evidence..." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" /></StackPanel>
+              <Button x:Name="OpenMo2CompanionFolderButton" Grid.Column="1" Content="Open Package Folder" IsEnabled="False" Click="OpenMo2CompanionFolderClicked" />
+              <Button x:Name="OpenMo2CompanionArchiveButton" Grid.Column="2" Content="Open Package ZIP" Margin="8,0,0,0" IsEnabled="False" Click="OpenMo2CompanionArchiveClicked" />
+              <Button x:Name="OpenMo2CompanionGuideButton" Grid.Column="3" Content="Open Install Guide" Margin="8,0,0,0" IsEnabled="False" Click="OpenMo2CompanionGuideClicked" />
+            </Grid>
+            <Grid Grid.Row="6" Margin="0,10,0,0">
+              <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+              <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions><TextBlock Text="MO2 process receipts" VerticalAlignment="Center" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" /><ComboBox x:Name="Mo2LaunchReceiptComboBox" Grid.Column="1" Margin="10,0" DisplayMemberPath="Summary" SelectionChanged="Mo2LaunchReceiptSelectionChanged" /><Button x:Name="RefreshMo2LaunchReceiptsButton" Grid.Column="2" Content="Refresh Receipts" Click="RefreshMo2LaunchReceiptsClicked" /><TextBlock x:Name="Mo2LaunchReceiptStatusTextBlock" Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Text="Refresh to inspect private process-created receipts." TextWrapping="Wrap" /></Grid>
+              <TextBox x:Name="Mo2LaunchReceiptDetailsTextBox" Grid.Row="1" Margin="0,8,0,0" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" FontSize="11" />
+            </Grid>
+            <TextBox x:Name="ProjectOutputDetailsTextBox" Grid.Row="7" Margin="0,14,0,0" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
           </Grid>
         </TabItem>
 

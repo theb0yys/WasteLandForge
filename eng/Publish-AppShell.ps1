@@ -176,6 +176,8 @@ else {
 $script:RepositoryRoot = (Resolve-Path -LiteralPath (Join-Path $scriptRoot '..')).Path
 $projectPath = Join-Path (Join-Path $script:RepositoryRoot 'src') (Join-Path 'WastelandForge.Desktop' 'WastelandForge.Desktop.csproj')
 $backendPublishScript = Join-Path (Join-Path $script:RepositoryRoot 'eng') 'Publish-StandaloneForge.ps1'
+$mo2PackageBuildScript = Join-Path (Join-Path $script:RepositoryRoot 'eng') 'Build-Mo2CompanionPackage.ps1'
+$mo2PackageSourceRoot = Join-Path (Join-Path (Join-Path $script:RepositoryRoot 'artifacts') 'integrations') 'mo2'
 
 if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
     $OutputRoot = Join-Path (Join-Path 'dist' 'app') 'WastelandForge.Desktop'
@@ -192,6 +194,7 @@ if (-not (Test-Path -LiteralPath $projectPath -PathType Leaf)) {
 if (-not (Test-Path -LiteralPath $backendPublishScript -PathType Leaf)) {
     Fail "Standalone Forge publish helper was not found at '$backendPublishScript'." 3
 }
+if (-not (Test-Path -LiteralPath $mo2PackageBuildScript -PathType Leaf)) { Fail "MO2 companion package builder was not found at '$mo2PackageBuildScript'." 3 }
 
 if (-not [string]::IsNullOrWhiteSpace($HeatSourceRoot) -and
     -not (Test-Path -LiteralPath $HeatSourceRoot -PathType Container)) {
@@ -247,6 +250,9 @@ try {
         Fail "Expected backend forge.exe was not found at '$backendRootPath'." 5
     }
 
+    Write-Host 'Building optional MO2 companion package...'
+    & $mo2PackageBuildScript
+
     if ($SelfContained -and [string]::IsNullOrWhiteSpace($RuntimeIdentifier)) {
         $RuntimeIdentifier = 'win-x64'
     }
@@ -278,6 +284,14 @@ try {
 
     Write-Host "Publishing WastelandForge app shell ($Configuration, $runtimeLabel, self-contained: $SelfContained)..."
     Invoke-DotNet -Arguments $publishArguments
+
+    $mo2PackagePublishRoot = Join-Path (Join-Path (Join-Path $outputRootPath 'Integrations') 'MO2') 'Package'
+    New-Item -ItemType Directory -Force -Path $mo2PackagePublishRoot | Out-Null
+    foreach ($name in @('WastelandForge-MO2-Bridge-0.1.0.zip','WastelandForge-MO2-Bridge-0.1.0.zip.sha256','package-build-manifest.json','INSTALL.md')) {
+        $source = Join-Path $mo2PackageSourceRoot $name
+        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { Fail "Expected MO2 companion package evidence was not produced: $source" 5 }
+        Copy-Item -LiteralPath $source -Destination (Join-Path $mo2PackagePublishRoot $name) -Force
+    }
 
     if (-not (Test-Path -LiteralPath $executablePath -PathType Leaf)) {
         Fail "Expected WastelandForge.exe was not produced at '$executablePath'." 5
@@ -370,6 +384,7 @@ Boundary:
             backendExecutable = 'ForgeBackend/forge.exe'
             bundledDemoProject = 'DemoProjects/ExampleMod'
             backendVersionSmoke = $backendVersion
+            mo2CompanionPackage = 'Integrations/MO2/Package/WastelandForge-MO2-Bridge-0.1.0.zip'
         }
         heat = [ordered] @{
             heatSourceRootProvided = -not [string]::IsNullOrWhiteSpace($HeatSourceRoot)

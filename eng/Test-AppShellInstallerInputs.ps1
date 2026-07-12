@@ -159,6 +159,10 @@ $requiredPaths = @(
     'WastelandForge.exe',
     'ForgeBackend/forge.exe',
     'DemoProjects/ExampleMod/wastelandforge.json',
+    'Integrations/MO2/Package/WastelandForge-MO2-Bridge-0.1.0.zip',
+    'Integrations/MO2/Package/WastelandForge-MO2-Bridge-0.1.0.zip.sha256',
+    'Integrations/MO2/Package/package-build-manifest.json',
+    'Integrations/MO2/Package/INSTALL.md',
     'app-build-manifest.json',
     'checksums.sha256'
 )

@@ -60,6 +60,8 @@ public partial class MainWindow
     private string? exportedMo2ModFolder;
     private readonly ReleaseCandidateWorkspace releaseCandidateWorkspace;
     private readonly ReleaseCandidateMo2TestCopy releaseCandidateMo2TestCopy;
+    private Mo2CompanionPackageResult mo2CompanionPackage = new(false, "Not checked.", "Not checked.");
+    private readonly Mo2LaunchReceiptService mo2LaunchReceiptService = new();
     private ReleaseCandidateResult? releaseCandidateResult;
     private Mo2TestCopyPreview? releaseCandidateMo2Preview;
     private string? releaseCandidateMo2Destination;
@@ -89,6 +91,7 @@ public partial class MainWindow
         ForgePathTextBlock.Text = forge.ForgePathDisplay;
         ApplyHeatSkin();
         UpdatePackageSummary(ProjectPathTextBox.Text);
+        RefreshMo2CompanionPackageHandoff();
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -1294,6 +1297,48 @@ public partial class MainWindow
 
     private void OpenSelectedGeneratedOutputClicked(object sender, RoutedEventArgs e) => OpenSelectedProjectOutput(distribution: false);
     private void OpenSelectedDistributionOutputClicked(object sender, RoutedEventArgs e) => OpenSelectedProjectOutput(distribution: true);
+
+    private void RefreshMo2CompanionPackageHandoff()
+    {
+        var root = Path.Combine(AppContext.BaseDirectory, "Integrations", "MO2", "Package");
+        mo2CompanionPackage = Mo2CompanionPackageHandoff.Inspect(root);
+        Mo2CompanionPackageStatusTextBlock.Text = mo2CompanionPackage.Message;
+        OpenMo2CompanionFolderButton.IsEnabled = mo2CompanionPackage.Success;
+        OpenMo2CompanionArchiveButton.IsEnabled = mo2CompanionPackage.Success;
+        OpenMo2CompanionGuideButton.IsEnabled = mo2CompanionPackage.Success;
+    }
+
+    private void OpenMo2CompanionFolderClicked(object sender, RoutedEventArgs e)
+    {
+        if (!mo2CompanionPackage.Success || mo2CompanionPackage.Root is null || !Directory.Exists(mo2CompanionPackage.Root)) { RefreshMo2CompanionPackageHandoff(); return; }
+        OpenFolder(mo2CompanionPackage.Root);
+    }
+
+    private void OpenMo2CompanionArchiveClicked(object sender, RoutedEventArgs e) => OpenMo2CompanionFile(mo2CompanionPackage.Archive);
+    private void OpenMo2CompanionGuideClicked(object sender, RoutedEventArgs e) => OpenMo2CompanionFile(mo2CompanionPackage.InstallGuide);
+
+    private void RefreshMo2LaunchReceiptsClicked(object sender, RoutedEventArgs e)
+    {
+        var result = mo2LaunchReceiptService.Discover();
+        Mo2LaunchReceiptComboBox.ItemsSource = result.Receipts;
+        Mo2LaunchReceiptStatusTextBlock.Text = result.Message;
+        Mo2LaunchReceiptDetailsTextBox.Text = result.Refusals.Count == 0 ? string.Empty : "Refused evidence:" + Environment.NewLine + string.Join(Environment.NewLine, result.Refusals);
+        if (result.Receipts.Count > 0) Mo2LaunchReceiptComboBox.SelectedIndex = 0;
+    }
+
+    private void Mo2LaunchReceiptSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (Mo2LaunchReceiptComboBox.SelectedItem is Mo2LaunchReceiptView receipt) Mo2LaunchReceiptDetailsTextBox.Text = receipt.Details;
+    }
+
+    private void OpenMo2CompanionFile(string? path)
+    {
+        var current = Mo2CompanionPackageHandoff.Inspect(Path.Combine(AppContext.BaseDirectory, "Integrations", "MO2", "Package"));
+        mo2CompanionPackage = current;
+        if (!current.Success || path is null || (!StringComparer.OrdinalIgnoreCase.Equals(path, current.Archive) && !StringComparer.OrdinalIgnoreCase.Equals(path, current.InstallGuide))) { RefreshMo2CompanionPackageHandoff(); return; }
+        try { Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true }); }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { Mo2CompanionPackageStatusTextBlock.Text = "Could not open MO2 companion evidence: " + ex.Message; }
+    }
     private void OpenSelectedStagingOutputClicked(object sender, RoutedEventArgs e)
     {
         if (ProjectOutputsDataGrid.SelectedItem is not ProjectOutputLane lane || lane.StagingPath is null || !Directory.Exists(lane.StagingPath))
@@ -1660,7 +1705,7 @@ public partial class MainWindow
     private void PreviewPluginReviewClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = PluginReviewPromotion.Preview(root, ReviewInput()); pluginReviewPreviewToken = preview.Token; PromotePluginReviewButton.IsEnabled = preview.Success; PluginIntakeStatusTextBlock.Text = preview.Message; PluginIntakeDetailsTextBox.Text = preview.Details ?? preview.Message; }
     private void PromotePluginReviewClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || pluginReviewPreviewToken is null) return; var result = PluginReviewPromotion.Promote(root, ReviewInput(), pluginReviewPreviewToken); pluginReviewPreviewToken = null; PromotePluginReviewButton.IsEnabled = false; PluginIntakeStatusTextBlock.Text = result.Message; if (result.Success) LoadPendingPluginsClicked(sender, e); }
     private void PreviewXEditLaunchClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || PluginReviewArtifactComboBox.SelectedItem is not PluginArtifactDefinition plugin) return; var result = xeditLaunchService.Preview(root, plugin.Id, XEditPathTextBox.Text); xeditLaunchPreview = result.Preview; LaunchXEditButton.IsEnabled = result.Success; PreviewXEditMo2RequestButton.IsEnabled = result.Success; PluginIntakeStatusTextBlock.Text = result.Message; XEditLaunchDetailsTextBox.Text = result.Preview?.Details ?? string.Empty; }
-    private void LaunchXEditClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || xeditLaunchPreview is null || PluginReviewArtifactComboBox.SelectedItem is not PluginArtifactDefinition plugin) return; LaunchXEditButton.IsEnabled = false; var result = xeditLaunchService.Launch(root, plugin.Id, xeditLaunchPreview); xeditLaunchPreview = null; PluginIntakeStatusTextBlock.Text = result.Message; }
+    private void LaunchXEditClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || xeditLaunchPreview is null || PluginReviewArtifactComboBox.SelectedItem is not PluginArtifactDefinition plugin) return; LaunchXEditButton.IsEnabled = false; PreviewXEditMo2RequestButton.IsEnabled = false; CreateXEditMo2RequestButton.IsEnabled = false; var result = xeditLaunchService.Launch(root, plugin.Id, xeditLaunchPreview); xeditLaunchPreview = null; xeditMo2RequestPreview = null; PluginIntakeStatusTextBlock.Text = result.Message; }
     private void PreviewXEditMo2RequestClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || xeditLaunchPreview is null || PluginReviewArtifactComboBox.SelectedItem is not PluginArtifactDefinition plugin) return; var result = mo2LaunchRequestService.PreviewXEdit(root, plugin.Id, xeditLaunchPreview); xeditMo2RequestPreview = result.Preview; CreateXEditMo2RequestButton.IsEnabled = result.Success; PluginIntakeStatusTextBlock.Text = result.Message; XEditLaunchDetailsTextBox.Text = result.Preview?.Details ?? string.Empty; }
     private void CreateXEditMo2RequestClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || xeditLaunchPreview is null || xeditMo2RequestPreview is null || PluginReviewArtifactComboBox.SelectedItem is not PluginArtifactDefinition plugin) return; var result = mo2LaunchRequestService.CreateXEdit(root, plugin.Id, xeditLaunchPreview, xeditMo2RequestPreview); CreateXEditMo2RequestButton.IsEnabled = false; PluginIntakeStatusTextBlock.Text = result.Message; }
     private void InvalidateXEditLaunch() { xeditLaunchPreview = null; xeditMo2RequestPreview = null; if (LaunchXEditButton is not null) LaunchXEditButton.IsEnabled = false; if (PreviewXEditMo2RequestButton is not null) PreviewXEditMo2RequestButton.IsEnabled = false; if (CreateXEditMo2RequestButton is not null) CreateXEditMo2RequestButton.IsEnabled = false; }
@@ -1717,8 +1762,11 @@ public partial class MainWindow
     {
         if (geckWorkspaceProject is null || geckWorkspaceSession is null || geckLaunchPreview is null) return;
         LaunchGeckButton.IsEnabled = false;
+        PreviewGeckMo2RequestButton.IsEnabled = false;
+        CreateGeckMo2RequestButton.IsEnabled = false;
         var result = geckLaunchService.Launch(geckWorkspaceProject, geckWorkspaceSession, geckLaunchPreview);
         geckLaunchPreview = null;
+        geckMo2RequestPreview = null;
         GeckHandoffWorkspaceStatusTextBlock.Text = result.Message;
     }
 
