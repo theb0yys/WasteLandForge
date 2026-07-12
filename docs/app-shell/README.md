@@ -249,7 +249,7 @@ necessary.
 
 ## Open Implementation Checks
 
-- Gate 461 desktop Release Candidate workspace implementation and regression.
+- Gate 464 Release Candidate diagnostic explanation panel and workspace-navigation implementation.
 - Code signing and update channel.
 - Final Heat Restricted Asset status before public release.
 - Seat/license coverage for every contributor who uses the Heat asset source.

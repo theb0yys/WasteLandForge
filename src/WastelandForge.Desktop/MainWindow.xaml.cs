@@ -58,6 +58,12 @@ public partial class MainWindow
     private string? xeditAuditOutputFolder;
     private string? mo2ExportPreviewToken;
     private string? exportedMo2ModFolder;
+    private readonly ReleaseCandidateWorkspace releaseCandidateWorkspace;
+    private ReleaseCandidateResult? releaseCandidateResult;
+    private CancellationTokenSource? releaseCandidateCancellation;
+    private ReleaseCandidateDiagnostic? selectedReleaseCandidateDiagnostic;
+    private DiagnosticExplanation? releaseCandidateExplanation;
+    private readonly DiagnosticExplanationRequestGate diagnosticExplanationRequests = new();
     private readonly Dictionary<string, string> lastNarrativeWorkflowByCategory = new(StringComparer.Ordinal);
     private NarrativeInventoryResult narrativeInventory = NarrativeInventoryResult.NotLoaded();
     private readonly NarrativeChangeJournal narrativeJournal = new();
@@ -66,6 +72,7 @@ public partial class MainWindow
 
     public MainWindow()
     {
+        releaseCandidateWorkspace = new ReleaseCandidateWorkspace(new ForgeReleaseCandidateCommandRunner(forge));
         InitializeComponent();
         InitializeNarrativeWorkspace();
 
@@ -90,6 +97,8 @@ public partial class MainWindow
         await RefreshBackendAsync();
     }
 
+    private void WindowActivated(object? sender, EventArgs e) => MarkReleaseCandidateStale();
+
     private async void RefreshBackendClicked(object sender, RoutedEventArgs e) =>
         await RefreshBackendAsync();
 
@@ -103,6 +112,7 @@ public partial class MainWindow
         RenderNarrativeInventory();
         RefreshNarrativeExplorer();
         RefreshNarrativeJournalStatus();
+        MarkReleaseCandidateStale();
     }
 
     private void RefreshNarrativeInventoryClicked(object sender, RoutedEventArgs e)
@@ -1311,6 +1321,180 @@ public partial class MainWindow
         if (ProjectOutputsDataGrid.SelectedItem is not ProjectOutputLane { WorklistPath: { } path } || !File.Exists(path)) { ProjectOutputsStatusTextBlock.Text = "Select a completed GECK handoff with an unresolved-actions worklist."; return; }
         try { Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true }); }
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { ProjectOutputsStatusTextBlock.Text = "Could not open GECK worklist: " + ex.Message; }
+    }
+
+    private async void RunReleaseCandidateClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport();
+        if (root is null || releaseCandidateCancellation is not null) return;
+        releaseCandidateCancellation = new CancellationTokenSource();
+        ReleaseCandidateStateTextBlock.Text = "Running";
+        ReleaseCandidateMessageTextBlock.Text = "Running validation...";
+        RunReleaseCandidateButton.IsEnabled = false;
+        CancelReleaseCandidateButton.IsEnabled = true;
+        SetBusy(true);
+        try
+        {
+            releaseCandidateResult = await releaseCandidateWorkspace.RunAsync(root, releaseCandidateCancellation.Token);
+            RenderReleaseCandidate();
+            foreach (var stage in releaseCandidateResult.Stages.Where(stage => stage.ExitCode is not null))
+                AppendLog(stage.Command + " -> exit " + stage.ExitCode);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            ReleaseCandidateStateTextBlock.Text = "Blocked";
+            ReleaseCandidateMessageTextBlock.Text = "Release candidate workspace failed: " + ex.Message;
+        }
+        finally
+        {
+            releaseCandidateCancellation.Dispose();
+            releaseCandidateCancellation = null;
+            CancelReleaseCandidateButton.IsEnabled = false;
+            SetBusy(false);
+        }
+    }
+
+    private void CancelReleaseCandidateClicked(object sender, RoutedEventArgs e) => releaseCandidateCancellation?.Cancel();
+
+    private void MarkReleaseCandidateStale()
+    {
+        if (releaseCandidateResult is null || releaseCandidateResult.State == ReleaseCandidateState.Stale) return;
+        var selectedChanged = !StringComparer.OrdinalIgnoreCase.Equals(Path.GetFullPath(ProjectPathTextBox.Text.Trim()), releaseCandidateResult.ProjectRoot);
+        if (!selectedChanged && !ReleaseCandidateWorkspace.IsStale(releaseCandidateResult)) return;
+        releaseCandidateResult = releaseCandidateResult with { State = ReleaseCandidateState.Stale, Message = "Project inputs changed. Run the release candidate check again." };
+        RenderReleaseCandidate(refreshData: false);
+    }
+
+    private void RenderReleaseCandidate(bool refreshData = true)
+    {
+        if (releaseCandidateResult is null) return;
+        ReleaseCandidateStateTextBlock.Text = releaseCandidateResult.State switch
+        {
+            ReleaseCandidateState.CandidateReady => "Candidate ready",
+            ReleaseCandidateState.NotRun => "Not run",
+            _ => releaseCandidateResult.State.ToString()
+        };
+        ReleaseCandidateMessageTextBlock.Text = releaseCandidateResult.Message;
+        if (refreshData)
+        {
+            selectedReleaseCandidateDiagnostic = null;
+            releaseCandidateExplanation = null;
+            diagnosticExplanationRequests.Advance();
+            ReleaseCandidateStagesDataGrid.ItemsSource = releaseCandidateResult.Stages;
+            ReleaseCandidateDiagnosticsDataGrid.ItemsSource = releaseCandidateResult.Stages.SelectMany(stage => stage.Diagnostics).ToArray();
+            ReleaseCandidatePluginsDataGrid.ItemsSource = releaseCandidateResult.Evidence.Plugins;
+            RenderDiagnosticRemediation();
+        }
+        var usable = releaseCandidateResult.State is ReleaseCandidateState.CandidateReady or ReleaseCandidateState.Blocked;
+        OpenCandidatePackageFolderButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.PackageRoot, out _);
+        OpenCandidatePackageArchiveButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.PackageArchive, out _);
+        OpenCandidateReleaseEvidenceButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.ReleaseRoot, out _);
+        OpenCandidateReleaseHandoffButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.ReleaseHandoff, out _);
+        UpdateDiagnosticRemediationActions();
+    }
+
+    private void ReleaseCandidateDiagnosticSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        selectedReleaseCandidateDiagnostic = ReleaseCandidateDiagnosticsDataGrid.SelectedItem as ReleaseCandidateDiagnostic;
+        releaseCandidateExplanation = null;
+        diagnosticExplanationRequests.Advance();
+        RenderDiagnosticRemediation();
+    }
+
+    private async void ExplainReleaseCandidateDiagnosticClicked(object sender, RoutedEventArgs e)
+    {
+        var diagnostic = selectedReleaseCandidateDiagnostic;
+        if (diagnostic is null) return;
+        var request = diagnosticExplanationRequests.Advance();
+        DiagnosticExplanationStatusTextBlock.Text = "Loading";
+        DiagnosticExplanationTextBox.Text = $"forge explain diagnostic {diagnostic.RuleId} --format json";
+        ExplainReleaseCandidateDiagnosticButton.IsEnabled = false;
+        var result = await forge.RunAsync("explain", "diagnostic", diagnostic.RuleId, "--format", "json");
+        AppendResult(result);
+        if (!diagnosticExplanationRequests.IsCurrent(request) || !ReferenceEquals(diagnostic, selectedReleaseCandidateDiagnostic)) return;
+        if (result.ExitCode != 0)
+        {
+            releaseCandidateExplanation = null;
+            DiagnosticExplanationStatusTextBlock.Text = "Unavailable";
+            DiagnosticExplanationTextBox.Text = string.IsNullOrWhiteSpace(result.StandardError) ? $"Explain command exited with code {result.ExitCode}." : result.StandardError.Trim();
+            UpdateDiagnosticRemediationActions();
+            return;
+        }
+        var read = DiagnosticRemediation.Parse(result.StandardOutput, diagnostic.RuleId);
+        releaseCandidateExplanation = read.Explanation;
+        DiagnosticExplanationStatusTextBlock.Text = read.Success ? "Ready" : "Unavailable";
+        DiagnosticExplanationTextBox.Text = read.Explanation is null ? read.Message : FormatDiagnosticExplanation(read.Explanation);
+        UpdateDiagnosticRemediationActions();
+    }
+
+    private void GoToDiagnosticWorkspaceClicked(object sender, RoutedEventArgs e)
+    {
+        if (selectedReleaseCandidateDiagnostic is null || releaseCandidateResult?.State == ReleaseCandidateState.Stale) return;
+        MainTabControl.SelectedItem = DiagnosticRemediation.RouteFor(selectedReleaseCandidateDiagnostic.RuleId) switch
+        {
+            DiagnosticWorkspaceRoute.ValidationReport => ValidationReportTabItem,
+            DiagnosticWorkspaceRoute.Capabilities => CapabilitiesTabItem,
+            DiagnosticWorkspaceRoute.ProjectOutputs => ProjectOutputsTabItem,
+            DiagnosticWorkspaceRoute.ReleaseCandidate => ReleaseCandidateTabItem,
+            _ => MainTabControl.SelectedItem
+        };
+    }
+
+    private void RenderDiagnosticRemediation()
+    {
+        var diagnostic = selectedReleaseCandidateDiagnostic;
+        DiagnosticOriginalContextTextBlock.Text = diagnostic is null
+            ? "Select a blocking diagnostic to inspect its exact context."
+            : $"{diagnostic.RuleId} | {diagnostic.Severity} | {diagnostic.Title}{Environment.NewLine}{diagnostic.Message}";
+        DiagnosticExplanationStatusTextBlock.Text = "Not loaded";
+        DiagnosticExplanationTextBox.Clear();
+        UpdateDiagnosticRemediationActions();
+    }
+
+    private void UpdateDiagnosticRemediationActions()
+    {
+        if (ExplainReleaseCandidateDiagnosticButton is null) return;
+        var selected = selectedReleaseCandidateDiagnostic is not null;
+        ExplainReleaseCandidateDiagnosticButton.IsEnabled = selected;
+        GoToDiagnosticWorkspaceButton.IsEnabled = selected && releaseCandidateResult?.State != ReleaseCandidateState.Stale && DiagnosticRemediation.RouteFor(selectedReleaseCandidateDiagnostic!.RuleId) != DiagnosticWorkspaceRoute.None;
+    }
+
+    private static string FormatDiagnosticExplanation(DiagnosticExplanation explanation)
+    {
+        var lines = new List<string>
+        {
+            explanation.Command,
+            $"Family: {explanation.FamilyId}",
+            $"Scope: {explanation.Scope}",
+            $"Validation stage: {explanation.ValidationStage}"
+        };
+        if (explanation.RuleTitle is not null) lines.Add("Rule: " + explanation.RuleTitle);
+        if (explanation.RuleSummary is not null) lines.Add(explanation.RuleSummary);
+        lines.Add("Recovery commands (display only):");
+        lines.AddRange(explanation.RecoveryCommands.Select(command => "  " + command));
+        lines.Add("Boundaries:");
+        lines.AddRange(explanation.Boundaries.Select(boundary => "  " + boundary));
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private void OpenCandidatePackageFolderClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.PackageRoot, directory: true);
+    private void OpenCandidatePackageArchiveClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.PackageArchive, directory: false);
+    private void OpenCandidateReleaseEvidenceClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.ReleaseRoot, directory: true);
+    private void OpenCandidateReleaseHandoffClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.ReleaseHandoff, directory: false);
+
+    private void OpenReleaseCandidatePath(string? path, bool directory)
+    {
+        if (releaseCandidateResult is null || releaseCandidateResult.State == ReleaseCandidateState.Stale || !ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, path, out var contained))
+        {
+            ReleaseCandidateMessageTextBlock.Text = "The selected evidence path is missing, stale, or outside the project distribution root.";
+            return;
+        }
+        if (directory) OpenFolder(contained!);
+        else
+        {
+            try { Process.Start(new ProcessStartInfo { FileName = contained!, UseShellExecute = true }); }
+            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { ReleaseCandidateMessageTextBlock.Text = "Could not open evidence: " + ex.Message; }
+        }
     }
 
     private string? geckWorkspaceRoot;
@@ -2608,6 +2792,9 @@ public partial class MainWindow
         AppendVoiceWorkItemButton.IsEnabled = !isBusy && voiceWorkItemPreviewToken is not null;
         PreviewMcmAppendButton.IsEnabled = !isBusy;
         AppendMcmSettingButton.IsEnabled = !isBusy && mcmAppendPreviewToken is not null;
+        RunReleaseCandidateButton.IsEnabled = !isBusy && releaseCandidateCancellation is null;
+        ExplainReleaseCandidateDiagnosticButton.IsEnabled = !isBusy && selectedReleaseCandidateDiagnostic is not null;
+        GoToDiagnosticWorkspaceButton.IsEnabled = !isBusy && selectedReleaseCandidateDiagnostic is not null && releaseCandidateResult?.State != ReleaseCandidateState.Stale && DiagnosticRemediation.RouteFor(selectedReleaseCandidateDiagnostic.RuleId) != DiagnosticWorkspaceRoute.None;
     }
 
     private static string FormatJsonOrText(string value)

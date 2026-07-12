@@ -7,7 +7,8 @@
         MinWidth="960"
         MinHeight="640"
         Background="{StaticResource AppBackground}"
-        Loaded="OnLoaded">
+        Loaded="OnLoaded"
+        Activated="WindowActivated">
   <Grid>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="278" />
@@ -533,7 +534,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem Header="Validation Report">
+        <TabItem x:Name="ValidationReportTabItem" Header="Validation Report">
           <Grid Margin="0,18,0,0">
             <TextBox x:Name="ValidationOutputTextBox"
                      AcceptsReturn="True"
@@ -547,7 +548,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem Header="Capabilities">
+        <TabItem x:Name="CapabilitiesTabItem" Header="Capabilities">
           <Grid Margin="0,18,0,0">
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
@@ -1316,7 +1317,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem Header="Project Outputs">
+        <TabItem x:Name="ProjectOutputsTabItem" Header="Project Outputs">
           <Grid Margin="0,18,0,0">
             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="180" /></Grid.RowDefinitions>
             <Grid>
@@ -1431,6 +1432,70 @@
               <DataGrid.Columns><DataGridTextColumn Header="State" Binding="{Binding Status}" Width="90" /><DataGridTextColumn Header="Source path" Binding="{Binding Path}" Width="*" /><DataGridTextColumn Header="SHA-256" Binding="{Binding Sha256}" Width="360" /><DataGridTextColumn Header="Bytes" Binding="{Binding Length}" Width="90" /></DataGrid.Columns>
             </DataGrid>
             <TextBlock x:Name="GeckHandoffWorkspaceStatusTextBlock" Grid.Row="5" Text="Load a completed GECK handoff to inspect its tasks and provenance." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" />
+          </Grid>
+        </TabItem>
+
+        <TabItem x:Name="ReleaseCandidateTabItem" Header="Release Candidate">
+          <Grid Margin="0,18,0,0">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="180" /><RowDefinition Height="*" /><RowDefinition Height="170" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock Text="Release Candidate" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock Text="Local validation, combined package, and release verification" Foreground="{StaticResource TextMuted}" Margin="0,4,0,0" />
+              </StackPanel>
+              <Button x:Name="RunReleaseCandidateButton" Grid.Column="1" Content="Run Release Candidate Check" Style="{StaticResource PrimaryButton}" Click="RunReleaseCandidateClicked" />
+              <Button x:Name="CancelReleaseCandidateButton" Grid.Column="2" Content="Cancel" Margin="8,0,0,0" IsEnabled="False" Click="CancelReleaseCandidateClicked" />
+            </Grid>
+            <Border Grid.Row="1" Margin="0,14,0,0" Padding="12" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="6">
+              <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <TextBlock x:Name="ReleaseCandidateStateTextBlock" Text="Not run" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock x:Name="ReleaseCandidateMessageTextBlock" Grid.Column="1" Text="Run the check to produce and verify a local candidate." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" VerticalAlignment="Center" />
+              </Grid>
+            </Border>
+            <DataGrid x:Name="ReleaseCandidateStagesDataGrid" Grid.Row="2" Margin="0,12,0,0" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Stage" Binding="{Binding Name}" Width="180" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="110" />
+                <DataGridTextColumn Header="Exit" Binding="{Binding ExitCode}" Width="60" />
+                <DataGridTextColumn Header="Errors" Binding="{Binding Errors}" Width="70" />
+                <DataGridTextColumn Header="Warnings" Binding="{Binding Warnings}" Width="80" />
+                <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="65" />
+                <DataGridTextColumn Header="Duration ms" Binding="{Binding DurationMilliseconds}" Width="100" />
+                <DataGridTextColumn Header="Canonical command" Binding="{Binding Command}" Width="*" />
+              </DataGrid.Columns>
+            </DataGrid>
+            <Grid Grid.Row="3" Margin="0,12,0,0">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="3*" /><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions>
+              <DataGrid x:Name="ReleaseCandidateDiagnosticsDataGrid" Margin="0,0,6,0" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" SelectionChanged="ReleaseCandidateDiagnosticSelectionChanged">
+                <DataGrid.Columns><DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="130" /><DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="80" /><DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="180" /><DataGridTextColumn Header="Exact message" Binding="{Binding Message}" Width="*" /></DataGrid.Columns>
+              </DataGrid>
+              <DataGrid x:Name="ReleaseCandidatePluginsDataGrid" Grid.Column="1" Margin="6,0,0,0" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+                <DataGrid.Columns><DataGridTextColumn Header="Plugin path" Binding="{Binding DataPath}" Width="*" /><DataGridTextColumn Header="Review" Binding="{Binding ReviewStatus}" Width="90" /><DataGridTextColumn Header="SHA-256" Binding="{Binding Sha256}" Width="220" /><DataGridTextColumn Header="Evidence digest" Binding="{Binding EvidenceSha256}" Width="220" /><DataGridTextColumn Header="Report digest" Binding="{Binding ReportSha256}" Width="220" /></DataGrid.Columns>
+              </DataGrid>
+            </Grid>
+            <Grid Grid.Row="4" Margin="0,12,0,0">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" /></Grid.ColumnDefinitions>
+              <StackPanel Margin="0,0,12,0">
+                <TextBlock Text="Selected diagnostic" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" />
+                <TextBlock x:Name="DiagnosticOriginalContextTextBlock" Margin="0,6,0,0" Foreground="{StaticResource TextMuted}" Text="Select a blocking diagnostic to inspect its exact context." TextWrapping="Wrap" />
+                <WrapPanel Margin="0,10,0,0">
+                  <Button x:Name="ExplainReleaseCandidateDiagnosticButton" Content="Explain Diagnostic" IsEnabled="False" Click="ExplainReleaseCandidateDiagnosticClicked" />
+                  <Button x:Name="GoToDiagnosticWorkspaceButton" Content="Go to Workspace" Margin="8,0,0,0" IsEnabled="False" Click="GoToDiagnosticWorkspaceClicked" />
+                </WrapPanel>
+              </StackPanel>
+              <Grid Grid.Column="1">
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <TextBlock x:Name="DiagnosticExplanationStatusTextBlock" Text="Not loaded" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" />
+                <TextBox x:Name="DiagnosticExplanationTextBox" Grid.Row="1" Margin="0,6,0,0" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" FontSize="12" />
+              </Grid>
+            </Grid>
+            <WrapPanel Grid.Row="5" Margin="0,12,0,0">
+              <Button x:Name="OpenCandidatePackageFolderButton" Content="Open Package Folder" IsEnabled="False" Click="OpenCandidatePackageFolderClicked" />
+              <Button x:Name="OpenCandidatePackageArchiveButton" Content="Open Package ZIP" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidatePackageArchiveClicked" />
+              <Button x:Name="OpenCandidateReleaseEvidenceButton" Content="Open Release Evidence" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidateReleaseEvidenceClicked" />
+              <Button x:Name="OpenCandidateReleaseHandoffButton" Content="Open Release Handoff" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidateReleaseHandoffClicked" />
+            </WrapPanel>
           </Grid>
         </TabItem>
 

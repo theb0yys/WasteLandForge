@@ -26,10 +26,13 @@ internal sealed class ForgeCommandRunner
 
     public async Task<ForgeCommandResult> RunInWorkingDirectoryAsync(string workingDirectory, params string[] arguments)
     {
-        return await RunCoreAsync(workingDirectory, arguments).ConfigureAwait(false);
+        return await RunCoreAsync(workingDirectory, arguments, CancellationToken.None).ConfigureAwait(false);
     }
 
-    private async Task<ForgeCommandResult> RunCoreAsync(string? workingDirectory, IReadOnlyCollection<string> arguments)
+    public async Task<ForgeCommandResult> RunInWorkingDirectoryAsync(string workingDirectory, CancellationToken cancellationToken, params string[] arguments) =>
+        await RunCoreAsync(workingDirectory, arguments, cancellationToken).ConfigureAwait(false);
+
+    private async Task<ForgeCommandResult> RunCoreAsync(string? workingDirectory, IReadOnlyCollection<string> arguments, CancellationToken cancellationToken = default)
     {
         if (forgePath is null)
         {
@@ -63,17 +66,26 @@ internal sealed class ForgeCommandRunner
         {
             using var process = new Process { StartInfo = startInfo };
             process.Start();
+            using var cancellationRegistration = cancellationToken.Register(() =>
+            {
+                try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
+                catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException) { }
+            });
 
             var stdoutTask = process.StandardOutput.ReadToEndAsync();
             var stderrTask = process.StandardError.ReadToEndAsync();
 
-            await process.WaitForExitAsync().ConfigureAwait(false);
+            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
 
             return new ForgeCommandResult(
                 commandLine,
                 process.ExitCode,
                 await stdoutTask.ConfigureAwait(false),
                 await stderrTask.ConfigureAwait(false));
+        }
+        catch (OperationCanceledException)
+        {
+            return new ForgeCommandResult(commandLine, 7, string.Empty, "Command cancelled.");
         }
         catch (Exception ex)
         {

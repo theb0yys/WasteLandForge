@@ -268,3 +268,15 @@ Fallout: New Vegas game root, Data root, MO2 path, and external tool paths.
 That route keeps settings local-only and does not run provider probes, install
 providers, automate MO2 or GECK, execute xEdit, sign or timestamp artifacts,
 publish releases, or add AI behavior.
+
+Gate 462 adds the installed Release Candidate workspace regression:
+
+```text
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Test-InstalledReleaseCandidateWorkspace.ps1
+```
+
+The script uses synthetic installed samples, isolated install/settings/project
+roots, and WPF UI Automation to prove ready, stale, and blocked states plus
+contained evidence-action enablement. It silently uninstalls and removes its
+isolated test roots. It does not publish releases or automate external game
+tools.

@@ -464,10 +464,13 @@ Gate status:
 - `gates/gate-458-plugin-review-evidence-promotion-implementation.md` - Gate 458, implemented digest-bound review evidence, explicit human approval, transactional reviewed promotion, package/release provenance, tests, and published tamper regression.
 - `gates/gate-459-installed-plugin-review-promotion-regression.md` - Gate 459, proved installed stale-preview rollback, reviewed promotion, restart visibility, release pass, evidence/report tamper blocking, uninstall, and cleanup.
 - `gates/gate-460-desktop-release-candidate-workspace-contract.md` - Gate 460, defined the ordered desktop validate/package/release-verification workflow, exact blocking diagnostics, reviewed-plugin provenance, freshness, contained evidence actions, and no-publish boundary.
+- `gates/gate-461-desktop-release-candidate-workspace-implementation.md` - Gate 461, implemented the cancellable ordered desktop Release Candidate workflow, exact diagnostics, reviewed-plugin provenance, stale/containment gates, 775-test coverage, publication, and isolated installed smoke.
+- `gates/gate-462-installed-release-candidate-ui-regression.md` - Gate 462, added repeatable installed WPF automation proving ready, evidence-action, stale, blocked, exact-diagnostic, stage short-circuit, uninstall, and cleanup behavior.
+- `gates/gate-463-release-candidate-remediation-navigation-contract.md` - Gate 463, defined canonical diagnostic explanation, exact issue-context preservation, stale-safe controls, and deterministic rule-family navigation without automatic fixes or source mutation.
 
 Next gates:
 
 - Gate 315 - harden the WPF app-shell scaffold and backend bridge after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
-- Gate 461 - implement and verify the end-to-end desktop Release Candidate workspace, including published and installed regression coverage.
+- Gate 464 - implement and verify the Release Candidate diagnostic explanation panel and deterministic workspace navigation defined by Gate 463.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.
