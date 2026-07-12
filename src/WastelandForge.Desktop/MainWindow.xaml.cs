@@ -59,10 +59,13 @@ public partial class MainWindow
     private string? mo2ExportPreviewToken;
     private string? exportedMo2ModFolder;
     private readonly ReleaseCandidateWorkspace releaseCandidateWorkspace;
+    private readonly ReleaseCandidateMo2TestCopy releaseCandidateMo2TestCopy;
     private ReleaseCandidateResult? releaseCandidateResult;
+    private Mo2TestCopyPreview? releaseCandidateMo2Preview;
+    private string? releaseCandidateMo2Destination;
+    private LocalReleaseHandoffPreview? localReleaseHandoffPreview;
     private CancellationTokenSource? releaseCandidateCancellation;
     private ReleaseCandidateDiagnostic? selectedReleaseCandidateDiagnostic;
-    private DiagnosticExplanation? releaseCandidateExplanation;
     private readonly DiagnosticExplanationRequestGate diagnosticExplanationRequests = new();
     private readonly Dictionary<string, string> lastNarrativeWorkflowByCategory = new(StringComparer.Ordinal);
     private NarrativeInventoryResult narrativeInventory = NarrativeInventoryResult.NotLoaded();
@@ -72,7 +75,9 @@ public partial class MainWindow
 
     public MainWindow()
     {
-        releaseCandidateWorkspace = new ReleaseCandidateWorkspace(new ForgeReleaseCandidateCommandRunner(forge));
+        var candidateRunner = new ForgeReleaseCandidateCommandRunner(forge);
+        releaseCandidateWorkspace = new ReleaseCandidateWorkspace(candidateRunner);
+        releaseCandidateMo2TestCopy = new ReleaseCandidateMo2TestCopy(candidateRunner);
         InitializeComponent();
         InitializeNarrativeWorkspace();
 
@@ -1327,6 +1332,7 @@ public partial class MainWindow
     {
         var root = GetProjectRootOrReport();
         if (root is null || releaseCandidateCancellation is not null) return;
+        InvalidateLocalReleaseHandoff();
         releaseCandidateCancellation = new CancellationTokenSource();
         ReleaseCandidateStateTextBlock.Text = "Running";
         ReleaseCandidateMessageTextBlock.Text = "Running validation...";
@@ -1362,6 +1368,8 @@ public partial class MainWindow
         var selectedChanged = !StringComparer.OrdinalIgnoreCase.Equals(Path.GetFullPath(ProjectPathTextBox.Text.Trim()), releaseCandidateResult.ProjectRoot);
         if (!selectedChanged && !ReleaseCandidateWorkspace.IsStale(releaseCandidateResult)) return;
         releaseCandidateResult = releaseCandidateResult with { State = ReleaseCandidateState.Stale, Message = "Project inputs changed. Run the release candidate check again." };
+        InvalidateReleaseCandidateMo2Preview();
+        InvalidateLocalReleaseHandoff();
         RenderReleaseCandidate(refreshData: false);
     }
 
@@ -1378,7 +1386,6 @@ public partial class MainWindow
         if (refreshData)
         {
             selectedReleaseCandidateDiagnostic = null;
-            releaseCandidateExplanation = null;
             diagnosticExplanationRequests.Advance();
             ReleaseCandidateStagesDataGrid.ItemsSource = releaseCandidateResult.Stages;
             ReleaseCandidateDiagnosticsDataGrid.ItemsSource = releaseCandidateResult.Stages.SelectMany(stage => stage.Diagnostics).ToArray();
@@ -1386,17 +1393,145 @@ public partial class MainWindow
             RenderDiagnosticRemediation();
         }
         var usable = releaseCandidateResult.State is ReleaseCandidateState.CandidateReady or ReleaseCandidateState.Blocked;
+        OpenCandidateFomodFolderButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.FomodRoot, out _);
+        OpenCandidateFomodArchiveButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.FomodArchive, out _);
         OpenCandidatePackageFolderButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.PackageRoot, out _);
         OpenCandidatePackageArchiveButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.PackageArchive, out _);
         OpenCandidateReleaseEvidenceButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.ReleaseRoot, out _);
         OpenCandidateReleaseHandoffButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.ReleaseHandoff, out _);
+        OpenCandidatePreparedFolderButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.PreparedRoot, out _);
+        OpenCandidatePreparedArchiveButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.PreparedArchive, out _);
+        PreviewLocalReleaseHandoffButton.IsEnabled = releaseCandidateResult.State == ReleaseCandidateState.CandidateReady;
+        if (releaseCandidateResult.State != ReleaseCandidateState.CandidateReady) InvalidateLocalReleaseHandoff();
+        PreviewCandidateMo2TestCopyButton.IsEnabled = releaseCandidateResult.State == ReleaseCandidateState.CandidateReady;
+        if (releaseCandidateResult.State == ReleaseCandidateState.CandidateReady)
+        {
+            if (string.IsNullOrWhiteSpace(CandidateMo2ModsRootTextBox.Text)) CandidateMo2ModsRootTextBox.Text = SettingsMo2ModsRootTextBox.Text;
+            if (string.IsNullOrWhiteSpace(CandidateMo2ModNameTextBox.Text)) CandidateMo2ModNameTextBox.Text = Path.GetFileName(releaseCandidateResult.ProjectRoot.TrimEnd(Path.DirectorySeparatorChar)) + " Test";
+        }
         UpdateDiagnosticRemediationActions();
+    }
+
+    private void CandidateMo2InputChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => InvalidateReleaseCandidateMo2Preview();
+
+    private void BrowseLocalReleaseDestinationClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Title = "Select local release handoff folder", InitialDirectory = Directory.Exists(LocalReleaseDestinationTextBox.Text) ? LocalReleaseDestinationTextBox.Text : Environment.CurrentDirectory };
+        if (dialog.ShowDialog() == true) LocalReleaseDestinationTextBox.Text = dialog.FolderName;
+    }
+
+    private void LocalReleaseDestinationChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        InvalidateLocalReleaseHandoff();
+        if (VerifyLocalReleaseHandoffButton is not null) VerifyLocalReleaseHandoffButton.IsEnabled = Directory.Exists(LocalReleaseDestinationTextBox.Text);
+    }
+
+    private void PreviewLocalReleaseHandoffClicked(object sender, RoutedEventArgs e)
+    {
+        if (releaseCandidateResult is null) return;
+        var result = ReleaseCandidateLocalHandoff.Preview(releaseCandidateResult, LocalReleaseDestinationTextBox.Text);
+        localReleaseHandoffPreview = result.Preview;
+        CreateLocalReleaseHandoffButton.IsEnabled = result.Success;
+        OpenLocalReleaseHandoffButton.IsEnabled = false;
+        LocalReleaseHandoffStatusTextBlock.Text = result.Message;
+        LocalReleaseHandoffDetailsTextBox.Text = result.Preview is null ? string.Empty : $"Archive: {result.Preview.ArchivePath}{Environment.NewLine}SHA-256: {result.Preview.Sha256}{Environment.NewLine}Bytes: {result.Preview.Length}";
+    }
+
+    private void CreateLocalReleaseHandoffClicked(object sender, RoutedEventArgs e)
+    {
+        if (releaseCandidateResult is null || localReleaseHandoffPreview is null) return;
+        var result = ReleaseCandidateLocalHandoff.Create(releaseCandidateResult, localReleaseHandoffPreview);
+        LocalReleaseHandoffStatusTextBlock.Text = result.Message;
+        CreateLocalReleaseHandoffButton.IsEnabled = false;
+        OpenLocalReleaseHandoffButton.IsEnabled = result.Success && result.Preview is not null && File.Exists(result.Preview.ArchivePath);
+    }
+
+    private void VerifyLocalReleaseHandoffClicked(object sender, RoutedEventArgs e)
+    {
+        var result = ReleaseCandidateLocalHandoff.Verify(LocalReleaseDestinationTextBox.Text);
+        LocalReleaseHandoffStatusTextBlock.Text = result.Message;
+        LocalReleaseHandoffDetailsTextBox.Text = result.Success ? $"Archive: {result.ArchivePath}{Environment.NewLine}Evidence: {result.ManifestPath}{Environment.NewLine}SHA-256: {result.Sha256}{Environment.NewLine}Bytes: {result.Length}" : string.Empty;
+        OpenLocalReleaseHandoffButton.IsEnabled = result.Success;
+    }
+
+    private void OpenLocalReleaseHandoffClicked(object sender, RoutedEventArgs e)
+    {
+        if (!Directory.Exists(LocalReleaseDestinationTextBox.Text)) { OpenLocalReleaseHandoffButton.IsEnabled = false; return; }
+        OpenFolder(Path.GetFullPath(LocalReleaseDestinationTextBox.Text));
+    }
+
+    private void InvalidateLocalReleaseHandoff()
+    {
+        localReleaseHandoffPreview = null;
+        if (CreateLocalReleaseHandoffButton is not null) CreateLocalReleaseHandoffButton.IsEnabled = false;
+        if (OpenLocalReleaseHandoffButton is not null) OpenLocalReleaseHandoffButton.IsEnabled = false;
+    }
+
+    private void BrowseCandidateMo2ModsRootClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Title = "Select the existing Mod Organizer 2 mods folder", InitialDirectory = Directory.Exists(CandidateMo2ModsRootTextBox.Text) ? CandidateMo2ModsRootTextBox.Text : Environment.CurrentDirectory };
+        if (dialog.ShowDialog(this) == true) CandidateMo2ModsRootTextBox.Text = dialog.FolderName;
+    }
+
+    private async void PreviewCandidateMo2TestCopyClicked(object sender, RoutedEventArgs e)
+    {
+        if (releaseCandidateResult is null) return;
+        SetBusy(true);
+        try
+        {
+            var result = await releaseCandidateMo2TestCopy.PreviewAsync(releaseCandidateResult, CandidateMo2ModsRootTextBox.Text.Trim(), CandidateMo2ModNameTextBox.Text, CancellationToken.None);
+            releaseCandidateMo2Preview = result.Preview;
+            CreateCandidateMo2TestCopyButton.IsEnabled = result.Success;
+            CandidateMo2TestCopyStatusTextBlock.Text = result.Message;
+            CandidateMo2TestCopyDetailsTextBox.Text = result.Preview is null ? result.Message : FormatMo2TestCopyPreview(result.Preview);
+        }
+        finally { SetBusy(false); }
+    }
+
+    private async void CreateCandidateMo2TestCopyClicked(object sender, RoutedEventArgs e)
+    {
+        if (releaseCandidateResult is null || releaseCandidateMo2Preview is null) return;
+        var approved = releaseCandidateMo2Preview;
+        InvalidateReleaseCandidateMo2Preview();
+        SetBusy(true);
+        try
+        {
+            var result = await releaseCandidateMo2TestCopy.CreateAsync(releaseCandidateResult, approved, CancellationToken.None);
+            CandidateMo2TestCopyStatusTextBlock.Text = result.Message;
+            releaseCandidateMo2Destination = result.Success ? result.Destination : null;
+            OpenCandidateMo2TestCopyButton.IsEnabled = result.Success && Directory.Exists(result.Destination);
+            if (result.Success) CandidateMo2TestCopyDetailsTextBox.Text += $"{Environment.NewLine}Manifest: {result.Manifest}{Environment.NewLine}Checksums: {result.Checksums}";
+            if (result.Success && !result.CandidateStillFresh)
+            {
+                releaseCandidateResult = releaseCandidateResult with { State = ReleaseCandidateState.Stale, Message = "Candidate package evidence was refreshed during test-copy creation. Run the Release Candidate check again." };
+                RenderReleaseCandidate(refreshData: false);
+            }
+        }
+        finally { SetBusy(false); }
+    }
+
+    private void OpenCandidateMo2TestCopyClicked(object sender, RoutedEventArgs e)
+    {
+        if (releaseCandidateMo2Destination is null || !Directory.Exists(releaseCandidateMo2Destination)) { OpenCandidateMo2TestCopyButton.IsEnabled = false; return; }
+        OpenFolder(releaseCandidateMo2Destination);
+    }
+
+    private void InvalidateReleaseCandidateMo2Preview()
+    {
+        releaseCandidateMo2Preview = null;
+        if (CreateCandidateMo2TestCopyButton is not null) CreateCandidateMo2TestCopyButton.IsEnabled = false;
+    }
+
+    private static string FormatMo2TestCopyPreview(Mo2TestCopyPreview preview)
+    {
+        var lines = new List<string> { $"Destination: {preview.Destination}", $"Entries: {preview.Entries.Count}", $"Backend: {preview.BackendVersion}", "Side effects: all disabled", "" };
+        lines.AddRange(preview.Entries.Select(entry => $"{entry.DataPath} | {entry.Component} | {entry.Length} | {entry.Sha256}"));
+        return string.Join(Environment.NewLine, lines);
     }
 
     private void ReleaseCandidateDiagnosticSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         selectedReleaseCandidateDiagnostic = ReleaseCandidateDiagnosticsDataGrid.SelectedItem as ReleaseCandidateDiagnostic;
-        releaseCandidateExplanation = null;
         diagnosticExplanationRequests.Advance();
         RenderDiagnosticRemediation();
     }
@@ -1414,14 +1549,12 @@ public partial class MainWindow
         if (!diagnosticExplanationRequests.IsCurrent(request) || !ReferenceEquals(diagnostic, selectedReleaseCandidateDiagnostic)) return;
         if (result.ExitCode != 0)
         {
-            releaseCandidateExplanation = null;
             DiagnosticExplanationStatusTextBlock.Text = "Unavailable";
             DiagnosticExplanationTextBox.Text = string.IsNullOrWhiteSpace(result.StandardError) ? $"Explain command exited with code {result.ExitCode}." : result.StandardError.Trim();
             UpdateDiagnosticRemediationActions();
             return;
         }
         var read = DiagnosticRemediation.Parse(result.StandardOutput, diagnostic.RuleId);
-        releaseCandidateExplanation = read.Explanation;
         DiagnosticExplanationStatusTextBlock.Text = read.Success ? "Ready" : "Unavailable";
         DiagnosticExplanationTextBox.Text = read.Explanation is null ? read.Message : FormatDiagnosticExplanation(read.Explanation);
         UpdateDiagnosticRemediationActions();
@@ -1479,8 +1612,12 @@ public partial class MainWindow
 
     private void OpenCandidatePackageFolderClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.PackageRoot, directory: true);
     private void OpenCandidatePackageArchiveClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.PackageArchive, directory: false);
+    private void OpenCandidateFomodFolderClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.FomodRoot, directory: true);
+    private void OpenCandidateFomodArchiveClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.FomodArchive, directory: false);
     private void OpenCandidateReleaseEvidenceClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.ReleaseRoot, directory: true);
     private void OpenCandidateReleaseHandoffClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.ReleaseHandoff, directory: false);
+    private void OpenCandidatePreparedFolderClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.PreparedRoot, directory: true);
+    private void OpenCandidatePreparedArchiveClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.PreparedArchive, directory: false);
 
     private void OpenReleaseCandidatePath(string? path, bool directory)
     {
@@ -1501,24 +1638,37 @@ public partial class MainWindow
     private string? geckWorkspaceWorklist;
     private string? geckWorkspaceProject;
     private GeckHandoffWorkspaceResult? geckWorkspaceSession;
+    private readonly GeckLaunchService geckLaunchService = new();
+    private GeckLaunchPreview? geckLaunchPreview;
+    private readonly Mo2LaunchRequestService mo2LaunchRequestService = new();
+    private Mo2LaunchRequestPreview? geckMo2RequestPreview;
     private string? pluginArtifactPreviewToken;
     private string? pluginReviewPreviewToken;
+    private readonly XEditLaunchService xeditLaunchService = new();
+    private XEditLaunchPreview? xeditLaunchPreview;
+    private Mo2LaunchRequestPreview? xeditMo2RequestPreview;
 
     private void PluginIntakeInputChanged(object sender, EventArgs e) { pluginArtifactPreviewToken = null; if (ImportPluginArtifactButton is not null) ImportPluginArtifactButton.IsEnabled = false; }
     private void BrowsePluginArtifactClicked(object sender, RoutedEventArgs e) { var dialog = new Microsoft.Win32.OpenFileDialog { Title = "Select a human-authored plugin", Filter = "Fallout plugins (*.esp;*.esm)|*.esp;*.esm" }; if (dialog.ShowDialog(this) == true) PluginSourcePathTextBox.Text = dialog.FileName; }
     private PluginArtifactInput PluginInput() => new(PluginSourcePathTextBox.Text, PluginArtifactIdTextBox.Text, (PluginAuthoringToolComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "geck");
     private void PreviewPluginArtifactClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = PluginArtifactIntake.Preview(root, PluginInput()); pluginArtifactPreviewToken = preview.Token; ImportPluginArtifactButton.IsEnabled = preview.Success; PluginIntakeStatusTextBlock.Text = preview.Message; PluginIntakeDetailsTextBox.Text = preview.Details ?? preview.Message; }
     private void ImportPluginArtifactClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || pluginArtifactPreviewToken is null) return; var result = PluginArtifactIntake.Import(root, PluginInput(), pluginArtifactPreviewToken); pluginArtifactPreviewToken = null; ImportPluginArtifactButton.IsEnabled = false; PluginIntakeStatusTextBlock.Text = result.Message; if (result.Success) RefreshProjectOutputs(); }
-    private void PluginReviewInputChanged(object sender, EventArgs e) { pluginReviewPreviewToken = null; if (PromotePluginReviewButton is not null) PromotePluginReviewButton.IsEnabled = false; }
-    private void LoadPendingPluginsClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var read = PluginReviewPromotion.Load(root); PluginReviewArtifactComboBox.ItemsSource = read.Plugins.Where(plugin => plugin.ReviewStatus == "pending").ToArray(); PluginReviewArtifactComboBox.SelectedIndex = read.Plugins.Any(plugin => plugin.ReviewStatus == "pending") ? 0 : -1; PluginIntakeStatusTextBlock.Text = read.HasErrors ? read.Diagnostics.Issues[0].Message : $"Loaded {read.Plugins.Count(plugin => plugin.ReviewStatus == "pending")} pending plugin(s)."; }
+    private void PluginReviewInputChanged(object sender, EventArgs e) { pluginReviewPreviewToken = null; if (PromotePluginReviewButton is not null) PromotePluginReviewButton.IsEnabled = false; InvalidateXEditLaunch(); if (PreviewXEditLaunchButton is not null) PreviewXEditLaunchButton.IsEnabled = PluginReviewArtifactComboBox?.SelectedItem is PluginArtifactDefinition; }
+    private void LoadPendingPluginsClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; InvalidateXEditLaunch(); var read = PluginReviewPromotion.Load(root); PluginReviewArtifactComboBox.ItemsSource = read.Plugins.Where(plugin => plugin.ReviewStatus == "pending").ToArray(); PluginReviewArtifactComboBox.SelectedIndex = read.Plugins.Any(plugin => plugin.ReviewStatus == "pending") ? 0 : -1; PluginIntakeStatusTextBlock.Text = read.HasErrors ? read.Diagnostics.Issues[0].Message : $"Loaded {read.Plugins.Count(plugin => plugin.ReviewStatus == "pending")} pending plugin(s)."; }
     private void BrowsePluginReviewReportClicked(object sender, RoutedEventArgs e) { var dialog = new Microsoft.Win32.OpenFileDialog { Title = "Select existing xEdit review evidence", Filter = "Review evidence (*.json;*.txt;*.md)|*.json;*.txt;*.md|All files (*.*)|*.*" }; if (dialog.ShowDialog(this) == true) PluginReviewReportPathTextBox.Text = dialog.FileName; }
     private PluginReviewInput ReviewInput() => new((PluginReviewArtifactComboBox.SelectedItem as PluginArtifactDefinition)?.Id ?? "", PluginReviewReportPathTextBox.Text, PluginReviewerTextBox.Text, PluginReviewApprovalCheckBox.IsChecked == true);
     private void PreviewPluginReviewClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = PluginReviewPromotion.Preview(root, ReviewInput()); pluginReviewPreviewToken = preview.Token; PromotePluginReviewButton.IsEnabled = preview.Success; PluginIntakeStatusTextBlock.Text = preview.Message; PluginIntakeDetailsTextBox.Text = preview.Details ?? preview.Message; }
     private void PromotePluginReviewClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || pluginReviewPreviewToken is null) return; var result = PluginReviewPromotion.Promote(root, ReviewInput(), pluginReviewPreviewToken); pluginReviewPreviewToken = null; PromotePluginReviewButton.IsEnabled = false; PluginIntakeStatusTextBlock.Text = result.Message; if (result.Success) LoadPendingPluginsClicked(sender, e); }
+    private void PreviewXEditLaunchClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || PluginReviewArtifactComboBox.SelectedItem is not PluginArtifactDefinition plugin) return; var result = xeditLaunchService.Preview(root, plugin.Id, XEditPathTextBox.Text); xeditLaunchPreview = result.Preview; LaunchXEditButton.IsEnabled = result.Success; PreviewXEditMo2RequestButton.IsEnabled = result.Success; PluginIntakeStatusTextBlock.Text = result.Message; XEditLaunchDetailsTextBox.Text = result.Preview?.Details ?? string.Empty; }
+    private void LaunchXEditClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || xeditLaunchPreview is null || PluginReviewArtifactComboBox.SelectedItem is not PluginArtifactDefinition plugin) return; LaunchXEditButton.IsEnabled = false; var result = xeditLaunchService.Launch(root, plugin.Id, xeditLaunchPreview); xeditLaunchPreview = null; PluginIntakeStatusTextBlock.Text = result.Message; }
+    private void PreviewXEditMo2RequestClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || xeditLaunchPreview is null || PluginReviewArtifactComboBox.SelectedItem is not PluginArtifactDefinition plugin) return; var result = mo2LaunchRequestService.PreviewXEdit(root, plugin.Id, xeditLaunchPreview); xeditMo2RequestPreview = result.Preview; CreateXEditMo2RequestButton.IsEnabled = result.Success; PluginIntakeStatusTextBlock.Text = result.Message; XEditLaunchDetailsTextBox.Text = result.Preview?.Details ?? string.Empty; }
+    private void CreateXEditMo2RequestClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || xeditLaunchPreview is null || xeditMo2RequestPreview is null || PluginReviewArtifactComboBox.SelectedItem is not PluginArtifactDefinition plugin) return; var result = mo2LaunchRequestService.CreateXEdit(root, plugin.Id, xeditLaunchPreview, xeditMo2RequestPreview); CreateXEditMo2RequestButton.IsEnabled = false; PluginIntakeStatusTextBlock.Text = result.Message; }
+    private void InvalidateXEditLaunch() { xeditLaunchPreview = null; xeditMo2RequestPreview = null; if (LaunchXEditButton is not null) LaunchXEditButton.IsEnabled = false; if (PreviewXEditMo2RequestButton is not null) PreviewXEditMo2RequestButton.IsEnabled = false; if (CreateXEditMo2RequestButton is not null) CreateXEditMo2RequestButton.IsEnabled = false; }
 
     private void LoadGeckHandoffWorkspaceClicked(object sender, RoutedEventArgs e)
     {
         var root = GetProjectRootOrReport(); if (root is null) return;
+        InvalidateGeckLaunch();
         var result = GeckHandoffWorkspace.Inspect(root);
         geckWorkspaceProject = root;
         geckWorkspaceSession = result;
@@ -1530,7 +1680,56 @@ public partial class MainWindow
         GeckHandoffWorkspaceStatusTextBlock.Text = result.Message + (result.Safety.Count > 0 ? " Safety: " + string.Join(", ", result.Safety) + "." : "");
         GeckTaskCategoryComboBox.ItemsSource = new[] { "All categories" }.Concat(result.Tasks.Select(task => task.Category).Distinct(StringComparer.Ordinal).OrderBy(value => value, StringComparer.Ordinal)).ToArray();
         GeckTaskCategoryComboBox.SelectedIndex = result.Tasks.Count > 0 ? 0 : -1;
+        PreviewGeckLaunchButton.IsEnabled = result.Success && result.Freshness == "Fresh";
         ApplyGeckTaskFilters();
+    }
+
+    private void PreviewGeckLaunchClicked(object sender, RoutedEventArgs e)
+    {
+        if (geckWorkspaceProject is null || geckWorkspaceSession is null) return;
+        var result = geckLaunchService.Preview(geckWorkspaceProject, geckWorkspaceSession, GeckPathTextBox.Text);
+        geckLaunchPreview = result.Preview;
+        LaunchGeckButton.IsEnabled = result.Success;
+        PreviewGeckMo2RequestButton.IsEnabled = result.Success;
+        GeckHandoffWorkspaceStatusTextBlock.Text = result.Message;
+        GeckLaunchDetailsTextBox.Text = result.Preview?.Details ?? string.Empty;
+    }
+
+    private void PreviewGeckMo2RequestClicked(object sender, RoutedEventArgs e)
+    {
+        if (geckWorkspaceProject is null || geckWorkspaceSession is null || geckLaunchPreview is null) return;
+        var result = mo2LaunchRequestService.PreviewGeck(geckWorkspaceProject, geckWorkspaceSession, geckLaunchPreview);
+        geckMo2RequestPreview = result.Preview;
+        CreateGeckMo2RequestButton.IsEnabled = result.Success;
+        GeckHandoffWorkspaceStatusTextBlock.Text = result.Message;
+        GeckLaunchDetailsTextBox.Text = result.Preview?.Details ?? string.Empty;
+    }
+
+    private void CreateGeckMo2RequestClicked(object sender, RoutedEventArgs e)
+    {
+        if (geckWorkspaceProject is null || geckWorkspaceSession is null || geckLaunchPreview is null || geckMo2RequestPreview is null) return;
+        var result = mo2LaunchRequestService.CreateGeck(geckWorkspaceProject, geckWorkspaceSession, geckLaunchPreview, geckMo2RequestPreview);
+        CreateGeckMo2RequestButton.IsEnabled = false;
+        GeckHandoffWorkspaceStatusTextBlock.Text = result.Message;
+    }
+
+    private void LaunchGeckClicked(object sender, RoutedEventArgs e)
+    {
+        if (geckWorkspaceProject is null || geckWorkspaceSession is null || geckLaunchPreview is null) return;
+        LaunchGeckButton.IsEnabled = false;
+        var result = geckLaunchService.Launch(geckWorkspaceProject, geckWorkspaceSession, geckLaunchPreview);
+        geckLaunchPreview = null;
+        GeckHandoffWorkspaceStatusTextBlock.Text = result.Message;
+    }
+
+    private void InvalidateGeckLaunch()
+    {
+        geckLaunchPreview = null;
+        geckMo2RequestPreview = null;
+        if (LaunchGeckButton is not null) LaunchGeckButton.IsEnabled = false;
+        if (PreviewGeckMo2RequestButton is not null) PreviewGeckMo2RequestButton.IsEnabled = false;
+        if (CreateGeckMo2RequestButton is not null) CreateGeckMo2RequestButton.IsEnabled = false;
+        if (PreviewGeckLaunchButton is not null) PreviewGeckLaunchButton.IsEnabled = geckWorkspaceSession?.CanUpdate == true;
     }
 
     private void GeckTaskFilterChanged(object sender, EventArgs e) => ApplyGeckTaskFilters();
@@ -2053,6 +2252,8 @@ public partial class MainWindow
 
     private void SettingsPathChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
+        InvalidateGeckLaunch();
+        InvalidateXEditLaunch();
         UpdateSetupReadiness();
     }
 

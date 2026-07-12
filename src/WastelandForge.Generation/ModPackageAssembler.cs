@@ -13,7 +13,7 @@ namespace WastelandForge.Generation;
 public sealed record ModPackageOptions(string ProjectRoot, string? OutputDirectory, string ToolVersion, bool DryRun);
 public sealed record ModPackageEntry(string Component, string Kind, string Id, string SourceFile, string DataPath, string StagedPath, string MediaType, long Length, string Sha256);
 public sealed record ModPackageOutputs(string Root, string StagingRoot, string PackageArchive, string PackageManifest, string InstallPlan, string BuildManifest, string Checksums);
-public sealed record ModPackageResult(string ProjectRoot, string Target, string Status, bool DryRun, string? ProjectId, DiagnosticReport Diagnostics, IReadOnlyList<string> IncludedComponents, IReadOnlyList<string> ExcludedComponents, IReadOnlyList<ModPackageEntry> Entries, ModPackageOutputs? Outputs, IReadOnlyList<FileDigest> OutputDigests)
+public sealed record ModPackageResult(string ProjectRoot, string Target, string Status, bool DryRun, string? ProjectId, DiagnosticReport Diagnostics, IReadOnlyList<string> IncludedComponents, IReadOnlyList<string> ExcludedComponents, IReadOnlyList<ModPackageEntry> Entries, ModPackageOutputs? Outputs, IReadOnlyList<FileDigest> OutputDigests, string PackageSource = "rebuilt")
 {
     public bool HasErrors => Diagnostics.HasErrors;
 }
@@ -63,7 +63,7 @@ public sealed class ModPackageAssembler
             return Result(projectRoot, options, projectId, "failed", issues, included, excluded, [], null, []);
         }
 
-        var workRoot = Path.Combine(projectRoot, "dist", $".mod-package-{Guid.NewGuid():N}");
+        var workRoot = Path.Combine(projectRoot, "dist", $"mod-package.work-{Guid.NewGuid():N}");
         try
         {
             var candidates = new List<Candidate>();
@@ -138,12 +138,13 @@ public sealed class ModPackageAssembler
 
             var finalRoot = Path.Combine(workRoot, "final");
             var stagingRoot = Path.Combine(finalRoot, "staging", "Data");
+            OutputFileSystem.EnsureDirectory(stagingRoot);
             var entries = new List<ModPackageEntry>();
             foreach (var candidate in candidates.OrderBy(item => item.DataPath, StringComparer.Ordinal))
             {
                 var staged = Path.GetFullPath(Path.Combine(stagingRoot, candidate.DataPath.Replace('/', Path.DirectorySeparatorChar)));
-                Directory.CreateDirectory(Path.GetDirectoryName(staged)!);
-                File.Copy(candidate.FullPath, staged, overwrite: false);
+                OutputFileSystem.EnsureDirectory(Path.GetDirectoryName(staged)!);
+                OutputFileSystem.CopyFile(candidate.FullPath, staged, overwrite: false);
                 var digest = Digest(staged, finalRoot);
                 entries.Add(new ModPackageEntry(candidate.Component, candidate.Kind, candidate.Id, NormalizeRelative(candidate.SourceFile), candidate.DataPath, NormalizeRelative(Path.GetRelativePath(finalRoot, staged)), candidate.MediaType, digest.Length, digest.Sha256));
             }
@@ -174,16 +175,64 @@ public sealed class ModPackageAssembler
             var checksumsPath = Path.Combine(finalRoot, "checksums.sha256");
             WriteChecksums(checksumsPath, finalRoot, evidenceFiles.Append(buildManifestPath));
 
-            if (Directory.Exists(outputRoot)) Directory.Delete(outputRoot, recursive: true);
-            Directory.CreateDirectory(Path.GetDirectoryName(outputRoot)!);
-            Directory.Move(finalRoot, outputRoot);
+            DeleteWorkRoot(outputRoot);
+            OutputFileSystem.EnsureDirectory(Path.GetDirectoryName(outputRoot)!);
+            MoveOutput(finalRoot, outputRoot);
             var outputs = CreateOutputs(projectRoot, outputRoot);
             var digests = Directory.GetFiles(outputRoot, "*", SearchOption.AllDirectories).Select(path => Digest(path, projectRoot)).OrderBy(item => item.Path, StringComparer.Ordinal).ToArray();
             return Result(projectRoot, options, projectId, "passed", issues, included, excluded, entries, outputs, digests);
         }
         finally
         {
-            if (Directory.Exists(workRoot)) Directory.Delete(workRoot, recursive: true);
+            DeleteWorkRoot(workRoot);
+        }
+    }
+
+    private static void DeleteWorkRoot(string workRoot)
+    {
+        for (var attempt = 0; attempt < 4 && Directory.Exists(workRoot); attempt++)
+        {
+            try
+            {
+                Directory.Delete(workRoot, recursive: true);
+            }
+            catch (IOException) when (attempt < 3)
+            {
+                Thread.Sleep(50 * (attempt + 1));
+            }
+            catch (UnauthorizedAccessException) when (attempt < 3)
+            {
+                Thread.Sleep(50 * (attempt + 1));
+            }
+            catch (IOException)
+            {
+                return;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return;
+            }
+        }
+    }
+
+    private static void MoveOutput(string sourceRoot, string outputRoot)
+    {
+        try
+        {
+            Directory.Move(sourceRoot, outputRoot);
+        }
+        catch (IOException) when (OperatingSystem.IsWindows())
+        {
+            OutputFileSystem.EnsureDirectory(outputRoot);
+            foreach (var directory in Directory.EnumerateDirectories(sourceRoot, "*", SearchOption.AllDirectories))
+            {
+                OutputFileSystem.EnsureDirectory(Path.Combine(outputRoot, Path.GetRelativePath(sourceRoot, directory)));
+            }
+
+            foreach (var file in Directory.EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories))
+            {
+                OutputFileSystem.CopyFile(file, Path.Combine(outputRoot, Path.GetRelativePath(sourceRoot, file)), overwrite: true);
+            }
         }
     }
 
@@ -284,11 +333,24 @@ public sealed class ModPackageAssembler
 
     private static void WriteArchive(string path, string stagingRoot, IReadOnlyList<ModPackageEntry> entries, DateTimeOffset timestamp)
     {
-        using var archive = ZipFile.Open(path, ZipArchiveMode.Create);
-        foreach (var item in entries.OrderBy(entry => entry.DataPath, StringComparer.Ordinal))
+        var archivePath = OperatingSystem.IsWindows() ? Path.GetTempFileName() : path;
+        try
         {
-            var entry = archive.CreateEntry(item.DataPath, CompressionLevel.NoCompression); entry.LastWriteTime = timestamp;
-            using var input = File.OpenRead(Path.Combine(stagingRoot, item.DataPath.Replace('/', Path.DirectorySeparatorChar))); using var output = entry.Open(); input.CopyTo(output);
+            if (OperatingSystem.IsWindows()) File.Delete(archivePath);
+            using (var archive = ZipFile.Open(archivePath, ZipArchiveMode.Create))
+            {
+                foreach (var item in entries.OrderBy(entry => entry.DataPath, StringComparer.Ordinal))
+                {
+                    var entry = archive.CreateEntry(item.DataPath, CompressionLevel.NoCompression); entry.LastWriteTime = timestamp;
+                    using var input = File.OpenRead(Path.Combine(stagingRoot, item.DataPath.Replace('/', Path.DirectorySeparatorChar))); using var output = entry.Open(); input.CopyTo(output);
+                }
+            }
+
+            if (OperatingSystem.IsWindows()) OutputFileSystem.CopyFile(archivePath, path, overwrite: false);
+        }
+        finally
+        {
+            if (!StringComparer.Ordinal.Equals(archivePath, path) && File.Exists(archivePath)) File.Delete(archivePath);
         }
     }
 
@@ -315,8 +377,8 @@ public sealed class ModPackageAssembler
     }
 
     private static FileDigest Digest(string path, string root) { using var stream = File.OpenRead(path); return new FileDigest(NormalizeRelative(Path.GetRelativePath(root, path)), Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant(), stream.Length); }
-    private static void WriteJson(string path, JsonObject value) { Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllText(path, value.ToJsonString(JsonOptions) + "\n", new System.Text.UTF8Encoding(false)); }
-    private static void WriteChecksums(string path, string root, IEnumerable<string> files) { var lines = files.Select(file => Digest(file, root)).OrderBy(item => item.Path, StringComparer.Ordinal).Select(item => $"{item.Sha256}  {item.Path}"); File.WriteAllText(path, string.Join("\n", lines) + "\n", new System.Text.UTF8Encoding(false)); }
+    private static void WriteJson(string path, JsonObject value) => OutputFileSystem.WriteUtf8NoBom(path, value.ToJsonString(JsonOptions) + "\n");
+    private static void WriteChecksums(string path, string root, IEnumerable<string> files) { var lines = files.Select(file => Digest(file, root)).OrderBy(item => item.Path, StringComparer.Ordinal).Select(item => $"{item.Sha256}  {item.Path}"); OutputFileSystem.WriteUtf8NoBom(path, string.Join("\n", lines) + "\n"); }
     private static DiagnosticIssue Issue(string rule, string title, string message, string file, string? projectId = null) => new(RuleId.Parse(rule), DiagnosticSeverity.Error, "build", title, message, new SourceLocation(NormalizeRelative(file)), projectId is null ? null : LogicalId.Parse(projectId), docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{rule}"));
     private static DiagnosticIssue Warning(string rule, string title, string message, string file, string? projectId = null) => new(RuleId.Parse(rule), DiagnosticSeverity.Warning, "build", title, message, new SourceLocation(NormalizeRelative(file)), projectId is null ? null : LogicalId.Parse(projectId), docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{rule}"));
     private static ModPackageResult Result(string root, ModPackageOptions options, string? projectId, string status, IReadOnlyList<DiagnosticIssue> issues, IReadOnlyList<string> included, IReadOnlyList<string> excluded, IReadOnlyList<ModPackageEntry> entries, ModPackageOutputs? outputs, IReadOnlyList<FileDigest> digests) => new(root, Target, status, options.DryRun, projectId, new DiagnosticReport(projectId is null ? null : LogicalId.Parse(projectId), issues), included, excluded, entries, outputs, digests);

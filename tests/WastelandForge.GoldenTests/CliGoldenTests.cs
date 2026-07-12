@@ -5971,6 +5971,27 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void PackageFomodReportsRequiredFilesArchiveAndHelp()
+    {
+        var projectRoot = CopyFixtureProject("CombinedModExample");
+        var result = RunCli("package", projectRoot, "--target", "fomod", "--format", "json", "--no-input");
+        var json = JsonNode.Parse(result.Stdout) ?? throw new InvalidOperationException("FOMOD package JSON did not parse.");
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal("passed", (string?)json["status"]);
+        Assert.Equal("fomod", (string?)json["target"]);
+        Assert.Equal(3, (int?)json["summary"]?["entries"]);
+        Assert.Equal("dist/fomod/package.zip", (string?)json["outputs"]?["packageArchive"]);
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "fomod", "staging", "fomod", "info.xml")));
+        Assert.True(File.Exists(Path.Combine(projectRoot, "dist", "fomod", "staging", "fomod", "ModuleConfig.xml")));
+
+        var help = RunCli("package", "--help");
+        Assert.Equal(0, help.ExitCode);
+        Assert.Contains("Target 'fomod'", help.Stdout, StringComparison.Ordinal);
+        Assert.Contains("dist/fomod/package.zip", help.Stdout, StringComparison.Ordinal);
+        Assert.Contains("--target fomod", help.Stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void PackageGeckHandoffReportsWorklistsAndSafetyEvidence()
     {
         var projectRoot = CopyFixtureProject("ExampleMod");
@@ -7988,6 +8009,47 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void ReleasePrepareStagesVerifiedFomodAndRefusesTamperedCandidate()
+    {
+        var projectRoot = CopyFixtureProject("CombinedModExample");
+        Assert.Equal(0, RunCli("package", projectRoot, "--target", "fomod", "--format", "json", "--no-input").ExitCode);
+
+        var prepared = RunCli("release", "prepare", projectRoot, "--format", "json", "--no-input");
+        var json = JsonNode.Parse(prepared.Stdout)!;
+        Assert.Equal(0, prepared.ExitCode);
+        Assert.Equal("prepared", (string?)json["status"]);
+        Assert.Equal(9, json["plannedOutputs"]?.AsArray().Count);
+        Assert.Equal(8, json["writtenOutputs"]?.AsArray().Count);
+
+        var sourceArchive = Path.Combine(projectRoot, "dist", "fomod", "package.zip");
+        var stagedArchive = Path.Combine(projectRoot, "dist", "release-prepare", "staging", "distributable", "package.zip");
+        var releaseArchive = Path.Combine(projectRoot, "dist", "release-prepare", "archives", "release.zip");
+        Assert.Equal(File.ReadAllBytes(sourceArchive), File.ReadAllBytes(stagedArchive));
+        using (var archive = ZipFile.OpenRead(releaseArchive))
+        {
+            Assert.Equal([
+                "release-archive-plan.json", "release-plan.json", "release-summary.json",
+                "staging/distributable/build-manifest.json", "staging/distributable/checksums.sha256",
+                "staging/distributable/fomod-manifest.json", "staging/distributable/package.zip",
+                "staging/release-payload.json"
+            ], archive.Entries.Select(entry => entry.FullName));
+        }
+        var staging = JsonNode.Parse(File.ReadAllText(Path.Combine(projectRoot, "dist", "release-prepare", "staging", "release-payload.json")))!;
+        Assert.Equal("staged-fomod", (string?)staging["payload"]?["status"]);
+        Assert.Equal("fomod-required-files-5.0", (string?)staging["payload"]?["packageType"]);
+        Assert.Equal(4, staging["payload"]?["sourceDigests"]?.AsArray().Count);
+
+        var previousRelease = File.ReadAllBytes(releaseArchive);
+        File.AppendAllText(sourceArchive, "tamper");
+        var refused = RunCli("release", "prepare", projectRoot, "--format", "json", "--no-input");
+        var refusal = JsonNode.Parse(refused.Stdout)!;
+        Assert.Equal(6, refused.ExitCode);
+        Assert.Equal("refused", (string?)refusal["status"]);
+        Assert.Equal("refused-fomod-evidence", (string?)refusal["outputSafety"]?["status"]);
+        Assert.Equal(previousRelease, File.ReadAllBytes(releaseArchive));
+    }
+
+    [Fact]
     public void ReleasePrepareDryRunReportsPlanningWithoutWritingFiles()
     {
         var projectRoot = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"), "release-prepare-plan");
@@ -8025,7 +8087,7 @@ public sealed class CliGoldenTests
 
         Assert.Equal(0, result.ExitCode);
         Assert.Contains("forge release prepare", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("Gate 268 writes local staging/release-payload.json, release-archive-plan.json, archives/release.zip, release-archive-evidence.json, release-plan.json, release-summary.json, build-manifest.json, and checksums.sha256 files only.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Writes local staging/release-payload.json, release-archive-plan.json, archives/release.zip, release-archive-evidence.json, release-plan.json, release-summary.json, build-manifest.json, and checksums.sha256.", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("dist/release-prepare/staging/release-payload.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("dist/release-prepare/release-archive-plan.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("dist/release-prepare/archives/release.zip", result.Stdout, StringComparison.Ordinal);
@@ -8034,7 +8096,7 @@ public sealed class CliGoldenTests
         Assert.Contains("dist/release-prepare/release-summary.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("dist/release-prepare/build-manifest.json", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("dist/release-prepare/checksums.sha256", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("It creates a deterministic local ZIP skeleton and archive evidence sidecar but does not assemble FOMOD installers, publish releases, call remote repositories, sign or attest artifacts, execute external tools, mutate plugins, automate MO2 or GECK, run runtime probes, or use AI.", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("it verifies and stages package.zip plus FOMOD manifest", result.Stdout, StringComparison.Ordinal);
         Assert.Equal(string.Empty, result.Stderr);
     }
 

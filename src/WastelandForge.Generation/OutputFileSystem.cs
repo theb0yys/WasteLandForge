@@ -3,7 +3,7 @@ using System.Text;
 
 namespace WastelandForge.Generation;
 
-internal static class OutputFileSystem
+public static class OutputFileSystem
 {
     private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 

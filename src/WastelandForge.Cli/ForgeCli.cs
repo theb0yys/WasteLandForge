@@ -560,11 +560,9 @@ internal static class ForgeCli
 
         if (StringComparer.Ordinal.Equals(parse.Target, ModPackageAssembler.Target))
         {
-            var modResult = new ModPackageAssembler().Package(new ModPackageOptions(
-                parse.ProjectPath,
-                parse.OutputDirectory,
-                CliConstants.Version,
-                parse.DryRun));
+            var modResult = parse.ReuseExistingPackage
+                ? new ExistingModPackageLoader().Load(new ExistingModPackageOptions(parse.ProjectPath, CliConstants.Version, parse.DryRun, parse.ExpectedPackageManifestSha256, parse.ExpectedPackageManifestLength, parse.ExpectedBuildManifestSha256, parse.ExpectedBuildManifestLength))
+                : new ModPackageAssembler().Package(new ModPackageOptions(parse.ProjectPath, parse.OutputDirectory, CliConstants.Version, parse.DryRun));
             Mo2ExportResult? exportResult = null;
             if (parse.Mo2ModsRoot is not null && parse.Mo2ModName is not null && !modResult.HasErrors)
             {
@@ -585,6 +583,12 @@ internal static class ForgeCli
             var handoff = new GeckHandoffEmitter().Package(new GeckHandoffOptions(parse.ProjectPath, parse.OutputDirectory, CliConstants.Version, parse.DryRun));
             Console.Write(CliConstants.IsMachineFormat(parse.Format) ? GeckHandoffResultWriter.Json(handoff) : GeckHandoffResultWriter.Text(handoff));
             return handoff.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+        }
+        if (StringComparer.Ordinal.Equals(parse.Target, FomodPackageEmitter.Target))
+        {
+            var fomod = new FomodPackageEmitter().Package(new(parse.ProjectPath, CliConstants.Version, parse.DryRun));
+            Console.Write(CliConstants.IsMachineFormat(parse.Format) ? FomodPackageResultWriter.Json(fomod) : FomodPackageResultWriter.Text(fomod));
+            return fomod.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
         }
 
         var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
@@ -1923,6 +1927,9 @@ internal static class ForgeCli
         string? mo2ModName = null;
         var dryRun = false;
         var verifyExisting = false;
+        var reuseExistingPackage = false;
+        string? expectedPackageManifestSha256 = null, expectedBuildManifestSha256 = null;
+        long? expectedPackageManifestLength = null, expectedBuildManifestLength = null;
         var projectWasSet = false;
 
         for (var index = 0; index < args.Length; index++)
@@ -1971,7 +1978,7 @@ internal static class ForgeCli
                     !StringComparer.Ordinal.Equals(target, ReportsPackageEmitter.Target) &&
                     !StringComparer.Ordinal.Equals(target, JipScriptPackageEmitter.Target) &&
                     !StringComparer.Ordinal.Equals(target, ModPackageAssembler.Target) &&
-                    !StringComparer.Ordinal.Equals(target, GeckHandoffEmitter.Target))
+                    !StringComparer.Ordinal.Equals(target, GeckHandoffEmitter.Target) && !StringComparer.Ordinal.Equals(target, FomodPackageEmitter.Target))
                 {
                     return PackageParseResult.Fail(format, $"Only targets '{ReportsPackageEmitter.Target}', '{McmJsonGenerator.Target}', '{JipScriptPackageEmitter.Target}', '{ModPackageAssembler.Target}', and '{GeckHandoffEmitter.Target}' are implemented for forge package in the current gate.");
                 }
@@ -2018,6 +2025,11 @@ internal static class ForgeCli
                 verifyExisting = true;
                 continue;
             }
+            if (StringComparer.Ordinal.Equals(arg, "--reuse-existing-package")) { reuseExistingPackage = true; continue; }
+            if (StringComparer.Ordinal.Equals(arg, "--expected-package-manifest-sha256")) { if (!TryReadValue(args, ref index, out expectedPackageManifestSha256)) return PackageParseResult.Fail(format, "Missing expected package manifest SHA-256."); continue; }
+            if (StringComparer.Ordinal.Equals(arg, "--expected-build-manifest-sha256")) { if (!TryReadValue(args, ref index, out expectedBuildManifestSha256)) return PackageParseResult.Fail(format, "Missing expected build manifest SHA-256."); continue; }
+            if (StringComparer.Ordinal.Equals(arg, "--expected-package-manifest-length")) { if (!TryReadValue(args, ref index, out var value) || !long.TryParse(value, out var parsed)) return PackageParseResult.Fail(format, "Invalid expected package manifest length."); expectedPackageManifestLength = parsed; continue; }
+            if (StringComparer.Ordinal.Equals(arg, "--expected-build-manifest-length")) { if (!TryReadValue(args, ref index, out var value) || !long.TryParse(value, out var parsed)) return PackageParseResult.Fail(format, "Invalid expected build manifest length."); expectedBuildManifestLength = parsed; continue; }
 
             if (StringComparer.Ordinal.Equals(arg, "--mo2-mods-root"))
             {
@@ -2067,6 +2079,7 @@ internal static class ForgeCli
         {
             return PackageParseResult.Fail(format, "Named MO2 export cannot be combined with --verify-existing.");
         }
+        if (reuseExistingPackage && (!StringComparer.Ordinal.Equals(target, ModPackageAssembler.Target) || mo2ModsRoot is null || outputDirectory is not null)) return PackageParseResult.Fail(format, "--reuse-existing-package requires a named MO2 mod-package export and cannot use --output.");
 
         if (!verifyExisting &&
             (StringComparer.Ordinal.Equals(format, "sarif") ||
@@ -2080,7 +2093,7 @@ internal static class ForgeCli
             return PackageParseResult.Fail(format, "--summary is only available for package verify-existing diagnostics in the current gate.");
         }
 
-        return PackageParseResult.Ok(projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, mo2ModsRoot, mo2ModName, format);
+        return PackageParseResult.Ok(projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, reuseExistingPackage, expectedPackageManifestSha256, expectedPackageManifestLength, expectedBuildManifestSha256, expectedBuildManifestLength, mo2ModsRoot, mo2ModName, format);
     }
 
     private static bool TryResolvePackageEvidencePaths(
@@ -3732,16 +3745,21 @@ internal static class ForgeCli
         string Target,
         bool DryRun,
         bool VerifyExisting,
+        bool ReuseExistingPackage,
+        string? ExpectedPackageManifestSha256,
+        long? ExpectedPackageManifestLength,
+        string? ExpectedBuildManifestSha256,
+        long? ExpectedBuildManifestLength,
         string? Mo2ModsRoot,
         string? Mo2ModName,
         string Format,
         string Message)
     {
-        public static PackageParseResult Ok(string projectPath, string? outputDirectory, string? summaryPath, string target, bool dryRun, bool verifyExisting, string? mo2ModsRoot, string? mo2ModName, string format) =>
-            new(true, projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, mo2ModsRoot, mo2ModName, format, string.Empty);
+        public static PackageParseResult Ok(string projectPath, string? outputDirectory, string? summaryPath, string target, bool dryRun, bool verifyExisting, bool reuseExistingPackage, string? packageSha, long? packageLength, string? buildSha, long? buildLength, string? mo2ModsRoot, string? mo2ModName, string format) =>
+            new(true, projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, reuseExistingPackage, packageSha, packageLength, buildSha, buildLength, mo2ModsRoot, mo2ModName, format, string.Empty);
 
         public static PackageParseResult Fail(string format, string message) =>
-            new(false, string.Empty, null, null, McmJsonGenerator.Target, false, false, null, null, format, message);
+            new(false, string.Empty, null, null, McmJsonGenerator.Target, false, false, false, null, null, null, null, null, null, format, message);
     }
 
     private sealed record PackageEvidencePaths(

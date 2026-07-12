@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:annotation>
+    <xs:documentation>WastelandForge-authored schema for the info.xml subset emitted by the required-files FOMOD 5.0 adapter.</xs:documentation>
+  </xs:annotation>
+  <xs:element name="fomod">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Name" type="xs:string" />
+        <xs:element name="Author" type="xs:string" />
+        <xs:element name="Version">
+          <xs:complexType mixed="true">
+            <xs:attribute name="MachineVersion" type="xs:string" use="required" />
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Description" type="xs:string" />
+        <xs:element name="Website" type="xs:anyURI" minOccurs="0" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -12,8 +12,8 @@ internal enum ReleaseCandidateState { NotRun, Running, Blocked, CandidateReady, 
 internal sealed record ReleaseCandidateDiagnostic(string RuleId, string Severity, string Title, string Message);
 internal sealed record ReleaseCandidateStage(string Name, string Command, string Status, int? ExitCode, long DurationMilliseconds, int Errors, int Warnings, int Notes, IReadOnlyList<ReleaseCandidateDiagnostic> Diagnostics);
 internal sealed record ReleaseCandidatePlugin(string DataPath, string Sha256, string ReviewStatus, string? EvidenceSha256, string? ReportSha256);
-internal sealed record ReleaseCandidateEvidence(string? PackageRoot, string? PackageArchive, string? PackageManifest, string? ReleaseRoot, string? ReleaseHandoff, string? ReleaseManifest, IReadOnlyList<ReleaseCandidatePlugin> Plugins);
-internal sealed record ReleaseCandidateResult(ReleaseCandidateState State, string ProjectRoot, string Fingerprint, string Message, IReadOnlyList<ReleaseCandidateStage> Stages, ReleaseCandidateEvidence Evidence);
+internal sealed record ReleaseCandidateEvidence(string? PackageRoot, string? PackageArchive, string? PackageManifest, string? FomodRoot, string? FomodArchive, string? FomodManifest, string? FomodBuildManifest, string? FomodChecksums, string? ReleaseRoot, string? ReleaseHandoff, string? ReleaseManifest, string? PreparedRoot, string? PreparedArchive, string? PreparedPayload, string? PreparedBuildManifest, string? PreparedChecksums, IReadOnlyList<ReleaseCandidatePlugin> Plugins);
+internal sealed record ReleaseCandidateResult(ReleaseCandidateState State, string RunId, string ProjectRoot, string Fingerprint, string Message, IReadOnlyList<ReleaseCandidateStage> Stages, ReleaseCandidateEvidence Evidence);
 
 internal interface IReleaseCandidateCommandRunner
 {
@@ -32,26 +32,29 @@ internal sealed class ReleaseCandidateWorkspace(IReleaseCandidateCommandRunner c
     [
         ("Validate", "forge validate .", ["validate", ".", "--format", "json", "--no-input"]),
         ("Combined package", "forge package . --target mod-package", ["package", ".", "--target", "mod-package", "--format", "json", "--no-input"]),
-        ("Release verification", "forge release verify .", ["release", "verify", ".", "--format", "json", "--no-input"])
+        ("FOMOD distributable", "forge package . --target fomod", ["package", ".", "--target", "fomod", "--format", "json", "--no-input"]),
+        ("Release verification", "forge release verify .", ["release", "verify", ".", "--format", "json", "--no-input"]),
+        ("Release preparation", "forge release prepare .", ["release", "prepare", ".", "--format", "json", "--no-input"])
     ];
 
     public async Task<ReleaseCandidateResult> RunAsync(string projectRoot, CancellationToken cancellationToken)
     {
         var root = Path.GetFullPath(projectRoot);
+        var runId = Guid.NewGuid().ToString("N");
         var fingerprint = CreateFingerprint(root);
         var stages = new List<ReleaseCandidateStage>();
         foreach (var definition in Pipeline)
         {
-            if (cancellationToken.IsCancellationRequested) return Result(ReleaseCandidateState.Cancelled, root, fingerprint, "Release candidate check cancelled.", stages);
+            if (cancellationToken.IsCancellationRequested) return Result(ReleaseCandidateState.Cancelled, runId, root, fingerprint, "Release candidate check cancelled.", stages);
             var stopwatch = Stopwatch.StartNew();
             var command = await commandRunner.RunAsync(root, cancellationToken, definition.Arguments).ConfigureAwait(false);
             stopwatch.Stop();
             var stage = ParseStage(definition.Name, definition.Command, command, stopwatch.ElapsedMilliseconds);
             stages.Add(stage);
-            if (command.ExitCode == 7 || cancellationToken.IsCancellationRequested) return Result(ReleaseCandidateState.Cancelled, root, fingerprint, "Release candidate check cancelled.", stages);
-            if (command.ExitCode != 0) return Result(ReleaseCandidateState.Blocked, root, fingerprint, definition.Name + " blocked the release candidate.", stages);
+            if (command.ExitCode == 7 || cancellationToken.IsCancellationRequested) return Result(ReleaseCandidateState.Cancelled, runId, root, fingerprint, "Release candidate check cancelled.", stages);
+            if (command.ExitCode != 0) return Result(ReleaseCandidateState.Blocked, runId, root, fingerprint, definition.Name + " blocked the release candidate.", stages);
         }
-        return Result(ReleaseCandidateState.CandidateReady, root, fingerprint, "Candidate ready. Validation, combined packaging, and release verification passed.", stages);
+        return Result(ReleaseCandidateState.CandidateReady, runId, root, fingerprint, "Candidate ready. Validation, packaging, verification, and local release preparation passed.", stages);
     }
 
     public static bool IsStale(ReleaseCandidateResult result) =>
@@ -69,12 +72,12 @@ internal sealed class ReleaseCandidateWorkspace(IReleaseCandidateCommandRunner c
         return File.Exists(candidate) || Directory.Exists(candidate);
     }
 
-    private static ReleaseCandidateResult Result(ReleaseCandidateState state, string root, string fingerprint, string message, IReadOnlyList<ReleaseCandidateStage> stages)
+    private static ReleaseCandidateResult Result(ReleaseCandidateState state, string runId, string root, string fingerprint, string message, IReadOnlyList<ReleaseCandidateStage> stages)
     {
         var completed = stages.ToList();
         foreach (var definition in Pipeline.Skip(completed.Count))
             completed.Add(new(definition.Name, definition.Command, "Not run", null, 0, 0, 0, 0, []));
-        return new(state, root, fingerprint, message, completed, InspectEvidence(root));
+        return new(state, runId, root, fingerprint, message, completed, InspectEvidence(root));
     }
 
     private static ReleaseCandidateStage ParseStage(string name, string displayCommand, ForgeCommandResult result, long duration)
@@ -100,7 +103,9 @@ internal sealed class ReleaseCandidateWorkspace(IReleaseCandidateCommandRunner c
     private static ReleaseCandidateEvidence InspectEvidence(string root)
     {
         var packageRoot = Path.Combine(root, "dist", "mod-package");
+        var fomodRoot = Path.Combine(root, "dist", "fomod");
         var releaseRoot = Path.Combine(root, "dist", "release-dry-run");
+        var preparedRoot = Path.Combine(root, "dist", "release-prepare");
         var packageManifest = Path.Combine(packageRoot, "package-manifest.json");
         var plugins = new List<ReleaseCandidatePlugin>();
         try
@@ -122,7 +127,10 @@ internal sealed class ReleaseCandidateWorkspace(IReleaseCandidateCommandRunner c
         {
             plugins.Add(new("Package evidence unreadable", "", "blocked: " + ex.Message, null, null));
         }
-        return new(Directory.Exists(packageRoot) ? packageRoot : null, ExistingFile(packageRoot, "package.zip"), ExistingFile(packageRoot, "package-manifest.json"), Directory.Exists(releaseRoot) ? releaseRoot : null, ExistingFile(releaseRoot, "release-evidence-handoff.md"), ExistingFile(releaseRoot, "build-manifest.json"), plugins);
+        return new(Directory.Exists(packageRoot) ? packageRoot : null, ExistingFile(packageRoot, "package.zip"), ExistingFile(packageRoot, "package-manifest.json"),
+            Directory.Exists(fomodRoot) ? fomodRoot : null, ExistingFile(fomodRoot, "package.zip"), ExistingFile(fomodRoot, "fomod-manifest.json"), ExistingFile(fomodRoot, "build-manifest.json"), ExistingFile(fomodRoot, "checksums.sha256"),
+            Directory.Exists(releaseRoot) ? releaseRoot : null, ExistingFile(releaseRoot, "release-evidence-handoff.md"), ExistingFile(releaseRoot, "build-manifest.json"),
+            Directory.Exists(preparedRoot) ? preparedRoot : null, ExistingFile(Path.Combine(preparedRoot, "archives"), "release.zip"), ExistingFile(Path.Combine(preparedRoot, "staging"), "release-payload.json"), ExistingFile(preparedRoot, "build-manifest.json"), ExistingFile(preparedRoot, "checksums.sha256"), plugins);
     }
 
     private static string CreateFingerprint(string root)

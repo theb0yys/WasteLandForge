@@ -1344,9 +1344,10 @@
                 <ComboBoxItem Content="Package JIP scripts" Tag="jip-scripts" />
                 <ComboBoxItem Content="Generate xEdit audit" Tag="xedit-audit" />
                 <ComboBoxItem Content="Build combined mod package" Tag="mod-package" />
+                <ComboBoxItem Content="Build FOMOD installer package" Tag="fomod" />
                 <ComboBoxItem Content="Build GECK authoring handoff" Tag="geck-handoff" />
               </ComboBox>
-              <Button Grid.Column="1" Content="Run Selected Workflow" Style="{StaticResource PrimaryButton}" Margin="12,0,0,0" Click="RunProjectOutputWorkflowClicked" />
+              <Button x:Name="RunProjectOutputWorkflowButton" Grid.Column="1" Content="Run Selected Workflow" Style="{StaticResource PrimaryButton}" Margin="12,0,0,0" Click="RunProjectOutputWorkflowClicked" />
               <Button Grid.Column="2" Content="Open Generated" Margin="12,0,0,0" Click="OpenSelectedGeneratedOutputClicked" />
               <Button Grid.Column="3" Content="Open Distribution" Margin="8,0,0,0" Click="OpenSelectedDistributionOutputClicked" />
               <Button Grid.Column="4" Content="Open Staging" Margin="8,0,0,0" Click="OpenSelectedStagingOutputClicked" />
@@ -1388,8 +1389,10 @@
               <TextBox x:Name="PluginIntakeDetailsTextBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" Padding="10" />
               <StackPanel Grid.Column="1" Margin="12,0,0,0">
                 <TextBlock Text="Attach xEdit review evidence" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" />
-                <Button Content="Load Pending Plugins" HorizontalAlignment="Left" Margin="0,8,0,0" Click="LoadPendingPluginsClicked" />
+                <Button x:Name="LoadPendingPluginsButton" Content="Load Pending Plugins" HorizontalAlignment="Left" Margin="0,8,0,0" Click="LoadPendingPluginsClicked" />
                 <ComboBox x:Name="PluginReviewArtifactComboBox" Margin="0,8,0,0" DisplayMemberPath="DataPath" SelectionChanged="PluginReviewInputChanged" />
+                <WrapPanel Margin="0,8,0,0"><Button x:Name="PreviewXEditLaunchButton" Content="Preview xEdit Launch" IsEnabled="False" Click="PreviewXEditLaunchClicked" /><Button x:Name="LaunchXEditButton" Content="Launch xEdit" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="LaunchXEditClicked" /><Button x:Name="PreviewXEditMo2RequestButton" Content="Preview MO2 Request" Margin="8,0,0,0" IsEnabled="False" Click="PreviewXEditMo2RequestClicked" /><Button x:Name="CreateXEditMo2RequestButton" Content="Create MO2 Request" Margin="8,0,0,0" IsEnabled="False" Click="CreateXEditMo2RequestClicked" /></WrapPanel>
+                <TextBox x:Name="XEditLaunchDetailsTextBox" Height="120" Margin="0,8,0,0" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" FontSize="11" />
                 <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBox x:Name="PluginReviewReportPathTextBox" Padding="8" TextChanged="PluginReviewInputChanged" /><Button Grid.Column="1" Content="Browse Report" Margin="8,0,0,0" Click="BrowsePluginReviewReportClicked" /></Grid>
                 <TextBox x:Name="PluginReviewerTextBox" Margin="0,8,0,0" Padding="8" ToolTip="Reviewer project identity" TextChanged="PluginReviewInputChanged" />
                 <CheckBox x:Name="PluginReviewApprovalCheckBox" Margin="0,10,0,0" Content="I accept the review statement and release responsibility" Checked="PluginReviewInputChanged" Unchecked="PluginReviewInputChanged" />
@@ -1401,11 +1404,11 @@
 
         <TabItem Header="GECK Handoff">
           <Grid Margin="0,18,0,0">
-            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="2*" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="2*" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
             <Grid>
               <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-              <StackPanel><TextBlock Text="GECK authoring handoff" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" /><TextBlock Text="Generated manual work only. Forge does not launch GECK or modify plugins." Foreground="{StaticResource TextMuted}" Margin="0,4,0,0" /></StackPanel>
-              <Button Grid.Column="1" Content="Load Handoff" Click="LoadGeckHandoffWorkspaceClicked" />
+              <StackPanel><TextBlock Text="GECK authoring handoff" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" /><TextBlock Text="Review generated work and explicitly launch the configured GECK executable. Plugin work remains manual." Foreground="{StaticResource TextMuted}" Margin="0,4,0,0" /></StackPanel>
+              <Button x:Name="LoadGeckHandoffButton" Grid.Column="1" Content="Load Handoff" Click="LoadGeckHandoffWorkspaceClicked" />
               <Button x:Name="OpenGeckWorkspaceFolderButton" Grid.Column="2" Content="Open Output Folder" Margin="8,0,0,0" IsEnabled="False" Click="OpenGeckWorkspaceFolderClicked" />
               <Button x:Name="OpenGeckWorkspaceWorklistButton" Grid.Column="3" Content="Open Task Worklist" Margin="8,0,0,0" IsEnabled="False" Click="OpenGeckWorkspaceWorklistClicked" />
             </Grid>
@@ -1431,18 +1434,23 @@
             <DataGrid x:Name="GeckHandoffSourcesDataGrid" Grid.Row="4" Margin="0,8,0,10" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
               <DataGrid.Columns><DataGridTextColumn Header="State" Binding="{Binding Status}" Width="90" /><DataGridTextColumn Header="Source path" Binding="{Binding Path}" Width="*" /><DataGridTextColumn Header="SHA-256" Binding="{Binding Sha256}" Width="360" /><DataGridTextColumn Header="Bytes" Binding="{Binding Length}" Width="90" /></DataGrid.Columns>
             </DataGrid>
-            <TextBlock x:Name="GeckHandoffWorkspaceStatusTextBlock" Grid.Row="5" Text="Load a completed GECK handoff to inspect its tasks and provenance." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" />
+            <Grid Grid.Row="5" Margin="0,4,0,8">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <WrapPanel><Button x:Name="PreviewGeckLaunchButton" Content="Preview GECK Launch" IsEnabled="False" Click="PreviewGeckLaunchClicked" /><Button x:Name="LaunchGeckButton" Content="Launch GECK" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="LaunchGeckClicked" /><Button x:Name="PreviewGeckMo2RequestButton" Content="Preview MO2 Request" Margin="8,0,0,0" IsEnabled="False" Click="PreviewGeckMo2RequestClicked" /><Button x:Name="CreateGeckMo2RequestButton" Content="Create MO2 Request" Margin="8,0,0,0" IsEnabled="False" Click="CreateGeckMo2RequestClicked" /></WrapPanel>
+              <TextBox x:Name="GeckLaunchDetailsTextBox" Grid.Column="1" Height="92" Margin="12,0,0,0" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" FontSize="11" />
+            </Grid>
+            <TextBlock x:Name="GeckHandoffWorkspaceStatusTextBlock" Grid.Row="6" Text="Load a completed GECK handoff to inspect its tasks and provenance." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" />
           </Grid>
         </TabItem>
 
         <TabItem x:Name="ReleaseCandidateTabItem" Header="Release Candidate">
           <Grid Margin="0,18,0,0">
-            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="180" /><RowDefinition Height="*" /><RowDefinition Height="170" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="150" /><RowDefinition Height="*" /><RowDefinition Height="145" /><RowDefinition Height="Auto" /><RowDefinition Height="180" /><RowDefinition Height="210" /></Grid.RowDefinitions>
             <Grid>
               <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
               <StackPanel>
                 <TextBlock Text="Release Candidate" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
-                <TextBlock Text="Local validation, combined package, and release verification" Foreground="{StaticResource TextMuted}" Margin="0,4,0,0" />
+                <TextBlock Text="Local validation, FOMOD distributable, release verification, and prepared release archive" Foreground="{StaticResource TextMuted}" Margin="0,4,0,0" />
               </StackPanel>
               <Button x:Name="RunReleaseCandidateButton" Grid.Column="1" Content="Run Release Candidate Check" Style="{StaticResource PrimaryButton}" Click="RunReleaseCandidateClicked" />
               <Button x:Name="CancelReleaseCandidateButton" Grid.Column="2" Content="Cancel" Margin="8,0,0,0" IsEnabled="False" Click="CancelReleaseCandidateClicked" />
@@ -1491,11 +1499,53 @@
               </Grid>
             </Grid>
             <WrapPanel Grid.Row="5" Margin="0,12,0,0">
-              <Button x:Name="OpenCandidatePackageFolderButton" Content="Open Package Folder" IsEnabled="False" Click="OpenCandidatePackageFolderClicked" />
-              <Button x:Name="OpenCandidatePackageArchiveButton" Content="Open Package ZIP" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidatePackageArchiveClicked" />
+              <Button x:Name="OpenCandidateFomodFolderButton" Content="Open Distributable Folder" IsEnabled="False" Click="OpenCandidateFomodFolderClicked" />
+              <Button x:Name="OpenCandidateFomodArchiveButton" Content="Open FOMOD ZIP" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidateFomodArchiveClicked" />
+              <Button x:Name="OpenCandidatePackageFolderButton" Content="Open Combined Payload" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidatePackageFolderClicked" />
+              <Button x:Name="OpenCandidatePackageArchiveButton" Content="Open Combined ZIP" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidatePackageArchiveClicked" />
               <Button x:Name="OpenCandidateReleaseEvidenceButton" Content="Open Release Evidence" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidateReleaseEvidenceClicked" />
               <Button x:Name="OpenCandidateReleaseHandoffButton" Content="Open Release Handoff" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidateReleaseHandoffClicked" />
+              <Button x:Name="OpenCandidatePreparedFolderButton" Content="Open Prepared Release" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidatePreparedFolderClicked" />
+              <Button x:Name="OpenCandidatePreparedArchiveButton" Content="Open Release ZIP" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidatePreparedArchiveClicked" />
             </WrapPanel>
+            <Border Grid.Row="6" Margin="0,12,0,0" Padding="12" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="6">
+              <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <TextBlock Text="Local Release Handoff" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" />
+                <Grid Grid.Row="1" Margin="0,8,0,8">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                  <TextBox x:Name="LocalReleaseDestinationTextBox" Padding="8" TextChanged="LocalReleaseDestinationChanged" ToolTip="Existing destination folder" />
+                  <Button Grid.Column="1" Content="Browse" Margin="8,0" Click="BrowseLocalReleaseDestinationClicked" />
+                  <Button x:Name="PreviewLocalReleaseHandoffButton" Grid.Column="2" Content="Preview Handoff" IsEnabled="False" Click="PreviewLocalReleaseHandoffClicked" />
+                  <Button x:Name="CreateLocalReleaseHandoffButton" Grid.Column="3" Content="Create Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="CreateLocalReleaseHandoffClicked" />
+                  <Button x:Name="VerifyLocalReleaseHandoffButton" Grid.Column="4" Content="Verify Existing" Margin="8,0,0,0" IsEnabled="False" Click="VerifyLocalReleaseHandoffClicked" />
+                  <Button x:Name="OpenLocalReleaseHandoffButton" Grid.Column="5" Content="Open Destination" Margin="8,0,0,0" IsEnabled="False" Click="OpenLocalReleaseHandoffClicked" />
+                </Grid>
+                <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" /></Grid.ColumnDefinitions>
+                  <TextBlock x:Name="LocalReleaseHandoffStatusTextBlock" Text="Create from a fresh Candidate, or select a handoff folder to verify existing files." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" />
+                  <TextBox x:Name="LocalReleaseHandoffDetailsTextBox" Grid.Column="1" Margin="12,0,0,0" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" FontFamily="Cascadia Mono, Consolas" FontSize="11" />
+                </Grid>
+              </Grid>
+            </Border>
+            <Border Grid.Row="7" Margin="0,12,0,0" Padding="12" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="6">
+              <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <TextBlock Text="Prepare MO2 Test Copy" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" />
+                <Grid Grid.Row="1" Margin="0,8,0,8">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                  <TextBox x:Name="CandidateMo2ModsRootTextBox" Padding="8" TextChanged="CandidateMo2InputChanged" ToolTip="Existing MO2 mods folder" />
+                  <Button Grid.Column="1" Content="Browse" Margin="8,0" Click="BrowseCandidateMo2ModsRootClicked" />
+                  <TextBox x:Name="CandidateMo2ModNameTextBox" Grid.Column="2" Padding="8" TextChanged="CandidateMo2InputChanged" ToolTip="New single-segment MO2 mod name" />
+                  <Button x:Name="PreviewCandidateMo2TestCopyButton" Grid.Column="3" Content="Preview Test Copy" Margin="8,0,0,0" IsEnabled="False" Click="PreviewCandidateMo2TestCopyClicked" />
+                  <Button x:Name="CreateCandidateMo2TestCopyButton" Grid.Column="4" Content="Create Test Copy" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="CreateCandidateMo2TestCopyClicked" />
+                  <Button x:Name="OpenCandidateMo2TestCopyButton" Grid.Column="5" Content="Open Test Copy" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidateMo2TestCopyClicked" />
+                </Grid>
+                <Grid Grid.Row="2"><Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="3*" /></Grid.ColumnDefinitions>
+                  <TextBlock x:Name="CandidateMo2TestCopyStatusTextBlock" Text="Run a fresh Release Candidate check before preparing a test copy. Enable and order the completed copy manually in MO2." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" />
+                  <TextBox x:Name="CandidateMo2TestCopyDetailsTextBox" Grid.Column="1" Margin="12,0,0,0" IsReadOnly="True" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextWrapping="NoWrap" FontFamily="Cascadia Mono, Consolas" FontSize="11" />
+                </Grid>
+              </Grid>
+            </Border>
           </Grid>
         </TabItem>
 

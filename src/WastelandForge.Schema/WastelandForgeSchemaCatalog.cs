@@ -19,6 +19,9 @@ public static class WastelandForgeSchemaCatalog
             "manifest",
             "0.3.0",
             "schemas/manifest/0.3.0/schema.json"),
+        new(WastelandForgeSchemaIds.Manifest040, "manifest", "0.4.0", "schemas/manifest/0.4.0/schema.json"),
+        new(WastelandForgeSchemaIds.Fomod010, "fomod", "0.1.0", "schemas/fomod/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.FomodManifest010, "fomod-manifest", "0.1.0", "schemas/fomod-manifest/0.1.0/schema.json"),
         new(
             WastelandForgeSchemaIds.Dependency010,
             "dependency",
@@ -94,6 +97,11 @@ public static class WastelandForgeSchemaCatalog
             "mo2-export-manifest",
             "0.1.0",
             "schemas/mo2-export-manifest/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.Mo2ExportManifest020,
+            "mo2-export-manifest",
+            "0.2.0",
+            "schemas/mo2-export-manifest/0.2.0/schema.json"),
         new(
             WastelandForgeSchemaIds.GeckHandoffManifest010,
             "geck-handoff-manifest",

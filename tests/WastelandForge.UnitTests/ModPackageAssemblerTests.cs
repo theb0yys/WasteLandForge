@@ -6,6 +6,25 @@ namespace WastelandForge.UnitTests;
 public sealed class ModPackageAssemblerTests
 {
     [Fact]
+    public void ReusesVerifiedPackageWithoutChangingEvidenceAndRefusesTamper()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "WastelandForge.PackageReuseTests", Guid.NewGuid().ToString("N")); CopyDirectory(FindFixture(), root);
+        try
+        {
+            var built = new ModPackageAssembler().Package(new(root, null, "0.1.0", false)); Assert.False(built.HasErrors);
+            var packagePath = Path.Combine(root, "dist", "mod-package", "package-manifest.json"); var buildPath = Path.Combine(root, "dist", "mod-package", "build-manifest.json");
+            var packageBytes = File.ReadAllBytes(packagePath); var buildBytes = File.ReadAllBytes(buildPath);
+            static string Sha(byte[] bytes) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant();
+            var reused = new ExistingModPackageLoader().Load(new(root, "0.1.0", false, Sha(packageBytes), packageBytes.Length, Sha(buildBytes), buildBytes.Length));
+            Assert.False(reused.HasErrors, string.Join(Environment.NewLine, reused.Diagnostics.Issues.Select(i => i.Message))); Assert.Equal(3, reused.Entries.Count);
+            Assert.Equal(packageBytes, File.ReadAllBytes(packagePath)); Assert.Equal(buildBytes, File.ReadAllBytes(buildPath));
+            var modsRoot = Directory.CreateDirectory(Path.Combine(root, "mo2", "mods")).FullName; var export = new Mo2ModExporter().Export(reused, new(modsRoot, "Reuse Evidence", "0.1.0", false)); Assert.False(export.HasErrors); var exportManifest = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(export.Outputs!.Manifest!))!; Assert.Equal("0.2", exportManifest["formatVersion"]!.GetValue<string>()); Assert.Equal("existing-verified", exportManifest["packageSource"]!.GetValue<string>());
+            File.AppendAllText(Path.Combine(root, "src", "registries", "mcm", "main.json"), " drift");
+            var tampered = new ExistingModPackageLoader().Load(new(root, "0.1.0", false)); Assert.True(tampered.HasErrors); Assert.Contains(tampered.Diagnostics.Issues, i => i.RuleId.ToString() == "WF-BUILD-015");
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+    [Fact]
     public void PackagesOpaquePluginArtifactByteForByte()
     {
         var root = Path.Combine(Path.GetTempPath(), "WastelandForge.PluginPackage", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(Path.Combine(root, "src", "plugins")); Directory.CreateDirectory(Path.Combine(root, "src", "registries", "plugin-artifacts"));

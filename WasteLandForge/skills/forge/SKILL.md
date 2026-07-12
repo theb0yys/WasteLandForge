@@ -988,9 +988,9 @@ implements explicit `forge clean --dist` execution, and Gate 255 implements
   input preflight. Gate 344 adds local Inno Setup compiler detection and an
   unsigned installer build helper scaffold. Gate 345 closes the installer
   helper lane and routes back to app-shell product value. Route the next
-  development step to Gate 464: implement and verify the Release Candidate
-  diagnostic explanation panel and deterministic workspace navigation defined
-  by Gate 463.
+  development step to Gate 472: implement the Gate 471 minimal deterministic
+  required-files FOMOD 5.0 adapter, schemas, package target, desktop workflow,
+  synthetic tests, publication, and installed regression.
 
 - `/forge capabilities scan` maps to the real `forge capabilities scan`
   behavior when available. It reports local path-based provider evidence and a

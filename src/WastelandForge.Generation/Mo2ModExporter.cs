@@ -18,7 +18,8 @@ public sealed record Mo2ExportResult(string Status, bool DryRun, string ModsRoot
 public sealed class Mo2ModExporter
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
-    private static readonly Lazy<JsonSchema> Schema = new(LoadSchema);
+    private static readonly Lazy<JsonSchema> Schema010 = new(() => LoadSchema(WastelandForgeSchemaIds.Mo2ExportManifest010));
+    private static readonly Lazy<JsonSchema> Schema020 = new(() => LoadSchema(WastelandForgeSchemaIds.Mo2ExportManifest020));
     private static readonly HashSet<string> ReservedNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
@@ -116,7 +117,7 @@ public sealed class Mo2ModExporter
         string Full(string relative) => Path.Combine(package.ProjectRoot, relative.Replace('/', Path.DirectorySeparatorChar));
         return new JsonObject
         {
-            ["formatVersion"] = "0.1", ["kind"] = "wastelandforge.mo2-export-manifest", ["exportType"] = "wastelandforge/named-mo2-mod-export/v1", ["command"] = "package", ["target"] = "mod-package",
+            ["formatVersion"] = "0.2", ["kind"] = "wastelandforge.mo2-export-manifest", ["exportType"] = "wastelandforge/named-mo2-mod-export/v1", ["command"] = "package", ["target"] = "mod-package", ["packageSource"] = package.PackageSource,
             ["tool"] = new JsonObject { ["name"] = "WastelandForge", ["version"] = options.ToolVersion },
             ["project"] = new JsonObject { ["id"] = package.ProjectId, ["root"] = package.ProjectRoot },
             ["export"] = new JsonObject { ["id"] = id, ["status"] = "exported", ["modsRoot"] = root, ["modName"] = options.ModName, ["destination"] = destination, ["destinationCreated"] = true, ["temporaryRootCleaned"] = true },
@@ -134,8 +135,8 @@ public sealed class Mo2ModExporter
     private static string SafeToken(string value) => new string(value.Where(char.IsLetterOrDigit).Take(24).ToArray()) is { Length: > 0 } token ? token : "mod";
     private static string Digest(string path) { using var stream = File.OpenRead(path); return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant(); }
     private static void WriteJson(string path, JsonObject value) => File.WriteAllText(path, value.ToJsonString(JsonOptions) + "\n", new System.Text.UTF8Encoding(false));
-    private static void ValidateManifest(JsonObject manifest) { using var document = JsonDocument.Parse(manifest.ToJsonString()); if (!Schema.Value.Evaluate(document.RootElement).IsValid) throw new InvalidOperationException("Generated MO2 export evidence failed schema validation."); }
-    private static JsonSchema LoadSchema() { if (!WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Mo2ExportManifest010, out var resource) || resource is null) throw new InvalidOperationException("MO2 export schema is not registered."); return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource)); }
+    private static void ValidateManifest(JsonObject manifest) { using var document = JsonDocument.Parse(manifest.ToJsonString()); var schema = manifest["formatVersion"]?.GetValue<string>() == "0.2" ? Schema020.Value : Schema010.Value; if (!schema.Evaluate(document.RootElement).IsValid) throw new InvalidOperationException("Generated MO2 export evidence failed schema validation."); }
+    private static JsonSchema LoadSchema(string id) { if (!WastelandForgeSchemaCatalog.TryGetById(id, out var resource) || resource is null) throw new InvalidOperationException("MO2 export schema is not registered."); return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource)); }
     private static DiagnosticIssue Issue(string rule, string title, string message, string file, string? projectId) => new(RuleId.Parse(rule), DiagnosticSeverity.Error, "build", title, message, new SourceLocation(file.Replace('\\', '/')), projectId is null ? null : LogicalId.Parse(projectId), docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{rule}"));
     private static Mo2ExportResult Result(string status, Mo2ExportOptions options, string root, string? destination, string? projectId, IReadOnlyList<DiagnosticIssue> issues, IReadOnlyList<Mo2ExportEntry> entries, Mo2ExportOutputs? outputs) => new(status, options.DryRun, root, options.ModName, destination, new DiagnosticReport(projectId is null ? null : LogicalId.Parse(projectId), issues), entries, outputs);
 }

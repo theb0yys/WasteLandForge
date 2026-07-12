@@ -1,0 +1,4 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://schemas.wastelandforge.dev/fnv/fomod-manifest/0.1.0/schema.json","type":"object","additionalProperties":true,"required":["formatVersion","kind","command","target","project","tool","entries","outputs","safety"],
+  "properties":{"formatVersion":{"const":"0.1"},"kind":{"const":"wastelandforge.fomod-manifest"},"command":{"const":"package"},"target":{"const":"fomod"},"project":{"type":"object"},"tool":{"type":"object"},"entries":{"type":"array","minItems":1},"outputs":{"type":"object"},"safety":{"type":"object","required":["launchesModManager","writesToGameData","executesScripts"],"properties":{"launchesModManager":{"const":false},"writesToGameData":{"const":false},"executesScripts":{"const":false}}}}
+}

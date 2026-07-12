@@ -5,6 +5,9 @@ public static class WastelandForgeSchemaIds
     public const string Manifest010 = "https://schemas.wastelandforge.dev/fnv/manifest/0.1.0/schema.json";
     public const string Manifest020 = "https://schemas.wastelandforge.dev/fnv/manifest/0.2.0/schema.json";
     public const string Manifest030 = "https://schemas.wastelandforge.dev/fnv/manifest/0.3.0/schema.json";
+    public const string Manifest040 = "https://schemas.wastelandforge.dev/fnv/manifest/0.4.0/schema.json";
+    public const string Fomod010 = "https://schemas.wastelandforge.dev/fnv/fomod/0.1.0/schema.json";
+    public const string FomodManifest010 = "https://schemas.wastelandforge.dev/fnv/fomod-manifest/0.1.0/schema.json";
     public const string Dependency010 = "https://schemas.wastelandforge.dev/fnv/dependencies/0.1.0/schema.json";
     public const string Dependency020 = "https://schemas.wastelandforge.dev/fnv/dependencies/0.2.0/schema.json";
     public const string Capability010 = "https://schemas.wastelandforge.dev/fnv/capabilities/0.1.0/schema.json";
@@ -20,6 +23,7 @@ public static class WastelandForgeSchemaIds
     public const string PackageManifest010 = "https://schemas.wastelandforge.dev/fnv/package-manifest/0.1.0/schema.json";
     public const string ModPackageManifest010 = "https://schemas.wastelandforge.dev/fnv/mod-package-manifest/0.1.0/schema.json";
     public const string Mo2ExportManifest010 = "https://schemas.wastelandforge.dev/fnv/mo2-export-manifest/0.1.0/schema.json";
+    public const string Mo2ExportManifest020 = "https://schemas.wastelandforge.dev/fnv/mo2-export-manifest/0.2.0/schema.json";
     public const string GeckHandoffManifest010 = "https://schemas.wastelandforge.dev/fnv/geck-handoff-manifest/0.1.0/schema.json";
     public const string InstallPreview010 = "https://schemas.wastelandforge.dev/fnv/install-preview/0.1.0/schema.json";
     public const string InstallPlan010 = "https://schemas.wastelandforge.dev/fnv/install-plan/0.1.0/schema.json";

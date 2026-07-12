@@ -276,7 +276,8 @@ pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Test-InstalledReleaseC
 ```
 
 The script uses synthetic installed samples, isolated install/settings/project
-roots, and WPF UI Automation to prove ready, stale, and blocked states plus
-contained evidence-action enablement. It silently uninstalls and removes its
-isolated test roots. It does not publish releases or automate external game
-tools.
+roots, and WPF UI Automation to prove ready, stale, and blocked states,
+contained evidence-action enablement, canonical diagnostic explanation, exact
+issue context, deterministic workspace routing, and stale-route disabling. It
+silently uninstalls and removes its isolated test roots. It does not publish
+releases or automate external game tools.

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/mo2-export-manifest/0.2.0/schema.json",
+  "title": "WastelandForge Named MO2 Mod Export Manifest",
+  "type": "object", "additionalProperties": false,
+  "required": ["formatVersion", "kind", "exportType", "command", "target", "packageSource", "tool", "project", "export", "packageEvidence", "entries", "counts", "safety"],
+  "properties": {
+    "formatVersion": { "const": "0.2" }, "kind": { "const": "wastelandforge.mo2-export-manifest" }, "exportType": { "const": "wastelandforge/named-mo2-mod-export/v1" }, "command": { "const": "package" }, "target": { "const": "mod-package" }, "packageSource": { "enum": ["rebuilt", "existing-verified"] },
+    "tool": { "type": "object", "additionalProperties": false, "required": ["name", "version"], "properties": { "name": { "const": "WastelandForge" }, "version": { "$ref": "#/$defs/text" } } },
+    "project": { "type": "object", "additionalProperties": false, "required": ["id", "root"], "properties": { "id": { "$ref": "#/$defs/text" }, "root": { "$ref": "#/$defs/text" } } },
+    "export": { "type": "object", "additionalProperties": false, "required": ["id", "status", "modsRoot", "modName", "destination", "destinationCreated", "temporaryRootCleaned"], "properties": { "id": { "$ref": "#/$defs/text" }, "status": { "const": "exported" }, "modsRoot": { "$ref": "#/$defs/text" }, "modName": { "$ref": "#/$defs/text" }, "destination": { "$ref": "#/$defs/text" }, "destinationCreated": { "const": true }, "temporaryRootCleaned": { "const": true } } },
+    "packageEvidence": { "type": "object", "additionalProperties": false, "required": ["packageManifestSha256", "packageArchiveSha256", "buildManifestSha256"], "properties": { "packageManifestSha256": { "$ref": "#/$defs/sha256" }, "packageArchiveSha256": { "$ref": "#/$defs/sha256" }, "buildManifestSha256": { "$ref": "#/$defs/sha256" } } },
+    "entries": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["component", "dataPath", "sourcePath", "destinationPath", "mediaType", "length", "sourceSha256", "destinationSha256"], "properties": { "component": { "enum": ["mcm-json", "jip-scripts", "plugin-artifacts"] }, "dataPath": { "$ref": "#/$defs/relativePath" }, "sourcePath": { "$ref": "#/$defs/text" }, "destinationPath": { "$ref": "#/$defs/text" }, "mediaType": { "$ref": "#/$defs/text" }, "length": { "type": "integer", "minimum": 0 }, "sourceSha256": { "$ref": "#/$defs/sha256" }, "destinationSha256": { "$ref": "#/$defs/sha256" } } } },
+    "counts": { "type": "object", "additionalProperties": false, "required": ["source", "destination"], "properties": { "source": { "type": "integer", "minimum": 1 }, "destination": { "type": "integer", "minimum": 1 } } },
+    "safety": { "type": "object", "additionalProperties": false, "required": ["writesToGameData", "writesToMo2Overwrite", "mutatesMo2Profile", "enablesMod", "changesPriority", "changesLoadOrder", "mutatesPlugins", "launchesMo2", "launchesGame", "executesExternalTools"], "properties": { "writesToGameData": { "const": false }, "writesToMo2Overwrite": { "const": false }, "mutatesMo2Profile": { "const": false }, "enablesMod": { "const": false }, "changesPriority": { "const": false }, "changesLoadOrder": { "const": false }, "mutatesPlugins": { "const": false }, "launchesMo2": { "const": false }, "launchesGame": { "const": false }, "executesExternalTools": { "const": false } } }
+  },
+  "$defs": { "text": { "type": "string", "minLength": 1 }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "relativePath": { "type": "string", "minLength": 1, "pattern": "^[^/\\\\][^\\\\]*(?:/[^/\\\\]+)*$" } }
+}

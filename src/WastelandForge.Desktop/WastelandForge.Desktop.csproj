@@ -25,6 +25,13 @@
     <ProjectReference Include="..\WastelandForge.Validation\WastelandForge.Validation.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)\..\..\integrations\mo2\wastelandforge_bridge')">
+    <Content Include="$(MSBuildProjectDirectory)\..\..\integrations\mo2\wastelandforge_bridge\**\*.*"
+             Link="Integrations\MO2\wastelandforge_bridge\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <Target Name="CopyForgeBackendToOutputDirectory" AfterTargets="Build" Condition="Exists('$(MSBuildProjectDirectory)\..\..\dist\local\forge')">
     <ItemGroup>
       <ForgeBackendOutputFiles Include="$(MSBuildProjectDirectory)\..\..\dist\local\forge\**\*.*" />

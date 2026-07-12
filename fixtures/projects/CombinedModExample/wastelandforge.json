@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.2.0",
+  "schemaVersion": "0.4.0",
   "kind": "manifest",
   "id": "io.github.theboyyss.combinedmodexample",
   "name": "Combined Mod Example",
@@ -9,6 +9,7 @@
     "dependencies": "src/registries/dependencies/",
     "capabilities": "src/registries/capabilities/",
     "mcm": "src/registries/mcm/",
-    "jipScripts": "src/registries/jip-scripts/"
+    "jipScripts": "src/registries/jip-scripts/",
+    "fomod": "src/registries/fomod/main.json"
   }
 }

@@ -16,7 +16,7 @@ internal static class ModPackageResultWriter
         {
             ["formatVersion"] = CliConstants.JsonFormatVersion,
             ["tool"] = new JsonObject { ["name"] = CliConstants.ToolName, ["version"] = CliConstants.Version },
-            ["command"] = "package", ["target"] = result.Target, ["dryRun"] = result.DryRun, ["status"] = result.Status,
+            ["command"] = "package", ["target"] = result.Target, ["dryRun"] = result.DryRun, ["status"] = result.Status, ["packageSource"] = result.PackageSource,
             ["project"] = new JsonObject { ["id"] = result.ProjectId, ["root"] = result.ProjectRoot },
             ["summary"] = new JsonObject { ["errors"] = result.Diagnostics.ErrorCount, ["warnings"] = result.Diagnostics.WarningCount, ["notes"] = result.Diagnostics.NoteCount, ["components"] = result.IncludedComponents.Count, ["entries"] = result.Entries.Count, ["outputs"] = result.OutputDigests.Count },
             ["components"] = new JsonObject { ["included"] = new JsonArray(result.IncludedComponents.Select(value => JsonValue.Create(value)).ToArray()), ["excluded"] = new JsonArray(result.ExcludedComponents.Select(value => JsonValue.Create(value)).ToArray()) },
@@ -31,6 +31,7 @@ internal static class ModPackageResultWriter
                 ["status"] = export.Status, ["dryRun"] = export.DryRun, ["modsRoot"] = export.ModsRoot, ["modName"] = export.ModName, ["destination"] = export.Destination,
                 ["entryCount"] = export.Entries.Count,
                 ["entries"] = new JsonArray(export.Entries.Select(entry => new JsonObject { ["component"] = entry.Component, ["dataPath"] = entry.DataPath, ["destinationPath"] = entry.DestinationPath, ["length"] = entry.Length, ["sha256"] = entry.SourceSha256 }).ToArray()),
+                ["safety"] = new JsonObject { ["writesToGameData"] = false, ["writesToMo2Overwrite"] = false, ["mutatesMo2Profile"] = false, ["enablesMod"] = false, ["changesPriority"] = false, ["changesLoadOrder"] = false, ["mutatesPlugins"] = false, ["launchesMo2"] = false, ["launchesGame"] = false, ["executesExternalTools"] = false },
                 ["outputs"] = export.Outputs is null ? null : new JsonObject { ["destination"] = export.Outputs.Destination, ["evidenceRoot"] = export.Outputs.EvidenceRoot, ["manifest"] = export.Outputs.Manifest, ["checksums"] = export.Outputs.Checksums },
                 ["issues"] = new JsonArray(export.Diagnostics.Issues.Select(DiagnosticIssueJsonSerializer.ToJsonNode).ToArray())
             };

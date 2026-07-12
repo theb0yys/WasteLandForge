@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.IO.Compression;
+using WastelandForge.Generation;
 
 namespace WastelandForge.Cli;
 
@@ -26,6 +27,18 @@ internal sealed record ReleasePrepareOutputDigest(
     string Path,
     string Sha256,
     long Length);
+
+internal sealed record ReleasePrepareFomodPayload(
+    string SourceRoot,
+    string SourceArchive,
+    string SourceManifest,
+    string SourceBuildManifest,
+    string SourceChecksums,
+    string StagedArchive,
+    string StagedManifest,
+    string StagedBuildManifest,
+    string StagedChecksums,
+    IReadOnlyList<ReleasePrepareOutputDigest> SourceDigests);
 
 internal sealed record ReleasePrepareArchiveEntryEvidence(
     string Path,
@@ -65,6 +78,7 @@ internal sealed record ReleasePreparePlanResult(
     string ReleaseSummaryPath,
     string BuildManifestPath,
     string ChecksumsPath,
+    ReleasePrepareFomodPayload? FomodPayload,
     ReleasePrepareOutputSafety OutputSafety,
     IReadOnlyList<ReleasePreparePlannedOutput> PlannedOutputs,
     IReadOnlyList<ReleasePrepareWrittenOutput> WrittenOutputs,
@@ -77,10 +91,10 @@ internal static class ReleasePreparePlanPlanner
 {
     private static readonly string[] BoundaryLines =
     [
-        "Gate 268 writes staging/release-payload.json, release-archive-plan.json, archives/release.zip, release-archive-evidence.json, release-plan.json, release-summary.json, build-manifest.json, and checksums.sha256 only.",
-        "Release archive creation is a deterministic ZIP skeleton containing local release-prepare evidence only.",
+        "Release prepare writes local plans, manifests, checksums, archive evidence, and a deterministic release ZIP under dist/release-prepare.",
+        "When verified dist/fomod evidence exists, its archive and provenance files are staged as the concrete local distributable payload.",
         "Release archive evidence revalidates archive digest, entry names, stored compression, and deterministic timestamp metadata.",
-        "No FOMOD installer, live Data write, plugin mutation, or external archive payload output is written.",
+        "No new installer is assembled, and no live Data write or plugin mutation is performed.",
         "No release is published.",
         "Remote repositories are not called.",
         "Attestations and signing are not performed.",
@@ -118,19 +132,20 @@ internal static class ReleasePreparePlanPlanner
         var releaseSummaryDisplayPath = ToDisplayPath(projectRoot, releaseSummaryPath);
         var buildManifestDisplayPath = ToDisplayPath(projectRoot, buildManifestPath);
         var checksumsDisplayPath = ToDisplayPath(projectRoot, checksumsPath);
-        var writes = insideDist && !options.DryRun;
-        var status = insideDist
+        var fomodResolution = ResolveFomodPayload(projectRoot, stagingRootPath);
+        var writes = insideDist && fomodResolution.Error is null && !options.DryRun;
+        var status = insideDist && fomodResolution.Error is null
             ? options.DryRun ? "planned" : "prepared"
             : "refused";
-        var refusalReason = insideDist
-            ? null
-            : "Release prepare output must stay under the project dist/ directory.";
+        var refusalReason = !insideDist
+            ? "Release prepare output must stay under the project dist/ directory."
+            : fomodResolution.Error;
 
         var safety = new ReleasePrepareOutputSafety(
             Checked: true,
             DistRoot: ToDisplayPath(projectRoot, distRoot),
             OutputRoot: outputRootDisplay,
-            Status: insideDist ? "inside-dist" : "refused-output-outside-dist",
+            Status: !insideDist ? "refused-output-outside-dist" : fomodResolution.Error is null ? "inside-dist" : "refused-fomod-evidence",
             RefusalReason: refusalReason);
 
         var result = new ReleasePreparePlanResult(
@@ -151,6 +166,7 @@ internal static class ReleasePreparePlanPlanner
             releaseSummaryDisplayPath,
             buildManifestDisplayPath,
             checksumsDisplayPath,
+            fomodResolution.Payload,
             safety,
             CreatePlannedOutputs(
                 outputRootDisplay,
@@ -161,7 +177,8 @@ internal static class ReleasePreparePlanPlanner
                 writesReleasePlan: writes,
                 writesReleaseSummary: writes,
                 writesBuildManifest: writes,
-                writesChecksums: writes),
+                writesChecksums: writes,
+                fomodResolution.Payload),
             [],
             BoundaryLines);
 
@@ -170,29 +187,32 @@ internal static class ReleasePreparePlanPlanner
             return result;
         }
 
-        Directory.CreateDirectory(outputRoot);
-        Directory.CreateDirectory(stagingRootPath);
+        OutputFileSystem.EnsureDirectory(outputRoot);
+        OutputFileSystem.EnsureDirectory(stagingRootPath);
+        if (result.FomodPayload is not null) StageFomodPayload(result.FomodPayload);
         var stagingPayloadJson = CreateStagingPayloadJson(result).ToJsonString(SerializerOptions) + Environment.NewLine;
-        File.WriteAllText(stagingPayloadPath, stagingPayloadJson, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(stagingPayloadPath, stagingPayloadJson);
         var releaseArchivePlanJson = CreateReleaseArchivePlanJson(result).ToJsonString(SerializerOptions) + Environment.NewLine;
-        File.WriteAllText(releaseArchivePlanPath, releaseArchivePlanJson, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(releaseArchivePlanPath, releaseArchivePlanJson);
         var releasePlanJson = CreateReleasePlanJson(result).ToJsonString(SerializerOptions) + Environment.NewLine;
-        File.WriteAllText(releasePlanPath, releasePlanJson, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(releasePlanPath, releasePlanJson);
         var releaseSummaryJson = CreateReleaseSummaryJson(result).ToJsonString(SerializerOptions) + Environment.NewLine;
-        File.WriteAllText(releaseSummaryPath, releaseSummaryJson, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(releaseSummaryPath, releaseSummaryJson);
+        var archiveInputs = ReleaseArchiveInputs(result, releaseArchivePlanPath, releasePlanPath, releaseSummaryPath, stagingPayloadPath);
         CreateReleaseArchive(
             outputRoot,
             plannedArchivePath,
-            [releaseArchivePlanPath, releasePlanPath, releaseSummaryPath, stagingPayloadPath]);
-        var releaseArchiveEvidenceJson = CreateReleaseArchiveEvidenceJson(projectRoot, outputRoot, plannedArchivePath, result).ToJsonString(SerializerOptions) + Environment.NewLine;
-        File.WriteAllText(releaseArchiveEvidencePath, releaseArchiveEvidenceJson, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-        var outputDigests = new[] { plannedArchivePath, releasePlanPath, releaseSummaryPath, stagingPayloadPath, releaseArchivePlanPath, releaseArchiveEvidencePath }
+            archiveInputs);
+        var releaseArchiveEvidenceJson = CreateReleaseArchiveEvidenceJson(projectRoot, outputRoot, plannedArchivePath, result, archiveInputs).ToJsonString(SerializerOptions) + Environment.NewLine;
+        OutputFileSystem.WriteUtf8NoBom(releaseArchiveEvidencePath, releaseArchiveEvidenceJson);
+        var outputFiles = new[] { plannedArchivePath, releasePlanPath, releaseSummaryPath, stagingPayloadPath, releaseArchivePlanPath, releaseArchiveEvidencePath };
+        var outputDigests = outputFiles
             .Select(path => ComputeDigest(projectRoot, path))
             .OrderBy(digest => digest.Path, StringComparer.Ordinal)
             .ToArray();
         var buildManifestJson = CreateBuildManifestJson(result, outputDigests).ToJsonString(SerializerOptions) + Environment.NewLine;
-        File.WriteAllText(buildManifestPath, buildManifestJson, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-        WriteChecksums(outputRoot, checksumsPath, [releasePlanPath, releaseSummaryPath, stagingPayloadPath, releaseArchivePlanPath, plannedArchivePath, releaseArchiveEvidencePath, buildManifestPath]);
+        OutputFileSystem.WriteUtf8NoBom(buildManifestPath, buildManifestJson);
+        WriteChecksums(outputRoot, checksumsPath, outputFiles.Append(buildManifestPath).ToArray());
 
         var stagingPayloadWritten = new ReleasePrepareWrittenOutput("staging-payload", stagingPayloadDisplayPath, new FileInfo(stagingPayloadPath).Length);
         var archivePlanWritten = new ReleasePrepareWrittenOutput("release-archive-plan", releaseArchivePlanDisplayPath, new FileInfo(releaseArchivePlanPath).Length);
@@ -209,8 +229,10 @@ internal static class ReleasePreparePlanPlanner
         };
     }
 
-    private static IReadOnlyList<ReleasePreparePlannedOutput> CreatePlannedOutputs(string outputRoot, bool writesStagingRoot, bool writesStagingPayload, bool writesReleaseArchivePlan, bool writesReleaseArchiveEvidence, bool writesReleasePlan, bool writesReleaseSummary, bool writesBuildManifest, bool writesChecksums) =>
-    [
+    private static IReadOnlyList<ReleasePreparePlannedOutput> CreatePlannedOutputs(string outputRoot, bool writesStagingRoot, bool writesStagingPayload, bool writesReleaseArchivePlan, bool writesReleaseArchiveEvidence, bool writesReleasePlan, bool writesReleaseSummary, bool writesBuildManifest, bool writesChecksums, ReleasePrepareFomodPayload? fomod)
+    {
+        var outputs = new List<ReleasePreparePlannedOutput>
+        {
         Output("staging-root", $"{outputRoot}/staging/", "Local release staging root.", writesStagingRoot),
         Output("staging-payload", $"{outputRoot}/staging/release-payload.json", "Machine-readable local release staging payload skeleton.", writesStagingPayload),
         Output("release-archive-plan", $"{outputRoot}/release-archive-plan.json", "Machine-readable local release archive planning metadata.", writesReleaseArchivePlan),
@@ -220,7 +242,9 @@ internal static class ReleasePreparePlanPlanner
         Output("release-summary", $"{outputRoot}/release-summary.json", "Machine-readable local release preparation summary.", writesReleaseSummary),
         Output("build-manifest", $"{outputRoot}/build-manifest.json", "Local build manifest for release-preparation evidence.", writesBuildManifest),
         Output("checksums", $"{outputRoot}/checksums.sha256", "Local checksum sidecar for release-preparation evidence.", writesChecksums)
-    ];
+        };
+        return outputs;
+    }
 
     private static ReleasePreparePlannedOutput Output(string kind, string path, string description, bool wouldWrite = false) =>
         new(kind, path, description, wouldWrite);
@@ -266,7 +290,7 @@ internal static class ReleasePreparePlanPlanner
             ["formatVersion"] = CliConstants.JsonFormatVersion,
             ["kind"] = "wastelandforge.release-staging-payload",
             ["command"] = "release prepare",
-            ["status"] = "skeleton",
+            ["status"] = result.FomodPayload is null ? "skeleton" : "staged-fomod",
             ["tool"] = new JsonObject
             {
                 ["name"] = CliConstants.ToolName,
@@ -292,12 +316,15 @@ internal static class ReleasePreparePlanPlanner
             },
             ["payload"] = new JsonObject
             {
-                ["status"] = "skeleton",
-                ["modPayloadFiles"] = 0,
+                ["status"] = result.FomodPayload is null ? "skeleton" : "staged-fomod",
+                ["modPayloadFiles"] = result.FomodPayload is null ? 0 : 1,
+                ["packageType"] = result.FomodPayload is null ? null : "fomod-required-files-5.0",
+                ["archive"] = result.FomodPayload is null ? null : "staging/distributable/package.zip",
+                ["sourceDigests"] = result.FomodPayload is null ? new JsonArray() : ToDigestArray(result.FomodPayload.SourceDigests),
                 ["writesToGameData"] = false,
                 ["writesToMo2Profile"] = false,
                 ["pluginMutation"] = false,
-                ["archiveCreated"] = false,
+                ["archiveCreated"] = result.FomodPayload is not null,
                 ["installerCreated"] = false
             },
             ["execution"] = ReleasePreparePlanJsonSerializer.ToExecution(result),
@@ -341,22 +368,16 @@ internal static class ReleasePreparePlanPlanner
                 ["format"] = "zip",
                 ["mediaType"] = "application/zip",
                 ["created"] = true,
-                ["entries"] = 4
+                ["entries"] = 4 + (result.FomodPayload is null ? 0 : 4)
             },
             ["determinism"] = new JsonObject
             {
                 ["entryOrdering"] = "ordinal-path-order",
                 ["timestampSource"] = "SOURCE_DATE_EPOCH-clamped-to-zip-range-or-1980-epoch",
                 ["compression"] = "stored",
-                ["fomodAssembly"] = "not-planned-in-current-gate"
+                ["fomodAssembly"] = result.FomodPayload is null ? "not-present" : "verified-existing-payload-staged"
             },
-            ["inputs"] = new JsonArray
-            {
-                ArchiveInput("release-archive-plan", result.ReleaseArchivePlanPath),
-                ArchiveInput("release-plan", result.ReleasePlanPath),
-                ArchiveInput("release-summary", result.ReleaseSummaryPath),
-                ArchiveInput("staging-payload", result.StagingPayloadPath)
-            },
+            ["inputs"] = ReleaseArchiveInputJson(result),
             ["execution"] = ReleasePreparePlanJsonSerializer.ToExecution(result),
             ["boundaries"] = ReleasePreparePlanJsonSerializer.ToStringArray(result.Boundaries)
         };
@@ -369,15 +390,9 @@ internal static class ReleasePreparePlanPlanner
             ["status"] = "planned-local-evidence"
         };
 
-    private static JsonObject CreateReleaseArchiveEvidenceJson(string projectRoot, string outputRoot, string archivePath, ReleasePreparePlanResult result)
+    private static JsonObject CreateReleaseArchiveEvidenceJson(string projectRoot, string outputRoot, string archivePath, ReleasePreparePlanResult result, IReadOnlyList<string> archiveInputs)
     {
-        var expectedEntries = new[]
-        {
-            "release-archive-plan.json",
-            "release-plan.json",
-            "release-summary.json",
-            "staging/release-payload.json"
-        };
+        var expectedEntries = archiveInputs.Select(path => ToDisplayPath(outputRoot, path)).Order(StringComparer.Ordinal).ToArray();
         var expectedTimestamp = ResolveZipTimestamp();
         using var archive = ZipFile.OpenRead(archivePath);
         var actualEntries = archive.Entries
@@ -598,16 +613,16 @@ internal static class ReleasePreparePlanPlanner
                     ["target"] = "release-prepare"
                 }
             },
-            ["sources"] = new JsonArray(),
+            ["sources"] = result.FomodPayload is null ? new JsonArray() : ToDigestArray(result.FomodPayload.SourceDigests),
             ["outputs"] = ToDigestArray(outputDigests),
             ["execution"] = ReleasePreparePlanJsonSerializer.ToExecution(result),
             ["boundaries"] = ReleasePreparePlanJsonSerializer.ToStringArray(result.Boundaries),
             ["limitations"] = new JsonArray
             {
-                "Staging payload is skeleton metadata only.",
-                "Release archive is a deterministic ZIP skeleton containing local release-prepare evidence only.",
+                result.FomodPayload is null ? "No FOMOD candidate payload was present." : "Verified existing FOMOD candidate payload is staged without regeneration.",
+                "Release archive is deterministic and local only.",
                 "Release archive evidence is local revalidation metadata only.",
-                "No FOMOD installer.",
+                "No installer is executed.",
                 "No release publishing.",
                 "No remote repository calls.",
                 "No attestation or signing.",
@@ -617,6 +632,92 @@ internal static class ReleasePreparePlanPlanner
             }
         };
     }
+
+    private static (ReleasePrepareFomodPayload? Payload, string? Error) ResolveFomodPayload(string projectRoot, string stagingRoot)
+    {
+        var root = Path.Combine(projectRoot, "dist", "fomod");
+        if (!Directory.Exists(root)) return (null, null);
+        var archive = Path.Combine(root, "package.zip");
+        var manifest = Path.Combine(root, "fomod-manifest.json");
+        var buildManifest = Path.Combine(root, "build-manifest.json");
+        var checksums = Path.Combine(root, "checksums.sha256");
+        var required = new[] { archive, manifest, buildManifest, checksums };
+        var missing = required.Where(path => !File.Exists(path)).Select(Path.GetFileName).ToArray();
+        if (missing.Length > 0) return (null, "FOMOD candidate evidence is incomplete: " + string.Join(", ", missing) + ".");
+        try
+        {
+            var checksumEntries = File.ReadAllLines(checksums)
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .Select(line => line.Split("  ", 2, StringSplitOptions.None))
+                .Where(parts => parts.Length == 2)
+                .ToDictionary(parts => parts[1].Replace('\\', '/'), parts => parts[0], StringComparer.Ordinal);
+            foreach (var source in new[] { archive, manifest, buildManifest })
+            {
+                var name = Path.GetFileName(source);
+                var digest = ComputeDigest(projectRoot, source);
+                if (!checksumEntries.TryGetValue(name, out var expected) || !StringComparer.Ordinal.Equals(expected, digest.Sha256))
+                    return (null, $"FOMOD candidate checksum evidence does not match {name}.");
+            }
+            var fomodManifest = JsonNode.Parse(File.ReadAllText(manifest))?.AsObject();
+            var recordedArchive = fomodManifest?["outputs"]?["sha256"]?.GetValue<string>();
+            var archiveDigest = ComputeDigest(projectRoot, archive);
+            if (!StringComparer.Ordinal.Equals(recordedArchive, archiveDigest.Sha256)) return (null, "FOMOD manifest archive digest does not match package.zip.");
+            var destination = Path.Combine(stagingRoot, "distributable");
+            return (new ReleasePrepareFomodPayload(
+                root, archive, manifest, buildManifest, checksums,
+                Path.Combine(destination, "package.zip"), Path.Combine(destination, "fomod-manifest.json"), Path.Combine(destination, "build-manifest.json"), Path.Combine(destination, "checksums.sha256"),
+                required.Select(path => ComputeDigest(projectRoot, path)).OrderBy(item => item.Path, StringComparer.Ordinal).ToArray()), null);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or ArgumentException)
+        {
+            return (null, "FOMOD candidate evidence could not be verified: " + ex.Message);
+        }
+    }
+
+    private static void StageFomodPayload(ReleasePrepareFomodPayload payload)
+    {
+        OutputFileSystem.EnsureDirectory(Path.GetDirectoryName(payload.StagedArchive)!);
+        OutputFileSystem.CopyFile(payload.SourceArchive, payload.StagedArchive, overwrite: true);
+        OutputFileSystem.CopyFile(payload.SourceManifest, payload.StagedManifest, overwrite: true);
+        OutputFileSystem.CopyFile(payload.SourceBuildManifest, payload.StagedBuildManifest, overwrite: true);
+        OutputFileSystem.CopyFile(payload.SourceChecksums, payload.StagedChecksums, overwrite: true);
+    }
+
+    private static IReadOnlyList<string> FomodStagedFiles(ReleasePreparePlanResult result) => result.FomodPayload is null
+        ? []
+        : [result.FomodPayload.StagedArchive, result.FomodPayload.StagedManifest, result.FomodPayload.StagedBuildManifest, result.FomodPayload.StagedChecksums];
+
+    private static IReadOnlyList<string> ReleaseArchiveInputs(ReleasePreparePlanResult result, params string[] evidence) =>
+        evidence.Concat(FomodStagedFiles(result)).Order(StringComparer.Ordinal).ToArray();
+
+    private static JsonArray ReleaseArchiveInputJson(ReleasePreparePlanResult result)
+    {
+        var inputs = new List<JsonObject>
+        {
+            ArchiveInput("release-archive-plan", result.ReleaseArchivePlanPath),
+            ArchiveInput("release-plan", result.ReleasePlanPath),
+            ArchiveInput("release-summary", result.ReleaseSummaryPath),
+            ArchiveInput("staging-payload", result.StagingPayloadPath)
+        };
+        if (result.FomodPayload is not null)
+        {
+            inputs.Add(ArchiveInput("fomod-archive", ToDisplayPath(result.ProjectRoot, result.FomodPayload.StagedArchive)));
+            inputs.Add(ArchiveInput("fomod-manifest", ToDisplayPath(result.ProjectRoot, result.FomodPayload.StagedManifest)));
+            inputs.Add(ArchiveInput("fomod-build-manifest", ToDisplayPath(result.ProjectRoot, result.FomodPayload.StagedBuildManifest)));
+            inputs.Add(ArchiveInput("fomod-checksums", ToDisplayPath(result.ProjectRoot, result.FomodPayload.StagedChecksums)));
+        }
+        return new JsonArray(inputs.OrderBy(input => input["path"]!.GetValue<string>(), StringComparer.Ordinal).ToArray());
+    }
+
+    private static IReadOnlyList<ReleasePrepareWrittenOutput> FomodWrittenOutputs(ReleasePreparePlanResult result) => result.FomodPayload is null
+        ? []
+        : new[]
+        {
+            new ReleasePrepareWrittenOutput("fomod-archive", ToDisplayPath(result.ProjectRoot, result.FomodPayload.StagedArchive), new FileInfo(result.FomodPayload.StagedArchive).Length),
+            new ReleasePrepareWrittenOutput("fomod-manifest", ToDisplayPath(result.ProjectRoot, result.FomodPayload.StagedManifest), new FileInfo(result.FomodPayload.StagedManifest).Length),
+            new ReleasePrepareWrittenOutput("fomod-build-manifest", ToDisplayPath(result.ProjectRoot, result.FomodPayload.StagedBuildManifest), new FileInfo(result.FomodPayload.StagedBuildManifest).Length),
+            new ReleasePrepareWrittenOutput("fomod-checksums", ToDisplayPath(result.ProjectRoot, result.FomodPayload.StagedChecksums), new FileInfo(result.FomodPayload.StagedChecksums).Length)
+        };
 
     private static void WriteChecksums(string outputRoot, string checksumsPath, IReadOnlyList<string> files)
     {
@@ -630,31 +731,34 @@ internal static class ReleasePreparePlanPlanner
             })
             .ToArray();
 
-        File.WriteAllText(
-            checksumsPath,
-            string.Join(Environment.NewLine, lines) + Environment.NewLine,
-            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        OutputFileSystem.WriteUtf8NoBom(checksumsPath, string.Join(Environment.NewLine, lines) + Environment.NewLine);
     }
 
     private static void CreateReleaseArchive(string outputRoot, string archivePath, IReadOnlyList<string> files)
     {
-        var archiveDirectory = Path.GetDirectoryName(archivePath) ?? outputRoot;
-        Directory.CreateDirectory(archiveDirectory);
-        if (File.Exists(archivePath))
-        {
-            File.Delete(archivePath);
-        }
-
+        OutputFileSystem.EnsureDirectory(Path.GetDirectoryName(archivePath) ?? outputRoot);
+        var scratch = OperatingSystem.IsWindows() ? Path.GetTempFileName() : archivePath;
+        if (OperatingSystem.IsWindows()) File.Delete(scratch);
         var lastWriteTime = ResolveZipTimestamp();
-        using var archive = ZipFile.Open(archivePath, ZipArchiveMode.Create);
-        foreach (var file in files.OrderBy(path => ToDisplayPath(outputRoot, path), StringComparer.Ordinal))
+        try
         {
-            var entryName = ToDisplayPath(outputRoot, file);
-            var entry = archive.CreateEntry(entryName, CompressionLevel.NoCompression);
-            entry.LastWriteTime = lastWriteTime;
-            using var entryStream = entry.Open();
-            using var fileStream = File.OpenRead(file);
-            fileStream.CopyTo(entryStream);
+            using (var archive = ZipFile.Open(scratch, ZipArchiveMode.Create))
+            {
+                foreach (var file in files.OrderBy(path => ToDisplayPath(outputRoot, path), StringComparer.Ordinal))
+                {
+                    var entryName = ToDisplayPath(outputRoot, file);
+                    var entry = archive.CreateEntry(entryName, CompressionLevel.NoCompression);
+                    entry.LastWriteTime = lastWriteTime;
+                    using var entryStream = entry.Open();
+                    using var fileStream = File.OpenRead(file);
+                    fileStream.CopyTo(entryStream);
+                }
+            }
+            if (OperatingSystem.IsWindows()) OutputFileSystem.CopyFile(scratch, archivePath, overwrite: true);
+        }
+        finally
+        {
+            if (!StringComparer.Ordinal.Equals(scratch, archivePath) && File.Exists(scratch)) File.Delete(scratch);
         }
     }
 

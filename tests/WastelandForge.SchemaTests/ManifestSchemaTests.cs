@@ -59,6 +59,18 @@ public sealed class ManifestSchemaTests
     }
 
     [Fact]
+    public void FomodSchemasAndManifest040AreRegistered()
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest040, out var manifest));
+        var schema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(manifest!));
+        Assert.NotNull(schema?["properties"]?["registries"]?["properties"]?["fomod"]);
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Fomod010, out var source));
+        Assert.Equal("fomod", source!.Kind);
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FomodManifest010, out var evidence));
+        Assert.Equal("fomod-manifest", evidence!.Kind);
+    }
+
+    [Fact]
     public void BuiltInCatalogResolvesPluginReviewEvidenceSchema()
     {
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.PluginReviewEvidence010, out var resource));

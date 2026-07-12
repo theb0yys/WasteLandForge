@@ -22,6 +22,7 @@ internal static class ProjectOutputWorkspace
                 Lane(projectRoot, registries, "jipScripts", "jip-scripts", "JIP script package", "forge package --target jip-scripts"),
                 Lane(projectRoot, registries, "xeditAudit", "xedit-audit", "xEdit audit scaffold", "forge generate --target xedit-audit"),
                 ModPackageLane(projectRoot, registries),
+                FomodLane(projectRoot, registries),
                 GeckHandoffLane(projectRoot, registries)
             };
             return new(true, $"Inspected {lanes.Length} project output lanes.", lanes);
@@ -70,6 +71,21 @@ internal static class ProjectOutputWorkspace
             Directory.Exists(staging) ? staging : null,
             File.Exists(archive) ? archive : null,
             string.IsNullOrWhiteSpace(components) ? "-" : components,
+            entryCount);
+    }
+
+    private static ProjectOutputLane FomodLane(string root, JsonObject registries)
+    {
+        var distribution = Path.GetFullPath(Path.Combine(root, "dist", "fomod"));
+        var staging = Path.Combine(distribution, "staging");
+        var archive = Path.Combine(distribution, "package.zip");
+        var manifestPath = Path.Combine(distribution, "fomod-manifest.json");
+        var entryCount = File.Exists(manifestPath) ? JsonNode.Parse(File.ReadAllText(manifestPath))?["entries"]?.AsArray().Count : null;
+        return new("fomod", "FOMOD installer package", registries["fomod"] is not null, false, Directory.Exists(distribution), "forge package --target fomod", null,
+            Directory.Exists(distribution) ? distribution : null,
+            Directory.Exists(staging) ? staging : null,
+            File.Exists(archive) ? archive : null,
+            "FOMOD 5.0 required files",
             entryCount);
     }
 

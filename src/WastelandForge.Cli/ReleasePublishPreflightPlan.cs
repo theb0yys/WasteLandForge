@@ -633,6 +633,22 @@ internal static class ReleasePublishPreflightPlanner
         "staging/release-payload.json"
     ];
 
+    private static readonly (string Kind, string Path)[] FomodArchivePlanInputs =
+    [
+        ("fomod-build-manifest", "dist/release-prepare/staging/distributable/build-manifest.json"),
+        ("fomod-checksums", "dist/release-prepare/staging/distributable/checksums.sha256"),
+        ("fomod-manifest", "dist/release-prepare/staging/distributable/fomod-manifest.json"),
+        ("fomod-archive", "dist/release-prepare/staging/distributable/package.zip")
+    ];
+
+    private static readonly string[] FomodArchiveEntryPaths =
+    [
+        "staging/distributable/build-manifest.json",
+        "staging/distributable/checksums.sha256",
+        "staging/distributable/fomod-manifest.json",
+        "staging/distributable/package.zip"
+    ];
+
     private static readonly (string Id, string Title, string Path)[] SemanticCheckTemplates =
     [
         ("release-plan-contract", "release-plan contract fields are consistent", "dist/release-prepare/release-plan.json"),
@@ -4021,21 +4037,24 @@ internal static class ReleasePublishPreflightPlanner
             }
         }
 
+        var fomodStaged = StagedFomodPayload(documents["staging-payload"]);
+        var expectedArchiveEntries = fomodStaged ? ExpectedArchiveEntryPaths.Concat(FomodArchiveEntryPaths).Order(StringComparer.Ordinal).ToArray() : ExpectedArchiveEntryPaths;
+        var expectedArchiveInputs = fomodStaged ? ExpectedArchivePlanInputs.Concat(FomodArchivePlanInputs).OrderBy(item => item.Path, StringComparer.Ordinal).ToArray() : ExpectedArchivePlanInputs;
         var checks = new List<ReleasePublishSemanticEvidenceCheck>
         {
             SemanticCheck("release-plan-contract", ContractMatches(documents["release-plan"], "wastelandforge.release-plan", "planned"), "release-plan-contract-validated"),
             SemanticCheck("release-summary-contract", ContractMatches(documents["release-summary"], "wastelandforge.release-summary", "prepared"), "release-summary-contract-validated"),
-            SemanticCheck("staging-payload-contract", ContractMatches(documents["staging-payload"], "wastelandforge.release-staging-payload", "skeleton"), "staging-payload-contract-validated"),
+            SemanticCheck("staging-payload-contract", ContractMatches(documents["staging-payload"], "wastelandforge.release-staging-payload", fomodStaged ? "staged-fomod" : "skeleton"), "staging-payload-contract-validated"),
             SemanticCheck("release-archive-plan-contract", ContractMatches(documents["release-archive-plan"], "wastelandforge.release-archive-plan", "created"), "release-archive-plan-contract-validated"),
             SemanticCheck("release-archive-evidence-contract", ContractMatches(documents["release-archive-evidence"], "wastelandforge.release-archive-evidence", "passed"), "release-archive-evidence-contract-validated"),
-            SemanticCheck("build-manifest-contract", BuildManifestContractMatches(documents["build-manifest"]), "build-manifest-contract-validated"),
+            SemanticCheck("build-manifest-contract", BuildManifestContractMatches(documents["build-manifest"], fomodStaged), "build-manifest-contract-validated"),
             SemanticCheck("project-output-map-consistency", DocumentsShareExpectedProjectAndOutputs(documents.Values, projectRoot), "project-output-map-consistency-validated"),
             SemanticCheck("release-plan-planned-output-consistency", ReleasePlanOutputsMatch(documents["release-plan"]), "release-plan-planned-output-consistency-validated"),
             SemanticCheck("release-summary-counts", ReleaseSummaryCountsMatch(documents["release-summary"]), "release-summary-counts-validated"),
-            SemanticCheck("staging-payload-boundary", StagingPayloadBoundaryMatches(documents["staging-payload"]), "staging-payload-boundary-validated"),
-            SemanticCheck("release-archive-plan-metadata", ReleaseArchivePlanMetadataMatches(documents["release-archive-plan"]), "release-archive-plan-metadata-validated"),
-            SemanticCheck("release-archive-plan-inputs", ReleaseArchivePlanInputsMatch(documents["release-archive-plan"]), "release-archive-plan-inputs-validated"),
-            SemanticCheck("release-archive-evidence-checks", ReleaseArchiveEvidenceChecksMatch(documents["release-archive-evidence"]), "release-archive-evidence-checks-validated"),
+            SemanticCheck("staging-payload-boundary", StagingPayloadBoundaryMatches(documents["staging-payload"], fomodStaged), "staging-payload-boundary-validated"),
+            SemanticCheck("release-archive-plan-metadata", ReleaseArchivePlanMetadataMatches(documents["release-archive-plan"], expectedArchiveEntries.Length, fomodStaged), "release-archive-plan-metadata-validated"),
+            SemanticCheck("release-archive-plan-inputs", ReleaseArchivePlanInputsMatch(documents["release-archive-plan"], expectedArchiveInputs), "release-archive-plan-inputs-validated"),
+            SemanticCheck("release-archive-evidence-checks", ReleaseArchiveEvidenceChecksMatch(documents["release-archive-evidence"], expectedArchiveEntries), "release-archive-evidence-checks-validated"),
             SemanticCheck("build-manifest-output-set", BuildManifestOutputSetMatches(documents["build-manifest"]), "build-manifest-output-set-validated"),
             SemanticCheck("non-publish-execution-boundary", NonPublishExecutionBoundariesMatch(documents.Values), "non-publish-execution-boundary-validated")
         };
@@ -4117,7 +4136,13 @@ internal static class ReleasePublishPreflightPlanner
         StringComparer.Ordinal.Equals(status, expectedStatus) &&
         ToolMetadataMatches(root);
 
-    private static bool BuildManifestContractMatches(JsonObject root) =>
+    private static bool StagedFomodPayload(JsonObject stagingPayload) =>
+        stagingPayload["payload"] is JsonObject payload &&
+        StringPropertyEquals(payload, "status", "staged-fomod") &&
+        payload["sourceDigests"] is JsonArray sources &&
+        sources.Count == 4;
+
+    private static bool BuildManifestContractMatches(JsonObject root, bool fomodStaged) =>
         ContractMatches(root, "wastelandforge.build-manifest", "prepared") &&
         TryGetStringProperty(root, "buildType", out var buildType) &&
         StringComparer.Ordinal.Equals(buildType, "wastelandforge/release-prepare/v1") &&
@@ -4138,7 +4163,7 @@ internal static class ReleasePublishPreflightPlanner
         capabilities["resolved"] is JsonArray resolved &&
         resolved.Count == 0 &&
         root["sources"] is JsonArray sources &&
-        sources.Count == 0 &&
+        sources.Count == (fomodStaged ? 4 : 0) &&
         root["generators"] is JsonArray generators &&
         generators.Count == 1 &&
         generators[0] is JsonObject generator &&
@@ -4219,18 +4244,18 @@ internal static class ReleasePublishPreflightPlanner
         BooleanPropertyEquals(summary, "archiveCreated", expected: true) &&
         BooleanPropertyEquals(summary, "releasePublished", expected: false);
 
-    private static bool StagingPayloadBoundaryMatches(JsonObject stagingPayload) =>
+    private static bool StagingPayloadBoundaryMatches(JsonObject stagingPayload, bool fomodStaged) =>
         stagingPayload["payload"] is JsonObject payload &&
-        StringPropertyEquals(payload, "status", "skeleton") &&
+        StringPropertyEquals(payload, "status", fomodStaged ? "staged-fomod" : "skeleton") &&
         TryGetInt32Property(payload, "modPayloadFiles", out var modPayloadFiles) &&
-        modPayloadFiles == 0 &&
+        modPayloadFiles == (fomodStaged ? 1 : 0) &&
         BooleanPropertyEquals(payload, "writesToGameData", expected: false) &&
         BooleanPropertyEquals(payload, "writesToMo2Profile", expected: false) &&
         BooleanPropertyEquals(payload, "pluginMutation", expected: false) &&
-        BooleanPropertyEquals(payload, "archiveCreated", expected: false) &&
+        BooleanPropertyEquals(payload, "archiveCreated", expected: fomodStaged) &&
         BooleanPropertyEquals(payload, "installerCreated", expected: false);
 
-    private static bool ReleaseArchivePlanMetadataMatches(JsonObject archivePlan) =>
+    private static bool ReleaseArchivePlanMetadataMatches(JsonObject archivePlan, int expectedEntries, bool fomodStaged) =>
         archivePlan["archive"] is JsonObject archive &&
         StringPropertyEquals(archive, "status", "created") &&
         StringPropertyEquals(archive, "path", "dist/release-prepare/archives/release.zip") &&
@@ -4238,26 +4263,26 @@ internal static class ReleasePublishPreflightPlanner
         StringPropertyEquals(archive, "mediaType", "application/zip") &&
         BooleanPropertyEquals(archive, "created", expected: true) &&
         TryGetInt32Property(archive, "entries", out var entries) &&
-        entries == ExpectedArchiveEntryPaths.Length &&
+        entries == expectedEntries &&
         archivePlan["determinism"] is JsonObject determinism &&
         StringPropertyEquals(determinism, "entryOrdering", "ordinal-path-order") &&
         StringPropertyEquals(determinism, "timestampSource", "SOURCE_DATE_EPOCH-clamped-to-zip-range-or-1980-epoch") &&
         StringPropertyEquals(determinism, "compression", "stored") &&
-        StringPropertyEquals(determinism, "fomodAssembly", "not-planned-in-current-gate");
+        StringPropertyEquals(determinism, "fomodAssembly", fomodStaged ? "verified-existing-payload-staged" : "not-present");
 
-    private static bool ReleaseArchivePlanInputsMatch(JsonObject archivePlan)
+    private static bool ReleaseArchivePlanInputsMatch(JsonObject archivePlan, IReadOnlyList<(string Kind, string Path)> expectedInputs)
     {
         if (archivePlan["inputs"] is not JsonArray inputs ||
-            inputs.Count != ExpectedArchivePlanInputs.Length)
+            inputs.Count != expectedInputs.Count)
         {
             return false;
         }
 
-        for (var index = 0; index < ExpectedArchivePlanInputs.Length; index++)
+        for (var index = 0; index < expectedInputs.Count; index++)
         {
             if (inputs[index] is not JsonObject input ||
-                !StringPropertyEquals(input, "kind", ExpectedArchivePlanInputs[index].Kind) ||
-                !StringPropertyEquals(input, "path", ExpectedArchivePlanInputs[index].Path) ||
+                !StringPropertyEquals(input, "kind", expectedInputs[index].Kind) ||
+                !StringPropertyEquals(input, "path", expectedInputs[index].Path) ||
                 !StringPropertyEquals(input, "status", "planned-local-evidence"))
             {
                 return false;
@@ -4267,7 +4292,7 @@ internal static class ReleasePublishPreflightPlanner
         return true;
     }
 
-    private static bool ReleaseArchiveEvidenceChecksMatch(JsonObject archiveEvidence) =>
+    private static bool ReleaseArchiveEvidenceChecksMatch(JsonObject archiveEvidence, IReadOnlyList<string> expectedPaths) =>
         archiveEvidence["archive"] is JsonObject archive &&
         StringPropertyEquals(archive, "path", "dist/release-prepare/archives/release.zip") &&
         StringPropertyEquals(archive, "format", "zip") &&
@@ -4276,14 +4301,14 @@ internal static class ReleasePublishPreflightPlanner
         TryGetInt64Property(archive, "length", out var length) &&
         length > 0 &&
         TryGetInt32Property(archive, "entries", out var entries) &&
-        entries == ExpectedArchiveEntryPaths.Length &&
+        entries == expectedPaths.Count &&
         archiveEvidence["expected"] is JsonObject expected &&
-        SequenceMatchesStringArray(expected["entries"] as JsonArray, ExpectedArchiveEntryPaths) &&
+        SequenceMatchesStringArray(expected["entries"] as JsonArray, expectedPaths) &&
         StringPropertyEquals(expected, "compression", "stored") &&
         archiveEvidence["actual"] is JsonObject actual &&
-        SequenceMatchesStringArray(actual["entries"] as JsonArray, ExpectedArchiveEntryPaths) &&
+        SequenceMatchesStringArray(actual["entries"] as JsonArray, expectedPaths) &&
         TryGetInt32Property(actual, "storedEntries", out var storedEntries) &&
-        storedEntries == ExpectedArchiveEntryPaths.Length &&
+        storedEntries == expectedPaths.Count &&
         archiveEvidence["checks"] is JsonObject checks &&
         BooleanPropertyEquals(checks, "archiveDigestRecomputed", expected: true) &&
         BooleanPropertyEquals(checks, "entryNamesMatch", expected: true) &&

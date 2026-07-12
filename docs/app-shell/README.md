@@ -249,7 +249,7 @@ necessary.
 
 ## Open Implementation Checks
 
-- Gate 464 Release Candidate diagnostic explanation panel and workspace-navigation implementation.
+- Gate 472 deterministic required-files FOMOD 5.0 adapter implementation and installed regression.
 - Code signing and update channel.
 - Final Heat Restricted Asset status before public release.
 - Seat/license coverage for every contributor who uses the Heat asset source.
