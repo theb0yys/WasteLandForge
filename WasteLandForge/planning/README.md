@@ -418,10 +418,40 @@ Gate status:
 - `gates/gate-412-dialogue-voice-work-item-implementation.md` - Gate 412, implemented complete-trio voice authoring modes, rollback, desktop controls, tests, and published-app handoff regression.
 - `gates/gate-413-installed-voice-work-item-regression.md` - Gate 413, verified the installed complete-trio voice binding workflow, handoff safety and checksums, and isolated uninstall cleanup.
 - `gates/gate-414-dialogue-branching-authoring-contract.md` - Gate 414, defined source-backed topic-link and opaque response-route authoring, transactional validation, handoff, refusals, and evidence boundaries.
+- `gates/gate-415-dialogue-branching-authoring-implementation.md` - Gate 415, implemented all three source-backed branch modes, transactional validation, desktop controls, and tests; published append interaction remains routed to Gate 416.
+- `gates/gate-416-published-dialogue-branch-interaction-regression.md` - Gate 416, moved branch authoring into the first viewport and completed published append, handoff, repeated-refusal, responsiveness, and cleanup regression.
+- `gates/gate-417-existing-dialogue-line-revision-contract.md` - Gate 417, defined preview-gated revision of dialogue presentation fields with strict preservation, rollback, validation, handoff, and refusal behavior.
+- `gates/gate-418-existing-dialogue-line-revision-implementation.md` - Gate 418, implemented exact-field dialogue revision, desktop controls, deterministic test isolation, tests, and published handoff regression.
+- `gates/gate-419-existing-quest-presentation-revision-contract.md` - Gate 419, defined preview-gated quest/stage/objective presentation revision with strict preservation, rollback, validation, handoff, and refusal behavior.
+- `gates/gate-420-existing-quest-presentation-revision-implementation.md` - Gate 420, implemented exact-field quest presentation revision, desktop controls, tests, and published three-worklist regression.
+- `gates/gate-421-quest-local-integer-variable-authoring-contract.md` - Gate 421, defined source-backed integer variable append, stable identity, explicit initial value, transaction, validation, handoff, and refusal behavior.
+- `gates/gate-422-quest-local-integer-variable-authoring-implementation.md` - Gate 422, implemented quest-local integer variable append, desktop controls, tests, and published handoff regression.
+- `gates/gate-423-quest-local-condition-authoring-contract.md` - Gate 423, defined typed stage-done/variable-equals condition append, source-backed ownership, transaction, validation, handoff, and refusal behavior.
+- `gates/gate-424-quest-local-condition-authoring-implementation.md` - Gate 424, implemented both typed quest-condition modes, desktop controls, tests, and published manual-map regression.
+- `gates/gate-425-quest-stage-result-intent-authoring-contract.md` - Gate 425, defined stage-result source authoring plus the missing dedicated handoff worklist and manual script action.
+- `gates/gate-426-quest-stage-result-intent-authoring-implementation.md` - Gate 426, implemented conditional/unconditional stage-result intent authoring, dedicated GECK worklist/action output, tests, and published-app regression.
+- `gates/gate-427-quest-transition-authoring-contract.md` - Gate 427, defined preview-gated transitions between existing quest-owned stages with strict preservation and no invented runtime semantics.
+- `gates/gate-428-quest-transition-authoring-implementation.md` - Gate 428, implemented source-backed transition authoring, transactional validation, handoff verification, tests, and published-app regression.
+- `gates/gate-429-quest-objective-authoring-contract.md` - Gate 429, defined preview-gated objective authoring with independently optional quest-owned stage references and no invented lifecycle semantics.
+- `gates/gate-430-quest-objective-authoring-implementation.md` - Gate 430, implemented all objective reference modes, transactional validation, handoff verification, tests, and published-app regression.
+- `gates/gate-431-quest-stage-authoring-contract.md` - Gate 431, defined standalone stage authoring with explicit unique number, optional presentation, strict preservation, and no invented execution semantics.
+- `gates/gate-432-quest-stage-authoring-implementation.md` - Gate 432, implemented standalone stage authoring, number/identity validation, handoff verification, tests, and published-app regression.
+- `gates/gate-433-quest-geck-binding-authoring-contract.md` - Gate 433, defined append-only quest GECK plugin/EditorID binding with strict preservation and no plugin lookup or mutation.
+- `gates/gate-434-quest-geck-binding-authoring-implementation.md` - Gate 434, implemented append-only GECK binding, xEdit-reference preservation, handoff verification, tests, and published-app regression.
+- `gates/gate-435-quest-geck-binding-revision-contract.md` - Gate 435, defined exact-field revision of one existing GECK binding with FormID/xEdit preservation and no plugin lookup or mutation.
+- `gates/gate-436-quest-geck-binding-revision-implementation.md` - Gate 436, implemented exact binding revision, FormID/xEdit preservation, handoff verification, tests, and published-app regression.
+- `gates/gate-437-narrative-author-workspace-consolidation-contract.md` - Gate 437, defined categorized single-form Narrative Author navigation with fixed shared status and unchanged authoring/backend behavior.
+- `gates/gate-438-narrative-author-workspace-consolidation-implementation.md` - Gate 438, implemented categorized navigation, single-form visibility, fixed status, state preservation, tests, and published-app regression.
+- `gates/gate-439-installed-narrative-workspace-regression.md` - Gate 439, rebuilt the unsigned installer and proved all installed Narrative Author routes, one transaction, uninstall, and isolated cleanup.
+- `gates/gate-440-narrative-author-project-inventory-contract.md` - Gate 440, defined a validated read-only Narrative Author project inventory, fixed readiness summary, and stale-state rules.
+- `gates/gate-441-narrative-author-project-inventory-implementation.md` - Gate 441, implemented validated project inventory counts, fixed readiness UI, stale-state handling, tests, and published-app regression.
+- `gates/gate-442-installed-narrative-inventory-regression.md` - Gate 442, closed stale-state coverage and proved installed inventory refresh, mutation, recovery, uninstall, and cleanup.
+- `gates/gate-443-narrative-author-explorer-contract.md` - Gate 443, defined a validated read-only quest/dialogue hierarchy and explicit routing into supported existing workflows.
+- `gates/gate-444-narrative-author-explorer-implementation.md` - Gate 444, implemented validated hierarchy snapshots, search, workflow routing, preselection, tests, and published-app regression.
 
 Next gates:
 
 - Gate 315 - harden the WPF app-shell scaffold and backend bridge after Gate 314, or in parallel with Gate 312 only if maintainers explicitly choose a parallel app-shell lane. Gate 315 must still stop before installer creation, external tool execution, provider installation, MO2 automation, GECK automation, runtime probes, real third-party plugin fixtures, release publication, remote repository calls, signing or attestation, plugin mutation, or AI behavior.
-- Gate 415 - implement source-backed dialogue branching authoring, validation rollback, Narrative Author controls, GECK-handoff rebuild, focused tests, and published-app regression.
+- Gate 445 - rebuild the unsigned installer and verify the installed Narrative Author explorer hierarchy, search, routing, preselection, transaction-to-stale behavior, uninstall, and isolated cleanup.
 
 Gate work must follow `AGENTS.md` and classify important claims as `Documented`, `Inferred`, or `Open`.

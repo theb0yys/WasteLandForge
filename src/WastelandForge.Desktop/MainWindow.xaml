@@ -154,7 +154,8 @@
                        FontWeight="Bold" />
             <TextBox x:Name="ProjectPathTextBox"
                      Margin="0,8,0,0"
-                     MinWidth="420" />
+                     MinWidth="420"
+                     TextChanged="ProjectPathChanged" />
           </StackPanel>
           <Button Grid.Column="1"
                   Content="Browse"
@@ -979,9 +980,153 @@
         <TabItem Header="Narrative Author">
           <Grid Margin="0,18,0,0">
             <Grid.ColumnDefinitions><ColumnDefinition Width="420" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,18,0">
+            <Grid Margin="0,0,18,0">
+              <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+              <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="Narrative Author" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+                <Grid Margin="0,10,0,0">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock x:Name="NarrativeInventoryStateTextBlock" Text="Inventory: Not loaded" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+                    <TextBlock x:Name="NarrativeInventorySummaryTextBlock" Text="Select a project and refresh inventory." Foreground="{StaticResource TextMuted}" Margin="0,3,8,0" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <Button x:Name="RefreshNarrativeInventoryButton" Grid.Column="1" Content="Refresh inventory" Click="RefreshNarrativeInventoryClicked" VerticalAlignment="Top" />
+                </Grid>
+                <Expander x:Name="NarrativeExplorerExpander" Header="Project explorer" Margin="0,8,0,0" IsExpanded="True" IsEnabled="False">
+                  <StackPanel Margin="0,6,0,0">
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="120" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                      <ComboBox x:Name="NarrativeExplorerViewComboBox" SelectionChanged="NarrativeExplorerFilterChanged"><ComboBoxItem Content="Quests" IsSelected="True" /><ComboBoxItem Content="Dialogue" /></ComboBox>
+                      <TextBox x:Name="NarrativeExplorerSearchTextBox" Grid.Column="1" Margin="8,0,0,0" TextChanged="NarrativeExplorerFilterChanged" />
+                    </Grid>
+                    <ListBox x:Name="NarrativeExplorerListBox" Height="150" Margin="0,6,0,0" DisplayMemberPath="Display" SelectionChanged="NarrativeExplorerSelectionChanged" />
+                    <Grid Margin="0,6,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <ComboBox x:Name="NarrativeExplorerRouteComboBox" MinWidth="220" />
+                      <Button x:Name="OpenNarrativeExplorerRouteButton" Grid.Column="1" Content="Open in workflow" Margin="8,0,0,0" IsEnabled="False" Click="OpenNarrativeExplorerRouteClicked" />
+                    </Grid>
+                  </StackPanel>
+                </Expander>
+                <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <ComboBox x:Name="NarrativeCategoryComboBox" SelectionChanged="NarrativeCategoryChanged"><ComboBoxItem Content="Source" IsSelected="True" /><ComboBoxItem Content="Quest" /><ComboBoxItem Content="Dialogue" /><ComboBoxItem Content="Voice &amp; GECK" /></ComboBox>
+                  <ComboBox x:Name="NarrativeWorkflowComboBox" Grid.Column="1" Margin="8,0,0,0" SelectionChanged="NarrativeWorkflowChanged" />
+                </Grid>
+                <TextBlock x:Name="NarrativeSelectedWorkflowTextBlock" Text="Create Narrative Source" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" Margin="0,10,0,0" />
+                <TextBlock x:Name="NarrativeAuthorStatusTextBlock" Text="Preview before creating source." Foreground="{StaticResource TextMuted}" Margin="0,5,0,0" TextWrapping="Wrap" />
+              </StackPanel>
+              <ScrollViewer x:Name="NarrativeAuthorScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
               <StackPanel>
-                <TextBlock Text="Quest and dialogue source" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+                <StackPanel x:Name="DialogueBranchWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="DialogueBranchSection" Text="Add dialogue branch" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Dialogue Branch Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadDialogueBranchClicked" />
+                <TextBlock Text="Dialogue line" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBranchLineComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBranchInputChanged" />
+                <TextBlock Text="Branch kind" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBranchModeComboBox" SelectionChanged="DialogueBranchInputChanged"><ComboBoxItem Content="Link To" IsSelected="True" /><ComboBoxItem Content="Link From" /><ComboBoxItem Content="Response Route" /></ComboBox>
+                <TextBlock Text="Referenced topic" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBranchTopicComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBranchInputChanged" />
+                <TextBlock Text="Branch slug / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="DialogueBranchSlugTextBox" Text="nexttopic" TextChanged="DialogueBranchInputChanged" /><TextBox x:Name="DialogueBranchSummaryTextBox" Margin="0,4,0,0" TextChanged="DialogueBranchInputChanged" />
+                <TextBlock Text="Response route key" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="DialogueBranchRouteKeyTextBox" Text="authored-route" TextChanged="DialogueBranchInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Dialogue Branch" Click="PreviewDialogueBranchClicked" /><Button x:Name="AppendDialogueBranchButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendDialogueBranchClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="DialogueRevisionWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="DialogueRevisionSection" Text="Revise dialogue line" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Dialogue Lines" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadDialogueRevisionClicked" />
+                <TextBlock Text="Dialogue line" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueRevisionLineComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueRevisionLineChanged" />
+                <TextBlock Text="Response text" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="DialogueRevisionResponseTextBox" TextChanged="DialogueRevisionInputChanged" />
+                <TextBlock Text="Speaker (optional)" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="DialogueRevisionSpeakerTextBox" TextChanged="DialogueRevisionInputChanged" />
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Prompt (optional)" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="DialogueRevisionPromptTextBox" TextChanged="DialogueRevisionInputChanged" /></StackPanel><StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Priority" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="DialogueRevisionPriorityTextBox" TextChanged="DialogueRevisionInputChanged" /></StackPanel></Grid>
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Dialogue Revision" Click="PreviewDialogueRevisionClicked" /><Button x:Name="ApplyDialogueRevisionButton" Content="Apply, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="ApplyDialogueRevisionClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="QuestRevisionWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="QuestRevisionSection" Text="Revise quest presentation" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Quest Presentation" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadQuestRevisionClicked" />
+                <TextBlock Text="Quest" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestRevisionQuestComboBox" DisplayMemberPath="Display" SelectionChanged="QuestRevisionQuestChanged" />
+                <TextBlock Text="Stage" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestRevisionStageComboBox" DisplayMemberPath="Display" SelectionChanged="QuestRevisionSelectionChanged" />
+                <TextBlock Text="Objective" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestRevisionObjectiveComboBox" DisplayMemberPath="Display" SelectionChanged="QuestRevisionSelectionChanged" />
+                <TextBlock Text="Quest title / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestRevisionTitleTextBox" TextChanged="QuestRevisionInputChanged" /><TextBox x:Name="QuestRevisionSummaryTextBox" Margin="0,4,0,0" TextChanged="QuestRevisionInputChanged" />
+                <TextBlock Text="Stage title / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestRevisionStageTitleTextBox" TextChanged="QuestRevisionInputChanged" /><TextBox x:Name="QuestRevisionStageSummaryTextBox" Margin="0,4,0,0" TextChanged="QuestRevisionInputChanged" />
+                <TextBlock Text="Objective text" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestRevisionObjectiveTextBox" TextChanged="QuestRevisionInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Quest Revision" Click="PreviewQuestRevisionClicked" /><Button x:Name="ApplyQuestRevisionButton" Content="Apply, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="ApplyQuestRevisionClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="QuestVariableWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="QuestVariableSection" Text="Add quest variable" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Variable Quest Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadQuestVariableClicked" />
+                <TextBlock Text="Quest" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestVariableQuestComboBox" DisplayMemberPath="Display" SelectionChanged="QuestVariableInputChanged" />
+                <TextBlock Text="Variable slug / initial value" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="100" /></Grid.ColumnDefinitions><TextBox x:Name="QuestVariableSlugTextBox" Text="newstate" TextChanged="QuestVariableInputChanged" /><TextBox Grid.Column="1" x:Name="QuestVariableInitialValueTextBox" Text="0" Margin="8,0,0,0" TextChanged="QuestVariableInputChanged" /></Grid>
+                <TextBlock Text="Title / summary (optional)" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestVariableTitleTextBox" TextChanged="QuestVariableInputChanged" /><TextBox x:Name="QuestVariableSummaryTextBox" Margin="0,4,0,0" TextChanged="QuestVariableInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Quest Variable" Click="PreviewQuestVariableClicked" /><Button x:Name="AppendQuestVariableButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendQuestVariableClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="QuestConditionWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="QuestConditionSection" Text="Add quest condition" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Quest Condition Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadQuestConditionClicked" />
+                <TextBlock Text="Quest" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestConditionQuestComboBox" DisplayMemberPath="Display" SelectionChanged="QuestConditionQuestChanged" />
+                <TextBlock Text="Condition mode" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestConditionModeComboBox" SelectionChanged="QuestConditionInputChanged"><ComboBoxItem Content="Stage Done" IsSelected="True" /><ComboBoxItem Content="Variable Equals" /></ComboBox>
+                <TextBlock Text="Quest stage" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestConditionStageComboBox" DisplayMemberPath="Display" SelectionChanged="QuestConditionInputChanged" />
+                <TextBlock Text="Quest variable / equals integer" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="100" /></Grid.ColumnDefinitions><ComboBox x:Name="QuestConditionVariableComboBox" DisplayMemberPath="Display" SelectionChanged="QuestConditionInputChanged" /><TextBox Grid.Column="1" x:Name="QuestConditionEqualsTextBox" Text="0" Margin="8,0,0,0" TextChanged="QuestConditionInputChanged" /></Grid>
+                <TextBlock Text="Condition slug / title / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestConditionSlugTextBox" Text="newcondition" TextChanged="QuestConditionInputChanged" /><TextBox x:Name="QuestConditionTitleTextBox" Margin="0,4,0,0" TextChanged="QuestConditionInputChanged" /><TextBox x:Name="QuestConditionSummaryTextBox" Margin="0,4,0,0" TextChanged="QuestConditionInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Quest Condition" Click="PreviewQuestConditionClicked" /><Button x:Name="AppendQuestConditionButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendQuestConditionClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="StageResultWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="StageResultSection" Text="Add stage result intent" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Stage Result Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadStageResultClicked" />
+                <TextBlock Text="Quest" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="StageResultQuestComboBox" DisplayMemberPath="Display" SelectionChanged="StageResultQuestChanged" />
+                <TextBlock Text="Stage" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="StageResultStageComboBox" DisplayMemberPath="Display" SelectionChanged="StageResultInputChanged" />
+                <CheckBox x:Name="StageResultUseConditionCheckBox" Content="Gate with quest condition" Margin="0,10,0,0" Checked="StageResultInputChanged" Unchecked="StageResultInputChanged" />
+                <TextBlock Text="Condition" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="StageResultConditionComboBox" DisplayMemberPath="Display" SelectionChanged="StageResultInputChanged" />
+                <TextBlock Text="Result slug / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="StageResultSlugTextBox" Text="newresult" TextChanged="StageResultInputChanged" /><TextBox x:Name="StageResultSummaryTextBox" Margin="0,4,0,0" TextChanged="StageResultInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Stage Result" Click="PreviewStageResultClicked" /><Button x:Name="AppendStageResultButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendStageResultClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="QuestTransitionWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="QuestTransitionSection" Text="Add quest transition" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Quest Transition Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadQuestTransitionClicked" />
+                <TextBlock Text="Quest" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestTransitionQuestComboBox" DisplayMemberPath="Display" SelectionChanged="QuestTransitionQuestChanged" />
+                <TextBlock Text="Source stage" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestTransitionFromStageComboBox" DisplayMemberPath="Display" SelectionChanged="QuestTransitionInputChanged" />
+                <TextBlock Text="Destination stage" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestTransitionToStageComboBox" DisplayMemberPath="Display" SelectionChanged="QuestTransitionInputChanged" />
+                <TextBlock Text="Transition slug / title / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestTransitionSlugTextBox" Text="newroute" TextChanged="QuestTransitionInputChanged" /><TextBox x:Name="QuestTransitionTitleTextBox" Margin="0,4,0,0" TextChanged="QuestTransitionInputChanged" /><TextBox x:Name="QuestTransitionSummaryTextBox" Margin="0,4,0,0" TextChanged="QuestTransitionInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Quest Transition" Click="PreviewQuestTransitionClicked" /><Button x:Name="AppendQuestTransitionButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendQuestTransitionClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="QuestObjectiveWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="QuestObjectiveSection" Text="Add quest objective" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Quest Objective Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadQuestObjectiveClicked" />
+                <TextBlock Text="Quest" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestObjectiveQuestComboBox" DisplayMemberPath="Display" SelectionChanged="QuestObjectiveQuestChanged" />
+                <TextBlock Text="Objective slug / text" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestObjectiveSlugTextBox" Text="newobjective" TextChanged="QuestObjectiveInputChanged" /><TextBox x:Name="QuestObjectiveTextBox" Margin="0,4,0,0" Text="Complete the objective." TextChanged="QuestObjectiveInputChanged" />
+                <CheckBox x:Name="QuestObjectiveUseStartCheckBox" Content="Use start stage" Margin="0,10,0,0" IsChecked="True" Checked="QuestObjectiveInputChanged" Unchecked="QuestObjectiveInputChanged" />
+                <ComboBox x:Name="QuestObjectiveStartStageComboBox" DisplayMemberPath="Display" SelectionChanged="QuestObjectiveInputChanged" />
+                <CheckBox x:Name="QuestObjectiveUseCompletionCheckBox" Content="Use completion stage" Margin="0,10,0,0" IsChecked="True" Checked="QuestObjectiveInputChanged" Unchecked="QuestObjectiveInputChanged" />
+                <ComboBox x:Name="QuestObjectiveCompletionStageComboBox" DisplayMemberPath="Display" SelectionChanged="QuestObjectiveInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Quest Objective" Click="PreviewQuestObjectiveClicked" /><Button x:Name="AppendQuestObjectiveButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendQuestObjectiveClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="QuestStageWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="QuestStageSection" Text="Add quest stage" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Quest Stage Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadQuestStageClicked" />
+                <TextBlock Text="Quest" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestStageQuestComboBox" DisplayMemberPath="Display" SelectionChanged="QuestStageInputChanged" />
+                <TextBlock Text="Stage slug / number" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="100" /></Grid.ColumnDefinitions><TextBox x:Name="QuestStageSlugTextBox" Text="newstage" TextChanged="QuestStageInputChanged" /><TextBox Grid.Column="1" x:Name="QuestStageNumberTextBox" Text="30" Margin="8,0,0,0" TextChanged="QuestStageInputChanged" /></Grid>
+                <TextBlock Text="Title / summary (optional)" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestStageTitleTextBox" TextChanged="QuestStageInputChanged" /><TextBox x:Name="QuestStageSummaryTextBox" Margin="0,4,0,0" TextChanged="QuestStageInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Quest Stage" Click="PreviewQuestStageClicked" /><Button x:Name="AppendQuestStageButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendQuestStageClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="QuestGeckBindingWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="QuestGeckBindingSection" Text="Add quest GECK binding" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load GECK Binding Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadQuestGeckBindingClicked" />
+                <TextBlock Text="Quest" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestGeckBindingQuestComboBox" DisplayMemberPath="Display" SelectionChanged="QuestGeckBindingInputChanged" />
+                <TextBlock Text="Plugin filename / EditorID" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestGeckBindingPluginTextBox" Text="MyMod.esm" TextChanged="QuestGeckBindingInputChanged" /><TextBox x:Name="QuestGeckBindingEditorIdTextBox" Margin="0,4,0,0" Text="MyQuest" TextChanged="QuestGeckBindingInputChanged" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview GECK Binding" Click="PreviewQuestGeckBindingClicked" /><Button x:Name="AppendQuestGeckBindingButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendQuestGeckBindingClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="QuestGeckBindingRevisionWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="QuestGeckBindingRevisionSection" Text="Revise quest GECK binding" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                <Button Content="Load Existing GECK Bindings" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadQuestGeckBindingRevisionClicked" />
+                <TextBlock Text="Quest binding" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="QuestGeckBindingRevisionComboBox" DisplayMemberPath="Display" SelectionChanged="QuestGeckBindingRevisionSelectionChanged" />
+                <TextBlock Text="Plugin filename / EditorID" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestGeckBindingRevisionPluginTextBox" TextChanged="QuestGeckBindingRevisionInputChanged" /><TextBox x:Name="QuestGeckBindingRevisionEditorIdTextBox" Margin="0,4,0,0" TextChanged="QuestGeckBindingRevisionInputChanged" />
+                <TextBlock Text="Preserved FormID" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="QuestGeckBindingRevisionFormIdTextBox" IsReadOnly="True" />
+                <WrapPanel Margin="0,14,0,18"><Button Content="Preview GECK Binding Revision" Click="PreviewQuestGeckBindingRevisionClicked" /><Button x:Name="ApplyQuestGeckBindingRevisionButton" Content="Apply, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="ApplyQuestGeckBindingRevisionClicked" /></WrapPanel>
+                <Separator Margin="0,2,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="NarrativeSourceWorkflowPanel">
                 <TextBlock Text="Quest" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" Margin="0,16,0,4" />
                 <TextBlock Text="Slug" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeQuestSlugTextBox" Text="intro" TextChanged="NarrativeInputChanged" />
                 <TextBlock Text="Title" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="NarrativeQuestTitleTextBox" Text="Intro Quest" TextChanged="NarrativeInputChanged" />
@@ -1012,8 +1157,9 @@
                   <StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Quest EditorID" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeEditorIdTextBox" TextChanged="NarrativeInputChanged" /></StackPanel>
                 </Grid>
                 <WrapPanel Margin="0,16,0,0"><Button Content="Preview Narrative Source" Click="PreviewNarrativeSourceClicked" /><Button x:Name="CreateNarrativeSourceButton" Content="Create, Validate and Build Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="CreateNarrativeSourceClicked" /></WrapPanel>
-                <TextBlock x:Name="NarrativeAuthorStatusTextBlock" Text="Preview before creating source." Foreground="{StaticResource TextMuted}" Margin="0,10,0,0" TextWrapping="Wrap" />
                 <Separator Margin="0,20,0,14" />
+                </StackPanel>
+                <StackPanel x:Name="NarrativeExtensionWorkflowPanel" Visibility="Collapsed">
                 <TextBlock Text="Extend existing narrative" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
                 <Button Content="Load Existing Narrative" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadNarrativeExtensionClicked" />
                 <TextBlock Text="Quest" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="NarrativeExistingQuestComboBox" DisplayMemberPath="Display" SelectionChanged="NarrativeExtensionQuestChanged" />
@@ -1030,7 +1176,9 @@
                 <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Prompt (optional)" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeExtensionPromptTextBox" TextChanged="NarrativeExtensionInputChanged" /></StackPanel><StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Priority" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="NarrativeExtensionPriorityTextBox" TextChanged="NarrativeExtensionInputChanged" /></StackPanel></Grid>
                 <WrapPanel Margin="0,14,0,0"><Button Content="Preview Narrative Extension" Click="PreviewNarrativeExtensionClicked" /><Button x:Name="AppendNarrativeExtensionButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendNarrativeExtensionClicked" /></WrapPanel>
                 <Separator Margin="0,20,0,14" />
-                <TextBlock Text="Add dialogue behavior" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                </StackPanel>
+                <StackPanel x:Name="DialogueBehaviorWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="DialogueBehaviorSection" Text="Add dialogue behavior" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
                 <Button Content="Load Dialogue Behavior Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadDialogueBehaviorClicked" />
                 <TextBlock Text="Dialogue line" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBehaviorLineComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBehaviorLineChanged" />
                 <TextBlock Text="Required quest stage" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBehaviorStageComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBehaviorInputChanged" />
@@ -1040,16 +1188,9 @@
                 <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Mutation slug / summary" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="DialogueBehaviorMutationSlugTextBox" Text="behaviorphase" TextChanged="DialogueBehaviorInputChanged" /><TextBox x:Name="DialogueBehaviorMutationSummaryTextBox" Margin="0,4,0,0" TextChanged="DialogueBehaviorInputChanged" /></StackPanel><StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="Delta" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="DialogueBehaviorDeltaTextBox" Text="1" TextChanged="DialogueBehaviorInputChanged" /></StackPanel></Grid>
                 <WrapPanel Margin="0,14,0,18"><Button Content="Preview Dialogue Behavior" Click="PreviewDialogueBehaviorClicked" /><Button x:Name="AppendDialogueBehaviorButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendDialogueBehaviorClicked" /></WrapPanel>
                 <Separator Margin="0,2,0,14" />
-                <TextBlock Text="Add dialogue branch" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
-                <Button Content="Load Dialogue Branch Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadDialogueBranchClicked" />
-                <TextBlock Text="Dialogue line" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBranchLineComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBranchInputChanged" />
-                <TextBlock Text="Branch kind" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBranchModeComboBox" SelectionChanged="DialogueBranchInputChanged"><ComboBoxItem Content="Link To" IsSelected="True" /><ComboBoxItem Content="Link From" /><ComboBoxItem Content="Response Route" /></ComboBox>
-                <TextBlock Text="Referenced topic" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="DialogueBranchTopicComboBox" DisplayMemberPath="Display" SelectionChanged="DialogueBranchInputChanged" />
-                <TextBlock Text="Branch slug / summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="DialogueBranchSlugTextBox" Text="nexttopic" TextChanged="DialogueBranchInputChanged" /><TextBox x:Name="DialogueBranchSummaryTextBox" Margin="0,4,0,0" TextChanged="DialogueBranchInputChanged" />
-                <TextBlock Text="Response route key" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="DialogueBranchRouteKeyTextBox" Text="authored-route" TextChanged="DialogueBranchInputChanged" />
-                <WrapPanel Margin="0,14,0,18"><Button Content="Preview Dialogue Branch" Click="PreviewDialogueBranchClicked" /><Button x:Name="AppendDialogueBranchButton" Content="Append, Validate and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendDialogueBranchClicked" /></WrapPanel>
-                <Separator Margin="0,2,0,14" />
-                <TextBlock Text="Add voice work item" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
+                </StackPanel>
+                <StackPanel x:Name="VoiceWorkItemWorkflowPanel" Visibility="Collapsed">
+                <TextBlock x:Name="VoiceWorkItemSection" Text="Add voice work item" Foreground="{StaticResource TextPrimary}" FontSize="18" FontWeight="SemiBold" />
                 <Button Content="Load Voice Work-Item Choices" Margin="0,10,0,0" HorizontalAlignment="Left" Click="LoadVoiceWorkItemClicked" />
                 <TextBlock Text="Unvoiced dialogue line" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><ComboBox x:Name="VoiceWorkItemLineComboBox" DisplayMemberPath="Display" SelectionChanged="VoiceWorkItemInputChanged" />
                 <CheckBox x:Name="VoiceWorkItemDeclareFilesCheckBox" Content="Declare project files instead of binding a declared trio" Margin="0,10,0,0" Checked="VoiceWorkItemInputChanged" Unchecked="VoiceWorkItemInputChanged" />
@@ -1057,8 +1198,10 @@
                 <TextBlock Text="Plugin / voice type / file stem" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="VoiceWorkItemPluginTextBox" Text="ExampleMod.esm" TextChanged="VoiceWorkItemInputChanged" /><TextBox x:Name="VoiceWorkItemVoiceTypeTextBox" Text="ExampleVoice" Margin="0,4,0,0" TextChanged="VoiceWorkItemInputChanged" /><TextBox x:Name="VoiceWorkItemFileStemTextBox" Text="followup_voice" Margin="0,4,0,0" TextChanged="VoiceWorkItemInputChanged" />
                 <TextBlock Text="Project-relative WAV / OGG / LIP source paths" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="VoiceWorkItemWavSourceTextBox" Text="src/assets/voice/followup_voice.wav" TextChanged="VoiceWorkItemInputChanged" /><TextBox x:Name="VoiceWorkItemOggSourceTextBox" Text="src/assets/voice/followup_voice.ogg" Margin="0,4,0,0" TextChanged="VoiceWorkItemInputChanged" /><TextBox x:Name="VoiceWorkItemLipSourceTextBox" Text="src/assets/voice/followup_voice.lip" Margin="0,4,0,0" TextChanged="VoiceWorkItemInputChanged" />
                 <WrapPanel Margin="0,14,0,18"><Button Content="Preview Voice Work Item" Click="PreviewVoiceWorkItemClicked" /><Button x:Name="AppendVoiceWorkItemButton" Content="Append Voice and Rebuild Handoff" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="AppendVoiceWorkItemClicked" /></WrapPanel>
+                </StackPanel>
               </StackPanel>
-            </ScrollViewer>
+              </ScrollViewer>
+            </Grid>
             <TextBox x:Name="NarrativeAuthorOutputTextBox" Grid.Column="1" AcceptsReturn="True" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" />
           </Grid>
         </TabItem>

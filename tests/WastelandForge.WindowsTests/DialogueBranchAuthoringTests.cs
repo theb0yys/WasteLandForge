@@ -16,7 +16,7 @@ public sealed class DialogueBranchAuthoringTests
         try
         {
             var loaded = DialogueBranchAuthoring.Load(root); Assert.True(loaded.Success, loaded.Message); Assert.Equal(2, loaded.Lines.Count); Assert.Equal(2, loaded.Topics.Count);
-            var line = loaded.Lines.Last(); var topic = loaded.Topics.First(); var input = new DialogueBranchInput(line.Id, mode, topic.Id, "newbranch", "Synthetic branch.", "opaque-authored-key");
+            var line = loaded.Lines.First(); var topic = loaded.Topics.First(); var input = new DialogueBranchInput(line.Id, mode, topic.Id, "newbranch", "Synthetic branch.", "opaque-authored-key");
             var path = Dialogue(root); var original = File.ReadAllBytes(path); var before = JsonNode.Parse(File.ReadAllText(path))!;
             var preview = DialogueBranchAuthoring.Preview(root, input); Assert.True(preview.Success, preview.Message); Assert.Equal(original, File.ReadAllBytes(path));
             var result = DialogueBranchAuthoring.Append(root, input, preview.Token!); Assert.True(result.Success, result.Message); Assert.Equal(0, ForgeCli.Run(["validate", root, "--format", "json", "--no-input"])); Assert.Equal(0, ForgeCli.Run(["package", root, "--target", "geck-handoff", "--format", "json", "--no-input"]));
@@ -35,7 +35,7 @@ public sealed class DialogueBranchAuthoringTests
         {
             var path = Dialogue(root); var dialogue = JsonNode.Parse(File.ReadAllText(path))!.AsObject(); dialogue["topics"]!.AsArray().Add(new JsonObject { ["id"] = "io.github.theboyyss.examplemod.topic.empty", ["title"] = "Empty" }); File.WriteAllText(path, dialogue.ToJsonString(new() { WriteIndented = true }));
             var loaded = DialogueBranchAuthoring.Load(root); Assert.True(loaded.Success, loaded.Message); Assert.DoesNotContain(loaded.Topics, x => x.Id.EndsWith(".empty", StringComparison.Ordinal));
-            var line = loaded.Lines.First(); var route = new DialogueBranchInput(line.Id, DialogueBranchAuthoring.ResponseRoute, loaded.Topics.Last().Id, "duplicatekey", "", "default"); Assert.False(DialogueBranchAuthoring.Preview(root, route).Success);
+            var line = loaded.Lines.Last(); var route = new DialogueBranchInput(line.Id, DialogueBranchAuthoring.ResponseRoute, loaded.Topics.Last().Id, "duplicatekey", "", "default"); Assert.False(DialogueBranchAuthoring.Preview(root, route).Success);
             var input = route with { Slug = "fresh", RouteKey = "fresh-key" }; var preview = DialogueBranchAuthoring.Preview(root, input); Assert.True(preview.Success, preview.Message); File.AppendAllText(path, Environment.NewLine); var changed = File.ReadAllBytes(path); Assert.False(DialogueBranchAuthoring.Append(root, input, preview.Token!).Success); Assert.Equal(changed, File.ReadAllBytes(path));
             Assert.False(DialogueBranchAuthoring.Preview(root, input with { TopicId = "io.github.theboyyss.examplemod.topic.empty" }).Success);
         }

@@ -84,6 +84,7 @@ public sealed class GeckHandoffEmitter
             ["quest-objectives"] = new(["questId", "objectiveId", "text", "startStageId", "completionStageId"]),
             ["quest-transitions"] = new(["questId", "transitionId", "fromStageId", "toStageId", "title", "summary"]),
             ["quest-conditions"] = new(["questId", "conditionId", "conditionType", "operands", "mappingStatus"]),
+            ["quest-result-intent"] = new(["questId", "stageId", "resultId", "scriptType", "conditionId", "summary", "status"]),
             ["dialogue-topics"] = new(["topicId", "title", "action"]),
             ["dialogue-lines"] = new(["lineId", "questId", "topicId", "speaker", "promptText", "responseText", "priority", "voicePlugin", "voiceType", "voiceFileStem"]),
             ["dialogue-conditions"] = new(["lineId", "conditionId", "family", "operands", "mappingStatus"]),
@@ -100,7 +101,7 @@ public sealed class GeckHandoffEmitter
             tables["quests"].Add(qid, Text(quest, "title"), Text(quest, "summary"), Text(geck, "plugin"), Text(geck, "editorId"), "create-or-verify");
             AddAction(tables, qid + ".record", qid, "quest-record", "Create or verify the GECK quest record.", "GECK remains the record authority.", document.DisplayPath);
             foreach (var item in Array(quest, "variables")) tables["quest-variables"].Add(qid, Text(item, "id"), Text(item, "variableType"), Scalar(item["initialValue"]), Text(item, "title"));
-            foreach (var item in Array(quest, "stages").OrderBy(item => Int(item, "stage"))) tables["quest-stages"].Add(qid, Text(item, "id"), Scalar(item["stage"]), Text(item, "title"), Text(item, "summary"), string.Join(",", Array(item, "resultScripts").Select(Id)));
+            foreach (var item in Array(quest, "stages").OrderBy(item => Int(item, "stage"))) { var sid = Text(item, "id"); tables["quest-stages"].Add(qid, sid, Scalar(item["stage"]), Text(item, "title"), Text(item, "summary"), string.Join(",", Array(item, "resultScripts").Select(Id))); foreach (var result in Array(item, "resultScripts")) { tables["quest-result-intent"].Add(qid, sid, Text(result, "id"), Text(result, "scriptType"), Text(result, "conditionId"), Text(result, "summary"), "manual-script-authoring-required"); AddAction(tables, Text(result, "id") + ".script", Text(result, "id"), "result-script", "Author and review the GECK stage result script.", "Registry intent is not executable script text.", document.DisplayPath); } }
             foreach (var item in Array(quest, "objectives")) tables["quest-objectives"].Add(qid, Text(item, "id"), Text(item, "text"), Text(item, "startStageId"), Text(item, "completionStageId"));
             foreach (var item in Array(quest, "transitions")) tables["quest-transitions"].Add(qid, Text(item, "id"), Text(item, "fromStageId"), Text(item, "toStageId"), Text(item, "title"), Text(item, "summary"));
             foreach (var item in Array(quest, "conditions")) { tables["quest-conditions"].Add(qid, Text(item, "id"), Text(item, "conditionType"), Compact(item), "manual-map"); AddAction(tables, Text(item, "id") + ".map", Text(item, "id"), "condition-mapping", "Map registry operands to GECK condition functions.", "No complete proven function mapping exists.", document.DisplayPath); }

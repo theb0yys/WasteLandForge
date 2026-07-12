@@ -34,6 +34,22 @@ public partial class MainWindow
     private DialogueBehaviorLoadResult? currentDialogueBehavior;
     private string? dialogueBranchPreviewToken;
     private DialogueBranchLoadResult? currentDialogueBranches;
+    private string? dialogueRevisionPreviewToken;
+    private DialogueLineRevisionLoadResult? currentDialogueRevision;
+    private string? questRevisionPreviewToken;
+    private QuestRevisionLoadResult? currentQuestRevision;
+    private string? questVariablePreviewToken;
+    private string? questConditionPreviewToken;
+    private QuestConditionLoadResult? currentQuestConditions;
+    private string? stageResultPreviewToken;
+    private QuestStageResultLoadResult? currentStageResults;
+    private string? questTransitionPreviewToken;
+    private QuestTransitionLoadResult? currentQuestTransitions;
+    private string? questObjectivePreviewToken;
+    private QuestObjectiveLoadResult? currentQuestObjectives;
+    private string? questStagePreviewToken;
+    private string? questGeckBindingPreviewToken;
+    private string? questGeckBindingRevisionPreviewToken;
     private string? voiceWorkItemPreviewToken;
     private VoiceWorkItemLoadResult? currentVoiceWorkItems;
     private string? jipAppendPreviewToken;
@@ -41,10 +57,13 @@ public partial class MainWindow
     private string? xeditAuditOutputFolder;
     private string? mo2ExportPreviewToken;
     private string? exportedMo2ModFolder;
+    private readonly Dictionary<string, string> lastNarrativeWorkflowByCategory = new(StringComparer.Ordinal);
+    private NarrativeInventoryResult narrativeInventory = NarrativeInventoryResult.NotLoaded();
 
     public MainWindow()
     {
         InitializeComponent();
+        InitializeNarrativeWorkspace();
 
         LoadLocalSettings();
         if (!File.Exists(settingsStore.SettingsPath))
@@ -72,6 +91,162 @@ public partial class MainWindow
 
     private async void ValidateProjectClicked(object sender, RoutedEventArgs e) =>
         await ValidateProjectAsync();
+
+    private void ProjectPathChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        if (NarrativeInventoryStateTextBlock is null) return;
+        narrativeInventory = NarrativeInventoryResult.NotLoaded();
+        RenderNarrativeInventory();
+        RefreshNarrativeExplorer();
+    }
+
+    private void RefreshNarrativeInventoryClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport();
+        if (root is null) return;
+        narrativeInventory = NarrativeProjectInventory.Refresh(root);
+        RenderNarrativeInventory();
+        RefreshNarrativeExplorer();
+        NarrativeAuthorOutputTextBox.Text = narrativeInventory.Message;
+    }
+
+    private void MarkNarrativeInventoryStale()
+    {
+        narrativeInventory = narrativeInventory.AsStale();
+        RenderNarrativeInventory();
+        RefreshNarrativeExplorer();
+    }
+
+    private void RenderNarrativeInventory()
+    {
+        NarrativeInventoryStateTextBlock.Text = "Inventory: " + (narrativeInventory.State switch
+        {
+            NarrativeInventoryState.NotLoaded => "Not loaded",
+            NarrativeInventoryState.Ready => "Ready",
+            NarrativeInventoryState.Blocked => "Blocked",
+            NarrativeInventoryState.Stale => "Stale",
+            _ => "Not loaded"
+        });
+        NarrativeInventorySummaryTextBlock.Text = narrativeInventory.State switch
+        {
+            NarrativeInventoryState.Ready => narrativeInventory.Counts!.Summary,
+            NarrativeInventoryState.Stale => narrativeInventory.Counts!.Summary + " | Refresh required",
+            _ => narrativeInventory.Message.Split(Environment.NewLine)[0]
+        };
+    }
+
+    private void NarrativeExplorerFilterChanged(object sender, RoutedEventArgs e) => RefreshNarrativeExplorer();
+
+    private void RefreshNarrativeExplorer()
+    {
+        if (NarrativeExplorerExpander is null || NarrativeExplorerViewComboBox is null ||
+            NarrativeExplorerSearchTextBox is null || NarrativeExplorerListBox is null ||
+            NarrativeExplorerRouteComboBox is null || OpenNarrativeExplorerRouteButton is null) return;
+        var ready = narrativeInventory.State == NarrativeInventoryState.Ready && narrativeInventory.Explorer is not null;
+        NarrativeExplorerExpander.IsEnabled = ready;
+        if (!ready)
+        {
+            NarrativeExplorerListBox.ItemsSource = null;
+            NarrativeExplorerRouteComboBox.ItemsSource = null;
+            OpenNarrativeExplorerRouteButton.IsEnabled = false;
+            return;
+        }
+        var view = (NarrativeExplorerViewComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "Quests";
+        var selectedId = (NarrativeExplorerListBox.SelectedItem as NarrativeExplorerNode)?.Id;
+        var filtered = narrativeInventory.Explorer!.Filter(view, NarrativeExplorerSearchTextBox.Text);
+        NarrativeExplorerListBox.ItemsSource = filtered;
+        NarrativeExplorerListBox.SelectedItem = filtered.FirstOrDefault(node => node.Id == selectedId);
+    }
+
+    private void NarrativeExplorerSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        var routes = NarrativeExplorerListBox.SelectedItem is NarrativeExplorerNode node ? NarrativeExplorerCatalog.For(node.Kind) : [];
+        NarrativeExplorerRouteComboBox.ItemsSource = routes;
+        NarrativeExplorerRouteComboBox.SelectedIndex = routes.Count > 0 ? 0 : -1;
+        OpenNarrativeExplorerRouteButton.IsEnabled = narrativeInventory.State == NarrativeInventoryState.Ready && routes.Count > 0;
+    }
+
+    private void OpenNarrativeExplorerRouteClicked(object sender, RoutedEventArgs e)
+    {
+        if (narrativeInventory.State != NarrativeInventoryState.Ready || NarrativeExplorerListBox.SelectedItem is not NarrativeExplorerNode node || NarrativeExplorerRouteComboBox.SelectedItem is not NarrativeExplorerRoute route) return;
+        if (!NarrativeWorkspaceCatalog.Workflows.Any(item => item.Category == route.Category && item.Name == route.Workflow))
+        {
+            NarrativeAuthorStatusTextBlock.Text = "Explorer route is not in the workspace catalog.";
+            return;
+        }
+        SelectNarrativeWorkflow(route.Category, route.Workflow);
+        LoadExplorerWorkflow(route.Workflow);
+        PreselectExplorerTarget(route.Workflow, node);
+        NarrativeAuthorStatusTextBlock.Text = $"Opened {route.Workflow} for {node.Id}. Preview and apply remain explicit.";
+    }
+
+    private void LoadExplorerWorkflow(string workflow)
+    {
+        switch (workflow)
+        {
+            case "Revise Dialogue Line": LoadDialogueRevisionClicked(this, new RoutedEventArgs()); break;
+            case "Add Dialogue Branch": LoadDialogueBranchClicked(this, new RoutedEventArgs()); break;
+            case "Add Dialogue Behavior": LoadDialogueBehaviorClicked(this, new RoutedEventArgs()); break;
+            case "Add Voice Work Item": LoadVoiceWorkItemClicked(this, new RoutedEventArgs()); break;
+            case "Revise Quest Presentation": LoadQuestRevisionClicked(this, new RoutedEventArgs()); break;
+            case "Add Quest Variable": LoadQuestVariableClicked(this, new RoutedEventArgs()); break;
+            case "Add Quest Condition": LoadQuestConditionClicked(this, new RoutedEventArgs()); break;
+            case "Add Stage Result Intent": LoadStageResultClicked(this, new RoutedEventArgs()); break;
+            case "Add Quest Transition": LoadQuestTransitionClicked(this, new RoutedEventArgs()); break;
+            case "Add Quest Objective": LoadQuestObjectiveClicked(this, new RoutedEventArgs()); break;
+            case "Add Quest Stage": LoadQuestStageClicked(this, new RoutedEventArgs()); break;
+            case "Add GECK Binding": LoadQuestGeckBindingClicked(this, new RoutedEventArgs()); break;
+            case "Revise GECK Binding": LoadQuestGeckBindingRevisionClicked(this, new RoutedEventArgs()); break;
+            case "Extend Existing Narrative": LoadNarrativeExtensionClicked(this, new RoutedEventArgs()); break;
+        }
+    }
+
+    private void PreselectExplorerTarget(string workflow, NarrativeExplorerNode node)
+    {
+        var ownerId = FindExplorerOwner(node, "quest") ?? node.Id;
+        var combo = workflow switch
+        {
+            "Revise Dialogue Line" => DialogueRevisionLineComboBox,
+            "Add Dialogue Branch" => DialogueBranchLineComboBox,
+            "Add Dialogue Behavior" => DialogueBehaviorLineComboBox,
+            "Add Voice Work Item" => VoiceWorkItemLineComboBox,
+            "Extend Existing Narrative" => NarrativeExistingTopicComboBox,
+            "Revise GECK Binding" => QuestGeckBindingRevisionComboBox,
+            "Revise Quest Presentation" => QuestRevisionQuestComboBox,
+            "Add Quest Variable" => QuestVariableQuestComboBox,
+            "Add Quest Condition" => QuestConditionQuestComboBox,
+            "Add Stage Result Intent" => StageResultQuestComboBox,
+            "Add Quest Transition" => QuestTransitionQuestComboBox,
+            "Add Quest Objective" => QuestObjectiveQuestComboBox,
+            "Add Quest Stage" => QuestStageQuestComboBox,
+            "Add GECK Binding" => QuestGeckBindingQuestComboBox,
+            _ => null
+        };
+        SelectComboItemById(combo, node.Kind is "line" or "topic" ? node.Id : ownerId);
+    }
+
+    private string? FindExplorerOwner(NarrativeExplorerNode node, string kind)
+    {
+        var snapshot = narrativeInventory.Explorer;
+        var current = node;
+        while (snapshot is not null)
+        {
+            if (current.Kind == kind) return current.Id;
+            if (current.ParentId is null) return null;
+            current = snapshot.Nodes.FirstOrDefault(item => item.Id == current.ParentId) ?? current;
+            if (current.Id == node.Id) return null;
+        }
+        return null;
+    }
+
+    private static void SelectComboItemById(System.Windows.Controls.ComboBox? combo, string id)
+    {
+        if (combo is null) return;
+        foreach (var item in combo.Items)
+        {
+            if (item?.GetType().GetProperty("Id")?.GetValue(item)?.ToString() == id) { combo.SelectedItem = item; return; }
+        }
+    }
 
     private async void GenerateMcmClicked(object sender, RoutedEventArgs e) =>
         await RunMcmCommandAsync("Generating MCM JSON", "generate", "--target", "mcm-json", "--format", "json", "--no-input");
@@ -338,6 +513,7 @@ public partial class MainWindow
         var result = NarrativeSourceAuthoring.Create(root, CaptureNarrativeInput(), narrativePreviewToken);
         narrativePreviewToken = null; CreateNarrativeSourceButton.IsEnabled = false; NarrativeAuthorStatusTextBlock.Text = result.Message;
         if (!result.Success) return;
+        MarkNarrativeInventoryStale();
         SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
         try
         {
@@ -361,6 +537,7 @@ public partial class MainWindow
 
     private void AppendNarrativeResult(string label, ForgeCommandResult result)
     {
+        MarkNarrativeInventoryStale();
         NarrativeAuthorOutputTextBox.AppendText("== " + label + " ==" + Environment.NewLine + result.CommandLine + " -> exit " + result.ExitCode + Environment.NewLine + FormatJsonOrText(result.StandardOutput) + Environment.NewLine + Environment.NewLine);
         NarrativeAuthorOutputTextBox.ScrollToEnd();
     }
@@ -400,6 +577,7 @@ public partial class MainWindow
         var root = GetProjectRootOrReport(); if (root is null || narrativeExtensionPreviewToken is null) return;
         var result = NarrativeExtensionAuthoring.Append(root, CaptureNarrativeExtensionInput(), narrativeExtensionPreviewToken);
         InvalidateNarrativeExtension(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return;
+        MarkNarrativeInventoryStale();
         SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
         try
         {
@@ -445,12 +623,75 @@ public partial class MainWindow
     private async void AppendDialogueBehaviorClicked(object sender, RoutedEventArgs e)
     {
         var root = GetProjectRootOrReport(); if (root is null || dialogueBehaviorPreviewToken is null) return; var result = DialogueBehaviorAuthoring.Append(root, CaptureDialogueBehaviorInput(), dialogueBehaviorPreviewToken);
-        InvalidateDialogueBehavior(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
+        InvalidateDialogueBehavior(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; MarkNarrativeInventoryStale(); SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
         try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate behavior", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Behavior validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Dialogue behavior validated and GECK handoff rebuilt." : "Dialogue behavior is valid; handoff rebuild failed."; }
         finally { SetBusy(false); }
     }
 
     private DialogueBehaviorInput CaptureDialogueBehaviorInput() => new((DialogueBehaviorLineComboBox.SelectedItem as DialogueBehaviorChoice)?.Id ?? "", (DialogueBehaviorStageComboBox.SelectedItem as DialogueBehaviorChoice)?.Id ?? "", (DialogueBehaviorVariableComboBox.SelectedItem as DialogueBehaviorChoice)?.Id ?? "", DialogueBehaviorConditionSlugTextBox.Text, DialogueBehaviorConditionSummaryTextBox.Text, DialogueBehaviorResultSlugTextBox.Text, DialogueBehaviorResultSummaryTextBox.Text, DialogueBehaviorMutationSlugTextBox.Text, DialogueBehaviorMutationSummaryTextBox.Text, DialogueBehaviorDeltaTextBox.Text);
+
+    private void InitializeNarrativeWorkspace()
+    {
+        NarrativeCategoryComboBox.SelectedIndex = 0;
+        RefreshNarrativeWorkflowChoices("Source");
+    }
+
+    private void NarrativeCategoryChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (NarrativeWorkflowComboBox is null) return;
+        var category = (NarrativeCategoryComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "Source";
+        RefreshNarrativeWorkflowChoices(category);
+    }
+
+    private void RefreshNarrativeWorkflowChoices(string category)
+    {
+        var workflows = NarrativeWorkspaceCatalog.ForCategory(category);
+        NarrativeWorkflowComboBox.ItemsSource = workflows;
+        var selected = lastNarrativeWorkflowByCategory.GetValueOrDefault(category);
+        NarrativeWorkflowComboBox.SelectedItem = selected is not null && workflows.Contains(selected, StringComparer.Ordinal) ? selected : workflows.FirstOrDefault();
+    }
+
+    private void NarrativeWorkflowChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (NarrativeSourceWorkflowPanel is null || NarrativeWorkflowComboBox.SelectedItem is not string workflowName) return;
+        var definition = NarrativeWorkspaceCatalog.Workflows.Single(item => item.Name == workflowName);
+        lastNarrativeWorkflowByCategory[definition.Category] = definition.Name;
+        foreach (var panel in NarrativeWorkflowPanels()) panel.Visibility = Visibility.Collapsed;
+        var selectedPanel = NarrativeWorkflowPanels().Single(panel => panel.Name == definition.PanelName);
+        selectedPanel.Visibility = Visibility.Visible;
+        NarrativeSelectedWorkflowTextBlock.Text = definition.Name;
+        NarrativeAuthorScrollViewer.ScrollToTop();
+    }
+
+    private IReadOnlyList<FrameworkElement> NarrativeWorkflowPanels() =>
+    [
+        NarrativeSourceWorkflowPanel, NarrativeExtensionWorkflowPanel, QuestRevisionWorkflowPanel,
+        QuestStageWorkflowPanel, QuestObjectiveWorkflowPanel, QuestTransitionWorkflowPanel,
+        QuestVariableWorkflowPanel, QuestConditionWorkflowPanel, StageResultWorkflowPanel,
+        DialogueBranchWorkflowPanel, DialogueBehaviorWorkflowPanel, DialogueRevisionWorkflowPanel,
+        VoiceWorkItemWorkflowPanel, QuestGeckBindingWorkflowPanel, QuestGeckBindingRevisionWorkflowPanel
+    ];
+
+    private void SelectNarrativeWorkflow(string category, string workflow)
+    {
+        NarrativeCategoryComboBox.SelectedItem = NarrativeCategoryComboBox.Items.OfType<System.Windows.Controls.ComboBoxItem>().Single(item => item.Content?.ToString() == category);
+        NarrativeWorkflowComboBox.SelectedItem = workflow;
+    }
+
+    private void ShowNarrativeSourceClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Source", "Create Narrative Source");
+    private void ShowDialogueBehaviorClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Dialogue", "Add Dialogue Behavior");
+    private void ShowDialogueBranchClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Dialogue", "Add Dialogue Branch");
+    private void ShowDialogueRevisionClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Dialogue", "Revise Dialogue Line");
+    private void ShowQuestRevisionClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Quest", "Revise Quest Presentation");
+    private void ShowQuestVariableClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Quest", "Add Quest Variable");
+    private void ShowQuestConditionClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Quest", "Add Quest Condition");
+    private void ShowStageResultClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Quest", "Add Stage Result Intent");
+    private void ShowQuestTransitionClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Quest", "Add Quest Transition");
+    private void ShowQuestObjectiveClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Quest", "Add Quest Objective");
+    private void ShowQuestStageClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Quest", "Add Quest Stage");
+    private void ShowQuestGeckBindingClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Voice & GECK", "Add GECK Binding");
+    private void ShowQuestGeckBindingRevisionClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Voice & GECK", "Revise GECK Binding");
+    private void ShowVoiceWorkItemClicked(object sender, RoutedEventArgs e) => SelectNarrativeWorkflow("Voice & GECK", "Add Voice Work Item");
 
     private void LoadDialogueBranchClicked(object sender, RoutedEventArgs e)
     {
@@ -466,12 +707,105 @@ public partial class MainWindow
 
     private async void AppendDialogueBranchClicked(object sender, RoutedEventArgs e)
     {
-        var root = GetProjectRootOrReport(); if (root is null || dialogueBranchPreviewToken is null) return; var result = DialogueBranchAuthoring.Append(root, CaptureDialogueBranchInput(), dialogueBranchPreviewToken); dialogueBranchPreviewToken = null; AppendDialogueBranchButton.IsEnabled = false; NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
+        var root = GetProjectRootOrReport(); if (root is null || dialogueBranchPreviewToken is null) return; var result = DialogueBranchAuthoring.Append(root, CaptureDialogueBranchInput(), dialogueBranchPreviewToken); dialogueBranchPreviewToken = null; AppendDialogueBranchButton.IsEnabled = false; NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; MarkNarrativeInventoryStale(); SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
         try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate dialogue branch", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Dialogue branch validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Dialogue branch validated and GECK handoff rebuilt." : "Dialogue branch is valid; handoff rebuild failed."; }
         finally { SetBusy(false); }
     }
 
     private DialogueBranchInput CaptureDialogueBranchInput() => new((DialogueBranchLineComboBox.SelectedItem as DialogueBranchChoice)?.Id ?? "", (DialogueBranchModeComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "", (DialogueBranchTopicComboBox.SelectedItem as DialogueBranchChoice)?.Id ?? "", DialogueBranchSlugTextBox.Text, DialogueBranchSummaryTextBox.Text, DialogueBranchRouteKeyTextBox.Text);
+
+    private void LoadDialogueRevisionClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return; currentDialogueRevision = DialogueLineRevisionAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = currentDialogueRevision.Message; DialogueRevisionLineComboBox.ItemsSource = currentDialogueRevision.Lines; DialogueRevisionLineComboBox.SelectedIndex = currentDialogueRevision.Lines.Count > 0 ? 0 : -1;
+    }
+    private void DialogueRevisionLineChanged(object sender, RoutedEventArgs e)
+    {
+        dialogueRevisionPreviewToken = null; if (ApplyDialogueRevisionButton is not null) ApplyDialogueRevisionButton.IsEnabled = false; if (DialogueRevisionLineComboBox.SelectedItem is not DialogueLineRevisionChoice line) return; DialogueRevisionResponseTextBox.Text = line.ResponseText; DialogueRevisionSpeakerTextBox.Text = line.Speaker; DialogueRevisionPromptTextBox.Text = line.PromptText; DialogueRevisionPriorityTextBox.Text = line.Priority;
+    }
+    private void DialogueRevisionInputChanged(object sender, RoutedEventArgs e) { dialogueRevisionPreviewToken = null; if (ApplyDialogueRevisionButton is not null) ApplyDialogueRevisionButton.IsEnabled = false; }
+    private void PreviewDialogueRevisionClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return; var preview = DialogueLineRevisionAuthoring.Preview(root, CaptureDialogueRevisionInput()); dialogueRevisionPreviewToken = preview.Token; ApplyDialogueRevisionButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = (preview.Changes ?? "") + Environment.NewLine + Environment.NewLine + (preview.DialogueJson ?? "");
+    }
+    private async void ApplyDialogueRevisionClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null || dialogueRevisionPreviewToken is null) return; var result = DialogueLineRevisionAuthoring.Apply(root, CaptureDialogueRevisionInput(), dialogueRevisionPreviewToken); dialogueRevisionPreviewToken = null; ApplyDialogueRevisionButton.IsEnabled = false; NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; MarkNarrativeInventoryStale(); SetBusy(true); NarrativeAuthorOutputTextBox.Clear();
+        try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate dialogue revision", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Dialogue revision validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Dialogue line revised and GECK handoff rebuilt." : "Dialogue line revision is valid; handoff rebuild failed."; }
+        finally { SetBusy(false); }
+    }
+    private DialogueLineRevisionInput CaptureDialogueRevisionInput() => new((DialogueRevisionLineComboBox.SelectedItem as DialogueLineRevisionChoice)?.Id ?? "", DialogueRevisionResponseTextBox.Text, DialogueRevisionSpeakerTextBox.Text, DialogueRevisionPromptTextBox.Text, DialogueRevisionPriorityTextBox.Text);
+
+    private void LoadQuestRevisionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; currentQuestRevision = QuestPresentationRevisionAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = currentQuestRevision.Message; QuestRevisionQuestComboBox.ItemsSource = currentQuestRevision.Quests; QuestRevisionQuestComboBox.SelectedIndex = currentQuestRevision.Quests.Count > 0 ? 0 : -1; RefreshQuestRevisionChoices(); }
+    private void QuestRevisionQuestChanged(object sender, RoutedEventArgs e) { InvalidateQuestRevision(); RefreshQuestRevisionChoices(); }
+    private void RefreshQuestRevisionChoices() { if (currentQuestRevision is null || QuestRevisionQuestComboBox.SelectedItem is not QuestRevisionChoice quest) return; QuestRevisionStageComboBox.ItemsSource = currentQuestRevision.Stages.Where(x => x.OwnerId == quest.Id).ToArray(); QuestRevisionObjectiveComboBox.ItemsSource = currentQuestRevision.Objectives.Where(x => x.OwnerId == quest.Id).ToArray(); QuestRevisionStageComboBox.SelectedIndex = QuestRevisionStageComboBox.Items.Count > 0 ? 0 : -1; QuestRevisionObjectiveComboBox.SelectedIndex = QuestRevisionObjectiveComboBox.Items.Count > 0 ? 0 : -1; PopulateQuestRevisionFields(); }
+    private void QuestRevisionSelectionChanged(object sender, RoutedEventArgs e) { InvalidateQuestRevision(); PopulateQuestRevisionFields(); }
+    private void PopulateQuestRevisionFields() { if (QuestRevisionQuestComboBox.SelectedItem is QuestRevisionChoice q) { QuestRevisionTitleTextBox.Text = q.Title; QuestRevisionSummaryTextBox.Text = q.Summary; } if (QuestRevisionStageComboBox.SelectedItem is QuestRevisionChoice s) { QuestRevisionStageTitleTextBox.Text = s.Title; QuestRevisionStageSummaryTextBox.Text = s.Summary; } if (QuestRevisionObjectiveComboBox.SelectedItem is QuestRevisionChoice o) QuestRevisionObjectiveTextBox.Text = o.Text; }
+    private void QuestRevisionInputChanged(object sender, RoutedEventArgs e) => InvalidateQuestRevision(); private void InvalidateQuestRevision() { questRevisionPreviewToken = null; if (ApplyQuestRevisionButton is not null) ApplyQuestRevisionButton.IsEnabled = false; }
+    private void PreviewQuestRevisionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = QuestPresentationRevisionAuthoring.Preview(root, CaptureQuestRevisionInput()); questRevisionPreviewToken = preview.Token; ApplyQuestRevisionButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = (preview.Changes ?? "") + Environment.NewLine + Environment.NewLine + (preview.QuestJson ?? ""); }
+    private async void ApplyQuestRevisionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || questRevisionPreviewToken is null) return; var result = QuestPresentationRevisionAuthoring.Apply(root, CaptureQuestRevisionInput(), questRevisionPreviewToken); InvalidateQuestRevision(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear(); try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate quest revision", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Quest revision validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Quest presentation revised and GECK handoff rebuilt." : "Quest revision is valid; handoff rebuild failed."; } finally { SetBusy(false); } }
+    private QuestRevisionInput CaptureQuestRevisionInput() => new((QuestRevisionQuestComboBox.SelectedItem as QuestRevisionChoice)?.Id ?? "", (QuestRevisionStageComboBox.SelectedItem as QuestRevisionChoice)?.Id ?? "", (QuestRevisionObjectiveComboBox.SelectedItem as QuestRevisionChoice)?.Id ?? "", QuestRevisionTitleTextBox.Text, QuestRevisionSummaryTextBox.Text, QuestRevisionStageTitleTextBox.Text, QuestRevisionStageSummaryTextBox.Text, QuestRevisionObjectiveTextBox.Text);
+
+    private void LoadQuestVariableClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var load = QuestVariableAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = load.Message; QuestVariableQuestComboBox.ItemsSource = load.Quests; QuestVariableQuestComboBox.SelectedIndex = load.Quests.Count > 0 ? 0 : -1; }
+    private void QuestVariableInputChanged(object sender, RoutedEventArgs e) { questVariablePreviewToken = null; if (AppendQuestVariableButton is not null) AppendQuestVariableButton.IsEnabled = false; }
+    private void PreviewQuestVariableClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = QuestVariableAuthoring.Preview(root, CaptureQuestVariableInput()); questVariablePreviewToken = preview.Token; AppendQuestVariableButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = (preview.Declaration ?? "") + Environment.NewLine + Environment.NewLine + (preview.QuestJson ?? ""); }
+    private async void AppendQuestVariableClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || questVariablePreviewToken is null) return; var result = QuestVariableAuthoring.Append(root, CaptureQuestVariableInput(), questVariablePreviewToken); questVariablePreviewToken = null; AppendQuestVariableButton.IsEnabled = false; NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear(); try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate quest variable", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Quest variable validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Quest variable validated and GECK handoff rebuilt." : "Quest variable is valid; handoff rebuild failed."; } finally { SetBusy(false); } }
+    private QuestVariableInput CaptureQuestVariableInput() => new((QuestVariableQuestComboBox.SelectedItem as QuestVariableChoice)?.Id ?? "", QuestVariableSlugTextBox.Text, QuestVariableInitialValueTextBox.Text, QuestVariableTitleTextBox.Text, QuestVariableSummaryTextBox.Text);
+
+    private void LoadQuestConditionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; currentQuestConditions = QuestConditionAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = currentQuestConditions.Message; QuestConditionQuestComboBox.ItemsSource = currentQuestConditions.Quests; QuestConditionQuestComboBox.SelectedIndex = currentQuestConditions.Quests.Count > 0 ? 0 : -1; RefreshQuestConditionChoices(); }
+    private void QuestConditionQuestChanged(object sender, RoutedEventArgs e) { InvalidateQuestCondition(); RefreshQuestConditionChoices(); }
+    private void RefreshQuestConditionChoices() { if (currentQuestConditions is null || QuestConditionQuestComboBox.SelectedItem is not QuestConditionChoice q) return; QuestConditionStageComboBox.ItemsSource = currentQuestConditions.Stages.Where(x => x.OwnerId == q.Id).ToArray(); QuestConditionVariableComboBox.ItemsSource = currentQuestConditions.Variables.Where(x => x.OwnerId == q.Id).ToArray(); QuestConditionStageComboBox.SelectedIndex = QuestConditionStageComboBox.Items.Count > 0 ? 0 : -1; QuestConditionVariableComboBox.SelectedIndex = QuestConditionVariableComboBox.Items.Count > 0 ? 0 : -1; }
+    private void QuestConditionInputChanged(object sender, RoutedEventArgs e) => InvalidateQuestCondition(); private void InvalidateQuestCondition() { questConditionPreviewToken = null; if (AppendQuestConditionButton is not null) AppendQuestConditionButton.IsEnabled = false; }
+    private void PreviewQuestConditionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = QuestConditionAuthoring.Preview(root, CaptureQuestConditionInput()); questConditionPreviewToken = preview.Token; AppendQuestConditionButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = (preview.Declaration ?? "") + Environment.NewLine + Environment.NewLine + (preview.QuestJson ?? ""); }
+    private async void AppendQuestConditionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || questConditionPreviewToken is null) return; var result = QuestConditionAuthoring.Append(root, CaptureQuestConditionInput(), questConditionPreviewToken); InvalidateQuestCondition(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear(); try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate quest condition", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Quest condition validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Quest condition validated and GECK handoff rebuilt." : "Quest condition is valid; handoff rebuild failed."; } finally { SetBusy(false); } }
+    private QuestConditionInput CaptureQuestConditionInput() => new((QuestConditionQuestComboBox.SelectedItem as QuestConditionChoice)?.Id ?? "", (QuestConditionModeComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "", (QuestConditionStageComboBox.SelectedItem as QuestConditionChoice)?.Id ?? "", (QuestConditionVariableComboBox.SelectedItem as QuestConditionChoice)?.Id ?? "", QuestConditionEqualsTextBox.Text, QuestConditionSlugTextBox.Text, QuestConditionTitleTextBox.Text, QuestConditionSummaryTextBox.Text);
+
+    private void LoadStageResultClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; currentStageResults = QuestStageResultAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = currentStageResults.Message; StageResultQuestComboBox.ItemsSource = currentStageResults.Quests; StageResultQuestComboBox.SelectedIndex = currentStageResults.Quests.Count > 0 ? 0 : -1; RefreshStageResultChoices(); }
+    private void StageResultQuestChanged(object sender, RoutedEventArgs e) { InvalidateStageResult(); RefreshStageResultChoices(); }
+    private void RefreshStageResultChoices() { if (currentStageResults is null || StageResultQuestComboBox.SelectedItem is not QuestStageResultChoice q) return; StageResultStageComboBox.ItemsSource = currentStageResults.Stages.Where(x => x.OwnerId == q.Id).ToArray(); StageResultConditionComboBox.ItemsSource = currentStageResults.Conditions.Where(x => x.OwnerId == q.Id).ToArray(); StageResultStageComboBox.SelectedIndex = StageResultStageComboBox.Items.Count > 0 ? 0 : -1; StageResultConditionComboBox.SelectedIndex = StageResultConditionComboBox.Items.Count > 0 ? 0 : -1; }
+    private void StageResultInputChanged(object sender, RoutedEventArgs e) => InvalidateStageResult(); private void InvalidateStageResult() { stageResultPreviewToken = null; if (AppendStageResultButton is not null) AppendStageResultButton.IsEnabled = false; }
+    private void PreviewStageResultClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = QuestStageResultAuthoring.Preview(root, CaptureStageResultInput()); stageResultPreviewToken = preview.Token; AppendStageResultButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = (preview.Declaration ?? "") + Environment.NewLine + Environment.NewLine + (preview.QuestJson ?? ""); }
+    private async void AppendStageResultClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || stageResultPreviewToken is null) return; var result = QuestStageResultAuthoring.Append(root, CaptureStageResultInput(), stageResultPreviewToken); InvalidateStageResult(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear(); try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate stage result", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Stage result validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Stage result intent validated and GECK handoff rebuilt." : "Stage result intent is valid; handoff rebuild failed."; } finally { SetBusy(false); } }
+    private QuestStageResultInput CaptureStageResultInput() => new((StageResultQuestComboBox.SelectedItem as QuestStageResultChoice)?.Id ?? "", (StageResultStageComboBox.SelectedItem as QuestStageResultChoice)?.Id ?? "", StageResultUseConditionCheckBox.IsChecked == true, (StageResultConditionComboBox.SelectedItem as QuestStageResultChoice)?.Id ?? "", StageResultSlugTextBox.Text, StageResultSummaryTextBox.Text);
+
+    private void LoadQuestTransitionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; currentQuestTransitions = QuestTransitionAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = currentQuestTransitions.Message; QuestTransitionQuestComboBox.ItemsSource = currentQuestTransitions.Quests; QuestTransitionQuestComboBox.SelectedIndex = currentQuestTransitions.Quests.Count > 0 ? 0 : -1; RefreshQuestTransitionChoices(); }
+    private void QuestTransitionQuestChanged(object sender, RoutedEventArgs e) { InvalidateQuestTransition(); RefreshQuestTransitionChoices(); }
+    private void RefreshQuestTransitionChoices() { if (currentQuestTransitions is null || QuestTransitionQuestComboBox.SelectedItem is not QuestTransitionChoice quest) return; var stages = currentQuestTransitions.Stages.Where(stage => stage.OwnerId == quest.Id).ToArray(); QuestTransitionFromStageComboBox.ItemsSource = stages; QuestTransitionToStageComboBox.ItemsSource = stages; QuestTransitionFromStageComboBox.SelectedIndex = stages.Length > 0 ? 0 : -1; QuestTransitionToStageComboBox.SelectedIndex = stages.Length > 1 ? 1 : stages.Length > 0 ? 0 : -1; }
+    private void QuestTransitionInputChanged(object sender, RoutedEventArgs e) => InvalidateQuestTransition();
+    private void InvalidateQuestTransition() { questTransitionPreviewToken = null; if (AppendQuestTransitionButton is not null) AppendQuestTransitionButton.IsEnabled = false; }
+    private void PreviewQuestTransitionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = QuestTransitionAuthoring.Preview(root, CaptureQuestTransitionInput()); questTransitionPreviewToken = preview.Token; AppendQuestTransitionButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = (preview.Declaration ?? "") + Environment.NewLine + Environment.NewLine + (preview.QuestJson ?? ""); }
+    private async void AppendQuestTransitionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || questTransitionPreviewToken is null) return; var result = QuestTransitionAuthoring.Append(root, CaptureQuestTransitionInput(), questTransitionPreviewToken); InvalidateQuestTransition(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear(); try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate quest transition", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Quest transition validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Quest transition validated and GECK handoff rebuilt." : "Quest transition is valid; handoff rebuild failed."; } finally { SetBusy(false); } }
+    private QuestTransitionInput CaptureQuestTransitionInput() => new((QuestTransitionQuestComboBox.SelectedItem as QuestTransitionChoice)?.Id ?? "", (QuestTransitionFromStageComboBox.SelectedItem as QuestTransitionChoice)?.Id ?? "", (QuestTransitionToStageComboBox.SelectedItem as QuestTransitionChoice)?.Id ?? "", QuestTransitionSlugTextBox.Text, QuestTransitionTitleTextBox.Text, QuestTransitionSummaryTextBox.Text);
+
+    private void LoadQuestObjectiveClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; currentQuestObjectives = QuestObjectiveAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = currentQuestObjectives.Message; QuestObjectiveQuestComboBox.ItemsSource = currentQuestObjectives.Quests; QuestObjectiveQuestComboBox.SelectedIndex = currentQuestObjectives.Quests.Count > 0 ? 0 : -1; RefreshQuestObjectiveChoices(); }
+    private void QuestObjectiveQuestChanged(object sender, RoutedEventArgs e) { InvalidateQuestObjective(); RefreshQuestObjectiveChoices(); }
+    private void RefreshQuestObjectiveChoices() { if (currentQuestObjectives is null || QuestObjectiveQuestComboBox.SelectedItem is not QuestObjectiveChoice quest) return; var stages = currentQuestObjectives.Stages.Where(stage => stage.OwnerId == quest.Id).ToArray(); QuestObjectiveStartStageComboBox.ItemsSource = stages; QuestObjectiveCompletionStageComboBox.ItemsSource = stages; QuestObjectiveStartStageComboBox.SelectedIndex = stages.Length > 0 ? 0 : -1; QuestObjectiveCompletionStageComboBox.SelectedIndex = stages.Length > 1 ? 1 : stages.Length > 0 ? 0 : -1; }
+    private void QuestObjectiveInputChanged(object sender, RoutedEventArgs e) => InvalidateQuestObjective();
+    private void InvalidateQuestObjective() { questObjectivePreviewToken = null; if (AppendQuestObjectiveButton is not null) AppendQuestObjectiveButton.IsEnabled = false; }
+    private void PreviewQuestObjectiveClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = QuestObjectiveAuthoring.Preview(root, CaptureQuestObjectiveInput()); questObjectivePreviewToken = preview.Token; AppendQuestObjectiveButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = (preview.Declaration ?? "") + Environment.NewLine + Environment.NewLine + (preview.QuestJson ?? ""); }
+    private async void AppendQuestObjectiveClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || questObjectivePreviewToken is null) return; var result = QuestObjectiveAuthoring.Append(root, CaptureQuestObjectiveInput(), questObjectivePreviewToken); InvalidateQuestObjective(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear(); try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate quest objective", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Quest objective validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Quest objective validated and GECK handoff rebuilt." : "Quest objective is valid; handoff rebuild failed."; } finally { SetBusy(false); } }
+    private QuestObjectiveInput CaptureQuestObjectiveInput() => new((QuestObjectiveQuestComboBox.SelectedItem as QuestObjectiveChoice)?.Id ?? "", QuestObjectiveSlugTextBox.Text, QuestObjectiveTextBox.Text, QuestObjectiveUseStartCheckBox.IsChecked == true, (QuestObjectiveStartStageComboBox.SelectedItem as QuestObjectiveChoice)?.Id ?? "", QuestObjectiveUseCompletionCheckBox.IsChecked == true, (QuestObjectiveCompletionStageComboBox.SelectedItem as QuestObjectiveChoice)?.Id ?? "");
+
+    private void LoadQuestStageClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var loaded = QuestStageAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = loaded.Message; QuestStageQuestComboBox.ItemsSource = loaded.Quests; QuestStageQuestComboBox.SelectedIndex = loaded.Quests.Count > 0 ? 0 : -1; InvalidateQuestStage(); }
+    private void QuestStageInputChanged(object sender, RoutedEventArgs e) => InvalidateQuestStage();
+    private void InvalidateQuestStage() { questStagePreviewToken = null; if (AppendQuestStageButton is not null) AppendQuestStageButton.IsEnabled = false; }
+    private void PreviewQuestStageClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = QuestStageAuthoring.Preview(root, CaptureQuestStageInput()); questStagePreviewToken = preview.Token; AppendQuestStageButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = (preview.Declaration ?? "") + Environment.NewLine + Environment.NewLine + (preview.QuestJson ?? ""); }
+    private async void AppendQuestStageClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || questStagePreviewToken is null) return; var result = QuestStageAuthoring.Append(root, CaptureQuestStageInput(), questStagePreviewToken); InvalidateQuestStage(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear(); try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate quest stage", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "Quest stage validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "Quest stage validated and GECK handoff rebuilt." : "Quest stage is valid; handoff rebuild failed."; } finally { SetBusy(false); } }
+    private QuestStageInput CaptureQuestStageInput() => new((QuestStageQuestComboBox.SelectedItem as QuestStageChoice)?.Id ?? "", QuestStageSlugTextBox.Text, QuestStageNumberTextBox.Text, QuestStageTitleTextBox.Text, QuestStageSummaryTextBox.Text);
+
+    private void LoadQuestGeckBindingClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var loaded = QuestGeckBindingAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = loaded.Message; QuestGeckBindingQuestComboBox.ItemsSource = loaded.Quests; QuestGeckBindingQuestComboBox.SelectedIndex = loaded.Quests.Count > 0 ? 0 : -1; InvalidateQuestGeckBinding(); }
+    private void QuestGeckBindingInputChanged(object sender, RoutedEventArgs e) => InvalidateQuestGeckBinding();
+    private void InvalidateQuestGeckBinding() { questGeckBindingPreviewToken = null; if (AppendQuestGeckBindingButton is not null) AppendQuestGeckBindingButton.IsEnabled = false; }
+    private void PreviewQuestGeckBindingClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = QuestGeckBindingAuthoring.Preview(root, CaptureQuestGeckBindingInput()); questGeckBindingPreviewToken = preview.Token; AppendQuestGeckBindingButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = (preview.Declaration ?? "") + Environment.NewLine + Environment.NewLine + (preview.QuestJson ?? ""); }
+    private async void AppendQuestGeckBindingClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || questGeckBindingPreviewToken is null) return; var result = QuestGeckBindingAuthoring.Append(root, CaptureQuestGeckBindingInput(), questGeckBindingPreviewToken); InvalidateQuestGeckBinding(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear(); try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate GECK binding", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "GECK binding validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "GECK binding validated and handoff rebuilt." : "GECK binding is valid; handoff rebuild failed."; } finally { SetBusy(false); } }
+    private QuestGeckBindingInput CaptureQuestGeckBindingInput() => new((QuestGeckBindingQuestComboBox.SelectedItem as QuestGeckBindingChoice)?.Id ?? "", QuestGeckBindingPluginTextBox.Text, QuestGeckBindingEditorIdTextBox.Text);
+
+    private void LoadQuestGeckBindingRevisionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var loaded = QuestGeckBindingRevisionAuthoring.Load(root); NarrativeAuthorStatusTextBlock.Text = loaded.Message; QuestGeckBindingRevisionComboBox.ItemsSource = loaded.Bindings; QuestGeckBindingRevisionComboBox.SelectedIndex = loaded.Bindings.Count > 0 ? 0 : -1; }
+    private void QuestGeckBindingRevisionSelectionChanged(object sender, RoutedEventArgs e) { InvalidateQuestGeckBindingRevision(); if (QuestGeckBindingRevisionComboBox.SelectedItem is not QuestGeckBindingRevisionChoice choice) return; QuestGeckBindingRevisionPluginTextBox.Text = choice.Plugin; QuestGeckBindingRevisionEditorIdTextBox.Text = choice.EditorId; QuestGeckBindingRevisionFormIdTextBox.Text = choice.FormId; }
+    private void QuestGeckBindingRevisionInputChanged(object sender, RoutedEventArgs e) => InvalidateQuestGeckBindingRevision();
+    private void InvalidateQuestGeckBindingRevision() { questGeckBindingRevisionPreviewToken = null; if (ApplyQuestGeckBindingRevisionButton is not null) ApplyQuestGeckBindingRevisionButton.IsEnabled = false; }
+    private void PreviewQuestGeckBindingRevisionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null) return; var preview = QuestGeckBindingRevisionAuthoring.Preview(root, CaptureQuestGeckBindingRevisionInput()); questGeckBindingRevisionPreviewToken = preview.Token; ApplyQuestGeckBindingRevisionButton.IsEnabled = preview.Success; NarrativeAuthorStatusTextBlock.Text = preview.Message; NarrativeAuthorOutputTextBox.Text = (preview.Changes ?? "") + Environment.NewLine + Environment.NewLine + (preview.Declaration ?? "") + Environment.NewLine + Environment.NewLine + (preview.QuestJson ?? ""); }
+    private async void ApplyQuestGeckBindingRevisionClicked(object sender, RoutedEventArgs e) { var root = GetProjectRootOrReport(); if (root is null || questGeckBindingRevisionPreviewToken is null) return; var result = QuestGeckBindingRevisionAuthoring.Apply(root, CaptureQuestGeckBindingRevisionInput(), questGeckBindingRevisionPreviewToken); InvalidateQuestGeckBindingRevision(); NarrativeAuthorStatusTextBlock.Text = result.Message; if (!result.Success) return; SetBusy(true); NarrativeAuthorOutputTextBox.Clear(); try { var validation = await RunProjectCommandAsync(root, "validate", ".", "--format", "json", "--no-input"); AppendNarrativeResult("Validate GECK binding revision", validation); if (validation.ExitCode != 0) { NarrativeAuthorStatusTextBlock.Text = "GECK binding revision validation unexpectedly failed."; return; } var package = await RunProjectCommandAsync(root, "package", ".", "--target", "geck-handoff", "--format", "json", "--no-input"); AppendNarrativeResult("Rebuild GECK handoff", package); NarrativeAuthorStatusTextBlock.Text = package.ExitCode == 0 ? "GECK binding revised and handoff rebuilt." : "GECK binding revision is valid; handoff rebuild failed."; } finally { SetBusy(false); } }
+    private QuestGeckBindingRevisionInput CaptureQuestGeckBindingRevisionInput() => new((QuestGeckBindingRevisionComboBox.SelectedItem as QuestGeckBindingRevisionChoice)?.QuestId ?? "", QuestGeckBindingRevisionPluginTextBox.Text, QuestGeckBindingRevisionEditorIdTextBox.Text);
 
     private void LoadVoiceWorkItemClicked(object sender, RoutedEventArgs e)
     {
@@ -2132,6 +2466,16 @@ public partial class MainWindow
         AppendNarrativeExtensionButton.IsEnabled = !isBusy && narrativeExtensionPreviewToken is not null;
         AppendDialogueBehaviorButton.IsEnabled = !isBusy && dialogueBehaviorPreviewToken is not null;
         AppendDialogueBranchButton.IsEnabled = !isBusy && dialogueBranchPreviewToken is not null;
+        ApplyDialogueRevisionButton.IsEnabled = !isBusy && dialogueRevisionPreviewToken is not null;
+        ApplyQuestRevisionButton.IsEnabled = !isBusy && questRevisionPreviewToken is not null;
+        AppendQuestVariableButton.IsEnabled = !isBusy && questVariablePreviewToken is not null;
+        AppendQuestConditionButton.IsEnabled = !isBusy && questConditionPreviewToken is not null;
+        AppendStageResultButton.IsEnabled = !isBusy && stageResultPreviewToken is not null;
+        AppendQuestTransitionButton.IsEnabled = !isBusy && questTransitionPreviewToken is not null;
+        AppendQuestObjectiveButton.IsEnabled = !isBusy && questObjectivePreviewToken is not null;
+        AppendQuestStageButton.IsEnabled = !isBusy && questStagePreviewToken is not null;
+        AppendQuestGeckBindingButton.IsEnabled = !isBusy && questGeckBindingPreviewToken is not null;
+        ApplyQuestGeckBindingRevisionButton.IsEnabled = !isBusy && questGeckBindingRevisionPreviewToken is not null;
         AppendVoiceWorkItemButton.IsEnabled = !isBusy && voiceWorkItemPreviewToken is not null;
         PreviewMcmAppendButton.IsEnabled = !isBusy;
         AppendMcmSettingButton.IsEnabled = !isBusy && mcmAppendPreviewToken is not null;

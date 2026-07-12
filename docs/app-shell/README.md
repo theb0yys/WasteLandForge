@@ -249,7 +249,7 @@ necessary.
 
 ## Open Implementation Checks
 
-- Gate 415 source-backed dialogue branching authoring implementation.
+- Gate 445 installed Narrative Author explorer regression and cleanup verification.
 - Code signing and update channel.
 - Final Heat Restricted Asset status before public release.
 - Seat/license coverage for every contributor who uses the Heat asset source.

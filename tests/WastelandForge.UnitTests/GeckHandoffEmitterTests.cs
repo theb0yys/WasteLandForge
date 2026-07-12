@@ -31,6 +31,7 @@ public sealed class GeckHandoffEmitterTests
             Assert.False((bool)manifest["safety"]!["launchesGeck"]!);
             Assert.Contains("manual-map", File.ReadAllText(Path.Combine(output, "worklists", "dialogue-conditions.tsv")));
             Assert.Contains("manual-script-authoring-required", File.ReadAllText(Path.Combine(output, "worklists", "dialogue-result-intent.tsv")));
+            Assert.Contains("manual-script-authoring-required", File.ReadAllText(Path.Combine(output, "worklists", "quest-result-intent.tsv")));
         }
         finally { Directory.Delete(root, true); }
     }
