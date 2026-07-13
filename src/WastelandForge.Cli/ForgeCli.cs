@@ -413,6 +413,18 @@ internal static class ForgeCli
                 : (int)CliExitCode.Success;
         }
 
+        if (StringComparer.Ordinal.Equals(parse.Target, GeckAuthoringPlanGenerator.Target))
+        {
+            if (parse.OutputDirectory is not null)
+            {
+                WriteUsage(parse.Format, commandPath, $"Target '{GeckAuthoringPlanGenerator.Target}' writes to generated/{GeckAuthoringPlanGenerator.Target}; --output is not supported.");
+                return (int)CliExitCode.Usage;
+            }
+            var authoringPlan = new GeckAuthoringPlanGenerator().Generate(new(parse.ProjectPath, parse.DryRun, CliConstants.Version));
+            Console.Write(CliConstants.IsMachineFormat(parse.Format) ? GeckAuthoringPlanResultWriter.Json(authoringPlan) : GeckAuthoringPlanResultWriter.Text(authoringPlan));
+            return authoringPlan.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+        }
+
         if (StringComparer.Ordinal.Equals(parse.Target, XEditAuditReportHandoffEmitter.CommandTarget))
         {
             if (parse.OutputDirectory is not null)
@@ -515,9 +527,31 @@ internal static class ForgeCli
 
         if (parse.VerifyExisting)
         {
+            if (StringComparer.Ordinal.Equals(parse.Target, BsaPackageAssembler.Target))
+            {
+                var verification = new BsaPackageVerifier().Verify(parse.ProjectPath);
+                Console.Write(CliConstants.IsMachineFormat(parse.Format)
+                    ? System.Text.Json.JsonSerializer.Serialize(new { command = "package verify-existing", target = BsaPackageAssembler.Target, status = verification.Status, evidenceRoot = verification.EvidenceRoot, verifiedFiles = verification.VerifiedFiles, archiveCount = verification.ArchiveCount, looseCount = verification.LooseCount, providerCompatibility = "unverified", releaseCandidateInput = false, issues = verification.Issues }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }) + Environment.NewLine
+                    : $"Existing BSA package verification: {verification.Status}{Environment.NewLine}Verified files: {verification.VerifiedFiles}{Environment.NewLine}Archives: {verification.ArchiveCount}{Environment.NewLine}Loose files: {verification.LooseCount}{Environment.NewLine}Provider compatibility: unverified{Environment.NewLine}Release Candidate input: no{Environment.NewLine}" + string.Concat(verification.Issues.Select(issue => $"- {issue.RuleId}: {issue.Message}{Environment.NewLine}")));
+                return verification.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+            }
+            if (StringComparer.Ordinal.Equals(parse.Target, BsaPlanEmitter.Target))
+            {
+                var verification = new BsaPlanVerifier().Verify(parse.ProjectPath, parse.OutputDirectory);
+                Console.Write(CliConstants.IsMachineFormat(parse.Format)
+                    ? System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        command = "package verify-existing", target = BsaPlanEmitter.Target, status = verification.Status,
+                        summary = new { errors = verification.Issues.Count(issue => issue.Severity == "error"), warnings = 0, notes = 0 },
+                        issues = verification.Issues, evidenceRoot = verification.EvidenceRoot, verifiedFiles = verification.VerifiedFiles,
+                        safety = new { bsaCreated = false, externalToolExecuted = false }
+                    }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine
+                    : $"BSA plan verification: {verification.Status}{Environment.NewLine}Verified files: {verification.VerifiedFiles.Count}{Environment.NewLine}BSA created: no{Environment.NewLine}External tool executed: no{Environment.NewLine}" + string.Concat(verification.Issues.Select(issue => $"- {issue.RuleId}: {issue.Message}{Environment.NewLine}")));
+                return verification.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+            }
             if (!StringComparer.Ordinal.Equals(parse.Target, McmJsonGenerator.Target))
             {
-                WriteUsage(parse.Format, "package", $"Package verify-existing is only implemented for target '{McmJsonGenerator.Target}' in the current gate.");
+                WriteUsage(parse.Format, "package", $"Package verify-existing is implemented for targets '{McmJsonGenerator.Target}', '{BsaPlanEmitter.Target}', and '{BsaPackageAssembler.Target}'.");
                 return (int)CliExitCode.Usage;
             }
 
@@ -589,6 +623,38 @@ internal static class ForgeCli
             var fomod = new FomodPackageEmitter().Package(new(parse.ProjectPath, CliConstants.Version, parse.DryRun));
             Console.Write(CliConstants.IsMachineFormat(parse.Format) ? FomodPackageResultWriter.Json(fomod) : FomodPackageResultWriter.Text(fomod));
             return fomod.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+        }
+        if (StringComparer.Ordinal.Equals(parse.Target, BsaPackageAssembler.Target))
+        {
+            var package = new BsaPackageAssembler().Package(new(parse.ProjectPath, CliConstants.Version, parse.DryRun));
+            Console.Write(CliConstants.IsMachineFormat(parse.Format)
+                ? System.Text.Json.JsonSerializer.Serialize(package, new System.Text.Json.JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }) + Environment.NewLine
+                : $"BSA-backed package: {package.Status}{Environment.NewLine}Archives: {package.ArchiveCount}{Environment.NewLine}Loose files: {package.LooseCount}{Environment.NewLine}Provider compatibility: unverified{Environment.NewLine}Release Candidate input: no{Environment.NewLine}" + string.Concat(package.Issues.Select(issue => $"- {issue.RuleId}: {issue.Message}{Environment.NewLine}")));
+            return package.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+        }
+        if (StringComparer.Ordinal.Equals(parse.Target, BsaPlanEmitter.Target))
+        {
+            var plan = new BsaPlanEmitter().Package(new(parse.ProjectPath, parse.OutputDirectory, parse.BsaPlugin, CliConstants.Version, parse.DryRun));
+            Console.Write(CliConstants.IsMachineFormat(parse.Format)
+                ? System.Text.Json.JsonSerializer.Serialize(plan, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine
+                : $"BSA packing plan: {plan.Status}{Environment.NewLine}Association plugin: {plan.PluginDataPath ?? "none"}{Environment.NewLine}Packed entries: {plan.Packed.Count}{Environment.NewLine}Loose entries: {plan.Loose.Count}{Environment.NewLine}BSA created: no{Environment.NewLine}External tool executed: no{Environment.NewLine}" + string.Concat(plan.Diagnostics.Select(value => "- " + value + Environment.NewLine)));
+            return plan.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+        }
+        if (StringComparer.Ordinal.Equals(parse.Target, BsArchPreviewPlanner.Target))
+        {
+            if (parse.DryRun)
+            {
+                var preview = new BsArchPreviewPlanner().Preview(parse.ProjectPath, parse.PackerPath);
+                Console.Write(CliConstants.IsMachineFormat(parse.Format)
+                    ? System.Text.Json.JsonSerializer.Serialize(preview, new System.Text.Json.JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }) + Environment.NewLine
+                    : $"BSArch preview: {preview.Status}{Environment.NewLine}Provider: {preview.Provider?.Path ?? "none"}{Environment.NewLine}Archives: {preview.Archives.Count}{Environment.NewLine}Approval: {preview.PreviewSha256 ?? "none"}{Environment.NewLine}External tool executed: no{Environment.NewLine}Files written: no{Environment.NewLine}" + string.Concat(preview.Issues.Select(issue => $"- {issue.RuleId}: {issue.Message}{Environment.NewLine}")));
+                return preview.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+            }
+            var execution = new BsArchExecutionCoordinator(new WindowsBsArchProcessRunner()).ExecuteAsync(new(parse.ProjectPath, parse.PackerPath!, parse.Approval!, CliConstants.Version), CancellationToken.None).GetAwaiter().GetResult();
+            Console.Write(CliConstants.IsMachineFormat(parse.Format)
+                ? System.Text.Json.JsonSerializer.Serialize(execution, new System.Text.Json.JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }) + Environment.NewLine
+                : $"BSArch execution: {execution.Status}{Environment.NewLine}Output: {execution.OutputRoot ?? "none"}{Environment.NewLine}Provider version: {execution.ProviderVersion ?? "none"}{Environment.NewLine}Archives: {execution.Archives.Count}{Environment.NewLine}External tool executed: {(execution.ExternalToolExecuted ? "yes" : "no")}{Environment.NewLine}Plugin mutation: no{Environment.NewLine}" + string.Concat(execution.Issues.Select(issue => $"- {issue.RuleId}: {issue.Message}{Environment.NewLine}")));
+            return execution.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
         }
 
         var result = new McmJsonGenerator().Run(new McmJsonGeneratorOptions(
@@ -1909,11 +1975,12 @@ internal static class ForgeCli
         StringComparer.Ordinal.Equals(target, JipScriptFileEmitter.Target) ||
         (StringComparer.Ordinal.Equals(commandPath, "generate") &&
             (StringComparer.Ordinal.Equals(target, XEditAuditScriptScaffoldEmitter.Target) ||
-                StringComparer.Ordinal.Equals(target, XEditAuditReportHandoffEmitter.CommandTarget)));
+                StringComparer.Ordinal.Equals(target, XEditAuditReportHandoffEmitter.CommandTarget) ||
+                StringComparer.Ordinal.Equals(target, GeckAuthoringPlanGenerator.Target)));
 
     private static string ImplementedMetadataReportTargets(string commandPath) =>
         StringComparer.Ordinal.Equals(commandPath, "generate")
-            ? $"'reports', '{McmJsonGenerator.Target}', '{JipScriptFileEmitter.Target}', '{XEditAuditScriptScaffoldEmitter.Target}', and '{XEditAuditReportHandoffEmitter.CommandTarget}'"
+            ? $"'reports', '{McmJsonGenerator.Target}', '{JipScriptFileEmitter.Target}', '{XEditAuditScriptScaffoldEmitter.Target}', '{XEditAuditReportHandoffEmitter.CommandTarget}', and '{GeckAuthoringPlanGenerator.Target}'"
             : $"'reports', '{McmJsonGenerator.Target}', and '{JipScriptFileEmitter.Target}'";
 
     private static PackageParseResult ParsePackageOptions(string[] args)
@@ -1925,6 +1992,9 @@ internal static class ForgeCli
         string? summaryPath = null;
         string? mo2ModsRoot = null;
         string? mo2ModName = null;
+        string? bsaPlugin = null;
+        string? packerPath = null;
+        string? approval = null;
         var dryRun = false;
         var verifyExisting = false;
         var reuseExistingPackage = false;
@@ -1978,13 +2048,16 @@ internal static class ForgeCli
                     !StringComparer.Ordinal.Equals(target, ReportsPackageEmitter.Target) &&
                     !StringComparer.Ordinal.Equals(target, JipScriptPackageEmitter.Target) &&
                     !StringComparer.Ordinal.Equals(target, ModPackageAssembler.Target) &&
-                    !StringComparer.Ordinal.Equals(target, GeckHandoffEmitter.Target) && !StringComparer.Ordinal.Equals(target, FomodPackageEmitter.Target))
+                    !StringComparer.Ordinal.Equals(target, GeckHandoffEmitter.Target) && !StringComparer.Ordinal.Equals(target, FomodPackageEmitter.Target) && !StringComparer.Ordinal.Equals(target, BsaPlanEmitter.Target) && !StringComparer.Ordinal.Equals(target, BsArchPreviewPlanner.Target) && !StringComparer.Ordinal.Equals(target, BsaPackageAssembler.Target))
                 {
-                    return PackageParseResult.Fail(format, $"Only targets '{ReportsPackageEmitter.Target}', '{McmJsonGenerator.Target}', '{JipScriptPackageEmitter.Target}', '{ModPackageAssembler.Target}', and '{GeckHandoffEmitter.Target}' are implemented for forge package in the current gate.");
+                    return PackageParseResult.Fail(format, $"Only targets '{ReportsPackageEmitter.Target}', '{McmJsonGenerator.Target}', '{JipScriptPackageEmitter.Target}', '{ModPackageAssembler.Target}', '{FomodPackageEmitter.Target}', '{GeckHandoffEmitter.Target}', '{BsaPlanEmitter.Target}', '{BsArchPreviewPlanner.Target}', and '{BsaPackageAssembler.Target}' are implemented for forge package in the current gate.");
                 }
 
                 continue;
             }
+            if (StringComparer.Ordinal.Equals(arg, "--bsa-plugin")) { if (!TryReadValue(args, ref index, out bsaPlugin)) return PackageParseResult.Fail(format, "Missing value for --bsa-plugin."); continue; }
+            if (StringComparer.Ordinal.Equals(arg, "--packer")) { if (!TryReadValue(args, ref index, out packerPath)) return PackageParseResult.Fail(format, "Missing value for --packer."); continue; }
+            if (StringComparer.Ordinal.Equals(arg, "--approve")) { if (!TryReadValue(args, ref index, out approval)) return PackageParseResult.Fail(format, "Missing value for --approve."); continue; }
 
             if (StringComparer.Ordinal.Equals(arg, "--output") ||
                 StringComparer.Ordinal.Equals(arg, "-o"))
@@ -2080,6 +2153,14 @@ internal static class ForgeCli
             return PackageParseResult.Fail(format, "Named MO2 export cannot be combined with --verify-existing.");
         }
         if (reuseExistingPackage && (!StringComparer.Ordinal.Equals(target, ModPackageAssembler.Target) || mo2ModsRoot is null || outputDirectory is not null)) return PackageParseResult.Fail(format, "--reuse-existing-package requires a named MO2 mod-package export and cannot use --output.");
+        if (bsaPlugin is not null && !StringComparer.Ordinal.Equals(target, BsaPlanEmitter.Target) && !StringComparer.Ordinal.Equals(target, BsArchPreviewPlanner.Target)) return PackageParseResult.Fail(format, "--bsa-plugin is only available with --target bsa-plan or bsa-bsarch.");
+        if (StringComparer.Ordinal.Equals(target, BsArchPreviewPlanner.Target) && packerPath is null) return PackageParseResult.Fail(format, "--target bsa-bsarch requires --packer <absolute-path-to-bsarch.exe>.");
+        if (!StringComparer.Ordinal.Equals(target, BsArchPreviewPlanner.Target) && (packerPath is not null || approval is not null)) return PackageParseResult.Fail(format, "--packer and --approve are only available with --target bsa-bsarch.");
+        if (StringComparer.Ordinal.Equals(target, BsArchPreviewPlanner.Target))
+        {
+            if (dryRun && approval is not null) return PackageParseResult.Fail(format, "BSArch preview cannot be combined with --approve.");
+            if (!dryRun && (approval is null || approval.Length != 64 || approval.Any(character => !Uri.IsHexDigit(character)))) return PackageParseResult.Fail(format, "BSArch execution requires --approve <64-hex-preview-sha256>.");
+        }
 
         if (!verifyExisting &&
             (StringComparer.Ordinal.Equals(format, "sarif") ||
@@ -2093,7 +2174,7 @@ internal static class ForgeCli
             return PackageParseResult.Fail(format, "--summary is only available for package verify-existing diagnostics in the current gate.");
         }
 
-        return PackageParseResult.Ok(projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, reuseExistingPackage, expectedPackageManifestSha256, expectedPackageManifestLength, expectedBuildManifestSha256, expectedBuildManifestLength, mo2ModsRoot, mo2ModName, format);
+        return PackageParseResult.Ok(projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, reuseExistingPackage, expectedPackageManifestSha256, expectedPackageManifestLength, expectedBuildManifestSha256, expectedBuildManifestLength, mo2ModsRoot, mo2ModName, bsaPlugin, packerPath, approval, format);
     }
 
     private static bool TryResolvePackageEvidencePaths(
@@ -3752,14 +3833,17 @@ internal static class ForgeCli
         long? ExpectedBuildManifestLength,
         string? Mo2ModsRoot,
         string? Mo2ModName,
+        string? BsaPlugin,
+        string? PackerPath,
+        string? Approval,
         string Format,
         string Message)
     {
-        public static PackageParseResult Ok(string projectPath, string? outputDirectory, string? summaryPath, string target, bool dryRun, bool verifyExisting, bool reuseExistingPackage, string? packageSha, long? packageLength, string? buildSha, long? buildLength, string? mo2ModsRoot, string? mo2ModName, string format) =>
-            new(true, projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, reuseExistingPackage, packageSha, packageLength, buildSha, buildLength, mo2ModsRoot, mo2ModName, format, string.Empty);
+        public static PackageParseResult Ok(string projectPath, string? outputDirectory, string? summaryPath, string target, bool dryRun, bool verifyExisting, bool reuseExistingPackage, string? packageSha, long? packageLength, string? buildSha, long? buildLength, string? mo2ModsRoot, string? mo2ModName, string? bsaPlugin, string? packerPath, string? approval, string format) =>
+            new(true, projectPath, outputDirectory, summaryPath, target, dryRun, verifyExisting, reuseExistingPackage, packageSha, packageLength, buildSha, buildLength, mo2ModsRoot, mo2ModName, bsaPlugin, packerPath, approval, format, string.Empty);
 
         public static PackageParseResult Fail(string format, string message) =>
-            new(false, string.Empty, null, null, McmJsonGenerator.Target, false, false, false, null, null, null, null, null, null, format, message);
+            new(false, string.Empty, null, null, McmJsonGenerator.Target, false, false, false, null, null, null, null, null, null, null, null, null, format, message);
     }
 
     private sealed record PackageEvidencePaths(

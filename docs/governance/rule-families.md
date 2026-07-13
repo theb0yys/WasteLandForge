@@ -1220,3 +1220,10 @@ runtime probe diagnostics, repository publish diagnostics,
 signing/attestation diagnostics, plugin mutation diagnostics, VS Code extension
 diagnostics, language-server diagnostics, app-shell packaging diagnostics, or
 AI requirements.
+## Gate 502
+
+- `WF-GEN-015`: an xEdit Check report is malformed, unsafe, stale, duplicated,
+  oversized, or does not match the current generated script and plugin bytes.
+- `WF-SEM-045`: xEdit `Check(e)` returned a non-empty error for an exact
+  file-local plugin record identity; inspect and correct it manually in xEdit or
+  GECK, then rerun the audit.

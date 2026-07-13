@@ -136,7 +136,7 @@ internal static class ExplainTargetCatalog
                     "xedit-audit-report-handoff-checksums.sha256"
                 ],
                 ["tool.xedit"],
-                ["WF-GEN-009", "WF-GEN-010"],
+                ["WF-GEN-009", "WF-GEN-010", "WF-GEN-015", "WF-SEM-045"],
                 [
                     "Does not execute xEdit or generate reports.",
                     "Does not generate patches or mutate plugins.",

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "capability",
+  "id": "example.couriersemergencycache.baseline",
+  "title": "Courier\u0027s Emergency Cache baseline source",
+  "satisfiedBy": [
+    {
+      "id": "provider.example.couriersemergencycache.source",
+      "providerType": "source-contract"
+    }
+  ],
+  "requires": {
+    "capabilities": []
+  },
+  "scope": "unknown",
+  "stability": "project-local",
+  "features": [
+    "source-contract-scaffold"
+  ]
+}

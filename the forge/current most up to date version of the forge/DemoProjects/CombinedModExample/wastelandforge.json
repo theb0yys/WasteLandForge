@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "0.4.0",
+  "kind": "manifest",
+  "id": "io.github.theboyyss.combinedmodexample",
+  "name": "Combined Mod Example",
+  "version": "0.1.0",
+  "game": "falloutnv",
+  "registries": {
+    "dependencies": "src/registries/dependencies/",
+    "capabilities": "src/registries/capabilities/",
+    "mcm": "src/registries/mcm/",
+    "jipScripts": "src/registries/jip-scripts/",
+    "fomod": "src/registries/fomod/main.json"
+  }
+}

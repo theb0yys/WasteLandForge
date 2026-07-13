@@ -1,0 +1,120 @@
+{
+  "json.schemas": [
+    {
+      "url": "https://schemas.wastelandforge.dev/fnv/manifest/0.2.0/schema.json",
+      "fileMatch": [
+        "/wastelandforge.json"
+      ]
+    },
+    {
+      "url": "https://schemas.wastelandforge.dev/fnv/dependencies/0.2.0/schema.json",
+      "fileMatch": [
+        "/src/registries/dependencies/*.json",
+        "/src/registries/dependencies/**/*.json"
+      ]
+    },
+    {
+      "url": "https://schemas.wastelandforge.dev/fnv/capabilities/0.2.0/schema.json",
+      "fileMatch": [
+        "/src/registries/capabilities/*.json",
+        "/src/registries/capabilities/**/*.json"
+      ]
+    },
+    {
+      "url": "https://schemas.wastelandforge.dev/fnv/assets/0.1.0/schema.json",
+      "fileMatch": [
+        "/src/registries/assets/*.json",
+        "/src/registries/assets/**/*.json"
+      ]
+    },
+    {
+      "url": "https://schemas.wastelandforge.dev/fnv/dialogue/0.23.0/schema.json",
+      "fileMatch": [
+        "/src/registries/dialogue/*.json",
+        "/src/registries/dialogue/**/*.json"
+      ]
+    },
+    {
+      "url": "https://schemas.wastelandforge.dev/fnv/quests/0.6.0/schema.json",
+      "fileMatch": [
+        "/src/registries/quests/*.json",
+        "/src/registries/quests/**/*.json"
+      ]
+    },
+    {
+      "url": "https://schemas.wastelandforge.dev/fnv/mcm/0.1.0/schema.json",
+      "fileMatch": [
+        "/src/registries/mcm/*.json",
+        "/src/registries/mcm/**/*.json"
+      ]
+    },
+    {
+      "url": "https://schemas.wastelandforge.dev/fnv/jip-scripts/0.1.0/schema.json",
+      "fileMatch": [
+        "/src/registries/jip-scripts/*.json",
+        "/src/registries/jip-scripts/**/*.json"
+      ]
+    },
+    {
+      "url": "https://schemas.wastelandforge.dev/fnv/xedit-audit/0.1.0/schema.json",
+      "fileMatch": [
+        "/src/registries/xedit-audit/*.json",
+        "/src/registries/xedit-audit/**/*.json"
+      ]
+    }
+  ],
+  "yaml.schemas": {
+    "https://schemas.wastelandforge.dev/fnv/manifest/0.2.0/schema.json": [
+      "wastelandforge.yaml",
+      "wastelandforge.yml"
+    ],
+    "https://schemas.wastelandforge.dev/fnv/dependencies/0.2.0/schema.json": [
+      "src/registries/dependencies/*.yaml",
+      "src/registries/dependencies/**/*.yaml",
+      "src/registries/dependencies/*.yml",
+      "src/registries/dependencies/**/*.yml"
+    ],
+    "https://schemas.wastelandforge.dev/fnv/capabilities/0.2.0/schema.json": [
+      "src/registries/capabilities/*.yaml",
+      "src/registries/capabilities/**/*.yaml",
+      "src/registries/capabilities/*.yml",
+      "src/registries/capabilities/**/*.yml"
+    ],
+    "https://schemas.wastelandforge.dev/fnv/assets/0.1.0/schema.json": [
+      "src/registries/assets/*.yaml",
+      "src/registries/assets/**/*.yaml",
+      "src/registries/assets/*.yml",
+      "src/registries/assets/**/*.yml"
+    ],
+    "https://schemas.wastelandforge.dev/fnv/dialogue/0.23.0/schema.json": [
+      "src/registries/dialogue/*.yaml",
+      "src/registries/dialogue/**/*.yaml",
+      "src/registries/dialogue/*.yml",
+      "src/registries/dialogue/**/*.yml"
+    ],
+    "https://schemas.wastelandforge.dev/fnv/quests/0.6.0/schema.json": [
+      "src/registries/quests/*.yaml",
+      "src/registries/quests/**/*.yaml",
+      "src/registries/quests/*.yml",
+      "src/registries/quests/**/*.yml"
+    ],
+    "https://schemas.wastelandforge.dev/fnv/mcm/0.1.0/schema.json": [
+      "src/registries/mcm/*.yaml",
+      "src/registries/mcm/**/*.yaml",
+      "src/registries/mcm/*.yml",
+      "src/registries/mcm/**/*.yml"
+    ],
+    "https://schemas.wastelandforge.dev/fnv/jip-scripts/0.1.0/schema.json": [
+      "src/registries/jip-scripts/*.yaml",
+      "src/registries/jip-scripts/**/*.yaml",
+      "src/registries/jip-scripts/*.yml",
+      "src/registries/jip-scripts/**/*.yml"
+    ],
+    "https://schemas.wastelandforge.dev/fnv/xedit-audit/0.1.0/schema.json": [
+      "src/registries/xedit-audit/*.yaml",
+      "src/registries/xedit-audit/**/*.yaml",
+      "src/registries/xedit-audit/*.yml",
+      "src/registries/xedit-audit/**/*.yml"
+    ]
+  }
+}

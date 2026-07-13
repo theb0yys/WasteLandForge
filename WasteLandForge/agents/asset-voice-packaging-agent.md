@@ -14,6 +14,8 @@ Design or review content pipeline automation for FNV assets, voice, dialogue man
 - `WasteLandForge/research/Fallout New Vegas Asset Pipeline, Content Production and Authoring Workflow-deep-research-report.md`
 - `WasteLandForge/research/R002A Dependency and Licensing Audit for Wasteland Forge-deep-research-report.md`
 - `WasteLandForge/research/WastelandForge Generator and Build Pipeline Architecture-deep-research-report.md`
+- `WasteLandForge/research/R009 GECK Authoring Plan and Provider Architecture.md`
+- `docs/adr/ADR-013.md`
 
 ## Forge should own
 
@@ -35,6 +37,11 @@ Design or review content pipeline automation for FNV assets, voice, dialogue man
 - GECK record editing,
 - xEdit conflict resolution,
 - MO2 replacement.
+
+Forge may orchestrate a bounded external GECK-side authoring provider only
+under ADR-013: previewed deterministic plan, local resolutions, exact approval,
+and independent record-aware verification. Do not treat this exception as
+permission for Forge core raw-plugin writing or UIA-only mutation.
 
 ## Voice checklist
 

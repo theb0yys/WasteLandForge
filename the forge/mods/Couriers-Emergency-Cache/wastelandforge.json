@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "manifest",
+  "id": "example.couriersemergencycache",
+  "name": "Courier\u0027s Emergency Cache",
+  "version": "0.1.0",
+  "game": "falloutnv",
+  "registries": {
+    "dependencies": "src/registries/dependencies/",
+    "capabilities": "src/registries/capabilities/"
+  }
+}

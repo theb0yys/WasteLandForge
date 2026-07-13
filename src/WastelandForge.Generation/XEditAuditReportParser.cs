@@ -1,6 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Security.Cryptography;
+using Json.Schema;
 using WastelandForge.Core;
+using WastelandForge.Schema;
+using WastelandForge.Validation;
 
 namespace WastelandForge.Generation;
 
@@ -9,6 +13,9 @@ public sealed class XEditAuditReportParser
     public const string Target = XEditAuditAdapterPlanner.Target;
     public const string ReportKind = "wastelandforge.xedit-audit-report";
     public const string ReportParserRuleId = "WF-GEN-009";
+    public const string CheckReportRuleId = "WF-GEN-015";
+    public const string CheckFindingRuleId = "WF-SEM-045";
+    private static readonly Lazy<JsonSchema> CheckReportSchema = new(() => { WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.XEditCheckReport010, out var resource); return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource!), new BuildOptions { SchemaRegistry = new SchemaRegistry() }); });
 
     private static readonly HashSet<string> FindingSeverities = new(StringComparer.Ordinal)
     {
@@ -54,6 +61,13 @@ public sealed class XEditAuditReportParser
             if (parsed is not null && issues.Count == before)
             {
                 reports.Add(parsed);
+                if (StringComparer.Ordinal.Equals(audit.Intent, "check-for-errors"))
+                {
+                    foreach (var finding in parsed.Findings)
+                    {
+                        issues.Add(new DiagnosticIssue(RuleId.Parse(CheckFindingRuleId), DiagnosticSeverity.Error, "semantic", "xEdit Check found a record error", finding.Message, finding.Source, plan.ProjectId, suggestedFix: $"Inspect {finding.Plugin} {finding.RecordType} {finding.FormId ?? "(unknown FormID)"} in xEdit or GECK, correct the record manually, and rerun the audit.", docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{CheckFindingRuleId}")));
+                    }
+                }
             }
         }
 
@@ -79,6 +93,11 @@ public sealed class XEditAuditReportParser
         List<DiagnosticIssue> issues)
     {
         var reportPath = ToDisplayPath(plan.ProjectRoot, fullPath);
+        if (new FileInfo(fullPath).Length > 4 * 1024 * 1024)
+        {
+            issues.Add(CreateCheckIssue(plan, reportPath, null, "xEdit Check report is too large", "The report exceeds the 4 MiB ingestion limit."));
+            return null;
+        }
         JsonObject? root;
         try
         {
@@ -107,6 +126,8 @@ public sealed class XEditAuditReportParser
                 "Regenerate or replace the synthetic report fixture with an object root."));
             return null;
         }
+
+        if (StringComparer.Ordinal.Equals(audit.Intent, "check-for-errors")) return TryParseCheckReport(plan, audit, root, reportPath, issues);
 
         var kind = ReadRequiredString(plan, root, "kind", reportPath, "/kind", issues);
         var auditId = ReadRequiredString(plan, root, "auditId", reportPath, "/auditId", issues);
@@ -228,6 +249,40 @@ public sealed class XEditAuditReportParser
                 "Use synthetic report evidence that records no external execution, patch writing, or plugin mutation."));
         }
     }
+
+    private static XEditAuditReport? TryParseCheckReport(XEditAuditAdapterPlanResult plan, XEditAuditAdapterPlanEntry audit, JsonObject root, string reportPath, List<DiagnosticIssue> issues)
+    {
+        using (var document = JsonDocument.Parse(root.ToJsonString()))
+            if (!CheckReportSchema.Value.Evaluate(document.RootElement).IsValid) { issues.Add(CreateCheckIssue(plan, reportPath, null, "xEdit Check report schema is invalid", "The report does not satisfy xedit-check-report/0.1.0.")); return null; }
+        if (!StringComparer.Ordinal.Equals(root["auditId"]!.GetValue<string>(), audit.AuditId)) { issues.Add(CreateCheckIssue(plan, reportPath, "/auditId", "xEdit Check report audit is stale", "The report auditId does not match the current declaration.")); return null; }
+        var scriptPath = Path.GetFullPath(Path.Combine(plan.ProjectRoot, audit.ScriptPath.Replace('/', Path.DirectorySeparatorChar)));
+        var allowedScripts = Path.GetFullPath(Path.Combine(plan.ProjectRoot, "generated", Target, "scripts"));
+        if (!IsInsideOrEqual(allowedScripts, scriptPath) || !File.Exists(scriptPath) || (File.GetAttributes(scriptPath) & FileAttributes.ReparsePoint) != 0 || !StringComparer.Ordinal.Equals(Sha(scriptPath), root["script"]!["sha256"]!.GetValue<string>())) { issues.Add(CreateCheckIssue(plan, reportPath, "/script/sha256", "xEdit Check report script provenance is stale", "The report script digest does not match the current generated audit script.")); return null; }
+        var target = audit.TargetPlugins.SingleOrDefault(plugin => plugin.Role == "subject");
+        var plugins = PluginArtifactRegistryReader.Read(plan.ProjectRoot);
+        var plugin = plugins.Plugins.SingleOrDefault(item => target is not null && StringComparer.OrdinalIgnoreCase.Equals(item.DataPath, target.Name));
+        var subject = root["subject"]!.AsObject();
+        if (plugin is null || !StringComparer.OrdinalIgnoreCase.Equals(subject["plugin"]!.GetValue<string>(), plugin.DataPath) || subject["length"]!.GetValue<long>() != plugin.Length || !StringComparer.Ordinal.Equals(subject["sha256"]!.GetValue<string>(), plugin.Sha256) || !StringComparer.Ordinal.Equals(subject["reviewStatus"]!.GetValue<string>(), plugin.ReviewStatus)) { issues.Add(CreateCheckIssue(plan, reportPath, "/subject", "xEdit Check report plugin provenance is stale", "The report subject does not match the current project plugin artifact.")); return null; }
+        var findings = new List<XEditAuditReportFinding>();
+        var records = new List<XEditAuditReportRecord>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var array = root["findings"]!.AsArray();
+        for (var index = 0; index < array.Count; index++)
+        {
+            var finding = array[index]!.AsObject(); var signature = finding["signature"]!.GetValue<string>(); var fixedId = finding["fixedFormId"]!.GetValue<string>(); var file = finding["recordFile"]!.GetValue<string>(); var message = finding["message"]!.GetValue<string>();
+            if (!audit.RecordTypes.Contains(signature, StringComparer.Ordinal) || !StringComparer.OrdinalIgnoreCase.Equals(file, plugin.DataPath)) { issues.Add(CreateCheckIssue(plan, reportPath, $"/findings/{index}", "xEdit Check report finding is undeclared", "The finding plugin or signature is outside the current audit declaration.")); continue; }
+            var key = $"{file}|{fixedId}|{signature}|{message}"; if (!seen.Add(key)) { issues.Add(CreateCheckIssue(plan, reportPath, $"/findings/{index}", "xEdit Check report finding is duplicated", "Duplicate record-error findings are refused.")); continue; }
+            var source = new SourceLocation(reportPath, JsonPointer.Parse($"/findings/{index}")); var editorId = ReadOptionalString(finding, "editorId");
+            records.Add(new(file, signature, editorId, fixedId, source));
+            findings.Add(new($"xedit.check.{fixedId.ToLowerInvariant()}.{index}", "error", file, signature, editorId, fixedId, message, source));
+        }
+        if (issues.Any(issue => StringComparer.Ordinal.Equals(issue.RuleId.ToString(), CheckReportRuleId))) return null;
+        findings = findings.OrderBy(item => item.Plugin, StringComparer.Ordinal).ThenBy(item => item.FormId, StringComparer.Ordinal).ThenBy(item => item.RecordType, StringComparer.Ordinal).ThenBy(item => item.Message, StringComparer.Ordinal).ToList();
+        return new(audit.AuditId, reportPath, "wastelandforge.xedit-check-report", audit.Intent, audit.ReportFormat, false, true, new(false, false, false), new(root["recordsVisited"]!.GetValue<int>(), findings.Count, findings.Count, 0, 0), records, findings, new SourceLocation(reportPath));
+    }
+
+    private static DiagnosticIssue CreateCheckIssue(XEditAuditAdapterPlanResult plan, string file, string? pointer, string title, string message) => new(RuleId.Parse(CheckReportRuleId), DiagnosticSeverity.Error, "generation", title, message, new SourceLocation(file, pointer is null ? null : JsonPointer.Parse(pointer)), plan.ProjectId, suggestedFix: "Regenerate the audit script and rerun it manually against the exact current plugin, then ingest the new report.", docsUri: new Uri($"https://docs.wastelandforge.dev/rules/{CheckReportRuleId}"));
+    private static string Sha(string path) { using var stream = File.OpenRead(path); return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant(); }
 
     private static IReadOnlyList<XEditAuditReportRecord> ReadRecords(
         XEditAuditAdapterPlanResult plan,

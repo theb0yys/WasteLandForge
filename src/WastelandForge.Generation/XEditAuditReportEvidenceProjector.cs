@@ -76,6 +76,8 @@ public sealed class XEditAuditReportEvidenceProjector
             ["execution"] = new JsonObject
             {
                 ["parsesSyntheticReports"] = true,
+                ["parsesXEditCheckReports"] = true,
+                ["forgeExecutesXEdit"] = false,
                 ["executesXEdit"] = false,
                 ["generatesReports"] = false,
                 ["mutatesPlugins"] = false,

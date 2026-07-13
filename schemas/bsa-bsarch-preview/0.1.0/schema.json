@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/bsa-bsarch-preview/0.1.0/schema.json",
+  "title": "WastelandForge BSArch Preview 0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "status", "projectRoot", "previewSha256", "provider", "archives", "issues", "dryRun", "externalToolExecuted", "filesWritten"],
+  "properties": {
+    "formatVersion": { "const": "0.1" },
+    "kind": { "const": "wastelandforge.bsa-bsarch-preview" },
+    "status": { "enum": ["planned", "refused"] },
+    "projectRoot": { "type": "string", "minLength": 1 },
+    "previewSha256": { "anyOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }] },
+    "provider": { "anyOf": [{ "$ref": "#/$defs/provider" }, { "type": "null" }] },
+    "archives": { "type": "array", "items": { "$ref": "#/$defs/archive" } },
+    "issues": { "type": "array" },
+    "dryRun": { "const": true },
+    "externalToolExecuted": { "const": false },
+    "filesWritten": { "const": false }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "provider": { "type": "object", "additionalProperties": false, "required": ["path", "length", "sha256", "fileVersion", "signatureStatus"], "properties": { "path": { "type": "string", "minLength": 1 }, "length": { "type": "integer", "minimum": 1 }, "sha256": { "$ref": "#/$defs/sha" }, "fileVersion": { "type": ["string", "null"] }, "signatureStatus": { "enum": ["signed", "unsigned"] } } },
+    "archive": { "type": "object", "additionalProperties": false, "required": ["archiveFile", "inputRoot", "outputPath", "entryCount", "packArguments", "listArguments", "unpackArguments"], "properties": { "archiveFile": { "type": "string", "pattern": "\\.bsa$" }, "inputRoot": { "type": "string", "minLength": 1 }, "outputPath": { "type": "string", "minLength": 1 }, "entryCount": { "type": "integer", "minimum": 1 }, "packArguments": { "type": "array", "minItems": 4, "items": { "type": "string" } }, "listArguments": { "type": "array", "minItems": 2, "items": { "type": "string" } }, "unpackArguments": { "type": "array", "minItems": 4, "items": { "type": "string" } } } }
+  }
+}

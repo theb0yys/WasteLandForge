@@ -52,6 +52,8 @@ public sealed class ProjectValidationPipeline
         WastelandForgeSchemaIds.Manifest030,
         "Manifest schema 0.3.0"));
     private static readonly Lazy<JsonSchema> ManifestSchema040 = new(() => LoadBuiltInSchema(WastelandForgeSchemaIds.Manifest040, "Manifest schema 0.4.0"));
+    private static readonly Lazy<JsonSchema> ManifestSchema050 = new(() => LoadBuiltInSchema(WastelandForgeSchemaIds.Manifest050, "Manifest schema 0.5.0"));
+    private static readonly Lazy<JsonSchema> GeckAuthoringIntentSchema010 = new(() => LoadBuiltInSchema(WastelandForgeSchemaIds.GeckAuthoringIntent010, "GECK authoring intent schema 0.1.0"));
     private static readonly Lazy<JsonSchema> DependencyRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Dependency010,
         "Dependency registry schema 0.1.0"));
@@ -76,6 +78,9 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> XEditAuditRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.XEditAudit010,
         "xEdit audit registry schema 0.1.0"));
+    private static readonly Lazy<JsonSchema> XEditAuditRegistrySchema020 = new(() => LoadBuiltInSchema(
+        WastelandForgeSchemaIds.XEditAudit020,
+        "xEdit audit registry schema 0.2.0"));
     private static readonly Lazy<JsonSchema> QuestRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Quest010,
         "Quest registry schema 0.1.0"));
@@ -880,7 +885,7 @@ public sealed class ProjectValidationPipeline
     private static void ValidateManifestSchema(LoadedManifest manifestLoad, List<DiagnosticIssue> issues, LogicalId? projectId)
     {
         var version = GetString(manifestLoad.Manifest, "schemaVersion");
-        var schema = StringComparer.Ordinal.Equals(version, "0.4.0") ? ManifestSchema040.Value : StringComparer.Ordinal.Equals(version, "0.3.0") ? ManifestSchema030.Value : StringComparer.Ordinal.Equals(version, "0.2.0") ? ManifestSchema020.Value : ManifestSchema.Value;
+        var schema = StringComparer.Ordinal.Equals(version, "0.5.0") ? ManifestSchema050.Value : StringComparer.Ordinal.Equals(version, "0.4.0") ? ManifestSchema040.Value : StringComparer.Ordinal.Equals(version, "0.3.0") ? ManifestSchema030.Value : StringComparer.Ordinal.Equals(version, "0.2.0") ? ManifestSchema020.Value : ManifestSchema.Value;
 
         ValidateSourceSchema(
             "Manifest",
@@ -929,7 +934,9 @@ public sealed class ProjectValidationPipeline
             "asset" => AssetRegistrySchema.Value,
             "mcm" => McmRegistrySchema.Value,
             "jip-script" => JipScriptRegistrySchema.Value,
+            "xedit-audit" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => XEditAuditRegistrySchema020.Value,
             "xedit-audit" => XEditAuditRegistrySchema.Value,
+            "geck-authoring-intent" => GeckAuthoringIntentSchema010.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.6.0") => QuestRegistrySchema060.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.5.0") => QuestRegistrySchema050.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.4.0") => QuestRegistrySchema040.Value,
@@ -1084,6 +1091,7 @@ public sealed class ProjectValidationPipeline
         var jipScriptsPath = GetString(registries, "jipScripts");
         var xeditAuditPath = GetString(registries, "xeditAudit");
         var pluginArtifactsPath = GetString(registries, "pluginArtifacts");
+        var geckAuthoringIntentPath = GetString(registries, "geckAuthoringIntent");
         if (dependencyPath is null || capabilityPath is null)
         {
             return;
@@ -1173,6 +1181,10 @@ public sealed class ProjectValidationPipeline
         if (pluginArtifactsPath is not null)
         {
             issues.AddRange(PluginArtifactRegistryReader.Read(manifestLoad.ProjectRoot).Diagnostics.Issues);
+        }
+        if (geckAuthoringIntentPath is not null)
+        {
+            LoadRegistryDocuments(manifestLoad.ProjectRoot, geckAuthoringIntentPath, "geck-authoring-intent", "geckAuthoringIntent", issues, projectId);
         }
 
         if (HasErrorSince(issues, registryIssueStart))

@@ -1,0 +1,17 @@
+{
+  "formatVersion": "1.0",
+  "kind": "wastelandforge.local-config",
+  "projectId": "example.couriersemergencycache",
+  "projectName": "Courier\u0027s Emergency Cache",
+  "paths": {
+    "generated": "generated/",
+    "dist": "dist/",
+    "cache": ".wastelandforge/cache/"
+  },
+  "behavior": {
+    "offlineFirst": true,
+    "aiRequired": false,
+    "externalToolsAutoRun": false,
+    "runtimeProbesAutoRun": false
+  }
+}

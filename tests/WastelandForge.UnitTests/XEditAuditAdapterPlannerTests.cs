@@ -1,10 +1,41 @@
 using System.Text.Json.Nodes;
+using System.Security.Cryptography;
 using WastelandForge.Generation;
 
 namespace WastelandForge.UnitTests;
 
 public sealed class XEditAuditAdapterPlannerTests
 {
+    [Fact]
+    public void CheckReportBindsCurrentScriptAndPluginAndProjectsTypedDiagnostic()
+    {
+        var root = CopyFixtureProject("XEditAuditExample");
+        ConfigureCheckAudit(root);
+        var emitted = new XEditAuditScriptScaffoldEmitter().Emit(root);
+        Assert.False(emitted.HasErrors, string.Join("\n", emitted.Diagnostics.Issues.Select(issue => issue.Message)));
+        var script = Path.Combine(root, emitted.Documents.Single().ScriptPath.Replace('/', Path.DirectorySeparatorChar));
+        var plugin = Path.Combine(root, "src", "plugins", "SyntheticAuditSubject.esp");
+        var report = Path.Combine(root, "generated", "xedit-audit", "reports", "synthetic-check.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(report)!);
+        File.WriteAllText(report, $$$"""
+        {"formatVersion":"0.1","kind":"wastelandforge.xedit-check-report","auditId":"io.github.theboyyss.xeditauditexample.xedit_audits.check_errors","intent":"check-for-errors","producer":{"name":"xEdit","gameMode":"FNV"},"script":{"id":"io.github.theboyyss.xeditauditexample.xedit_audits.check_errors","sha256":"{{{Sha(File.ReadAllBytes(script))}}}"},"subject":{"plugin":"SyntheticAuditSubject.esp","length":5,"sha256":"{{{Sha(File.ReadAllBytes(plugin))}}}","reviewStatus":"pending"},"recordsVisited":1,"findings":[{"message":"Synthetic invalid reference.","recordFile":"SyntheticAuditSubject.esp","signature":"QUST","fixedFormId":"00000800","editorId":"SyntheticQuest","loadOrderFormId":"01000800"}],"safety":{"forgeExecutedXEdit":false,"mutatedPlugins":false,"wrotePatches":false,"changedLoadOrder":false,"wroteGameData":false}}
+        """);
+        var pluginBefore = File.ReadAllBytes(plugin); var reportBefore = File.ReadAllBytes(report);
+        var parsed = new XEditAuditReportParser().Parse(root);
+        var parsedReport = Assert.Single(parsed.Reports);
+        var finding = Assert.Single(parsedReport.Findings);
+        Assert.Equal("00000800", finding.FormId);
+        Assert.Equal("Synthetic invalid reference.", finding.Message);
+        Assert.Contains(parsed.Diagnostics.Issues, issue => issue.RuleId.ToString() == XEditAuditReportParser.CheckFindingRuleId);
+        Assert.Equal(pluginBefore, File.ReadAllBytes(plugin)); Assert.Equal(reportBefore, File.ReadAllBytes(report));
+        Assert.Contains("Check(e)", File.ReadAllText(script), StringComparison.Ordinal);
+        Assert.Contains("FixedFormID(e)", File.ReadAllText(script), StringComparison.Ordinal);
+        var stale = JsonNode.Parse(File.ReadAllText(report))!.AsObject(); stale["script"]!["sha256"] = new string('0', 64); File.WriteAllText(report, stale.ToJsonString());
+        var refused = new XEditAuditReportParser().Parse(root);
+        Assert.Empty(refused.Reports);
+        Assert.Contains(refused.Diagnostics.Issues, issue => issue.RuleId.ToString() == XEditAuditReportParser.CheckReportRuleId);
+    }
+
     [Fact]
     public void PlanReturnsEvidenceOnlyXEditAuditEntries()
     {
@@ -550,6 +581,18 @@ public sealed class XEditAuditAdapterPlannerTests
         Directory.CreateDirectory(Path.GetDirectoryName(target) ?? projectRoot);
         File.Copy(source, target, overwrite: true);
     }
+
+    private static void ConfigureCheckAudit(string root)
+    {
+        var plugin = Path.Combine(root, "src", "plugins", "SyntheticAuditSubject.esp"); Directory.CreateDirectory(Path.GetDirectoryName(plugin)!); File.WriteAllBytes(plugin, [1,2,3,4,5]);
+        var pluginRegistry = Path.Combine(root, "src", "registries", "plugin-artifacts", "main.json"); Directory.CreateDirectory(Path.GetDirectoryName(pluginRegistry)!);
+        File.WriteAllText(pluginRegistry, $$$"""{"schemaVersion":"0.1.0","kind":"plugin-artifact","id":"io.github.theboyyss.xeditauditexample.plugins","plugins":[{"id":"io.github.theboyyss.xeditauditexample.plugins.subject","file":"src/plugins/SyntheticAuditSubject.esp","pluginType":"esp","dataPath":"SyntheticAuditSubject.esp","sha256":"{{{Sha(File.ReadAllBytes(plugin))}}}","length":5,"authoringTool":"xedit","reviewStatus":"pending"}]}""");
+        var audit = Path.Combine(root, "src", "registries", "xedit-audit", "main.json");
+        File.WriteAllText(audit, """{"schemaVersion":"0.2.0","kind":"xedit-audit","id":"io.github.theboyyss.xeditauditexample.xedit_audits","audits":[{"id":"io.github.theboyyss.xeditauditexample.xedit_audits.check_errors","summary":"Synthetic check errors","intent":"check-for-errors","mode":"manual-script-report","scriptLanguage":"pascal","reportFormat":"wastelandforge-json-0.1","targetPlugins":[{"name":"SyntheticAuditSubject.esp","role":"subject"}],"recordTypes":["QUST"],"requires":{"capabilities":[{"id":"tool.xedit.record_inspection"}]},"outputs":{"script":"generated/xedit-audit/scripts/synthetic-check.pas","report":"generated/xedit-audit/reports/synthetic-check.json"},"safety":{"executesXEdit":false,"mutatesPlugins":false,"writesPatches":false,"usesRealPluginFixture":false}}]}""");
+        var manifestPath=Path.Combine(root,"wastelandforge.json");var manifest=JsonNode.Parse(File.ReadAllText(manifestPath))!.AsObject();manifest["schemaVersion"]="0.3.0";manifest["registries"]!["pluginArtifacts"]="src/registries/plugin-artifacts/";File.WriteAllText(manifestPath,manifest.ToJsonString());
+    }
+
+    private static string Sha(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
 
     private static void WriteSyntheticReport(string projectRoot, string content)
     {

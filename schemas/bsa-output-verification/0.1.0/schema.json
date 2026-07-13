@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/bsa-output-verification/0.1.0/schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "status", "archives", "repeatPackVerified", "unpackedBytesVerified"],
+  "properties": {
+    "formatVersion": { "const": "0.1" },
+    "kind": { "const": "wastelandforge.bsa-output-verification" },
+    "status": { "const": "passed" },
+    "archives": { "type": "array", "minItems": 1 },
+    "repeatPackVerified": { "const": true },
+    "unpackedBytesVerified": { "const": true }
+  }
+}

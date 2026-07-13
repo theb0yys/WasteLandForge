@@ -66,8 +66,22 @@
                      Margin="0,8,0,0" />
         </StackPanel>
 
-        <StackPanel Grid.Row="2" Margin="0,36,0,0">
+        <ScrollViewer Grid.Row="2" Margin="0,24,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+          <TextBlock Text="Build" Foreground="{StaticResource TextMuted}" FontSize="12" FontWeight="Bold" />
+          <ComboBox x:Name="BuildWorkspaceComboBox" Margin="0,7,0,0" SelectionChanged="WorkspaceNavigationChanged">
+            <ComboBoxItem Content="Basic Mod Builder" Tag="basic" /><ComboBoxItem Content="Plugin Mod Workbench" Tag="plugin-workbench" /><ComboBoxItem Content="Legacy Mod Builder" Tag="mod-builder" /><ComboBoxItem Content="Narrative Author" Tag="narrative" /><ComboBoxItem Content="MCM Author" Tag="mcm" /><ComboBoxItem Content="JIP Author" Tag="jip" />
+          </ComboBox>
+          <TextBlock Text="Review" Foreground="{StaticResource TextMuted}" FontSize="12" FontWeight="Bold" Margin="0,12,0,0" />
+          <ComboBox x:Name="ReviewWorkspaceComboBox" Margin="0,7,0,0" SelectionChanged="WorkspaceNavigationChanged">
+            <ComboBoxItem Content="Validation" Tag="validation" /><ComboBoxItem Content="Capabilities" Tag="capabilities" /><ComboBoxItem Content="xEdit Audit" Tag="xedit" /><ComboBoxItem Content="Plugin Intake" Tag="plugin-intake" /><ComboBoxItem Content="GECK Handoff" Tag="geck" /><ComboBoxItem Content="Project Outputs" Tag="outputs" /><ComboBoxItem Content="Release Candidate" Tag="candidate" />
+          </ComboBox>
+          <TextBlock Text="System" Foreground="{StaticResource TextMuted}" FontSize="12" FontWeight="Bold" Margin="0,12,0,0" />
+          <ComboBox x:Name="SystemWorkspaceComboBox" Margin="0,7,0,0" SelectionChanged="WorkspaceNavigationChanged">
+            <ComboBoxItem Content="Dashboard" Tag="dashboard" /><ComboBoxItem Content="New Project" Tag="new-project" /><ComboBoxItem Content="Settings" Tag="settings" /><ComboBoxItem Content="Advanced Logs" Tag="logs" />
+          </ComboBox>
           <Button x:Name="RefreshButton"
+                  Margin="0,18,0,0"
                   Content="Refresh Backend"
                   Click="RefreshBackendClicked" />
           <Button Content="Open Publish Folder"
@@ -77,6 +91,7 @@
                   Margin="0,10,0,0"
                   Click="OpenAppLogClicked" />
         </StackPanel>
+        </ScrollViewer>
 
         <StackPanel Grid.Row="3">
           <TextBlock Text="forge.exe"
@@ -105,11 +120,11 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel>
-          <TextBlock Text="Project command center"
+          <TextBlock Text="WastelandForge project studio"
                      Foreground="{StaticResource TextPrimary}"
                      FontSize="30"
                      FontWeight="Bold" />
-          <TextBlock Text="Build and verify a basic MCM package without exposing a console window."
+          <TextBlock Text="Author, validate, package, and review Fallout: New Vegas mod projects."
                      Foreground="{StaticResource TextMuted}"
                      Margin="0,6,0,0" />
         </StackPanel>
@@ -174,7 +189,7 @@
       </Border>
 
       <TabControl x:Name="MainTabControl" Grid.Row="2" SelectedIndex="1">
-        <TabItem Header="Dashboard">
+        <TabItem x:Name="DashboardTabItem" Header="Dashboard">
           <Grid Margin="0,18,0,0">
             <Grid.RowDefinitions>
               <RowDefinition Height="2*" />
@@ -910,7 +925,35 @@
           </ScrollViewer>
         </TabItem>
 
-        <TabItem Header="New Project">
+        <TabItem x:Name="BasicModBuilderTabItem" Header="Basic Mod Builder">
+          <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="390" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,18,0">
+              <StackPanel>
+                <TextBlock Text="Basic Mod Builder" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock Text="Parent folder" Foreground="{StaticResource TextMuted}" Margin="0,16,0,0" /><TextBox x:Name="BasicModParentTextBox" TextChanged="BasicModInputChanged" />
+                <Button Content="Choose Parent Folder" Margin="0,7,0,0" Click="BrowseBasicModParentClicked" />
+                <TextBlock Text="Project and mod name" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="BasicModNameTextBox" TextChanged="BasicModInputChanged" />
+                <TextBlock Text="MCM menu title" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="BasicModMenuTitleTextBox" Text="My Mod Settings" TextChanged="BasicModInputChanged" />
+                <TextBlock Text="Toggle label" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="BasicModSettingLabelTextBox" Text="Enable feature" TextChanged="BasicModInputChanged" />
+                <Grid Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <StackPanel Margin="0,0,5,0"><TextBlock Text="INI section" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="BasicModIniSectionTextBox" Text="General" TextChanged="BasicModInputChanged" /></StackPanel>
+                  <StackPanel Grid.Column="1" Margin="5,0,0,0"><TextBlock Text="INI key" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="BasicModIniKeyTextBox" Text="bEnabled" TextChanged="BasicModInputChanged" /></StackPanel>
+                </Grid>
+                <CheckBox x:Name="BasicModEnabledCheckBox" Content="Enabled by default" Margin="0,12,0,0" Checked="BasicModInputChanged" Unchecked="BasicModInputChanged" />
+                <CheckBox x:Name="BasicModIncludeJipCheckBox" Content="Include JIP LN startup script" Margin="0,12,0,0" IsChecked="True" Checked="BasicModInputChanged" Unchecked="BasicModInputChanged" />
+                <TextBlock Text="JIP script summary" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="BasicModJipSummaryTextBox" Text="Project bootstrap script." TextChanged="BasicModInputChanged" />
+                <TextBlock Text="JIP opaque source" Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" /><TextBox x:Name="BasicModJipBodyTextBox" Text="; Add JIP LN startup logic here." AcceptsReturn="True" Height="72" TextChanged="BasicModInputChanged" />
+                <WrapPanel Margin="0,18,0,0"><Button x:Name="PreviewBasicModButton" Content="Preview" Click="PreviewBasicModClicked" /><Button x:Name="CreateBasicModButton" Content="Create Mod" Style="{StaticResource PrimaryButton}" IsEnabled="False" Margin="8,0,0,0" Click="CreateBasicModClicked" /><Button x:Name="CancelBasicModButton" Content="Cancel" IsEnabled="False" Margin="8,0,0,0" Click="CancelBasicModClicked" /></WrapPanel>
+                <TextBlock x:Name="BasicModStatusTextBlock" Text="Enter project details and preview." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" Margin="0,12,0,0" />
+                <WrapPanel Margin="0,12,0,0"><Button x:Name="OpenBasicModProjectButton" Content="Open Project" IsEnabled="False" Click="OpenBasicModProjectClicked" /><Button x:Name="OpenBasicModFomodButton" Content="Open FOMOD ZIP" IsEnabled="False" Margin="8,0,0,0" Click="OpenBasicModFomodClicked" /></WrapPanel>
+              </StackPanel>
+            </ScrollViewer>
+            <TextBox x:Name="BasicModOutputTextBox" Grid.Column="1" AcceptsReturn="True" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" />
+          </Grid>
+        </TabItem>
+
+        <TabItem x:Name="NewProjectTabItem" Header="New Project">
           <Grid Margin="0,18,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="360" />
@@ -978,7 +1021,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem Header="Narrative Author">
+        <TabItem x:Name="NarrativeAuthorTabItem" Header="Narrative Author">
           <Grid Margin="0,18,0,0">
             <Grid.ColumnDefinitions><ColumnDefinition Width="420" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
             <Grid Margin="0,0,18,0">
@@ -1212,7 +1255,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem Header="MCM Author">
+        <TabItem x:Name="McmAuthorTabItem" Header="MCM Author">
           <Grid Margin="0,18,0,0">
             <Grid.ColumnDefinitions><ColumnDefinition Width="380" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
             <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,18,0">
@@ -1273,7 +1316,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem Header="JIP Author">
+        <TabItem x:Name="JipAuthorTabItem" Header="JIP Author">
           <Grid Margin="0,18,0,0">
             <Grid.ColumnDefinitions><ColumnDefinition Width="380" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
             <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,18,0">
@@ -1301,7 +1344,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem Header="xEdit Audit">
+        <TabItem x:Name="XEditAuditTabItem" Header="xEdit Audit">
           <Grid Margin="0,18,0,0">
             <Grid.ColumnDefinitions><ColumnDefinition Width="340" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
             <StackPanel Margin="0,0,18,0">
@@ -1319,7 +1362,7 @@
 
         <TabItem x:Name="ProjectOutputsTabItem" Header="Project Outputs">
           <Grid Margin="0,18,0,0">
-            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="125" /><RowDefinition Height="180" /></Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="125" /><RowDefinition Height="180" /></Grid.RowDefinitions>
             <Grid>
               <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
               <TextBlock Text="Buildable project outputs" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
@@ -1345,6 +1388,8 @@
                 <ComboBoxItem Content="Generate xEdit audit" Tag="xedit-audit" />
                 <ComboBoxItem Content="Build combined mod package" Tag="mod-package" />
                 <ComboBoxItem Content="Build FOMOD installer package" Tag="fomod" />
+                <ComboBoxItem Content="Build BSA packing plan" Tag="bsa-plan" />
+                <ComboBoxItem Content="Build BSA-backed local package" Tag="bsa-package" />
                 <ComboBoxItem Content="Build GECK authoring handoff" Tag="geck-handoff" />
               </ComboBox>
               <Button x:Name="RunProjectOutputWorkflowButton" Grid.Column="1" Content="Run Selected Workflow" Style="{StaticResource PrimaryButton}" Margin="12,0,0,0" Click="RunProjectOutputWorkflowClicked" />
@@ -1368,29 +1413,67 @@
               <Button x:Name="OpenExportedMo2ModButton" Grid.Column="7" Content="Open Export" Margin="8,0,0,0" IsEnabled="False" Click="OpenExportedMo2ModClicked" />
             </Grid>
             <Grid Grid.Row="4" Margin="0,8,0,0">
-              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
               <Button Content="Discover MO2 Instances" Click="DiscoverMo2InstancesClicked" />
               <ComboBox x:Name="Mo2DiscoveryComboBox" Grid.Column="1" Margin="10,0" Padding="8" DisplayMemberPath="Display" />
               <Button Grid.Column="2" Content="Use Selected" Click="UseSelectedMo2CandidateClicked" />
               <TextBlock x:Name="Mo2DiscoveryStatusTextBlock" Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Text="Discovery is read-only." />
             </Grid>
             <Grid Grid.Row="5" Margin="0,10,0,0">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <TextBlock Text="BSArch provider" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" />
+              <TextBox x:Name="BsArchProviderPathTextBox" Grid.Column="1" Margin="10,0,8,0" Padding="8" ToolTip="Absolute path to bsarch.exe" TextChanged="BsArchProviderPathChanged" />
+              <Button Grid.Column="2" Content="Browse" Click="BrowseBsArchProviderClicked" />
+              <Button x:Name="PreviewBsArchBuildButton" Grid.Column="3" Content="Preview BSA Build" Margin="8,0,0,0" Click="PreviewBsArchBuildClicked" />
+              <Button x:Name="ExecuteBsArchBuildButton" Grid.Column="4" Content="Build BSA" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="ExecuteBsArchBuildClicked" />
+            </Grid>
+            <Grid Grid.Row="6" Margin="0,10,0,0">
               <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
               <StackPanel><TextBlock Text="Optional MO2 companion" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" /><TextBlock x:Name="Mo2CompanionPackageStatusTextBlock" Text="Checking published package evidence..." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" /></StackPanel>
               <Button x:Name="OpenMo2CompanionFolderButton" Grid.Column="1" Content="Open Package Folder" IsEnabled="False" Click="OpenMo2CompanionFolderClicked" />
               <Button x:Name="OpenMo2CompanionArchiveButton" Grid.Column="2" Content="Open Package ZIP" Margin="8,0,0,0" IsEnabled="False" Click="OpenMo2CompanionArchiveClicked" />
               <Button x:Name="OpenMo2CompanionGuideButton" Grid.Column="3" Content="Open Install Guide" Margin="8,0,0,0" IsEnabled="False" Click="OpenMo2CompanionGuideClicked" />
             </Grid>
-            <Grid Grid.Row="6" Margin="0,10,0,0">
+            <Grid Grid.Row="7" Margin="0,10,0,0">
               <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
               <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions><TextBlock Text="MO2 process receipts" VerticalAlignment="Center" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" /><ComboBox x:Name="Mo2LaunchReceiptComboBox" Grid.Column="1" Margin="10,0" DisplayMemberPath="Summary" SelectionChanged="Mo2LaunchReceiptSelectionChanged" /><Button x:Name="RefreshMo2LaunchReceiptsButton" Grid.Column="2" Content="Refresh Receipts" Click="RefreshMo2LaunchReceiptsClicked" /><TextBlock x:Name="Mo2LaunchReceiptStatusTextBlock" Grid.Column="3" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Text="Refresh to inspect private process-created receipts." TextWrapping="Wrap" /></Grid>
               <TextBox x:Name="Mo2LaunchReceiptDetailsTextBox" Grid.Row="1" Margin="0,8,0,0" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" FontSize="11" />
             </Grid>
-            <TextBox x:Name="ProjectOutputDetailsTextBox" Grid.Row="7" Margin="0,14,0,0" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
+            <TextBox x:Name="ProjectOutputDetailsTextBox" Grid.Row="8" Margin="0,14,0,0" AcceptsReturn="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="NoWrap" />
           </Grid>
         </TabItem>
 
-        <TabItem Header="Plugin Intake">
+        <TabItem x:Name="PluginModWorkbenchTabItem" Header="Plugin Mod Workbench">
+          <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="390" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <Grid Margin="0,0,18,0">
+              <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+              <TextBlock Text="Plugin Mod Workbench" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+              <Grid Grid.Row="1" Margin="0,12,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <ComboBox x:Name="PluginWorkbenchPluginComboBox" DisplayMemberPath="DataPath" SelectionChanged="PluginWorkbenchPluginChanged" />
+                <Button x:Name="RefreshPluginWorkbenchButton" Grid.Column="1" Content="Refresh" Margin="8,0,0,0" Click="RefreshPluginWorkbenchClicked" />
+              </Grid>
+              <DataGrid x:Name="PluginWorkbenchPhaseDataGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" SelectionChanged="PluginWorkbenchPhaseChanged">
+                <DataGrid.Columns><DataGridTextColumn Header="Phase" Binding="{Binding Title}" Width="*" /><DataGridTextColumn Header="State" Binding="{Binding State}" Width="120" /></DataGrid.Columns>
+              </DataGrid>
+              <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                <Button x:Name="OpenPluginWorkbenchPhaseButton" Content="Open Phase Workspace" Style="{StaticResource PrimaryButton}" IsEnabled="False" Click="OpenPluginWorkbenchPhaseClicked" />
+                <TextBlock Text="Revised plugin file" Foreground="{StaticResource TextMuted}" Margin="0,14,0,0" />
+                <Grid Margin="0,6,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBox x:Name="PluginRevisionPathTextBox" TextChanged="PluginRevisionInputChanged" /><Button Grid.Column="1" Content="Browse" Margin="8,0,0,0" Click="BrowsePluginRevisionClicked" /></Grid>
+                <WrapPanel Margin="0,8,0,0"><Button x:Name="PreviewPluginRevisionButton" Content="Preview Revision" Click="PreviewPluginRevisionClicked" /><Button x:Name="ApplyPluginRevisionButton" Content="Import Revised Plugin" IsEnabled="False" Margin="8,0,0,0" Click="ApplyPluginRevisionClicked" /></WrapPanel>
+              </StackPanel>
+            </Grid>
+            <Grid Grid.Column="1"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+              <TextBlock x:Name="PluginWorkbenchStatusTextBlock" Text="Select a project and refresh evidence." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" />
+              <Grid Grid.Row="1" Margin="0,12,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <WrapPanel><Button x:Name="BuildPluginWorkbenchFomodButton" Content="Build FOMOD" Click="BuildPluginWorkbenchFomodClicked" /><Button x:Name="RunPluginWorkbenchCandidateButton" Content="Run Candidate Check" Margin="8,0,0,0" Click="RunPluginWorkbenchCandidateClicked" /><Button x:Name="CancelPluginWorkbenchActionButton" Content="Cancel" Margin="8,0,0,0" IsEnabled="False" Click="CancelPluginWorkbenchActionClicked" /></WrapPanel>
+                <TextBox x:Name="PluginWorkbenchDetailsTextBox" Grid.Row="1" Margin="0,12,0,0" AcceptsReturn="True" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" />
+              </Grid>
+            </Grid>
+          </Grid>
+        </TabItem>
+
+        <TabItem x:Name="PluginIntakeTabItem" Header="Plugin Intake">
           <Grid Margin="0,18,0,0">
             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
             <StackPanel><TextBlock Text="Human-authored plugin intake" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" /><TextBlock Text="Import opaque ESP/ESM bytes into project source. Forge does not parse or edit plugin records." Foreground="{StaticResource TextMuted}" Margin="0,4,0,0" /></StackPanel>
@@ -1414,7 +1497,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem Header="GECK Handoff">
+        <TabItem x:Name="GeckHandoffTabItem" Header="GECK Handoff">
           <Grid Margin="0,18,0,0">
             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="2*" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
             <Grid>
@@ -1513,6 +1596,8 @@
             <WrapPanel Grid.Row="5" Margin="0,12,0,0">
               <Button x:Name="OpenCandidateFomodFolderButton" Content="Open Distributable Folder" IsEnabled="False" Click="OpenCandidateFomodFolderClicked" />
               <Button x:Name="OpenCandidateFomodArchiveButton" Content="Open FOMOD ZIP" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidateFomodArchiveClicked" />
+              <Button x:Name="OpenCandidateBsaPlanFolderButton" Content="Open BSA Plan" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidateBsaPlanFolderClicked" />
+              <Button x:Name="OpenCandidateBsaPlanReportButton" Content="Open BSA Report" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidateBsaPlanReportClicked" />
               <Button x:Name="OpenCandidatePackageFolderButton" Content="Open Combined Payload" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidatePackageFolderClicked" />
               <Button x:Name="OpenCandidatePackageArchiveButton" Content="Open Combined ZIP" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidatePackageArchiveClicked" />
               <Button x:Name="OpenCandidateReleaseEvidenceButton" Content="Open Release Evidence" Margin="8,0,0,0" IsEnabled="False" Click="OpenCandidateReleaseEvidenceClicked" />
@@ -1561,7 +1646,7 @@
           </Grid>
         </TabItem>
 
-        <TabItem Header="Advanced Logs">
+        <TabItem x:Name="AdvancedLogsTabItem" Header="Advanced Logs">
           <Grid Margin="0,18,0,0">
             <TextBox x:Name="LogsTextBox"
                      AcceptsReturn="True"

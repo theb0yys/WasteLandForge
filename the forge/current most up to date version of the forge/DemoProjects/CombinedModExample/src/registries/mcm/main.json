@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "mcm",
+  "id": "io.github.theboyyss.combinedmodexample.mcm",
+  "menus": [{
+    "id": "io.github.theboyyss.combinedmodexample.mcm.main",
+    "title": "$ModName",
+    "outputFile": "CombinedModExample.json",
+    "minMCMVersion": 1.0,
+    "requires": { "capabilities": [{ "id": "runtime.ui.mcm_json" }] },
+    "translations": { "$ModName": "Combined Mod Example", "$General": "General", "$Enabled": "Enabled" },
+    "pages": [{
+      "id": "io.github.theboyyss.combinedmodexample.mcm.general",
+      "title": "$General",
+      "settings": [{
+        "id": "io.github.theboyyss.combinedmodexample.mcm.general.enabled",
+        "label": "$Enabled",
+        "settingType": "toggle",
+        "default": true,
+        "ini": { "file": "Config/CombinedModExample.ini", "section": "General", "key": "bEnabled" }
+      }]
+    }]
+  }]
+}

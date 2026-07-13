@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/bsa-package-manifest/0.1.0/schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "packageType", "command", "target", "tool", "project", "associationPlugin", "provider", "approvalSha256", "archives", "looseEntries", "partition", "archive", "providerCompatibility", "releaseCandidateInput", "safety"],
+  "properties": {
+    "formatVersion": { "const": "0.1" },
+    "kind": { "const": "wastelandforge.bsa-package-manifest" },
+    "packageType": { "const": "wastelandforge/bsa-package/v1" },
+    "command": { "const": "package" },
+    "target": { "const": "bsa-package" },
+    "tool": { "type": "object" },
+    "project": { "type": "object" },
+    "associationPlugin": { "type": "object" },
+    "provider": { "type": "object" },
+    "approvalSha256": { "$ref": "#/$defs/sha" },
+    "archives": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/archiveEntry" } },
+    "looseEntries": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/looseEntry" } },
+    "partition": { "type": "object", "additionalProperties": false, "required": ["packedCount", "looseCount", "complete"], "properties": { "packedCount": { "type": "integer", "minimum": 1 }, "looseCount": { "type": "integer", "minimum": 1 }, "complete": { "const": true } } },
+    "archive": { "type": "object", "additionalProperties": false, "required": ["path", "length", "sha256", "entryCount", "compression", "timestampSource", "entriesValidated"], "properties": { "path": { "const": "package.zip" }, "length": { "type": "integer", "minimum": 1 }, "sha256": { "$ref": "#/$defs/sha" }, "entryCount": { "type": "integer", "minimum": 2 }, "compression": { "const": "store" }, "timestampSource": { "type": "string", "minLength": 1 }, "entriesValidated": { "const": true } } },
+    "providerCompatibility": { "const": "unverified" },
+    "releaseCandidateInput": { "const": false },
+    "safety": { "type": "object", "additionalProperties": false, "required": ["pluginMutation", "gameDataWrite", "mo2ProfileWrite", "iniWrite", "loadOrderWrite", "externalToolExecutedDuringPackaging"], "properties": { "pluginMutation": { "const": false }, "gameDataWrite": { "const": false }, "mo2ProfileWrite": { "const": false }, "iniWrite": { "const": false }, "loadOrderWrite": { "const": false }, "externalToolExecutedDuringPackaging": { "const": false } } }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "archiveEntry": { "type": "object", "additionalProperties": false, "required": ["file", "length", "sha256", "entryCount", "repeatPackMatches", "listMatches", "unpackedBytesMatch"], "properties": { "file": { "type": "string", "pattern": "\\.bsa$" }, "length": { "type": "integer", "minimum": 1 }, "sha256": { "$ref": "#/$defs/sha" }, "entryCount": { "type": "integer", "minimum": 1 }, "repeatPackMatches": { "const": true }, "listMatches": { "const": true }, "unpackedBytesMatch": { "const": true } } },
+    "looseEntry": { "type": "object", "additionalProperties": false, "required": ["component", "dataPath", "classification", "reason", "length", "sha256"], "properties": { "component": { "type": "string", "minLength": 1 }, "dataPath": { "type": "string", "minLength": 1 }, "classification": { "enum": ["loose-only", "mp3-refused", "kf-capability-sensitive", "unclassified-loose"] }, "reason": { "type": "string", "minLength": 1 }, "length": { "type": "integer", "minimum": 0 }, "sha256": { "$ref": "#/$defs/sha" } } }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "fomod",
+  "id": "io.github.theboyyss.combinedmodexample.fomod",
+  "name": "Combined Mod Example",
+  "author": "WastelandForge",
+  "version": "0.1.0",
+  "description": "Synthetic redistributable FOMOD fixture.",
+  "website": "https://example.invalid/wastelandforge",
+  "installerVersion": "5.0"
+}

@@ -9,21 +9,30 @@ public sealed class ReleaseCandidateWorkspaceTests
     {
         using var project = TestProject.Create();
         WriteCandidateEvidence(project.Root);
-        var runner = new FakeRunner(Success("validate"), Success("package mod-package"), Success("package fomod"), Success("release verify"), Success("release prepare"));
+        var runner = ReadyRunner();
         var result = await new ReleaseCandidateWorkspace(runner).RunAsync(project.Root, CancellationToken.None);
 
         Assert.Equal(ReleaseCandidateState.CandidateReady, result.State);
-        Assert.Equal(["validate", "package", "package", "release", "release"], runner.Invocations.Select(args => args[0]));
+        Assert.Equal(["validate", "package", "package", "package", "package", "release", "release"], runner.Invocations.Select(args => args[0]));
         Assert.Equal("mod-package", runner.Invocations[1][3]);
         Assert.Equal("fomod", runner.Invocations[2][3]);
-        Assert.Equal("verify", runner.Invocations[3][1]);
-        Assert.Equal("prepare", runner.Invocations[4][1]);
+        Assert.Equal("bsa-plan", runner.Invocations[3][3]);
+        Assert.DoesNotContain("--verify-existing", runner.Invocations[3]);
+        Assert.Equal("bsa-plan", runner.Invocations[4][3]);
+        Assert.Contains("--verify-existing", runner.Invocations[4]);
+        Assert.Equal("verify", runner.Invocations[5][1]);
+        Assert.Equal("prepare", runner.Invocations[6][1]);
         Assert.All(result.Stages, stage => Assert.Equal("Passed", stage.Status));
         Assert.Equal(Path.Combine(project.Root, "dist", "fomod"), result.Evidence.FomodRoot);
         Assert.Equal(Path.Combine(project.Root, "dist", "fomod", "package.zip"), result.Evidence.FomodArchive);
         Assert.NotNull(result.Evidence.FomodManifest);
         Assert.NotNull(result.Evidence.FomodBuildManifest);
         Assert.NotNull(result.Evidence.FomodChecksums);
+        Assert.Equal(Path.Combine(project.Root, "dist", "bsa-plan"), result.Evidence.BsaPlanRoot);
+        Assert.NotNull(result.Evidence.BsaPlan);
+        Assert.NotNull(result.Evidence.BsaValidation);
+        Assert.NotNull(result.Evidence.BsaBuildManifest);
+        Assert.NotNull(result.Evidence.BsaChecksums);
         Assert.Equal(Path.Combine(project.Root, "dist", "release-prepare"), result.Evidence.PreparedRoot);
         Assert.Equal(Path.Combine(project.Root, "dist", "release-prepare", "archives", "release.zip"), result.Evidence.PreparedArchive);
         Assert.NotNull(result.Evidence.PreparedPayload);
@@ -47,6 +56,8 @@ public sealed class ReleaseCandidateWorkspaceTests
         Assert.Equal("Not run", result.Stages[2].Status);
         Assert.Equal("Not run", result.Stages[3].Status);
         Assert.Equal("Not run", result.Stages[4].Status);
+        Assert.Equal("Not run", result.Stages[5].Status);
+        Assert.Equal("Not run", result.Stages[6].Status);
     }
 
     [Fact]
@@ -61,6 +72,8 @@ public sealed class ReleaseCandidateWorkspaceTests
         Assert.Equal("Not run", result.Stages[2].Status);
         Assert.Equal("Not run", result.Stages[3].Status);
         Assert.Equal("Not run", result.Stages[4].Status);
+        Assert.Equal("Not run", result.Stages[5].Status);
+        Assert.Equal("Not run", result.Stages[6].Status);
     }
 
     [Fact]
@@ -75,38 +88,69 @@ public sealed class ReleaseCandidateWorkspaceTests
         Assert.Equal("FOMOD distributable", result.Stages[2].Name);
         Assert.Equal("Not run", result.Stages[3].Status);
         Assert.Equal("Not run", result.Stages[4].Status);
+        Assert.Equal("Not run", result.Stages[5].Status);
+        Assert.Equal("Not run", result.Stages[6].Status);
+    }
+
+    [Fact]
+    public async Task BsaPlanFailurePreventsVerificationAndReleaseStages()
+    {
+        using var project = TestProject.Create();
+        var runner = new FakeRunner(Success("validate"), Success("package mod-package"), Success("package fomod"), Failure("package bsa-plan", "WF-BUILD-016"));
+        var result = await new ReleaseCandidateWorkspace(runner).RunAsync(project.Root, CancellationToken.None);
+
+        Assert.Equal(ReleaseCandidateState.Blocked, result.State);
+        Assert.Equal(4, runner.Invocations.Count);
+        Assert.Equal("BSA packing plan", result.Stages[3].Name);
+        Assert.Equal("Not run", result.Stages[4].Status);
+        Assert.Equal("Not run", result.Stages[5].Status);
+        Assert.Equal("Not run", result.Stages[6].Status);
+    }
+
+    [Fact]
+    public async Task BsaPlanVerificationFailurePreventsReleaseStages()
+    {
+        using var project = TestProject.Create();
+        var runner = new FakeRunner(Success("validate"), Success("package mod-package"), Success("package fomod"), Success("package bsa-plan"), Failure("package bsa-plan verify", "WF-BUILD-017"));
+        var result = await new ReleaseCandidateWorkspace(runner).RunAsync(project.Root, CancellationToken.None);
+
+        Assert.Equal(ReleaseCandidateState.Blocked, result.State);
+        Assert.Equal(5, runner.Invocations.Count);
+        Assert.Equal("BSA plan verification", result.Stages[4].Name);
+        Assert.Equal("Not run", result.Stages[5].Status);
+        Assert.Equal("Not run", result.Stages[6].Status);
     }
 
     [Fact]
     public async Task ReleaseVerificationFailurePreventsPreparation()
     {
         using var project = TestProject.Create();
-        var runner = new FakeRunner(Success("validate"), Success("package mod-package"), Success("package fomod"), Failure("release verify", "WF-REL-001"));
+        var runner = new FakeRunner(Success("validate"), Success("package mod-package"), Success("package fomod"), Success("package bsa-plan"), Success("package bsa-plan verify"), Failure("release verify", "WF-REL-001"));
         var result = await new ReleaseCandidateWorkspace(runner).RunAsync(project.Root, CancellationToken.None);
 
         Assert.Equal(ReleaseCandidateState.Blocked, result.State);
-        Assert.Equal(4, runner.Invocations.Count);
-        Assert.Equal("Not run", result.Stages[4].Status);
+        Assert.Equal(6, runner.Invocations.Count);
+        Assert.Equal("Not run", result.Stages[6].Status);
     }
 
     [Fact]
     public async Task ReleasePrepareFailureBlocksCandidate()
     {
         using var project = TestProject.Create();
-        var runner = new FakeRunner(Success("validate"), Success("package mod-package"), Success("package fomod"), Success("release verify"), Failure("release prepare", "WF-REL-001"));
+        var runner = new FakeRunner(Success("validate"), Success("package mod-package"), Success("package fomod"), Success("package bsa-plan"), Success("package bsa-plan verify"), Success("release verify"), Failure("release prepare", "WF-REL-001"));
         var result = await new ReleaseCandidateWorkspace(runner).RunAsync(project.Root, CancellationToken.None);
 
         Assert.Equal(ReleaseCandidateState.Blocked, result.State);
-        Assert.Equal(5, runner.Invocations.Count);
-        Assert.Equal("Release preparation", result.Stages[4].Name);
-        Assert.Equal("Blocked", result.Stages[4].Status);
+        Assert.Equal(7, runner.Invocations.Count);
+        Assert.Equal("Release preparation", result.Stages[6].Name);
+        Assert.Equal("Blocked", result.Stages[6].Status);
     }
 
     [Fact]
     public async Task FingerprintDetectsChangedSourceAndContainmentRejectsEscape()
     {
         using var project = TestProject.Create();
-        var result = await new ReleaseCandidateWorkspace(new FakeRunner(Success("validate"), Success("package mod-package"), Success("package fomod"), Success("release verify"), Success("release prepare"))).RunAsync(project.Root, CancellationToken.None);
+        var result = await new ReleaseCandidateWorkspace(ReadyRunner()).RunAsync(project.Root, CancellationToken.None);
         File.AppendAllText(Path.Combine(project.Root, "src", "registry.json"), " drift");
 
         Assert.True(ReleaseCandidateWorkspace.IsStale(result));
@@ -126,6 +170,8 @@ public sealed class ReleaseCandidateWorkspaceTests
         Assert.Equal("Not run", result.Stages[2].Status);
         Assert.Equal("Not run", result.Stages[3].Status);
         Assert.Equal("Not run", result.Stages[4].Status);
+        Assert.Equal("Not run", result.Stages[5].Status);
+        Assert.Equal("Not run", result.Stages[6].Status);
     }
 
     [Fact]
@@ -168,11 +214,11 @@ public sealed class ReleaseCandidateWorkspaceTests
     }
 
     private static async Task<ReleaseCandidateResult> ReadyCandidate(string root) =>
-        await new ReleaseCandidateWorkspace(new FakeRunner(Success("validate"), Success("package mod-package"), Success("package fomod"), Success("release verify"), Success("release prepare"))).RunAsync(root, CancellationToken.None);
+        await new ReleaseCandidateWorkspace(ReadyRunner()).RunAsync(root, CancellationToken.None);
 
     private static void WriteCandidateEvidence(string root)
     {
-        foreach (var relative in new[] { "dist/mod-package/package-manifest.json", "dist/mod-package/build-manifest.json", "dist/fomod/package.zip", "dist/fomod/fomod-manifest.json", "dist/fomod/build-manifest.json", "dist/fomod/checksums.sha256", "dist/release-dry-run/release-verify.json", "dist/release-dry-run/build-manifest.json", "dist/release-prepare/archives/release.zip", "dist/release-prepare/staging/release-payload.json", "dist/release-prepare/build-manifest.json", "dist/release-prepare/checksums.sha256" })
+        foreach (var relative in new[] { "dist/mod-package/package-manifest.json", "dist/mod-package/build-manifest.json", "dist/fomod/package.zip", "dist/fomod/fomod-manifest.json", "dist/fomod/build-manifest.json", "dist/fomod/checksums.sha256", "dist/bsa-plan/bsa-pack-plan.json", "dist/bsa-plan/bsa-validation.json", "dist/bsa-plan/build-manifest.json", "dist/bsa-plan/checksums.sha256", "dist/release-dry-run/release-verify.json", "dist/release-dry-run/build-manifest.json", "dist/release-prepare/archives/release.zip", "dist/release-prepare/staging/release-payload.json", "dist/release-prepare/build-manifest.json", "dist/release-prepare/checksums.sha256" })
         {
             var path = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -197,6 +243,7 @@ public sealed class ReleaseCandidateWorkspaceTests
     }
 
     private static ForgeCommandResult Success(string command) => new("forge " + command, 0, """{ "summary": { "errors": 0, "warnings": 0, "notes": 0 }, "issues": [] }""", "");
+    private static FakeRunner ReadyRunner() => new(Success("validate"), Success("package mod-package"), Success("package fomod"), Success("package bsa-plan"), Success("package bsa-plan verify"), Success("release verify"), Success("release prepare"));
     private static ForgeCommandResult Failure(string command, string rule) => new("forge " + command, 1, $$"""{ "summary": { "errors": 1, "warnings": 0, "notes": 0 }, "issues": [{ "ruleId": "{{rule}}", "severity": "error", "title": "Blocked", "message": "Blocked." }] }""", "");
 
     private sealed class FakeRunner(params ForgeCommandResult[] results) : IReleaseCandidateCommandRunner

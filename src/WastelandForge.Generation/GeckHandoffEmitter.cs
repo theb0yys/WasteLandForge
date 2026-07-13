@@ -29,15 +29,19 @@ public sealed class GeckHandoffEmitter
     {
         var read = new ProjectValidationPipeline().ReadGeckHandoffSources(options.ProjectRoot);
         var issues = new List<DiagnosticIssue>(read.Diagnostics.Issues);
+        var plugins = PluginArtifactRegistryReader.Read(read.ProjectRoot);
         var projectId = read.ProjectId?.ToString();
-        if (!read.HasErrors && (read.Quests.Count == 0 || read.Dialogue.Count == 0))
-            issues.Add(Issue("WF-GEN-011", "GECK handoff source is incomplete", "Declared, validated quest and dialogue registries are both required.", "wastelandforge.json", read.ProjectId));
+        var hasQuests = read.Quests.Count > 0;
+        var hasDialogue = read.Dialogue.Count > 0;
+        var scope = hasQuests ? "narrative" : plugins.Plugins.Count > 0 ? "plugin-only" : "greenfield";
+        if (!read.HasErrors && hasQuests != hasDialogue)
+            issues.Add(Issue("WF-GEN-011", "GECK handoff source is incomplete", "Quest and dialogue registries must both be declared for a narrative handoff.", "wastelandforge.json", read.ProjectId));
         if (issues.Any(issue => issue.Severity == DiagnosticSeverity.Error)) return Result("failed", options, read, issues, EmptySummary(), [], null, [], []);
 
         var outputRoot = ResolveOutput(read.ProjectRoot, options.OutputDirectory, issues, read.ProjectId);
         if (outputRoot is null) return Result("failed", options, read, issues, EmptySummary(), [], null, [], []);
 
-        var files = BuildWorklists(read);
+        var files = BuildWorklists(read, plugins.Plugins, scope);
         var jipDocuments = System.Array.Empty<JipScriptRenderedDocument>();
         if (read.JipScriptsDeclared)
         {
@@ -49,7 +53,11 @@ public sealed class GeckHandoffEmitter
         if (issues.Any(issue => issue.Severity == DiagnosticSeverity.Error)) return Result("failed", options, read, issues, EmptySummary(), files, null, [], []);
 
         var summary = Summarize(read, files, jipDocuments.Length);
-        var sourceDigests = read.Quests.Concat(read.Dialogue).Concat(read.Assets).Concat(read.JipScripts).Select(document => Digest(document.Path, read.ProjectRoot)).OrderBy(digest => digest.Path, StringComparer.Ordinal).ToArray();
+        var sourcePaths = (scope == "greenfield" ? new[] { ManifestPath(read.ProjectRoot) } : [])
+            .Concat(read.Quests.Concat(read.Dialogue).Concat(read.Assets).Concat(read.JipScripts).Select(document => document.Path))
+            .Concat(plugins.Plugins.SelectMany(plugin => new[] { Path.Combine(read.ProjectRoot, Native(plugin.RegistryFile)), plugin.FullPath }))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        var sourceDigests = sourcePaths.Select(path => Digest(path, read.ProjectRoot)).OrderBy(digest => digest.Path, StringComparer.Ordinal).ToArray();
         var outputs = CreateOutputs(read.ProjectRoot, outputRoot);
         if (options.DryRun) return Result("planned", options, read, issues, summary, files, outputs, sourceDigests, []);
 
@@ -60,7 +68,7 @@ public sealed class GeckHandoffEmitter
             foreach (var file in files) Write(Path.Combine(final, Native(file.Path)), file.Content);
             var payloadPaths = files.Select(file => Path.Combine(final, Native(file.Path))).ToList();
             var payloadDigests = payloadPaths.Select(path => Digest(path, final)).OrderBy(digest => digest.Path, StringComparer.Ordinal).ToArray();
-            var manifest = CreateManifest(options, read, summary, sourceDigests, payloadDigests, files);
+            var manifest = CreateManifest(options, read, scope, summary, sourceDigests, payloadDigests, files);
             ValidateManifest(manifest, issues, read.ProjectId);
             if (issues.Any(issue => issue.Severity == DiagnosticSeverity.Error)) return Result("failed", options, read, issues, summary, files, null, sourceDigests, []);
             var manifestPath = Path.Combine(final, "handoff-manifest.json"); Write(manifestPath, manifest.ToJsonString(JsonOptions) + "\n"); payloadPaths.Add(manifestPath);
@@ -74,7 +82,7 @@ public sealed class GeckHandoffEmitter
         finally { if (Directory.Exists(workRoot)) Directory.Delete(workRoot, true); }
     }
 
-    private static List<GeckHandoffFile> BuildWorklists(ProjectGeckHandoffSourceReadResult read)
+    private static List<GeckHandoffFile> BuildWorklists(ProjectGeckHandoffSourceReadResult read, IReadOnlyList<PluginArtifactDefinition> plugins, string scope)
     {
         var tables = new Dictionary<string, Table>(StringComparer.Ordinal)
         {
@@ -128,10 +136,17 @@ public sealed class GeckHandoffEmitter
                 }
             }
         }
-        AddAction(tables, "project.plugin.verify", read.ProjectId?.ToString() ?? "project", "plugin-review", "Verify plugin filename, masters, compile/save, then inspect with xEdit.", "Forge does not create or mutate plugin records.", "wastelandforge.json");
+        if (scope == "greenfield")
+            AddAction(tables, "project.plugin.create", read.ProjectId?.ToString() ?? "project", "plugin-creation", "Create a new ESP or ESM in GECK, choose its filename and masters, save it, then import the resulting plugin into Forge.", "GECK owns initial plugin creation and record authoring; Forge does not invent plugin identity or records.", "wastelandforge.json");
+        else if (plugins.Count == 0)
+            AddAction(tables, "project.plugin.verify", read.ProjectId?.ToString() ?? "project", "plugin-review", "Verify plugin filename, masters, compile/save, then inspect with xEdit.", "Forge does not create or mutate plugin records.", "wastelandforge.json");
+        else
+            foreach (var plugin in plugins.OrderBy(item => item.Id, StringComparer.Ordinal))
+                AddAction(tables, plugin.Id + ".geck", plugin.Id, "plugin-record-authoring", $"Open or create {plugin.DataPath} in GECK and complete the required record authoring.", "Forge treats plugin bytes as opaque and does not create or mutate records.", plugin.RegistryFile);
         var files = tables.Where(pair => pair.Key == "unresolved-actions" || pair.Value.Rows.Count > 0).OrderBy(pair => pair.Key, StringComparer.Ordinal).Select(pair => new GeckHandoffFile("worklist", $"worklists/{pair.Key}.tsv", pair.Value.Rows.Count, pair.Value.Render())).ToList();
-        files.Add(new("readme", "README.md", 0, "# GECK authoring handoff\n\nGenerated review worklists. No plugin was created, no script was compiled, and GECK/xEdit were not launched.\n"));
-        files.Add(new("evidence", "evidence/source-index.json", 0, SourceIndex(read).ToJsonString(JsonOptions) + "\n"));
+        var description = scope switch { "greenfield" => "Greenfield handoff for creating the first plugin manually in GECK.", "plugin-only" => "Plugin-only handoff for opaque project-owned plugin artifacts.", _ => "Narrative registry handoff." };
+        files.Add(new("readme", "README.md", 0, $"# GECK authoring handoff\n\n{description} Generated review worklists. No plugin was created or modified, no script was compiled, and GECK/xEdit were not launched.\n"));
+        files.Add(new("evidence", "evidence/source-index.json", 0, SourceIndex(read, plugins, scope).ToJsonString(JsonOptions) + "\n"));
         files.Add(new("evidence", "evidence/validation-summary.json", 0, new JsonObject { ["status"] = "passed", ["errors"] = 0, ["warnings"] = read.Diagnostics.WarningCount, ["notes"] = read.Diagnostics.NoteCount }.ToJsonString(JsonOptions) + "\n"));
         return files;
     }
@@ -140,8 +155,8 @@ public sealed class GeckHandoffEmitter
     private static void AddAction(Dictionary<string, Table> tables, params string[] values) => tables["unresolved-actions"].Add([.. values, "true"]);
     private static GeckHandoffSummary Summarize(ProjectGeckHandoffSourceReadResult read, IReadOnlyList<GeckHandoffFile> files, int jip) => new(read.Quests.Sum(d => Array(d.Root, "quests").Count), read.Dialogue.Sum(d => Array(d.Root, "lines").Count), files.Where(f => f.Path.EndsWith("voice-assets.tsv", StringComparison.Ordinal)).Sum(f => f.Rows), jip, files.Count(f => f.Kind == "worklist"), files.Single(f => f.Path.EndsWith("unresolved-actions.tsv", StringComparison.Ordinal)).Rows);
     private static GeckHandoffSummary EmptySummary() => new(0, 0, 0, 0, 0, 0);
-    private static JsonObject SourceIndex(ProjectGeckHandoffSourceReadResult read) => new() { ["kind"] = "wastelandforge.geck-handoff-source-index", ["quests"] = new JsonArray(read.Quests.Select(d => JsonValue.Create(d.DisplayPath)).ToArray()), ["dialogue"] = new JsonArray(read.Dialogue.Select(d => JsonValue.Create(d.DisplayPath)).ToArray()), ["assets"] = new JsonArray(read.Assets.Select(d => JsonValue.Create(d.DisplayPath)).ToArray()), ["jipScripts"] = new JsonArray(read.JipScripts.Select(d => JsonValue.Create(d.DisplayPath)).ToArray()), ["jipScriptsDeclared"] = read.JipScriptsDeclared };
-    private static JsonObject CreateManifest(GeckHandoffOptions options, ProjectGeckHandoffSourceReadResult read, GeckHandoffSummary summary, IReadOnlyList<FileDigest> sources, IReadOnlyList<FileDigest> files, IReadOnlyList<GeckHandoffFile> work) => new() { ["formatVersion"] = "0.1", ["kind"] = "wastelandforge.geck-handoff-manifest", ["handoffType"] = "wastelandforge/geck-authoring-handoff/v1", ["command"] = "package", ["target"] = Target, ["tool"] = new JsonObject { ["name"] = "WastelandForge", ["version"] = options.ToolVersion }, ["project"] = new JsonObject { ["id"] = read.ProjectId?.ToString(), ["version"] = read.ProjectVersion }, ["summary"] = JsonSerializer.SerializeToNode(summary, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }), ["sources"] = Digests(sources), ["files"] = Digests(files), ["unresolvedActions"] = new JsonObject { ["count"] = summary.UnresolvedActions, ["categories"] = new JsonArray(ReadCategories(work).Select(c => JsonValue.Create(c)).ToArray()) }, ["safety"] = Safety() };
+    private static JsonObject SourceIndex(ProjectGeckHandoffSourceReadResult read, IReadOnlyList<PluginArtifactDefinition> plugins, string scope) => new() { ["kind"] = "wastelandforge.geck-handoff-source-index", ["scope"] = scope, ["quests"] = new JsonArray(read.Quests.Select(d => JsonValue.Create(d.DisplayPath)).ToArray()), ["dialogue"] = new JsonArray(read.Dialogue.Select(d => JsonValue.Create(d.DisplayPath)).ToArray()), ["assets"] = new JsonArray(read.Assets.Select(d => JsonValue.Create(d.DisplayPath)).ToArray()), ["jipScripts"] = new JsonArray(read.JipScripts.Select(d => JsonValue.Create(d.DisplayPath)).ToArray()), ["jipScriptsDeclared"] = read.JipScriptsDeclared, ["pluginArtifacts"] = new JsonArray(plugins.OrderBy(plugin => plugin.Id, StringComparer.Ordinal).Select(plugin => JsonValue.Create(plugin.File)).ToArray()) };
+    private static JsonObject CreateManifest(GeckHandoffOptions options, ProjectGeckHandoffSourceReadResult read, string scope, GeckHandoffSummary summary, IReadOnlyList<FileDigest> sources, IReadOnlyList<FileDigest> files, IReadOnlyList<GeckHandoffFile> work) => new() { ["formatVersion"] = "0.2", ["kind"] = "wastelandforge.geck-handoff-manifest", ["handoffType"] = "wastelandforge/geck-authoring-handoff/v2", ["scope"] = scope, ["command"] = "package", ["target"] = Target, ["tool"] = new JsonObject { ["name"] = "WastelandForge", ["version"] = options.ToolVersion }, ["project"] = new JsonObject { ["id"] = read.ProjectId?.ToString(), ["version"] = read.ProjectVersion }, ["summary"] = JsonSerializer.SerializeToNode(summary, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }), ["sources"] = Digests(sources), ["files"] = Digests(files), ["unresolvedActions"] = new JsonObject { ["count"] = summary.UnresolvedActions, ["categories"] = new JsonArray(ReadCategories(work).Select(c => JsonValue.Create(c)).ToArray()) }, ["safety"] = Safety() };
     private static JsonObject CreateBuildManifest(GeckHandoffOptions options, ProjectGeckHandoffSourceReadResult read, IEnumerable<FileDigest> sources, IEnumerable<FileDigest> outputs) => new() { ["formatVersion"] = "0.1", ["kind"] = "wastelandforge.build-manifest", ["buildType"] = "wastelandforge/package-geck-handoff/v1", ["command"] = "package", ["target"] = Target, ["tool"] = new JsonObject { ["name"] = "WastelandForge", ["version"] = options.ToolVersion }, ["project"] = new JsonObject { ["id"] = read.ProjectId?.ToString() }, ["timestamp"] = new JsonObject { ["source"] = "deterministic-default", ["unixTime"] = 315532800, ["utc"] = "1980-01-01T00:00:00Z" }, ["sources"] = Digests(sources), ["outputs"] = Digests(outputs), ["safety"] = Safety() };
     private static JsonObject Safety() => new() { ["launchesGeck"] = false, ["launchesXEdit"] = false, ["mutatesPlugins"] = false, ["createsPluginRecords"] = false, ["compilesScripts"] = false, ["writesToGameData"] = false, ["writesToMo2"] = false, ["executesExternalTools"] = false };
     private static JsonArray Digests(IEnumerable<FileDigest> values) => new(values.OrderBy(d => d.Path, StringComparer.Ordinal).Select(d => new JsonObject { ["path"] = d.Path, ["sha256"] = d.Sha256, ["length"] = d.Length }).ToArray());
@@ -149,11 +164,12 @@ public sealed class GeckHandoffEmitter
     private static string? ResolveOutput(string root, string? output, List<DiagnosticIssue> issues, LogicalId? id) { var dist = Path.GetFullPath(Path.Combine(root, "dist")); var result = string.IsNullOrWhiteSpace(output) ? Path.Combine(dist, Target) : Path.GetFullPath(Path.Combine(root, output)); if (result.StartsWith(dist + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return result; issues.Add(Issue("WF-GEN-013", "Unsafe GECK handoff output", "Output must remain under project dist/.", output ?? "dist/geck-handoff", id)); return null; }
     private static GeckHandoffOutputs CreateOutputs(string projectRoot, string root) => new(Rel(projectRoot, root), Rel(projectRoot, Path.Combine(root, "handoff-manifest.json")), Rel(projectRoot, Path.Combine(root, "README.md")), Rel(projectRoot, Path.Combine(root, "worklists", "unresolved-actions.tsv")), Rel(projectRoot, Path.Combine(root, "build-manifest.json")), Rel(projectRoot, Path.Combine(root, "checksums.sha256")));
     private static void ValidateManifest(JsonObject manifest, List<DiagnosticIssue> issues, LogicalId? id) { using var doc = JsonDocument.Parse(manifest.ToJsonString()); if (!ManifestSchema.Value.Evaluate(doc.RootElement).IsValid) issues.Add(Issue("WF-GEN-014", "GECK handoff manifest validation failed", "Generated handoff-manifest.json failed its immutable schema.", "dist/geck-handoff/handoff-manifest.json", id)); }
-    private static JsonSchema LoadSchema() { if (!WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckHandoffManifest010, out var resource) || resource is null) throw new InvalidOperationException("GECK handoff schema is not registered."); return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource)); }
+    private static JsonSchema LoadSchema() { if (!WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckHandoffManifest020, out var resource) || resource is null) throw new InvalidOperationException("GECK handoff schema is not registered."); return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource)); }
     private static FileDigest Digest(string path, string root) { using var stream = File.OpenRead(path); return new(Rel(root, path), Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant(), stream.Length); }
     private static void Write(string path, string content) { Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllText(path, content, new UTF8Encoding(false)); }
     private static string Rel(string root, string path) => Path.GetRelativePath(root, path).Replace('\\', '/');
     private static string Native(string path) => path.Replace('/', Path.DirectorySeparatorChar);
+    private static string ManifestPath(string root) => new[] { "wastelandforge.json", "wastelandforge.yaml", "wastelandforge.yml" }.Select(name => Path.Combine(root, name)).Single(File.Exists);
     private static IReadOnlyList<JsonObject> Array(JsonObject? owner, string key) => owner?[key] is JsonArray array ? array.OfType<JsonObject>().ToArray() : [];
     private static string Text(JsonObject? owner, string key) => owner?[key]?.GetValue<string>() ?? "";
     private static string Id(JsonObject owner) => Text(owner, "id");

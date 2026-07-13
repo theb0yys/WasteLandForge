@@ -1,0 +1,228 @@
+{
+  "schemaVersion": "0.23.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.examplemod.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.examplemod.topic.greeting",
+      "title": "Synthetic Greeting"
+    },
+    {
+      "id": "io.github.theboyyss.examplemod.topic.followup",
+      "title": "Synthetic Follow Up"
+    }
+  ],
+  "questGates": [
+    {
+      "id": "io.github.theboyyss.examplemod.dialogue.gate.intro.available",
+      "questId": "io.github.theboyyss.examplemod.quest.intro",
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.gate.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+          "summary": "Synthetic quest-level dialogue gate over quest stage state."
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.gate.intro.condition.dialoguephasezero",
+          "conditionType": "questVariableEquals",
+          "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+          "equalsInteger": 0,
+          "summary": "Synthetic quest-level dialogue gate over quest variable state."
+        }
+      ],
+      "summary": "Synthetic quest-level dialogue gate declaration."
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.examplemod.dialogue.intro.hello",
+      "questId": "io.github.theboyyss.examplemod.quest.intro",
+      "topicId": "io.github.theboyyss.examplemod.topic.greeting",
+      "speaker": "ExampleSpeaker",
+      "promptText": "Synthetic greeting prompt.",
+      "priority": 10,
+      "speechChallenge": {
+        "skill": "speech",
+        "threshold": 25,
+        "summary": "Synthetic Speech Challenge declaration."
+      },
+      "skillGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.skillgate.science",
+          "skill": "science",
+          "threshold": 50,
+          "summary": "Synthetic line-local skill gate declaration."
+        }
+      ],
+      "perkGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.perkgate.synthetic",
+          "perk": "syntheticPerk",
+          "summary": "Synthetic line-local perk gate declaration."
+        }
+      ],
+      "factionGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.factiongate.ncr",
+          "faction": "ncr",
+          "relation": "ally",
+          "summary": "Synthetic line-local faction relation gate declaration."
+        }
+      ],
+      "reputationGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.reputationgate.ncr",
+          "faction": "ncr",
+          "standing": "liked",
+          "summary": "Synthetic line-local reputation standing gate declaration."
+        }
+      ],
+      "identityGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.identitygate.synthetic",
+          "identity": "syntheticIdentity",
+          "summary": "Synthetic line-local identity gate declaration."
+        }
+      ],
+      "worldFlagGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.worldflaggate.freesidepower",
+          "flag": "freesidePowerRestored",
+          "state": "true",
+          "summary": "Synthetic line-local local world flag gate declaration."
+        }
+      ],
+      "eventHistoryGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.eventhistorygate.synthetic",
+          "event": "syntheticEventObserved",
+          "state": "recorded",
+          "summary": "Synthetic line-local event history gate declaration."
+        }
+      ],
+      "companionStateGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.companionstategate.synthetic",
+          "companion": "syntheticCompanion",
+          "state": "syntheticCompanionState",
+          "summary": "Synthetic line-local companion state gate declaration."
+        }
+      ],
+      "resultScriptSideEffectGates": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.resultscriptsideeffectgate.synthetic",
+          "effect": "syntheticResultScriptSideEffect",
+          "state": "applied",
+          "summary": "Synthetic line-local result-script side-effect gate declaration."
+        }
+      ],
+      "responseText": "Synthetic hello line.",
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.started",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+          "summary": "Synthetic dialogue condition over quest stage state."
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephasezero",
+          "conditionType": "questVariableEquals",
+          "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+          "equalsInteger": 0,
+          "summary": "Synthetic dialogue condition over quest variable state."
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephaseone",
+          "conditionType": "questVariableEquals",
+          "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+          "equalsInteger": 1,
+          "summary": "Synthetic dialogue condition used by a negated condition reference."
+        }
+      ],
+      "conditionLogic": {
+        "id": "io.github.theboyyss.examplemod.dialogue.intro.conditionlogic.all",
+        "operator": "all",
+        "precedence": 0,
+        "shortCircuit": true,
+        "conditionIds": [
+          "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephasezero"
+        ],
+        "negatedConditionIds": [
+          "io.github.theboyyss.examplemod.dialogue.intro.condition.dialoguephaseone"
+        ],
+        "groups": [
+          {
+            "id": "io.github.theboyyss.examplemod.dialogue.intro.conditionlogic.group.quest",
+            "operator": "all",
+            "precedence": 10,
+            "shortCircuit": true,
+            "conditionIds": [
+              "io.github.theboyyss.examplemod.dialogue.intro.condition.started"
+            ],
+            "summary": "Synthetic nested condition group declaration."
+          }
+        ],
+        "summary": "Synthetic line-local condition boolean composition declaration."
+      },
+      "resultScripts": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.result.advance",
+          "scriptType": "dialogueResult",
+          "mutations": [
+            {
+              "id": "io.github.theboyyss.examplemod.dialogue.intro.result.advance.mutation.dialoguephase",
+              "mutationType": "questVariableIncrement",
+              "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+              "deltaInteger": 1,
+              "summary": "Synthetic dialogue result-script variable increment declaration."
+            }
+          ],
+          "summary": "Synthetic dialogue result-script declaration."
+        }
+      ],
+      "links": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.link.followup",
+          "linkType": "linkTo",
+          "targetTopicId": "io.github.theboyyss.examplemod.topic.followup",
+          "summary": "Synthetic topic link declaration."
+        }
+      ],
+      "responseRoutes": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.responseroute.default",
+          "routeKey": "default",
+          "targetTopicId": "io.github.theboyyss.examplemod.topic.followup",
+          "summary": "Synthetic response route declaration."
+        }
+      ],
+      "voice": {
+        "plugin": "ExampleMod.esm",
+        "voiceType": "ExampleVoice",
+        "fileStem": "intro_hello"
+      },
+      "tags": [
+        "synthetic"
+      ]
+    },
+    {
+      "id": "io.github.theboyyss.examplemod.dialogue.intro.followup",
+      "questId": "io.github.theboyyss.examplemod.quest.intro",
+      "topicId": "io.github.theboyyss.examplemod.topic.followup",
+      "priority": 20,
+      "responseText": "Synthetic follow-up line.",
+      "links": [
+        {
+          "id": "io.github.theboyyss.examplemod.dialogue.intro.link.fromgreeting",
+          "linkType": "linkFrom",
+          "sourceTopicId": "io.github.theboyyss.examplemod.topic.greeting",
+          "summary": "Synthetic Link From declaration."
+        }
+      ],
+      "tags": [
+        "synthetic"
+      ]
+    }
+  ]
+}

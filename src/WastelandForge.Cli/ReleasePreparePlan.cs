@@ -40,6 +40,14 @@ internal sealed record ReleasePrepareFomodPayload(
     string StagedChecksums,
     IReadOnlyList<ReleasePrepareOutputDigest> SourceDigests);
 
+internal sealed record ReleasePrepareBsaPlanEvidence(
+    string SourceRoot,
+    string Plan,
+    string Validation,
+    string BuildManifest,
+    string Checksums,
+    IReadOnlyList<ReleasePrepareOutputDigest> SourceDigests);
+
 internal sealed record ReleasePrepareArchiveEntryEvidence(
     string Path,
     long Length,
@@ -79,6 +87,7 @@ internal sealed record ReleasePreparePlanResult(
     string BuildManifestPath,
     string ChecksumsPath,
     ReleasePrepareFomodPayload? FomodPayload,
+    ReleasePrepareBsaPlanEvidence? BsaPlanEvidence,
     ReleasePrepareOutputSafety OutputSafety,
     IReadOnlyList<ReleasePreparePlannedOutput> PlannedOutputs,
     IReadOnlyList<ReleasePrepareWrittenOutput> WrittenOutputs,
@@ -133,19 +142,21 @@ internal static class ReleasePreparePlanPlanner
         var buildManifestDisplayPath = ToDisplayPath(projectRoot, buildManifestPath);
         var checksumsDisplayPath = ToDisplayPath(projectRoot, checksumsPath);
         var fomodResolution = ResolveFomodPayload(projectRoot, stagingRootPath);
-        var writes = insideDist && fomodResolution.Error is null && !options.DryRun;
-        var status = insideDist && fomodResolution.Error is null
+        var bsaResolution = ResolveBsaPlanEvidence(projectRoot);
+        var evidenceError = fomodResolution.Error ?? bsaResolution.Error;
+        var writes = insideDist && evidenceError is null && !options.DryRun;
+        var status = insideDist && evidenceError is null
             ? options.DryRun ? "planned" : "prepared"
             : "refused";
         var refusalReason = !insideDist
             ? "Release prepare output must stay under the project dist/ directory."
-            : fomodResolution.Error;
+            : evidenceError;
 
         var safety = new ReleasePrepareOutputSafety(
             Checked: true,
             DistRoot: ToDisplayPath(projectRoot, distRoot),
             OutputRoot: outputRootDisplay,
-            Status: !insideDist ? "refused-output-outside-dist" : fomodResolution.Error is null ? "inside-dist" : "refused-fomod-evidence",
+            Status: !insideDist ? "refused-output-outside-dist" : evidenceError is null ? "inside-dist" : bsaResolution.Error is null ? "refused-fomod-evidence" : "refused-bsa-plan-evidence",
             RefusalReason: refusalReason);
 
         var result = new ReleasePreparePlanResult(
@@ -167,6 +178,7 @@ internal static class ReleasePreparePlanPlanner
             buildManifestDisplayPath,
             checksumsDisplayPath,
             fomodResolution.Payload,
+            bsaResolution.Evidence,
             safety,
             CreatePlannedOutputs(
                 outputRootDisplay,
@@ -321,6 +333,15 @@ internal static class ReleasePreparePlanPlanner
                 ["packageType"] = result.FomodPayload is null ? null : "fomod-required-files-5.0",
                 ["archive"] = result.FomodPayload is null ? null : "staging/distributable/package.zip",
                 ["sourceDigests"] = result.FomodPayload is null ? new JsonArray() : ToDigestArray(result.FomodPayload.SourceDigests),
+                ["bsaPlan"] = result.BsaPlanEvidence is null ? null : new JsonObject
+                {
+                    ["status"] = "verified-existing-plan",
+                    ["plan"] = ToDisplayPath(result.ProjectRoot, result.BsaPlanEvidence.Plan),
+                    ["validation"] = ToDisplayPath(result.ProjectRoot, result.BsaPlanEvidence.Validation),
+                    ["sourceDigests"] = ToDigestArray(result.BsaPlanEvidence.SourceDigests),
+                    ["bsaCreated"] = false,
+                    ["externalToolExecuted"] = false
+                },
                 ["writesToGameData"] = false,
                 ["writesToMo2Profile"] = false,
                 ["pluginMutation"] = false,
@@ -613,7 +634,7 @@ internal static class ReleasePreparePlanPlanner
                     ["target"] = "release-prepare"
                 }
             },
-            ["sources"] = result.FomodPayload is null ? new JsonArray() : ToDigestArray(result.FomodPayload.SourceDigests),
+            ["sources"] = ToDigestArray((result.FomodPayload?.SourceDigests ?? []).Concat(result.BsaPlanEvidence?.SourceDigests ?? []).OrderBy(item => item.Path, StringComparer.Ordinal).ToArray()),
             ["outputs"] = ToDigestArray(outputDigests),
             ["execution"] = ReleasePreparePlanJsonSerializer.ToExecution(result),
             ["boundaries"] = ReleasePreparePlanJsonSerializer.ToStringArray(result.Boundaries),
@@ -672,6 +693,20 @@ internal static class ReleasePreparePlanPlanner
         {
             return (null, "FOMOD candidate evidence could not be verified: " + ex.Message);
         }
+    }
+
+    private static (ReleasePrepareBsaPlanEvidence? Evidence, string? Error) ResolveBsaPlanEvidence(string projectRoot)
+    {
+        var root = Path.Combine(projectRoot, "dist", BsaPlanEmitter.Target);
+        if (!Directory.Exists(root)) return (null, null);
+        var verification = new BsaPlanVerifier().Verify(projectRoot);
+        if (verification.HasErrors) return (null, "BSA plan candidate evidence could not be verified: " + string.Join(" ", verification.Issues.Select(issue => issue.Message)));
+        var plan = Path.Combine(root, "bsa-pack-plan.json");
+        var validation = Path.Combine(root, "bsa-validation.json");
+        var buildManifest = Path.Combine(root, "build-manifest.json");
+        var checksums = Path.Combine(root, "checksums.sha256");
+        return (new(root, plan, validation, buildManifest, checksums,
+            verification.VerifiedFiles.Select(path => ComputeDigest(projectRoot, path)).OrderBy(item => item.Path, StringComparer.Ordinal).ToArray()), null);
     }
 
     private static void StageFomodPayload(ReleasePrepareFomodPayload payload)

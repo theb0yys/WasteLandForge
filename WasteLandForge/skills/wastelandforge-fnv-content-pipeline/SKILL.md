@@ -42,6 +42,16 @@ Do not own:
 - MO2 replacement,
 - xNVSE/UIO/MCM replacement.
 
+## ADR-013 scoped exception
+
+Forge may plan and orchestrate record authoring through an approved external
+provider, but Forge core still must not write raw ESP/ESM bytes. Require a
+locally resolved deterministic plan, exact digest approval, bounded provider
+capabilities, and independent record-aware verification. Provider journals,
+screenshots, UIA observations, and GECK session state are evidence only, never
+canonical truth. Until Gates 522-524 establish verifier and provider evidence,
+limit work to preview-only planning and refuse execution.
+
 ## Workflow backbone
 
 Preserve the researched division of labor:

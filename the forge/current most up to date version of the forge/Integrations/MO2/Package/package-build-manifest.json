@@ -1,0 +1,15 @@
+{
+  "formatVersion": "0.1",
+  "kind": "wastelandforge.mo2-companion-package-build",
+  "version": "0.1.0",
+  "archive": "WastelandForge-MO2-Bridge-0.1.0.zip",
+  "length": 17124,
+  "sha256": "a7e55bd50d76abef25add31d020085a0904fa3729d49143153434a724405b2a3",
+  "installGuide": "INSTALL.md",
+  "installGuideSha256": "f511959c14f0cabf8ba400c583b1d60de8996096981ba34288108ce7423862ff",
+  "deterministic": true,
+  "archiveTimestamp": "2000-01-01T00:00:00+00:00",
+  "compression": "stored",
+  "liveMo2Executed": false,
+  "mo2StateChanged": false
+}

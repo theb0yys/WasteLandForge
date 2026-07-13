@@ -58,7 +58,9 @@ public partial class MainWindow
     private string? xeditAuditOutputFolder;
     private string? mo2ExportPreviewToken;
     private string? exportedMo2ModFolder;
+    private string? bsArchApprovalToken;
     private readonly ReleaseCandidateWorkspace releaseCandidateWorkspace;
+    private readonly BasicModBuilderWorkspace basicModBuilderWorkspace;
     private readonly ReleaseCandidateMo2TestCopy releaseCandidateMo2TestCopy;
     private Mo2CompanionPackageResult mo2CompanionPackage = new(false, "Not checked.", "Not checked.");
     private readonly Mo2LaunchReceiptService mo2LaunchReceiptService = new();
@@ -67,6 +69,12 @@ public partial class MainWindow
     private string? releaseCandidateMo2Destination;
     private LocalReleaseHandoffPreview? localReleaseHandoffPreview;
     private CancellationTokenSource? releaseCandidateCancellation;
+    private CancellationTokenSource? basicModBuilderCancellation;
+    private string? basicModBuilderPreviewToken;
+    private BasicModBuilderResult? basicModBuilderResult;
+    private PluginModWorkbenchResult? pluginModWorkbenchResult;
+    private string? pluginRevisionPreviewToken;
+    private CancellationTokenSource? pluginWorkbenchCancellation;
     private ReleaseCandidateDiagnostic? selectedReleaseCandidateDiagnostic;
     private readonly DiagnosticExplanationRequestGate diagnosticExplanationRequests = new();
     private readonly Dictionary<string, string> lastNarrativeWorkflowByCategory = new(StringComparer.Ordinal);
@@ -79,6 +87,7 @@ public partial class MainWindow
     {
         var candidateRunner = new ForgeReleaseCandidateCommandRunner(forge);
         releaseCandidateWorkspace = new ReleaseCandidateWorkspace(candidateRunner);
+        basicModBuilderWorkspace = new BasicModBuilderWorkspace(new ForgeBasicModBuilderCommandRunner(forge));
         releaseCandidateMo2TestCopy = new ReleaseCandidateMo2TestCopy(candidateRunner);
         InitializeComponent();
         InitializeNarrativeWorkspace();
@@ -87,6 +96,10 @@ public partial class MainWindow
         if (!File.Exists(settingsStore.SettingsPath))
         {
             MainTabControl.SelectedItem = SettingsTabItem;
+        }
+        else
+        {
+            MainTabControl.SelectedItem = BasicModBuilderTabItem;
         }
         ForgePathTextBlock.Text = forge.ForgePathDisplay;
         ApplyHeatSkin();
@@ -113,6 +126,87 @@ public partial class MainWindow
     private async void ValidateProjectClicked(object sender, RoutedEventArgs e) =>
         await ValidateProjectAsync();
 
+    private void WorkspaceNavigationChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.ComboBox combo || combo.SelectedItem is not System.Windows.Controls.ComboBoxItem item || item.Tag is not string route) return;
+        MainTabControl.SelectedItem = route switch
+        {
+            "basic" => BasicModBuilderTabItem, "plugin-workbench" => PluginModWorkbenchTabItem, "mod-builder" => ModBuilderTabItem,
+            "narrative" => NarrativeAuthorTabItem, "mcm" => McmAuthorTabItem, "jip" => JipAuthorTabItem,
+            "validation" => ValidationReportTabItem, "capabilities" => CapabilitiesTabItem, "xedit" => XEditAuditTabItem,
+            "plugin-intake" => PluginIntakeTabItem, "geck" => GeckHandoffTabItem, "outputs" => ProjectOutputsTabItem,
+            "candidate" => ReleaseCandidateTabItem, "dashboard" => DashboardTabItem, "new-project" => NewProjectTabItem,
+            "settings" => SettingsTabItem, "logs" => AdvancedLogsTabItem, _ => MainTabControl.SelectedItem
+        };
+    }
+
+    private BasicModBuilderInput CaptureBasicModBuilderInput() => new(
+        BasicModParentTextBox.Text, BasicModNameTextBox.Text, BasicModMenuTitleTextBox.Text,
+        BasicModSettingLabelTextBox.Text, BasicModIniSectionTextBox.Text, BasicModIniKeyTextBox.Text,
+        BasicModEnabledCheckBox.IsChecked == true, BasicModIncludeJipCheckBox.IsChecked == true,
+        BasicModJipSummaryTextBox.Text, BasicModJipBodyTextBox.Text);
+
+    private void BasicModInputChanged(object sender, RoutedEventArgs e)
+    {
+        basicModBuilderPreviewToken = null;
+        if (CreateBasicModButton is not null) CreateBasicModButton.IsEnabled = false;
+        if (BasicModStatusTextBlock is not null) BasicModStatusTextBlock.Text = "Inputs changed. Preview before creating.";
+    }
+
+    private void BrowseBasicModParentClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Title = "Choose the parent folder for the new mod project" };
+        if (dialog.ShowDialog() == true) BasicModParentTextBox.Text = dialog.FolderName;
+    }
+
+    private void PreviewBasicModClicked(object sender, RoutedEventArgs e)
+    {
+        var preview = basicModBuilderWorkspace.Preview(CaptureBasicModBuilderInput());
+        basicModBuilderPreviewToken = preview.Token;
+        CreateBasicModButton.IsEnabled = preview.Success;
+        BasicModStatusTextBlock.Text = preview.Message;
+        BasicModOutputTextBox.Text = preview.Success
+            ? $"Destination: {preview.Destination}{Environment.NewLine}Project ID: {preview.ProjectId}{Environment.NewLine}Mode: {(BasicModIncludeJipCheckBox.IsChecked == true ? "MCM + JIP" : "MCM only")}{Environment.NewLine}{Environment.NewLine}Source files:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", preview.SourceFiles)}{Environment.NewLine}{Environment.NewLine}Expected payload:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", preview.PayloadEntries)}"
+            : preview.Message;
+    }
+
+    private async void CreateBasicModClicked(object sender, RoutedEventArgs e)
+    {
+        if (basicModBuilderPreviewToken is null) return;
+        basicModBuilderCancellation?.Dispose();
+        basicModBuilderCancellation = new CancellationTokenSource();
+        CreateBasicModButton.IsEnabled = false;
+        CancelBasicModButton.IsEnabled = true;
+        BasicModStatusTextBlock.Text = "Creating source and distributable...";
+        try
+        {
+            basicModBuilderResult = await basicModBuilderWorkspace.CreateAsync(CaptureBasicModBuilderInput(), basicModBuilderPreviewToken, basicModBuilderCancellation.Token);
+            BasicModStatusTextBlock.Text = basicModBuilderResult.Message;
+            BasicModOutputTextBox.Text = string.Join(Environment.NewLine, basicModBuilderResult.Stages.Select(stage => $"{stage.State,-10} {stage.Name}: {stage.Detail}"));
+            if (basicModBuilderResult.Success)
+            {
+                BasicModOutputTextBox.AppendText($"{Environment.NewLine}{Environment.NewLine}Project: {basicModBuilderResult.ProjectRoot}{Environment.NewLine}FOMOD: {basicModBuilderResult.FomodArchive}{Environment.NewLine}SHA-256: {basicModBuilderResult.ArchiveSha256}{Environment.NewLine}Entries: {basicModBuilderResult.PayloadEntryCount}");
+                ProjectPathTextBox.Text = basicModBuilderResult.ProjectRoot;
+            }
+            OpenBasicModProjectButton.IsEnabled = basicModBuilderResult.Success;
+            OpenBasicModFomodButton.IsEnabled = basicModBuilderResult.Success;
+        }
+        finally
+        {
+            CancelBasicModButton.IsEnabled = false;
+            basicModBuilderPreviewToken = null;
+        }
+    }
+
+    private void CancelBasicModClicked(object sender, RoutedEventArgs e) => basicModBuilderCancellation?.Cancel();
+    private void OpenBasicModProjectClicked(object sender, RoutedEventArgs e) { if (basicModBuilderResult?.ProjectRoot is string path) OpenFolder(path); }
+    private void OpenBasicModFomodClicked(object sender, RoutedEventArgs e)
+    {
+        if (basicModBuilderResult?.FomodArchive is not string path || !File.Exists(path)) return;
+        try { Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true }); }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { BasicModStatusTextBlock.Text = "Could not open FOMOD: " + ex.Message; }
+    }
+
     private void ProjectPathChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
         if (NarrativeInventoryStateTextBlock is null) return;
@@ -121,7 +215,94 @@ public partial class MainWindow
         RefreshNarrativeExplorer();
         RefreshNarrativeJournalStatus();
         MarkReleaseCandidateStale();
+        InvalidateBsArchApproval();
+        pluginModWorkbenchResult = null;
+        pluginRevisionPreviewToken = null;
     }
+
+    private void RefreshPluginWorkbenchClicked(object sender, RoutedEventArgs e) => RefreshPluginWorkbench();
+
+    private void RefreshPluginWorkbench()
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        var selectedId = (PluginWorkbenchPluginComboBox.SelectedItem as WastelandForge.Validation.PluginArtifactDefinition)?.Id;
+        var candidate = releaseCandidateResult is not null && StringComparer.OrdinalIgnoreCase.Equals(releaseCandidateResult.ProjectRoot, Path.GetFullPath(root)) ? releaseCandidateResult : null;
+        pluginModWorkbenchResult = PluginModWorkbench.Inspect(root, selectedId, candidate);
+        PluginWorkbenchStatusTextBlock.Text = pluginModWorkbenchResult.Message;
+        PluginWorkbenchPluginComboBox.ItemsSource = pluginModWorkbenchResult.Plugins;
+        if (pluginModWorkbenchResult.PrimaryPluginId is string primary)
+            PluginWorkbenchPluginComboBox.SelectedItem = pluginModWorkbenchResult.Plugins.FirstOrDefault(plugin => plugin.Id == primary);
+        PluginWorkbenchPhaseDataGrid.ItemsSource = pluginModWorkbenchResult.Phases;
+        PluginWorkbenchPhaseDataGrid.SelectedIndex = pluginModWorkbenchResult.Phases.Count > 0 ? 0 : -1;
+    }
+
+    private void PluginWorkbenchPluginChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (PluginWorkbenchPluginComboBox?.SelectedItem is not WastelandForge.Validation.PluginArtifactDefinition plugin || pluginModWorkbenchResult is null) return;
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        pluginModWorkbenchResult = PluginModWorkbench.Inspect(root, plugin.Id, releaseCandidateResult);
+        PluginWorkbenchPhaseDataGrid.ItemsSource = pluginModWorkbenchResult.Phases;
+        PluginWorkbenchStatusTextBlock.Text = pluginModWorkbenchResult.Message;
+    }
+
+    private void PluginWorkbenchPhaseChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        var phase = PluginWorkbenchPhaseDataGrid?.SelectedItem as PluginModPhase;
+        OpenPluginWorkbenchPhaseButton.IsEnabled = phase is not null;
+        PluginWorkbenchDetailsTextBox.Text = phase is null ? string.Empty : $"{phase.Title}\nState: {phase.State}\nAction: {phase.Action}\n\n{phase.Detail}";
+    }
+
+    private void OpenPluginWorkbenchPhaseClicked(object sender, RoutedEventArgs e)
+    {
+        if (PluginWorkbenchPhaseDataGrid.SelectedItem is not PluginModPhase phase) return;
+        MainTabControl.SelectedItem = phase.Id switch
+        {
+            "narrative" => NarrativeAuthorTabItem,
+            "geck-handoff" or "geck-session" => GeckHandoffTabItem,
+            "plugin" or "review" => PluginIntakeTabItem,
+            "fomod" => ProjectOutputsTabItem,
+            "candidate" => ReleaseCandidateTabItem,
+            _ => PluginModWorkbenchTabItem
+        };
+    }
+
+    private void PluginRevisionInputChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) { pluginRevisionPreviewToken = null; if (ApplyPluginRevisionButton is not null) ApplyPluginRevisionButton.IsEnabled = false; }
+    private void BrowsePluginRevisionClicked(object sender, RoutedEventArgs e) { var dialog = new OpenFileDialog { Title = "Select revised plugin", Filter = "Fallout plugins (*.esp;*.esm)|*.esp;*.esm" }; if (dialog.ShowDialog() == true) PluginRevisionPathTextBox.Text = dialog.FileName; }
+    private PluginRevisionInput? CapturePluginRevision() => PluginWorkbenchPluginComboBox.SelectedItem is WastelandForge.Validation.PluginArtifactDefinition plugin ? new(plugin.Id, PluginRevisionPathTextBox.Text) : null;
+    private void PreviewPluginRevisionClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); var input = CapturePluginRevision(); if (root is null || input is null) { PluginWorkbenchStatusTextBlock.Text = "Select one primary plugin first."; return; }
+        var preview = PluginArtifactRevision.Preview(root, input); pluginRevisionPreviewToken = preview.Token; ApplyPluginRevisionButton.IsEnabled = preview.Success; PluginWorkbenchStatusTextBlock.Text = preview.Message; PluginWorkbenchDetailsTextBox.Text = preview.Details ?? preview.Message;
+    }
+    private void ApplyPluginRevisionClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); var input = CapturePluginRevision(); if (root is null || input is null || pluginRevisionPreviewToken is null) return;
+        var result = PluginArtifactRevision.Apply(root, input, pluginRevisionPreviewToken); pluginRevisionPreviewToken = null; ApplyPluginRevisionButton.IsEnabled = false; PluginWorkbenchStatusTextBlock.Text = result.Message; if (result.Success) { releaseCandidateResult = null; RefreshPluginWorkbench(); }
+    }
+
+    private async void BuildPluginWorkbenchFomodClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        pluginWorkbenchCancellation = new CancellationTokenSource(); CancelPluginWorkbenchActionButton.IsEnabled = true;
+        try
+        {
+            PluginWorkbenchStatusTextBlock.Text = "Building combined package...";
+            var combined = await forge.RunInWorkingDirectoryAsync(root, pluginWorkbenchCancellation.Token, "package", ".", "--target", "mod-package", "--format", "json", "--no-input");
+            if (combined.ExitCode != 0) { PluginWorkbenchStatusTextBlock.Text = "Combined package blocked."; PluginWorkbenchDetailsTextBox.Text = combined.StandardOutput; return; }
+            PluginWorkbenchStatusTextBlock.Text = "Building FOMOD...";
+            var fomod = await forge.RunInWorkingDirectoryAsync(root, pluginWorkbenchCancellation.Token, "package", ".", "--target", "fomod", "--format", "json", "--no-input");
+            PluginWorkbenchStatusTextBlock.Text = fomod.ExitCode == 0 ? "FOMOD build completed." : "FOMOD build blocked."; PluginWorkbenchDetailsTextBox.Text = fomod.StandardOutput; RefreshPluginWorkbench();
+        }
+        finally { CancelPluginWorkbenchActionButton.IsEnabled = false; pluginWorkbenchCancellation.Dispose(); pluginWorkbenchCancellation = null; }
+    }
+    private async void RunPluginWorkbenchCandidateClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        pluginWorkbenchCancellation = new CancellationTokenSource(); CancelPluginWorkbenchActionButton.IsEnabled = true;
+        try { releaseCandidateResult = await releaseCandidateWorkspace.RunAsync(root, pluginWorkbenchCancellation.Token); PluginWorkbenchStatusTextBlock.Text = releaseCandidateResult.Message; RefreshPluginWorkbench(); }
+        finally { CancelPluginWorkbenchActionButton.IsEnabled = false; pluginWorkbenchCancellation.Dispose(); pluginWorkbenchCancellation = null; }
+    }
+    private void CancelPluginWorkbenchActionClicked(object sender, RoutedEventArgs e) => pluginWorkbenchCancellation?.Cancel();
 
     private void RefreshNarrativeInventoryClicked(object sender, RoutedEventArgs e)
     {
@@ -1295,6 +1476,56 @@ public partial class MainWindow
         finally { SetBusy(false); }
     }
 
+    private void BrowseBsArchProviderClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { Title = "Select BSArch provider", Filter = "BSArch executable (bsarch.exe)|bsarch.exe" };
+        if (dialog.ShowDialog(this) == true) BsArchProviderPathTextBox.Text = dialog.FileName;
+    }
+
+    private void BsArchProviderPathChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => InvalidateBsArchApproval();
+
+    private void InvalidateBsArchApproval()
+    {
+        bsArchApprovalToken = null;
+        if (ExecuteBsArchBuildButton is not null) ExecuteBsArchBuildButton.IsEnabled = false;
+    }
+
+    private async void PreviewBsArchBuildClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport(); if (root is null) return;
+        SetBusy(true);
+        try
+        {
+            var result = await RunProjectCommandAsync(root, "package", ".", "--target", "bsa-bsarch", "--packer", BsArchProviderPathTextBox.Text.Trim(), "--dry-run", "--format", "json", "--no-input");
+            ProjectOutputDetailsTextBox.Text = result.CommandLine + " -> exit " + result.ExitCode + Environment.NewLine + FormatJsonOrText(result.StandardOutput);
+            var payload = result.ExitCode == 0 ? JsonNode.Parse(result.StandardOutput) : null;
+            bsArchApprovalToken = payload?["previewSha256"]?.GetValue<string>();
+            ExecuteBsArchBuildButton.IsEnabled = bsArchApprovalToken?.Length == 64;
+            ProjectOutputsStatusTextBlock.Text = ExecuteBsArchBuildButton.IsEnabled ? "BSArch approval preview ready. Review the evidence, then choose Build BSA." : "BSArch preview was refused.";
+        }
+        finally { SetBusy(false); }
+    }
+
+    private async void ExecuteBsArchBuildClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport();
+        var approval = bsArchApprovalToken;
+        if (root is null || approval is null) return;
+        var provider = BsArchProviderPathTextBox.Text.Trim();
+        var confirmation = MessageBox.Show(this, $"Run the selected BSArch provider and build the approved BSA archives?\n\nProvider: {provider}\nApproval: {approval}\n\nForge will revalidate the preview before execution.", "Approve BSArch execution", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (confirmation != MessageBoxResult.Yes) return;
+        InvalidateBsArchApproval();
+        SetBusy(true);
+        try
+        {
+            var result = await RunProjectCommandAsync(root, "package", ".", "--target", "bsa-bsarch", "--packer", provider, "--approve", approval, "--format", "json", "--no-input");
+            ProjectOutputDetailsTextBox.Text = result.CommandLine + " -> exit " + result.ExitCode + Environment.NewLine + FormatJsonOrText(result.StandardOutput);
+            ProjectOutputsStatusTextBlock.Text = result.ExitCode == 0 ? "Verified BSA build completed." : "BSArch execution was refused or failed.";
+            RefreshProjectOutputs();
+        }
+        finally { SetBusy(false); }
+    }
+
     private void OpenSelectedGeneratedOutputClicked(object sender, RoutedEventArgs e) => OpenSelectedProjectOutput(distribution: false);
     private void OpenSelectedDistributionOutputClicked(object sender, RoutedEventArgs e) => OpenSelectedProjectOutput(distribution: true);
 
@@ -1440,6 +1671,8 @@ public partial class MainWindow
         var usable = releaseCandidateResult.State is ReleaseCandidateState.CandidateReady or ReleaseCandidateState.Blocked;
         OpenCandidateFomodFolderButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.FomodRoot, out _);
         OpenCandidateFomodArchiveButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.FomodArchive, out _);
+        OpenCandidateBsaPlanFolderButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.BsaPlanRoot, out _);
+        OpenCandidateBsaPlanReportButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.BsaPlan, out _);
         OpenCandidatePackageFolderButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.PackageRoot, out _);
         OpenCandidatePackageArchiveButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.PackageArchive, out _);
         OpenCandidateReleaseEvidenceButton.IsEnabled = usable && ReleaseCandidateWorkspace.TryResolveContained(releaseCandidateResult.ProjectRoot, releaseCandidateResult.Evidence.ReleaseRoot, out _);
@@ -1659,6 +1892,8 @@ public partial class MainWindow
     private void OpenCandidatePackageArchiveClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.PackageArchive, directory: false);
     private void OpenCandidateFomodFolderClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.FomodRoot, directory: true);
     private void OpenCandidateFomodArchiveClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.FomodArchive, directory: false);
+    private void OpenCandidateBsaPlanFolderClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.BsaPlanRoot, directory: true);
+    private void OpenCandidateBsaPlanReportClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.BsaPlan, directory: false);
     private void OpenCandidateReleaseEvidenceClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.ReleaseRoot, directory: true);
     private void OpenCandidateReleaseHandoffClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.ReleaseHandoff, directory: false);
     private void OpenCandidatePreparedFolderClicked(object sender, RoutedEventArgs e) => OpenReleaseCandidatePath(releaseCandidateResult?.Evidence.PreparedRoot, directory: true);

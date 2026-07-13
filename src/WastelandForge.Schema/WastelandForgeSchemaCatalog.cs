@@ -20,6 +20,9 @@ public static class WastelandForgeSchemaCatalog
             "0.3.0",
             "schemas/manifest/0.3.0/schema.json"),
         new(WastelandForgeSchemaIds.Manifest040, "manifest", "0.4.0", "schemas/manifest/0.4.0/schema.json"),
+        new(WastelandForgeSchemaIds.Manifest050, "manifest", "0.5.0", "schemas/manifest/0.5.0/schema.json"),
+        new(WastelandForgeSchemaIds.GeckAuthoringIntent010, "geck-authoring-intent", "0.1.0", "schemas/geck-authoring-intent/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.GeckAuthoringPlan010, "geck-authoring-plan", "0.1.0", "schemas/geck-authoring-plan/0.1.0/schema.json"),
         new(WastelandForgeSchemaIds.Fomod010, "fomod", "0.1.0", "schemas/fomod/0.1.0/schema.json"),
         new(WastelandForgeSchemaIds.FomodManifest010, "fomod-manifest", "0.1.0", "schemas/fomod-manifest/0.1.0/schema.json"),
         new(
@@ -77,6 +80,8 @@ public static class WastelandForgeSchemaCatalog
             "xedit-audit",
             "0.1.0",
             "schemas/xedit-audit/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.XEditAudit020, "xedit-audit", "0.2.0", "schemas/xedit-audit/0.2.0/schema.json"),
+        new(WastelandForgeSchemaIds.XEditCheckReport010, "xedit-check-report", "0.1.0", "schemas/xedit-check-report/0.1.0/schema.json"),
         new(
             WastelandForgeSchemaIds.McmExtenderOutput010,
             "mcm-extender-output",
@@ -92,6 +97,11 @@ public static class WastelandForgeSchemaCatalog
             "mod-package-manifest",
             "0.1.0",
             "schemas/mod-package-manifest/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.BsaPackPlan010, "bsa-pack-plan", "0.1.0", "schemas/bsa-pack-plan/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.BsArchPreview010, "bsa-bsarch-preview", "0.1.0", "schemas/bsa-bsarch-preview/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.BsArchExecution010, "bsarch-execution", "0.1.0", "schemas/bsarch-execution/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.BsaOutputVerification010, "bsa-output-verification", "0.1.0", "schemas/bsa-output-verification/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.BsaPackageManifest010, "bsa-package-manifest", "0.1.0", "schemas/bsa-package-manifest/0.1.0/schema.json"),
         new(
             WastelandForgeSchemaIds.Mo2ExportManifest010,
             "mo2-export-manifest",
@@ -107,6 +117,11 @@ public static class WastelandForgeSchemaCatalog
             "geck-handoff-manifest",
             "0.1.0",
             "schemas/geck-handoff-manifest/0.1.0/schema.json"),
+        new(
+            WastelandForgeSchemaIds.GeckHandoffManifest020,
+            "geck-handoff-manifest",
+            "0.2.0",
+            "schemas/geck-handoff-manifest/0.2.0/schema.json"),
         new(
             WastelandForgeSchemaIds.InstallPreview010,
             "install-preview",

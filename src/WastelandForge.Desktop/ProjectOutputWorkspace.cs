@@ -23,6 +23,8 @@ internal static class ProjectOutputWorkspace
                 Lane(projectRoot, registries, "xeditAudit", "xedit-audit", "xEdit audit scaffold", "forge generate --target xedit-audit"),
                 ModPackageLane(projectRoot, registries),
                 FomodLane(projectRoot, registries),
+                BsaPlanLane(projectRoot, registries),
+                BsaPackageLane(projectRoot, registries),
                 GeckHandoffLane(projectRoot, registries)
             };
             return new(true, $"Inspected {lanes.Length} project output lanes.", lanes);
@@ -46,7 +48,7 @@ internal static class ProjectOutputWorkspace
             components = $"{summary?["quests"]?.GetValue<int>() ?? 0} quests, {summary?["dialogueLines"]?.GetValue<int>() ?? 0} lines";
             actions = summary?["unresolvedActions"]?.GetValue<int>();
         }
-        return new("geck-handoff", "GECK authoring handoff", registries["quests"] is not null && registries["dialogue"] is not null, false, Directory.Exists(distribution), "forge package --target geck-handoff", null,
+        return new("geck-handoff", "GECK authoring handoff", true, false, Directory.Exists(distribution), "forge package --target geck-handoff", null,
             Directory.Exists(distribution) ? distribution : null, Components: components, EntryCount: actions,
             HandoffPath: Directory.Exists(distribution) ? distribution : null,
             WorklistPath: File.Exists(worklist) ? worklist : null);
@@ -87,6 +89,31 @@ internal static class ProjectOutputWorkspace
             File.Exists(archive) ? archive : null,
             "FOMOD 5.0 required files",
             entryCount);
+    }
+
+    private static ProjectOutputLane BsaPlanLane(string root, JsonObject registries)
+    {
+        var distribution = Path.GetFullPath(Path.Combine(root, "dist", "bsa-plan"));
+        var plan = Path.Combine(distribution, "bsa-pack-plan.json");
+        var count = File.Exists(plan) ? JsonNode.Parse(File.ReadAllText(plan))?["archives"]?.AsArray().Sum(node => node?["entryCount"]?.GetValue<int>() ?? 0) : null;
+        return new("bsa-plan", "BSA packing plan", registries["pluginArtifacts"] is not null, false, Directory.Exists(distribution), "forge package --target bsa-plan", null,
+            Directory.Exists(distribution) ? distribution : null, Components: "tool-neutral; no BSA", EntryCount: count);
+    }
+
+    private static ProjectOutputLane BsaPackageLane(string root, JsonObject registries)
+    {
+        var distribution = Path.GetFullPath(Path.Combine(root, "dist", "bsa-package"));
+        var staging = Path.Combine(distribution, "staging", "Data");
+        var archive = Path.Combine(distribution, "package.zip");
+        var manifestPath = Path.Combine(distribution, "bsa-package-manifest.json");
+        int? count = null;
+        if (File.Exists(manifestPath))
+        {
+            var manifest = JsonNode.Parse(File.ReadAllText(manifestPath));
+            count = (manifest?["archives"]?.AsArray().Count ?? 0) + (manifest?["looseEntries"]?.AsArray().Count ?? 0);
+        }
+        return new("bsa-package", "BSA-backed local package", registries["pluginArtifacts"] is not null, false, Directory.Exists(distribution), "forge package --target bsa-package", null,
+            Directory.Exists(distribution) ? distribution : null, Directory.Exists(staging) ? staging : null, File.Exists(archive) ? archive : null, "provider compatibility unverified", count);
     }
 
     private static ProjectOutputLane Lane(string root, JsonObject registries, string registryKey, string target, string title, string command)

@@ -1,0 +1,69 @@
+{
+  "formatVersion": "0.2",
+  "kind": "wastelandforge.geck-handoff-manifest",
+  "handoffType": "wastelandforge/geck-authoring-handoff/v2",
+  "scope": "greenfield",
+  "command": "package",
+  "target": "geck-handoff",
+  "tool": {
+    "name": "WastelandForge",
+    "version": "0.1.0"
+  },
+  "project": {
+    "id": "example.couriersemergencycache",
+    "version": "0.1.0"
+  },
+  "summary": {
+    "quests": 0,
+    "dialogueLines": 0,
+    "voiceRows": 0,
+    "jipScripts": 0,
+    "worklists": 1,
+    "unresolvedActions": 1
+  },
+  "sources": [
+    {
+      "path": "wastelandforge.json",
+      "sha256": "27812b12d19860d0fa511b53861c60696bf0e87cb05f9442170972988db679c4",
+      "length": 322
+    }
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "5f12cf144b7e56cd38b5cb19d56a7400745f8af59c03840ef3f6ed1c4f77d6e8",
+      "length": 214
+    },
+    {
+      "path": "evidence/source-index.json",
+      "sha256": "d8abd0cd863727979f54f84d88a4db9f144cdc796b1c948e12e1febc0525975f",
+      "length": 217
+    },
+    {
+      "path": "evidence/validation-summary.json",
+      "sha256": "89ffcc8aa618bff86ce56b292f0372d117738f5b03bda8f013ab3f5e4b5bd727",
+      "length": 76
+    },
+    {
+      "path": "worklists/unresolved-actions.tsv",
+      "sha256": "921e52ed8e0265cc6b2bff116bee78d02a5803372d6ff6a68153e98043d0b97f",
+      "length": 407
+    }
+  ],
+  "unresolvedActions": {
+    "count": 1,
+    "categories": [
+      "plugin-creation"
+    ]
+  },
+  "safety": {
+    "launchesGeck": false,
+    "launchesXEdit": false,
+    "mutatesPlugins": false,
+    "createsPluginRecords": false,
+    "compilesScripts": false,
+    "writesToGameData": false,
+    "writesToMo2": false,
+    "executesExternalTools": false
+  }
+}

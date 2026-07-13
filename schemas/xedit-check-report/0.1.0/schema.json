@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/xedit-check-report/0.1.0/schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["formatVersion", "kind", "auditId", "intent", "producer", "script", "subject", "recordsVisited", "findings", "safety"],
+  "properties": {
+    "formatVersion": { "const": "0.1" }, "kind": { "const": "wastelandforge.xedit-check-report" },
+    "auditId": { "type": "string", "minLength": 1 }, "intent": { "const": "check-for-errors" },
+    "producer": { "type": "object", "additionalProperties": false, "required": ["name", "gameMode"], "properties": { "name": { "const": "xEdit" }, "gameMode": { "const": "FNV" }, "xeditVersion": { "type": "string", "minLength": 1, "maxLength": 64 } } },
+    "script": { "$ref": "#/$defs/digestIdentity" },
+    "subject": { "type": "object", "additionalProperties": false, "required": ["plugin", "length", "sha256", "reviewStatus"], "properties": { "plugin": { "type": "string", "pattern": "^[A-Za-z0-9_ .'-]+\\.(esm|esp|esl)$" }, "length": { "type": "integer", "minimum": 1 }, "sha256": { "$ref": "#/$defs/sha" }, "reviewStatus": { "enum": ["pending", "reviewed"] } } },
+    "recordsVisited": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+    "findings": { "type": "array", "maxItems": 10000, "items": { "$ref": "#/$defs/finding" } },
+    "safety": { "type": "object", "additionalProperties": false, "required": ["forgeExecutedXEdit", "mutatedPlugins", "wrotePatches", "changedLoadOrder", "wroteGameData"], "properties": { "forgeExecutedXEdit": { "const": false }, "mutatedPlugins": { "const": false }, "wrotePatches": { "const": false }, "changedLoadOrder": { "const": false }, "wroteGameData": { "const": false } } }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "digestIdentity": { "type": "object", "additionalProperties": false, "required": ["id", "sha256"], "properties": { "id": { "type": "string", "minLength": 1 }, "sha256": { "$ref": "#/$defs/sha" } } },
+    "finding": { "type": "object", "additionalProperties": false, "required": ["message", "recordFile", "signature", "fixedFormId"], "properties": { "message": { "type": "string", "minLength": 1, "maxLength": 4096 }, "recordFile": { "type": "string", "pattern": "^[A-Za-z0-9_ .'-]+\\.(esm|esp|esl)$" }, "signature": { "type": "string", "pattern": "^[A-Z0-9_]{4}$" }, "fixedFormId": { "type": "string", "pattern": "^[0-9A-F]{8}$" }, "editorId": { "type": "string", "minLength": 1, "maxLength": 512 }, "loadOrderFormId": { "type": "string", "pattern": "^[0-9A-F]{8}$" } } }
+  }
+}

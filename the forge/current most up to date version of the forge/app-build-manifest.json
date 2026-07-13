@@ -1,0 +1,381 @@
+{
+  "schema": "wastelandforge.local-app-shell-distribution.v1",
+  "kind": "wastelandforge.localAppShellDistribution",
+  "gate": 341,
+  "status": "complete",
+  "build": {
+    "configuration": "Release",
+    "runtimeIdentifier": "current-platform-apphost",
+    "selfContained": false,
+    "frameworkDependent": true,
+    "publishSingleFile": false,
+    "noRestore": true,
+    "timestamp": {
+      "source": "utc-now",
+      "utc": "2026-07-13T02:45:27Z"
+    }
+  },
+  "source": {
+    "repositoryRoot": "D:\\documents\\GitHub\\WasteLandForge",
+    "project": "src/WastelandForge.Desktop/WastelandForge.Desktop.csproj",
+    "backendRoot": "dist/local/forge"
+  },
+  "app": {
+    "executable": "WastelandForge.exe",
+    "backendExecutable": "ForgeBackend/forge.exe",
+    "bundledDemoProject": "DemoProjects/ExampleMod",
+    "backendVersionSmoke": "WastelandForge 0.1.0",
+    "mo2CompanionPackage": "Integrations/MO2/Package/WastelandForge-MO2-Bridge-0.1.0.zip"
+  },
+  "heat": {
+    "heatSourceRootProvided": false,
+    "rawHeatAssetsCommitted": false,
+    "publicReleaseApproved": false
+  },
+  "boundaries": {
+    "installerCreated": false,
+    "archiveCreated": false,
+    "signing": false,
+    "attestation": false,
+    "updateChannel": false,
+    "releasePublication": false,
+    "nugetPublication": false,
+    "packageRestorePolicyChanged": false,
+    "generatedConsumerTemplateMutation": false,
+    "externalGameToolExecution": false,
+    "runtimeProbes": false,
+    "aiRequired": false
+  },
+  "outputs": [
+    {
+      "path": "DemoProjects/CombinedModExample/src/registries/capabilities/jip-script-runner.json",
+      "bytes": 418,
+      "sha256": "018e931ceb1f1f835e73762b65dce6ea482d6246d41d84ea6e8a64e550999e74"
+    },
+    {
+      "path": "DemoProjects/CombinedModExample/src/registries/capabilities/mcm-json.json",
+      "bytes": 396,
+      "sha256": "22e59a1a0e940410201f027e5425f1ef4bace54eacee4ff92e737c985fef4e7c"
+    },
+    {
+      "path": "DemoProjects/CombinedModExample/src/registries/capabilities/xnvse.json",
+      "bytes": 360,
+      "sha256": "cdd79ec85512278c500ce891d8b48f6d2473f89797617def78bc30878bd964a9"
+    },
+    {
+      "path": "DemoProjects/CombinedModExample/src/registries/dependencies/main.json",
+      "bytes": 310,
+      "sha256": "c2100852185818e558a2adb37ef9e4ba06b46728b8a04822746002ca07fac351"
+    },
+    {
+      "path": "DemoProjects/CombinedModExample/src/registries/fomod/main.json",
+      "bytes": 337,
+      "sha256": "96c62ab278c6146127cdd62b5357cb9a52635162cf9a8674e0c6a4f3a4182c51"
+    },
+    {
+      "path": "DemoProjects/CombinedModExample/src/registries/jip-scripts/main.json",
+      "bytes": 640,
+      "sha256": "df87c0c26bb013ab89f101708cf390ada399079b41fa347ed5613926b7bd0e3f"
+    },
+    {
+      "path": "DemoProjects/CombinedModExample/src/registries/mcm/main.json",
+      "bytes": 865,
+      "sha256": "8cb0d3ca004935fd62d391271f46ca324f3dc4e5fc2a1c98327bc8a50d93c076"
+    },
+    {
+      "path": "DemoProjects/CombinedModExample/wastelandforge.json",
+      "bytes": 438,
+      "sha256": "5da866d077fc4391c463f6961c8842186bcf2b2887d0c750e089ba86f55c27da"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/assets/config/settings.json",
+      "bytes": 24,
+      "sha256": "efa82530f0281abdf7bff98dbf617ee4427f964100fa5fe3f2e8673792b268cf"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/assets/textures/interface/logo.dds",
+      "bytes": 35,
+      "sha256": "b7fe524e2ad45494ba22ff1ef5521583b31f2510eed5c46fef5a8fdf1afc0ff3"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/assets/voice/intro_hello.lip",
+      "bytes": 14,
+      "sha256": "c8e11617d787a6c32f34b7a9af8992a75b0fc4a3f1ad6c3278e36c425b5175d1"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/assets/voice/intro_hello.ogg",
+      "bytes": 19,
+      "sha256": "8f445127c3e26089d878042ad9944bcb2c66ffe967a586c80585c5509bba349f"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/assets/voice/intro_hello.wav",
+      "bytes": 27,
+      "sha256": "7da94db7078f0c822aee979b99bec15816093d6f7b68020fd690eb25c4513734"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/registries/assets/main.json",
+      "bytes": 1635,
+      "sha256": "1de066cdd952ffe0ad19c901552b1962aeaec06d0c3e2159b26f702a38cedba7"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/registries/capabilities/mcm-json.json",
+      "bytes": 795,
+      "sha256": "16146028815eaa4265d269386f8c80479e725e0d400f86f8b8f0db9db2f1cfab"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/registries/capabilities/runtime.json",
+      "bytes": 368,
+      "sha256": "d0f51f0a425b634a16e99040680e88029bd90c22e130b64ceefe0f7fc85898e0"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/registries/dependencies/main.json",
+      "bytes": 391,
+      "sha256": "544e2c3373e182f24577ac66edebeda1e0dcb7155e4ef55669f79c0c858a6168"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/registries/dialogue/main.json",
+      "bytes": 8559,
+      "sha256": "a7b190f97f54f281effa8c484147acce891ba2d508ae426f6c19991e2981501d"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/registries/mcm/main.json",
+      "bytes": 4333,
+      "sha256": "b0eacb8fd9ec59055677529db032e97835744ea0ec068fbfa302f994c944cd5d"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/src/registries/quests/main.json",
+      "bytes": 3128,
+      "sha256": "ee3c2f3315e2843ac2907faf7f10f75e4cad8fe28a4451970622859b2cf7377c"
+    },
+    {
+      "path": "DemoProjects/ExampleMod/wastelandforge.json",
+      "bytes": 449,
+      "sha256": "a4c2721a7d69f5ad3abc56fd0a9967f0154520992e2bf5bed767bed140c39e4e"
+    },
+    {
+      "path": "DemoProjects/XEditAuditExample/src/registries/capabilities/xedit-record-inspection.json",
+      "bytes": 474,
+      "sha256": "869cae71337381260c5b7d712510d449b8b2183f5b2052ff5c47a03a9400bb09"
+    },
+    {
+      "path": "DemoProjects/XEditAuditExample/src/registries/capabilities/xedit.json",
+      "bytes": 365,
+      "sha256": "80d9c707a8bdc77241c572918e3984fc6bff9bc0f2bd702a09779eacbd2efa51"
+    },
+    {
+      "path": "DemoProjects/XEditAuditExample/src/registries/dependencies/main.json",
+      "bytes": 353,
+      "sha256": "17cae8376c66134a67440a22e4cfdf2431a0ab6904b088a01baf92a931221aad"
+    },
+    {
+      "path": "DemoProjects/XEditAuditExample/src/registries/xedit-audit/main.json",
+      "bytes": 1157,
+      "sha256": "6fd48f2ed2bff16bd63b772c69d38465d26ca57483feb3adb698c3e9ce88b934"
+    },
+    {
+      "path": "DemoProjects/XEditAuditExample/wastelandforge.json",
+      "bytes": 355,
+      "sha256": "cfd53c8c029b21db9764f173a47457e46c597524c5820691ddeb2f1c65e303a4"
+    },
+    {
+      "path": "ForgeBackend/build-manifest.json",
+      "bytes": 3748,
+      "sha256": "856d7eee31bab6055cce5b0d112fe90bbe3288aec1cf88f7d116728a8f4ff930"
+    },
+    {
+      "path": "ForgeBackend/checksums.sha256",
+      "bytes": 1520,
+      "sha256": "38dcbcfd9d078a9ad6f0aa857514727cc962a2d29908dff7571761aa001d6af8"
+    },
+    {
+      "path": "ForgeBackend/forge.exe",
+      "bytes": 162816,
+      "sha256": "85d69ca8c6d55c65ef5f785eeec16e1b0139b044bd10783610bbdb21ef7966ba"
+    },
+    {
+      "path": "ForgeBackend/Humanizer.dll",
+      "bytes": 643760,
+      "sha256": "2769ed8265b691a5482c72506ed274dc52446fa1641997a8c12c66f5b9263d39"
+    },
+    {
+      "path": "ForgeBackend/Json.More.dll",
+      "bytes": 54272,
+      "sha256": "80b6cd50331fa2ded4fbacdbf80dcedd2b142dee679df227c30299d2a3c3840f"
+    },
+    {
+      "path": "ForgeBackend/JsonPointer.Net.dll",
+      "bytes": 25088,
+      "sha256": "ab3e8236f02d8b5110d0bca4f640b1e8550728facfe740d65e0f4bd158c59f8f"
+    },
+    {
+      "path": "ForgeBackend/JsonSchema.Net.dll",
+      "bytes": 280576,
+      "sha256": "b4e761599a97429412d9f8eee6382d0e684080d85fb41a2875cfc9662ec4d60d"
+    },
+    {
+      "path": "ForgeBackend/README.txt",
+      "bytes": 869,
+      "sha256": "4f7cd56e735a58e1506483d029a50e57328a989d49ad99b6088ba9f4da029f5a"
+    },
+    {
+      "path": "ForgeBackend/WastelandForge.Cli.deps.json",
+      "bytes": 6512,
+      "sha256": "bd2bf4d3a83892de40365fabd3192b0ff8b960794edc80a88a8723caa3320a7a"
+    },
+    {
+      "path": "ForgeBackend/WastelandForge.Cli.dll",
+      "bytes": 1482752,
+      "sha256": "bea235a6511e0e346415f6484181ded5631faa4280dbec9844eaf6121611399e"
+    },
+    {
+      "path": "ForgeBackend/WastelandForge.Cli.runtimeconfig.json",
+      "bytes": 342,
+      "sha256": "c230a317a54dd960bcbeb5f347f52e18dc665a26f7efda2159fced9a5ac7e097"
+    },
+    {
+      "path": "ForgeBackend/WastelandForge.Core.dll",
+      "bytes": 69120,
+      "sha256": "506b77997301dcfe3fd9e5a9030b9482655a6120c40bdfa4e0d98d522b15ee12"
+    },
+    {
+      "path": "ForgeBackend/WastelandForge.Generation.dll",
+      "bytes": 978944,
+      "sha256": "c7693233b4a3853e195cacff9a679b11d5ffbea6873c653f92fa6faef2e00313"
+    },
+    {
+      "path": "ForgeBackend/WastelandForge.Provenance.dll",
+      "bytes": 83456,
+      "sha256": "8e16cf15d1dad83858b64aae567428cb422ab045aa53dc1e62d5a775f6bb457c"
+    },
+    {
+      "path": "ForgeBackend/WastelandForge.Registry.dll",
+      "bytes": 132608,
+      "sha256": "aeb87d32868ebf3d95cbee42971ca23cfcfac23a2077122d7d064644c2c8e266"
+    },
+    {
+      "path": "ForgeBackend/WastelandForge.Schema.dll",
+      "bytes": 787456,
+      "sha256": "b0fc8281d704251d64d7c0c099afa6a6f36adebfe3cbac80eae6e7818dc45413"
+    },
+    {
+      "path": "ForgeBackend/WastelandForge.Validation.dll",
+      "bytes": 329728,
+      "sha256": "6be6c33b58ce5c5bd016334266fff7f375f322e25c44902c726e36eaa9f41e5d"
+    },
+    {
+      "path": "ForgeBackend/YamlDotNet.dll",
+      "bytes": 300032,
+      "sha256": "cb295bc91c69e212bc00d3d6f8f2ab90bbbf87d1c806f008816bf298cf35839e"
+    },
+    {
+      "path": "Humanizer.dll",
+      "bytes": 643760,
+      "sha256": "2769ed8265b691a5482c72506ed274dc52446fa1641997a8c12c66f5b9263d39"
+    },
+    {
+      "path": "Integrations/MO2/Package/INSTALL.md",
+      "bytes": 890,
+      "sha256": "f511959c14f0cabf8ba400c583b1d60de8996096981ba34288108ce7423862ff"
+    },
+    {
+      "path": "Integrations/MO2/Package/package-build-manifest.json",
+      "bytes": 555,
+      "sha256": "19d2613b6f03c0f928259169c6158c6d5a8aa04210be237b645c4429750cd1a7"
+    },
+    {
+      "path": "Integrations/MO2/Package/WastelandForge-MO2-Bridge-0.1.0.zip",
+      "bytes": 17124,
+      "sha256": "a7e55bd50d76abef25add31d020085a0904fa3729d49143153434a724405b2a3"
+    },
+    {
+      "path": "Integrations/MO2/Package/WastelandForge-MO2-Bridge-0.1.0.zip.sha256",
+      "bytes": 102,
+      "sha256": "0405231c251ce033a0ec55e2114c7af74227d4e65f48ebbdb0a8b1f0316fee12"
+    },
+    {
+      "path": "Integrations/MO2/wastelandforge_bridge/__init__.py",
+      "bytes": 105,
+      "sha256": "ac709fd3e5cbbb33cb61c265a305d433d7d1d55ed1b9085e9428515d4a86d629"
+    },
+    {
+      "path": "Integrations/MO2/wastelandforge_bridge/core.py",
+      "bytes": 9484,
+      "sha256": "e2e1afb90502e3bfc82f9ab1dd00c572b07c4930b8174d761123e3fa4ad30dc9"
+    },
+    {
+      "path": "Integrations/MO2/wastelandforge_bridge/plugin.py",
+      "bytes": 2867,
+      "sha256": "f2d8f1fa29befcaccb85884c39858fa096cc324676e2d71b812c23d17e6572e7"
+    },
+    {
+      "path": "Integrations/MO2/wastelandforge_bridge/README.md",
+      "bytes": 1113,
+      "sha256": "8a027eb2d9593dc2cd66facb564bc7e411a92f5c9cdd1540a9dc045cf1bfcafb"
+    },
+    {
+      "path": "Json.More.dll",
+      "bytes": 54272,
+      "sha256": "80b6cd50331fa2ded4fbacdbf80dcedd2b142dee679df227c30299d2a3c3840f"
+    },
+    {
+      "path": "JsonPointer.Net.dll",
+      "bytes": 25088,
+      "sha256": "ab3e8236f02d8b5110d0bca4f640b1e8550728facfe740d65e0f4bd158c59f8f"
+    },
+    {
+      "path": "JsonSchema.Net.dll",
+      "bytes": 280576,
+      "sha256": "b4e761599a97429412d9f8eee6382d0e684080d85fb41a2875cfc9662ec4d60d"
+    },
+    {
+      "path": "README.txt",
+      "bytes": 687,
+      "sha256": "f35618a44dbd2e2c7c3c02fd83fde42bae7ad570edab0c4630887bdd36b23fc7"
+    },
+    {
+      "path": "WastelandForge.Core.dll",
+      "bytes": 69120,
+      "sha256": "506b77997301dcfe3fd9e5a9030b9482655a6120c40bdfa4e0d98d522b15ee12"
+    },
+    {
+      "path": "WastelandForge.deps.json",
+      "bytes": 5124,
+      "sha256": "b462abcd0bdcf24515ab27591bf1f1104b52d0fdf2cb3c2eca97f8c1c1184c6a"
+    },
+    {
+      "path": "WastelandForge.dll",
+      "bytes": 1057280,
+      "sha256": "076c35f11d2e0c53d97ab46b69170d467d056d94391654d56cf3c9128d87219e"
+    },
+    {
+      "path": "WastelandForge.exe",
+      "bytes": 162304,
+      "sha256": "302ce547ec670c48e797ef944604aa071b2ee69d1494cd16f9016a99d7e06f9d"
+    },
+    {
+      "path": "WastelandForge.Registry.dll",
+      "bytes": 132608,
+      "sha256": "aeb87d32868ebf3d95cbee42971ca23cfcfac23a2077122d7d064644c2c8e266"
+    },
+    {
+      "path": "WastelandForge.runtimeconfig.json",
+      "bytes": 519,
+      "sha256": "96bc2946dff8790400d652ec7f8de7bb043e954980d59470c112788b68a1fbd3"
+    },
+    {
+      "path": "WastelandForge.Schema.dll",
+      "bytes": 787456,
+      "sha256": "b0fc8281d704251d64d7c0c099afa6a6f36adebfe3cbac80eae6e7818dc45413"
+    },
+    {
+      "path": "WastelandForge.Validation.dll",
+      "bytes": 329728,
+      "sha256": "6be6c33b58ce5c5bd016334266fff7f375f322e25c44902c726e36eaa9f41e5d"
+    },
+    {
+      "path": "YamlDotNet.dll",
+      "bytes": 300032,
+      "sha256": "cb295bc91c69e212bc00d3d6f8f2ab90bbbf87d1c806f008816bf298cf35839e"
+    }
+  ]
+}

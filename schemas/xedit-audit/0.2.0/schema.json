@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/xedit-audit/0.2.0/schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "id", "audits"],
+  "properties": {
+    "schemaVersion": { "const": "0.2.0" },
+    "kind": { "const": "xedit-audit" },
+    "id": { "$ref": "#/$defs/id" },
+    "audits": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/audit" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$" },
+    "audit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "intent", "mode", "scriptLanguage", "reportFormat", "targetPlugins", "recordTypes", "requires", "outputs", "safety"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" }, "summary": { "type": "string", "minLength": 1 },
+        "intent": { "const": "check-for-errors" }, "mode": { "const": "manual-script-report" },
+        "scriptLanguage": { "const": "pascal" }, "reportFormat": { "const": "wastelandforge-json-0.1" },
+        "targetPlugins": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["name", "role"], "properties": { "name": { "type": "string", "pattern": "^[A-Za-z0-9_ .'-]+\\.(esm|esp|esl)$" }, "role": { "const": "subject" } } } },
+        "recordTypes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Z0-9_]{4}$" } },
+        "requires": { "type": "object", "additionalProperties": false, "required": ["capabilities"], "properties": { "capabilities": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["id"], "properties": { "id": { "$ref": "#/$defs/id" } } } } } },
+        "outputs": { "type": "object", "additionalProperties": false, "required": ["script", "report"], "properties": { "script": { "type": "string", "pattern": "^generated/xedit-audit/scripts/[A-Za-z0-9._/-]+\\.pas$" }, "report": { "type": "string", "pattern": "^generated/xedit-audit/reports/[A-Za-z0-9._/-]+\\.json$" } } },
+        "safety": { "type": "object", "additionalProperties": false, "required": ["executesXEdit", "mutatesPlugins", "writesPatches", "usesRealPluginFixture"], "properties": { "executesXEdit": { "const": false }, "mutatesPlugins": { "const": false }, "writesPatches": { "const": false }, "usesRealPluginFixture": { "const": false } } }
+      }
+    }
+  }
+}

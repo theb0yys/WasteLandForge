@@ -59,6 +59,18 @@ public sealed class ManifestSchemaTests
     }
 
     [Fact]
+    public void GeckHandoff020SupportsExplicitGreenfieldScopeWithoutChanging010()
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckHandoffManifest010, out var original));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckHandoffManifest020, out var current));
+        var originalSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(original!));
+        var currentSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(current!));
+        Assert.Null(originalSchema?["properties"]?["scope"]);
+        Assert.Contains("greenfield", currentSchema?["properties"]?["scope"]?["enum"]!.AsArray().Select(node => node!.GetValue<string>())!);
+        Assert.Equal(1, currentSchema?["properties"]?["sources"]?["minItems"]!.GetValue<int>());
+    }
+
+    [Fact]
     public void FomodSchemasAndManifest040AreRegistered()
     {
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest040, out var manifest));
@@ -114,6 +126,41 @@ public sealed class ManifestSchemaTests
         Assert.Equal("0.1.0", resource.Version);
         var schema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(resource)) as JsonObject;
         Assert.Equal(WastelandForgeSchemaIds.ModPackageManifest010, (string?)schema?["$id"]);
+    }
+
+    [Fact]
+    public void BuiltInCatalogResolvesBsaPackPlanSchema()
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.BsaPackPlan010, out var resource));
+        Assert.Equal("bsa-pack-plan", resource!.Kind);
+        Assert.Contains("wastelandforge.bsa-pack-plan", WastelandForgeSchemaCatalog.ReadText(resource), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BuiltInCatalogResolvesBsArchPreviewSchema()
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.BsArchPreview010, out var resource));
+        Assert.Equal("bsa-bsarch-preview", resource!.Kind);
+        Assert.Contains("previewSha256", WastelandForgeSchemaCatalog.ReadText(resource), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(WastelandForgeSchemaIds.XEditAudit020, "xedit-audit")]
+    [InlineData(WastelandForgeSchemaIds.XEditCheckReport010, "xedit-check-report")]
+    public void BuiltInCatalogResolvesXEditCheckSchemas(string id, string kind)
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(id, out var resource));
+        Assert.Equal(kind, resource!.Kind);
+    }
+
+    [Theory]
+    [InlineData(WastelandForgeSchemaIds.BsArchExecution010, "bsarch-execution")]
+    [InlineData(WastelandForgeSchemaIds.BsaOutputVerification010, "bsa-output-verification")]
+    [InlineData(WastelandForgeSchemaIds.BsaPackageManifest010, "bsa-package-manifest")]
+    public void BuiltInCatalogResolvesBsArchExecutionSchemas(string id, string kind)
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(id, out var resource));
+        Assert.Equal(kind, resource!.Kind);
     }
 
     [Fact]

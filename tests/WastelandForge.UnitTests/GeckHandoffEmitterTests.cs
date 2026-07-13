@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using System.Security.Cryptography;
 using WastelandForge.Generation;
 
 namespace WastelandForge.UnitTests;
@@ -56,6 +57,68 @@ public sealed class GeckHandoffEmitterTests
             Assert.False(result.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.Issues.Select(issue => issue.Message)));
             Assert.Equal(1, result.Summary.JipScripts);
             Assert.Equal(rendered.Documents.Single().Content, File.ReadAllText(Path.Combine(root, "dist", "geck-handoff", "scripts", "jip", "gr_handoff_bootstrap.txt")));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void EmitsPluginOnlyHandoffWithoutMutatingOpaquePlugin()
+    {
+        var root = CopyFixture("ExampleMod");
+        try
+        {
+            var manifestPath = Path.Combine(root, "wastelandforge.json");
+            var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))!.AsObject();
+            manifest["schemaVersion"] = "0.3.0";
+            manifest["registries"]!.AsObject().Remove("quests");
+            manifest["registries"]!.AsObject().Remove("dialogue");
+            manifest["registries"]!["pluginArtifacts"] = "src/registries/plugin-artifacts/";
+            File.WriteAllText(manifestPath, manifest.ToJsonString(new() { WriteIndented = true }));
+
+            var pluginPath = Path.Combine(root, "src", "plugins", "Synthetic.esp");
+            Directory.CreateDirectory(Path.GetDirectoryName(pluginPath)!);
+            var pluginBytes = new byte[] { 1, 2, 3, 4, 5 };
+            File.WriteAllBytes(pluginPath, pluginBytes);
+            var registryPath = Path.Combine(root, "src", "registries", "plugin-artifacts", "main.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(registryPath)!);
+            var sha = Convert.ToHexString(SHA256.HashData(pluginBytes)).ToLowerInvariant();
+            File.WriteAllText(registryPath, $$"""{"schemaVersion":"0.1.0","kind":"plugin-artifact","id":"io.github.theboyyss.examplemod.plugins","plugins":[{"id":"io.github.theboyyss.examplemod.plugins.synthetic","file":"src/plugins/Synthetic.esp","pluginType":"esp","dataPath":"Synthetic.esp","sha256":"{{sha}}","length":5,"authoringTool":"geck","reviewStatus":"pending"}]}""");
+
+            var result = new GeckHandoffEmitter().Package(new(root, null, "0.1.0", false));
+
+            Assert.False(result.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.Issues.Select(issue => issue.Message)));
+            Assert.Equal("passed", result.Status);
+            Assert.Equal(0, result.Summary.Quests);
+            Assert.Equal(0, result.Summary.DialogueLines);
+            Assert.Equal(pluginBytes, File.ReadAllBytes(pluginPath));
+            Assert.Contains("plugin-record-authoring", File.ReadAllText(Path.Combine(root, "dist", "geck-handoff", "worklists", "unresolved-actions.tsv")));
+            Assert.Equal("plugin-only", JsonNode.Parse(File.ReadAllText(Path.Combine(root, "dist", "geck-handoff", "evidence", "source-index.json")))!["scope"]!.GetValue<string>());
+            Assert.Contains(result.SourceDigests, digest => digest.Path == "src/registries/plugin-artifacts/main.json");
+            Assert.Contains(result.SourceDigests, digest => digest.Path == "src/plugins/Synthetic.esp" && digest.Sha256 == sha);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void EmitsGreenfieldHandoffBeforeAPluginExists()
+    {
+        var root = CopyFixture("ExampleMod");
+        try
+        {
+            var manifestPath = Path.Combine(root, "wastelandforge.json");
+            var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))!.AsObject();
+            manifest["registries"]!.AsObject().Remove("quests");
+            manifest["registries"]!.AsObject().Remove("dialogue");
+            File.WriteAllText(manifestPath, manifest.ToJsonString(new() { WriteIndented = true }));
+
+            var result = new GeckHandoffEmitter().Package(new(root, null, "0.1.0", false));
+
+            Assert.False(result.HasErrors, string.Join(Environment.NewLine, result.Diagnostics.Issues.Select(issue => issue.Message)));
+            Assert.Equal("greenfield", JsonNode.Parse(File.ReadAllText(Path.Combine(root, "dist", "geck-handoff", "handoff-manifest.json")))!["scope"]!.GetValue<string>());
+            Assert.Contains("project.plugin.create", File.ReadAllText(Path.Combine(root, "dist", "geck-handoff", "worklists", "unresolved-actions.tsv")));
+            Assert.Contains(result.SourceDigests, digest => digest.Path == "wastelandforge.json");
+            Assert.Empty(Directory.GetFiles(root, "*.esp", SearchOption.AllDirectories));
+            Assert.Empty(Directory.GetFiles(root, "*.esm", SearchOption.AllDirectories));
         }
         finally { Directory.Delete(root, true); }
     }

@@ -129,7 +129,7 @@ internal static class InitPlanPlanner
     [
         "Gate 320 writes the source manifest, dependency/capability registries, repo-local Forge config, README, VS Code tasks, VS Code schema associations, and GitHub Actions workflow when not run with --dry-run.",
         "Generated, distribution, cache, provider, and tool-integration paths remain planned only.",
-        "Future init writes must refuse existing planned files unless an explicit later overwrite policy is added.",
+        "Init reuses existing empty planned directories but refuses existing planned files and any unplanned directory contents.",
         "No provider installation is performed.",
         "No external tools are executed.",
         "No MO2 automation is performed.",
@@ -154,8 +154,11 @@ internal static class InitPlanPlanner
         var projectName = options.ProjectName.Trim();
         var projectId = CreateProjectId(projectName);
         var plannedPaths = CreatePlannedPaths(projectRoot, options.Template);
+        var allowedDirectories = plannedPaths.Where(path => path.Directory)
+            .Select(path => Path.GetFullPath(Path.Combine(projectRoot, path.Path)))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var existing = plannedPaths
-            .Where(path => path.Exists && !StringComparer.Ordinal.Equals(path.Kind, "project-root"))
+            .Where(path => IsConflictingExistingPath(projectRoot, path, allowedDirectories))
             .Select(path => path.Path)
             .OrderBy(path => path, StringComparer.Ordinal)
             .ToArray();
@@ -192,6 +195,24 @@ internal static class InitPlanPlanner
             InitExecutionState.None,
             SupportedTemplates,
             BoundaryLines);
+    }
+
+    private static bool IsConflictingExistingPath(string projectRoot, InitPlannedPath planned, IReadOnlySet<string> allowedDirectories)
+    {
+        if (!planned.Exists || StringComparer.Ordinal.Equals(planned.Kind, "project-root")) return false;
+        if (!planned.Directory) return true;
+        var full = Path.GetFullPath(Path.Combine(projectRoot, planned.Path));
+        try
+        {
+            foreach (var entry in System.IO.Directory.EnumerateFileSystemEntries(full, "*", SearchOption.AllDirectories))
+            {
+                var normalized = Path.GetFullPath(entry);
+                if (!System.IO.Directory.Exists(normalized) ||
+                    (!allowedDirectories.Contains(normalized) && !allowedDirectories.Any(allowed => allowed.StartsWith(normalized.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))) return true;
+            }
+            return false;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return true; }
     }
 
     public static IReadOnlyList<InitPlannedPath> CreatePlannedPaths(string projectRoot, string template = DefaultTemplate)

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "0.6.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.examplemod.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.examplemod.quest.intro",
+      "title": "Synthetic Intro Quest",
+      "summary": "Synthetic quest declaration used by the dialogue fixture.",
+      "variables": [
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+          "variableType": "integer",
+          "initialValue": 0,
+          "title": "Dialogue phase",
+          "summary": "Synthetic quest variable declaration."
+        }
+      ],
+      "stages": [
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+          "stage": 10,
+          "title": "Started",
+          "summary": "Synthetic opening stage."
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro.stage.complete",
+          "stage": 100,
+          "title": "Complete",
+          "summary": "Synthetic completion stage.",
+          "resultScripts": [
+            {
+              "id": "io.github.theboyyss.examplemod.quest.intro.result.complete",
+              "scriptType": "stageResult",
+              "conditionId": "io.github.theboyyss.examplemod.quest.intro.condition.started",
+              "summary": "Synthetic stage result-script declaration."
+            }
+          ]
+        }
+      ],
+      "objectives": [
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro.objective.speak",
+          "text": "Speak to the synthetic greeter.",
+          "startStageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+          "completionStageId": "io.github.theboyyss.examplemod.quest.intro.stage.complete"
+        }
+      ],
+      "transitions": [
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro.transition.start.complete",
+          "fromStageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+          "toStageId": "io.github.theboyyss.examplemod.quest.intro.stage.complete",
+          "title": "Complete intro",
+          "summary": "Synthetic transition from start to completion."
+        }
+      ],
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro.condition.started",
+          "conditionType": "stageDone",
+          "stageId": "io.github.theboyyss.examplemod.quest.intro.stage.start",
+          "title": "Intro started",
+          "summary": "Synthetic condition for stage reference validation."
+        },
+        {
+          "id": "io.github.theboyyss.examplemod.quest.intro.condition.dialoguephasezero",
+          "conditionType": "variableEquals",
+          "variableId": "io.github.theboyyss.examplemod.quest.intro.variable.dialoguephase",
+          "equalsInteger": 0,
+          "title": "Dialogue phase zero",
+          "summary": "Synthetic condition for quest variable reference validation."
+        }
+      ],
+      "externalRefs": [
+        {
+          "provider": "geck",
+          "plugin": "ExampleMod.esm",
+          "editorId": "WFIntroQuest"
+        }
+      ],
+      "tags": [
+        "synthetic"
+      ]
+    }
+  ]
+}

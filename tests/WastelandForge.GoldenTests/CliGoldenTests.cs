@@ -10,6 +10,38 @@ namespace WastelandForge.GoldenTests;
 public sealed class CliGoldenTests
 {
     [Fact]
+    public void BsaPackageRefusesMissingVerifiedEvidence()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "WastelandForge.BsaPackageCliTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            File.WriteAllText(Path.Combine(root, "wastelandforge.json"), """{ "registries": {} }""");
+            var result = RunCli("package", root, "--target", "bsa-package", "--format", "json", "--no-input");
+            var payload = JsonNode.Parse(result.Stdout)!;
+            Assert.Equal(1, result.ExitCode);
+            Assert.Equal("failed", payload["status"]!.GetValue<string>());
+            Assert.False(Directory.Exists(Path.Combine(root, "dist", "bsa-package")));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void BsArchExecutionRequiresExactApprovalToken()
+    {
+        var missing = RunCli("package", ".", "--target", "bsa-bsarch", "--packer", "C:\\Tools\\bsarch.exe", "--format", "json", "--no-input");
+        var malformed = RunCli("package", ".", "--target", "bsa-bsarch", "--packer", "C:\\Tools\\bsarch.exe", "--approve", "not-a-sha", "--format", "json", "--no-input");
+        var previewWithApproval = RunCli("package", ".", "--target", "bsa-bsarch", "--packer", "C:\\Tools\\bsarch.exe", "--dry-run", "--approve", new string('a', 64), "--format", "json", "--no-input");
+
+        Assert.Equal(2, missing.ExitCode);
+        Assert.Equal(2, malformed.ExitCode);
+        Assert.Equal(2, previewWithApproval.ExitCode);
+        Assert.Contains("requires --approve <64-hex-preview-sha256>", JsonNode.Parse(missing.Stdout)!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Contains("requires --approve <64-hex-preview-sha256>", JsonNode.Parse(malformed.Stdout)!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Contains("preview cannot be combined with --approve", JsonNode.Parse(previewWithApproval.Stdout)!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TopLevelHelpMatchesGoldenOutput()
     {
         var result = RunCli("--help");
@@ -370,6 +402,31 @@ public sealed class CliGoldenTests
         Assert.DoesNotContain(existingPaths, path => StringComparer.Ordinal.Equals(path?.GetValue<string>(), "."));
         Assert.False(Directory.Exists(Path.Combine(projectRoot, "src")));
         Assert.Equal(string.Empty, result.Stderr);
+    }
+
+    [Fact]
+    public void InitReusesPrecreatedEmptyScaffoldDirectoriesButRefusesUnplannedContents()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "WastelandForge.Tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var recoverable = Path.Combine(root, "recoverable");
+            foreach (var directory in new[] { "src/registries/dependencies", "src/registries/capabilities", ".wastelandforge", ".vscode", ".github/workflows" })
+                Directory.CreateDirectory(Path.Combine(recoverable, directory.Replace('/', Path.DirectorySeparatorChar)));
+            var recovered = RunCli("init", recoverable, "--name", "Recovered Init", "--format", "json", "--no-input");
+            Assert.Equal(0, recovered.ExitCode);
+            Assert.True(File.Exists(Path.Combine(recoverable, "wastelandforge.json")));
+            Assert.Equal(0, RunCli("validate", recoverable, "--format", "json", "--no-input").ExitCode);
+
+            var unsafeRoot = Path.Combine(root, "unsafe");
+            Directory.CreateDirectory(Path.Combine(unsafeRoot, "src"));
+            File.WriteAllText(Path.Combine(unsafeRoot, "src", "unplanned.txt"), "preserve");
+            var refused = RunCli("init", unsafeRoot, "--format", "json", "--no-input");
+            Assert.Equal(6, refused.ExitCode);
+            Assert.Equal("preserve", File.ReadAllText(Path.Combine(unsafeRoot, "src", "unplanned.txt")));
+            Assert.False(File.Exists(Path.Combine(unsafeRoot, "wastelandforge.json")));
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
     }
 
     [Fact]

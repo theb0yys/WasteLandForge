@@ -1,0 +1,2 @@
+actionId	ownerId	category	requiredAction	reason	sourceFile	blockingForPluginCompletion
+project.plugin.create	example.couriersemergencycache	plugin-creation	Create a new ESP or ESM in GECK, choose its filename and masters, save it, then import the resulting plugin into Forge.	GECK owns initial plugin creation and record authoring; Forge does not invent plugin identity or records.	wastelandforge.json	true

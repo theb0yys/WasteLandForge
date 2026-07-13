@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "capability",
+  "id": "runtime.scripting.xnvse",
+  "title": "xNVSE runtime scripting",
+  "satisfiedBy": [{ "id": "provider.runtime.xnvse", "providerType": "runtime-extension" }],
+  "requires": { "capabilities": [] },
+  "scope": "runtime-session",
+  "stability": "community-standard",
+  "features": ["script-extender"]
+}

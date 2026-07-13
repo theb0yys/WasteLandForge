@@ -1,0 +1,79 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Forge: Check Command",
+      "type": "shell",
+      "command": "forge",
+      "args": [
+        "--version"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Forge: Validate",
+      "type": "shell",
+      "command": "forge",
+      "args": [
+        "validate",
+        ".",
+        "--format",
+        "plain",
+        "--no-input"
+      ],
+      "dependsOn": "Forge: Check Command",
+      "dependsOrder": "sequence",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": {
+        "owner": "wastelandforge",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "severity": "error",
+        "pattern": {
+          "regexp": "^ERR\\s\u002B(WF-[A-Z]\u002B-\\d\u002B)\\s\u002B([^#\\s]\u002B)(?:#\\S\u002B)?\\s\u002B(.*)$",
+          "code": 1,
+          "file": 2,
+          "message": 3
+        }
+      }
+    },
+    {
+      "label": "Forge: Capabilities Scan",
+      "type": "shell",
+      "command": "forge",
+      "args": [
+        "capabilities",
+        "scan",
+        "--project",
+        ".",
+        "--format",
+        "plain",
+        "--no-input"
+      ],
+      "dependsOn": "Forge: Check Command",
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Forge: Build Reports",
+      "type": "shell",
+      "command": "forge",
+      "args": [
+        "build",
+        ".",
+        "--target",
+        "reports",
+        "--format",
+        "plain",
+        "--no-input"
+      ],
+      "dependsOn": "Forge: Check Command",
+      "dependsOrder": "sequence",
+      "group": "build"
+    }
+  ]
+}
