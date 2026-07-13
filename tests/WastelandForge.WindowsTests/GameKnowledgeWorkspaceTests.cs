@@ -8,13 +8,26 @@ namespace WastelandForge.WindowsTests;
 public sealed class GameKnowledgeWorkspaceTests
 {
     [Fact]
+    public void ForgeLocalDataOverrideRequiresABoundedAbsoluteRoot()
+    {
+        var expected = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "WastelandForge.Override", "private"));
+        Assert.Equal(expected, WastelandForgeLocalData.ResolveRoot(expected));
+        Assert.Equal(expected, WastelandForgeLocalData.ResolveFnvUserStateRoot(expected));
+        Assert.Throws<InvalidOperationException>(() => WastelandForgeLocalData.ResolveRoot("relative"));
+        Assert.Throws<InvalidOperationException>(() => WastelandForgeLocalData.ResolveRoot(Path.GetPathRoot(expected)));
+        Assert.Throws<InvalidOperationException>(() => WastelandForgeLocalData.ResolveFnvUserStateRoot("relative"));
+        Assert.Throws<InvalidOperationException>(() => WastelandForgeLocalData.ResolveFnvUserStateRoot(Path.GetPathRoot(expected)));
+    }
+
+    [Fact]
     public void XamlDeclaresGameKnowledgeRouteAndStableAutomationSurface()
     {
         var xaml = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "WastelandForge.Desktop", "MainWindow.xaml"));
         foreach (var identity in new[]
         {
-            "GameKnowledgeTabItem", "GameKnowledgeStateTextBlock", "RefreshGameKnowledgeButton",
-            "PrepareGameKnowledgeExportButton", "ImportGameKnowledgeExportButton", "RebuildGameKnowledgeButton",
+            "GameKnowledgeTabItem", "GameKnowledgeScrollViewer", "GameKnowledgeStateTextBlock", "RefreshGameKnowledgeButton",
+            "PrepareGameKnowledgeExportButton", "PreparePrivateGameKnowledgeRunButton", "RunGameKnowledgeExportButton",
+            "ImportGameKnowledgeExportButton", "RebuildGameKnowledgeButton",
             "GameKnowledgeSearchTextBox", "GameKnowledgeSignatureComboBox", "GameKnowledgeContextComboBox",
             "GameKnowledgeResultsDataGrid", "GameKnowledgeDetailsTextBox", "CopyGameKnowledgeEditorIdButton",
             "CopyGameKnowledgeFormIdButton", "CreateGameKnowledgeReceiptButton", "GameKnowledgeIntentKindComboBox",

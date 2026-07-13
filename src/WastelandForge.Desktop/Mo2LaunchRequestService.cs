@@ -16,7 +16,7 @@ internal sealed class Mo2LaunchRequestService
 
     public Mo2LaunchRequestService(string? requestRoot = null, Func<DateTimeOffset>? utcNow = null)
     {
-        this.requestRoot = requestRoot ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WastelandForge", "Mo2LaunchRequests");
+        this.requestRoot = requestRoot ?? WastelandForgeLocalData.Combine("Mo2LaunchRequests");
         this.utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
     }
 

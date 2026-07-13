@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-export/0.2.0/schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "producer", "source", "completion", "records", "safety"],
+  "properties": {
+    "formatVersion": { "const": "0.2.0" },
+    "kind": { "const": "wastelandforge.fnv-game-knowledge-export" },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "gameMode", "scriptId"],
+      "properties": {
+        "name": { "const": "xEdit" },
+        "gameMode": { "const": "FNV" },
+        "version": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "scriptId": { "const": "wastelandforge.fnv-game-knowledge-export/0.2.0" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "synthetic", "usesRealPluginBytes"],
+      "properties": {
+        "fileName": { "const": "FalloutNV.esm" },
+        "synthetic": { "type": "boolean" },
+        "usesRealPluginBytes": { "type": "boolean" }
+      }
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["complete", "recordsVisited", "recordsEmitted", "omissions", "refusals"],
+      "properties": {
+        "complete": { "type": "boolean" },
+        "recordsVisited": { "type": "integer", "minimum": 0, "maximum": 2000000 },
+        "recordsEmitted": { "type": "integer", "minimum": 0, "maximum": 2000000 },
+        "omissions": { "$ref": "#/$defs/messages" },
+        "refusals": { "$ref": "#/$defs/messages" }
+      }
+    },
+    "records": { "type": "array", "maxItems": 2000000, "items": { "$ref": "#/$defs/record" } },
+    "safety": { "$ref": "#/$defs/safety" }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "text": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "formId": { "type": "string", "pattern": "^[0-9A-F]{8}$" },
+    "signature": { "type": "string", "pattern": "^[A-Z0-9_]{4}$" },
+    "messages": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/text" } },
+    "identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceFile", "signature", "fixedFormId"],
+      "properties": { "sourceFile": { "const": "FalloutNV.esm" }, "signature": { "$ref": "#/$defs/signature" }, "fixedFormId": { "$ref": "#/$defs/formId" }, "editorId": { "$ref": "#/$defs/text" } }
+    },
+    "vector": {
+      "type": "object", "additionalProperties": false, "required": ["x", "y", "z"],
+      "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "z": { "type": "number" } }
+    },
+    "context": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind", "interior"], "properties": { "kind": { "const": "cell" }, "interior": { "type": "boolean" }, "gridX": { "type": "integer" }, "gridY": { "type": "integer" }, "worldspace": { "$ref": "#/$defs/identity" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "const": "worldspace" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "baseRecord", "position", "rotation"], "properties": { "kind": { "const": "reference" }, "baseRecord": { "$ref": "#/$defs/identity" }, "cell": { "$ref": "#/$defs/identity" }, "worldspace": { "$ref": "#/$defs/identity" }, "position": { "$ref": "#/$defs/vector" }, "rotation": { "$ref": "#/$defs/vector" } } }
+      ]
+    },
+    "record": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceFile", "signature", "fixedFormId", "isDeleted"],
+      "properties": { "sourceFile": { "const": "FalloutNV.esm" }, "signature": { "$ref": "#/$defs/signature" }, "fixedFormId": { "$ref": "#/$defs/formId" }, "loadOrderFormId": { "$ref": "#/$defs/formId" }, "editorId": { "$ref": "#/$defs/text" }, "displayName": { "$ref": "#/$defs/text" }, "isDeleted": { "type": "boolean" }, "context": { "$ref": "#/$defs/context" } }
+    },
+    "safety": {
+      "type": "object", "additionalProperties": false,
+      "required": ["readOnly", "forgeExecutedXEdit", "mutatedPlugin", "wrotePlugin", "changedLoadOrder", "wroteGameData"],
+      "properties": { "readOnly": { "const": true }, "forgeExecutedXEdit": { "const": true }, "mutatedPlugin": { "const": false }, "wrotePlugin": { "const": false }, "changedLoadOrder": { "const": false }, "wroteGameData": { "const": false } }
+    }
+  }
+}

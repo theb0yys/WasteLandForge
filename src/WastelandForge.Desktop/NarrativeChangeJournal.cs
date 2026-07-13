@@ -26,7 +26,7 @@ internal sealed class NarrativeChangeJournal
 
     public NarrativeChangeJournal(string? root = null)
     {
-        this.root = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WastelandForge", "authoring-journal");
+        this.root = root ?? WastelandForgeLocalData.Combine("authoring-journal");
         if (Directory.Exists(this.root)) foreach (var staged in Directory.GetDirectories(this.root, "*.tmp-*", SearchOption.TopDirectoryOnly)) Directory.Delete(staged, true);
     }
 

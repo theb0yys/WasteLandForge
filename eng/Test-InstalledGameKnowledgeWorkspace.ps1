@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string] $InstallerPath = 'artifacts/installer/inno/local/WastelandForge-Setup-local.exe',
-    [string] $SyntheticExportPath = 'fixtures/fnv-game-knowledge/valid-synthetic-export.json',
+    [string] $FakeProviderProjectPath = 'eng/stubs/WastelandForge.FakeFNVEdit/WastelandForge.FakeFNVEdit.csproj',
     [int] $TimeoutSeconds = 90
 )
 
@@ -91,14 +91,15 @@ public static class WfGameKnowledgeWindow {
 '@
 
 $installer = Resolve-RepositoryFile $InstallerPath 'Installer'
-$syntheticExport = Resolve-RepositoryFile $SyntheticExportPath 'Synthetic game-knowledge export'
+$fakeProviderProject = Resolve-RepositoryFile $FakeProviderProjectPath 'Synthetic FNVEdit provider project'
 $runId = [Guid]::NewGuid().ToString('N')
-$installRoot = Join-Path $env:LOCALAPPDATA "WastelandForge\Gate544-$runId"
-$settingsRoot = Join-Path $env:TEMP "WastelandForge-Gate544-Settings-$runId"
-$fixtureRoot = Join-Path $env:TEMP "WastelandForge-Gate544-Fixture-$runId"
+$installRoot = Join-Path $env:LOCALAPPDATA "WastelandForge\Gate547-$runId"
+$settingsRoot = Join-Path $env:TEMP "WastelandForge-Gate547-Settings-$runId"
+$fixtureRoot = Join-Path $env:TEMP "WastelandForge-Gate547-Fixture-$runId"
 $gameRoot = Join-Path $fixtureRoot 'Game'
 $dataRoot = Join-Path $gameRoot 'Data'
 $toolRoot = Join-Path $fixtureRoot 'Tools'
+$userStateRoot = Join-Path $fixtureRoot 'UserState\FalloutNV'
 $projectRoot = Join-Path $fixtureRoot 'Project'
 $masterPath = Join-Path $dataRoot 'FalloutNV.esm'
 $providerPath = Join-Path $toolRoot 'FNVEdit.exe'
@@ -110,13 +111,18 @@ try {
     $install = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installRoot") -Wait -PassThru -WindowStyle Hidden
     if ($install.ExitCode -ne 0) { throw "Installer exited with $($install.ExitCode)." }
     $installed = $true
-    New-Item -ItemType Directory -Path $dataRoot,$toolRoot,(Join-Path $settingsRoot 'WastelandForge') -Force | Out-Null
+    New-Item -ItemType Directory -Path $dataRoot,$toolRoot,$userStateRoot,(Join-Path $settingsRoot 'WastelandForge') -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $installRoot 'DemoProjects\ExampleMod') -Destination $projectRoot -Recurse
     [IO.File]::WriteAllBytes($masterPath, [Text.Encoding]::UTF8.GetBytes('synthetic FalloutNV.esm identity bytes'))
-    Copy-Item -LiteralPath (Join-Path $installRoot 'ForgeBackend\forge.exe') -Destination $providerPath
+    [IO.File]::WriteAllText((Join-Path $userStateRoot 'plugins.txt'), 'synthetic user load-order state', [Text.UTF8Encoding]::new($false))
+    $publish = Start-Process -FilePath 'dotnet' -ArgumentList @('publish', $fakeProviderProject, '-c', 'Release', '-o', $toolRoot, '-p:UseAppHost=true', '-m:1', '/nodeReuse:false') -Wait -PassThru -NoNewWindow
+    if ($publish.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $providerPath -PathType Leaf)) { throw "Synthetic FNVEdit provider publish failed with exit code $($publish.ExitCode)." }
     $masterHash = (Get-FileHash -LiteralPath $masterPath -Algorithm SHA256).Hash
     $providerHash = (Get-FileHash -LiteralPath $providerPath -Algorithm SHA256).Hash
     $projectBefore = Get-ProjectSnapshot $projectRoot
+    $dataBefore = Get-ProjectSnapshot $dataRoot
+    $toolsBefore = Get-ProjectSnapshot $toolRoot
+    $userStateBefore = Get-ProjectSnapshot $userStateRoot
     $settings = [ordered]@{
         ProjectRoot = $projectRoot
         GameRoot = $gameRoot
@@ -131,13 +137,15 @@ try {
     $start = [Diagnostics.ProcessStartInfo]::new((Join-Path $installRoot 'WastelandForge.exe'))
     $start.UseShellExecute = $false
     $start.Environment['LOCALAPPDATA'] = $settingsRoot
+    $start.Environment['WASTELANDFORGE_LOCAL_APP_DATA'] = (Join-Path $settingsRoot 'WastelandForge')
+    $start.Environment['WASTELANDFORGE_FNV_USER_STATE'] = $userStateRoot
     $process = [Diagnostics.Process]::Start($start)
     Wait-Until { $process.Refresh(); $process.MainWindowHandle -ne [IntPtr]::Zero } 'Installed WastelandForge window did not open.' | Out-Null
     $window = [System.Windows.Automation.AutomationElement]::FromHandle($process.MainWindowHandle)
 
     [WfGameKnowledgeWindow]::MoveWindow($process.MainWindowHandle, 40, 40, 960, 640, $true) | Out-Null
     Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'Game Knowledge'
-    foreach ($controlId in @('GameKnowledgeTabItem','GameKnowledgeStateTextBlock','PrepareGameKnowledgeExportButton','ImportGameKnowledgeExportButton','GameKnowledgeSearchTextBox','GameKnowledgeResultsDataGrid','GameKnowledgeDetailsTextBox')) {
+    foreach ($controlId in @('GameKnowledgeTabItem','GameKnowledgeStateTextBlock','PrepareGameKnowledgeExportButton','PreparePrivateGameKnowledgeRunButton','RunGameKnowledgeExportButton','ImportGameKnowledgeExportButton','GameKnowledgeSearchTextBox')) {
         $visible = $false
         $deadline = [DateTime]::UtcNow.AddSeconds(10)
         do {
@@ -150,17 +158,41 @@ try {
             throw "Game Knowledge control is not accessible at 960x640 after layout settled: $controlId; window=$($window.Current.BoundingRectangle); tab=$($tab.Current.BoundingRectangle); control=$($control.Current.BoundingRectangle); offscreen=$($control.Current.IsOffscreen)."
         }
     }
+    $knowledgeScroller = Require-Control $window 'GameKnowledgeScrollViewer'
+    $scrollPattern = $knowledgeScroller.GetCurrentPattern([System.Windows.Automation.ScrollPattern]::Pattern)
+    if (-not $scrollPattern.Current.VerticallyScrollable) { throw 'Game Knowledge workspace is not vertically scrollable at 960x640.' }
+    foreach ($target in @(@('GameKnowledgeResultsDataGrid', 45), @('GameKnowledgeDetailsTextBox', 80))) {
+        $scrollPattern.SetScrollPercent([System.Windows.Automation.ScrollPattern]::NoScroll, $target[1])
+        $control = Require-Control $window $target[0]
+        Wait-Until {
+            -not $control.Current.IsOffscreen -and $control.Current.BoundingRectangle.Width -gt 0 -and $control.Current.BoundingRectangle.Height -gt 0
+        } "Game Knowledge control cannot be brought into view at 960x640: $($target[0])" 10 | Out-Null
+    }
 
     [WfGameKnowledgeWindow]::MoveWindow($process.MainWindowHandle, 40, 40, 1180, 760, $true) | Out-Null
     Start-Sleep -Milliseconds 300
-    Invoke-Control (Require-Control $window 'PrepareGameKnowledgeExportButton')
-    Wait-Until { (Require-Control $window 'GameKnowledgeStateTextBlock').Current.Name -eq 'WaitingForExport' } 'Installed export preparation did not reach WaitingForExport.' | Out-Null
+    Invoke-Control (Require-Control $window 'PreparePrivateGameKnowledgeRunButton')
+    Wait-Until { (Require-Control $window 'GameKnowledgeStateTextBlock').Current.Name -eq 'ApprovalRequired' } 'Installed private export preview did not reach ApprovalRequired.' | Out-Null
     $cacheRoot = Join-Path $settingsRoot 'WastelandForge\game-knowledge\fnv'
     $runRoot = Wait-Until { Get-ChildItem -LiteralPath (Join-Path $cacheRoot 'runs') -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1 -ExpandProperty FullName } 'Prepared private export run was not created.'
-    foreach ($name in @('WastelandForgeFNVGameKnowledge.pas','run-manifest.json')) { if (-not (Test-Path -LiteralPath (Join-Path $runRoot $name) -PathType Leaf)) { throw "Prepared export bundle omitted $name." } }
-    Copy-Item -LiteralPath $syntheticExport -Destination (Join-Path $runRoot 'raw-export.json')
-    Invoke-Control (Require-Control $window 'ImportGameKnowledgeExportButton')
-    Wait-Until { (Require-Control $window 'GameKnowledgeStateTextBlock').Current.Name -eq 'Ready' } 'Installed synthetic import did not reach Ready.' | Out-Null
+    foreach ($name in @('WastelandForgeFNVGameKnowledge.pas','run-manifest.json','execution-plan.json','state\Plugins.txt')) { if (-not (Test-Path -LiteralPath (Join-Path $runRoot $name) -PathType Leaf)) { throw "Prepared private execution bundle omitted $name." } }
+    $plan = Get-Content -LiteralPath (Join-Path $runRoot 'execution-plan.json') -Raw | ConvertFrom-Json
+    if ($plan.arguments.Count -ne 12) { throw "Installed private execution plan did not contain exactly 12 arguments." }
+    if ($plan.arguments[0] -ne '-FNV' -or $plan.arguments[1] -ne '-view' -or $plan.arguments[2] -ne '-autoload' -or $plan.arguments[4] -ne '-autoexit') { throw 'Installed private execution plan changed the fixed argument order.' }
+    if ((Get-Content -LiteralPath (Join-Path $runRoot 'state\Plugins.txt') -Raw) -ne "FalloutNV.esm`r`n") { throw 'Installed private execution plan did not isolate FalloutNV.esm.' }
+
+    Invoke-Control (Require-Control $window 'RunGameKnowledgeExportButton')
+    Wait-Until { (Require-Control $window 'RunGameKnowledgeExportButton').Current.Name -eq 'Confirm Run Export' } 'Installed private execution did not expose inline confirmation.' | Out-Null
+    if ((Require-Control $window 'GameKnowledgeStateTextBlock').Current.Name -ne 'ApprovalRequired') { throw 'Installed private execution started before inline confirmation.' }
+    if (@((Get-TrackedEditorProcessIds) | Where-Object { $_ -notin $trackedBefore }).Count -ne 0) { throw 'Installed private execution started a provider before inline confirmation.' }
+    Invoke-Control (Require-Control $window 'RunGameKnowledgeExportButton')
+    Wait-Until { (Require-Control $window 'GameKnowledgeStateTextBlock').Current.Name -eq 'Ready' } 'Installed synthetic private execution did not reach Ready.' | Out-Null
+    foreach ($name in @('raw-export.json','logs\FNVEdit.log.txt','state\Plugins.fnvviewsettings','cache\synthetic-cache.txt','temp\synthetic-temp.txt','execution-receipt.json')) { if (-not (Test-Path -LiteralPath (Join-Path $runRoot $name) -PathType Leaf)) { throw "Synthetic private execution omitted audited output $name." } }
+    if ((Get-ChildItem -LiteralPath (Join-Path $runRoot 'backups') -Force).Count -ne 0) { throw 'Synthetic private execution wrote a backup.' }
+    $executionReceipt = Get-Content -LiteralPath (Join-Path $runRoot 'execution-receipt.json') -Raw | ConvertFrom-Json
+    if (-not $executionReceipt.success -or -not $executionReceipt.audit.dataUnchanged -or -not $executionReceipt.audit.providerUnchanged -or -not $executionReceipt.audit.userStateUnchanged -or -not $executionReceipt.audit.privateWritesAllowed -or -not $executionReceipt.audit.backupsEmpty) { throw 'Installed execution receipt did not prove a successful bounded audit.' }
+    $index = Get-Content -LiteralPath (Join-Path $cacheRoot 'index.json') -Raw | ConvertFrom-Json
+    if ($index.formatVersion -ne '0.2.0' -or -not $index.safety.forgeExecutedXEdit) { throw 'Installed automated export was not sealed as the 0.2.0 Forge-executed lineage.' }
 
     Set-Value (Require-Control $window 'GameKnowledgeSearchTextBox') 'SyntheticRoadCell'
     $results = Require-Control $window 'GameKnowledgeResultsDataGrid'
@@ -176,6 +208,9 @@ try {
     Wait-Until { (Require-Control $window 'GeckIntentStatusTextBlock').Current.Name -like '*provisional resolution*' } 'Installed provisional GECK Intent Builder handoff did not complete.' | Out-Null
     $projectAfter = Get-ProjectSnapshot $projectRoot
     if (($projectAfter -join "`n") -ne ($projectBefore -join "`n")) { throw 'Game Knowledge workflow changed canonical project source before preview/apply.' }
+    if (((Get-ProjectSnapshot $dataRoot) -join "`n") -ne ($dataBefore -join "`n")) { throw 'Installed private execution changed the synthetic Data tree.' }
+    if (((Get-ProjectSnapshot $toolRoot) -join "`n") -ne ($toolsBefore -join "`n")) { throw 'Installed private execution changed the synthetic provider tree.' }
+    if (((Get-ProjectSnapshot $userStateRoot) -join "`n") -ne ($userStateBefore -join "`n")) { throw 'Installed private execution changed the isolated user-state tree.' }
 
     Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'Basic Mod Builder'
     Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'Game Knowledge'
@@ -187,11 +222,11 @@ try {
     if ((Get-FileHash -LiteralPath $providerPath -Algorithm SHA256).Hash -ne $providerHash) { throw 'Installed workflow changed the synthetic provider bytes.' }
     $trackedAfter = Get-TrackedEditorProcessIds
     if (@($trackedAfter | Where-Object { $_ -notin $trackedBefore }).Count -ne 0) { throw 'Installed workflow created an editor, mod-manager, or game process.' }
-    Write-Host 'Gate 544 installed Game Knowledge regression passed at 960x640 and 1180x760.'
+    Write-Host 'Gate 547 installed synthetic private xEdit execution regression passed at 960x640 and 1180x760.'
 }
 catch {
     $failure = $_
-    Write-Host ("Gate 544 installed Game Knowledge regression failed: " + $_.Exception.Message)
+    Write-Host ("Gate 547 installed synthetic private xEdit execution regression failed: " + $_.Exception.Message)
 }
 finally {
     if ($null -ne $process -and -not $process.HasExited) { $process.Kill($true); $process.WaitForExit(5000) | Out-Null }
@@ -202,11 +237,11 @@ finally {
         if (Test-Path -LiteralPath $path) {
             $resolved = (Resolve-Path -LiteralPath $path).Path
             $tempPrefix = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
-            if (-not $resolved.StartsWith($tempPrefix, [StringComparison]::OrdinalIgnoreCase)) { throw "Refusing unsafe Gate 544 cleanup: $resolved" }
+            if (-not $resolved.StartsWith($tempPrefix, [StringComparison]::OrdinalIgnoreCase)) { throw "Refusing unsafe Gate 547 cleanup: $resolved" }
             Remove-Item -LiteralPath $resolved -Recurse -Force
         }
     }
-    if (Test-Path -LiteralPath $installRoot) { throw "Gate 544 installed regression did not clean installation root: $installRoot" }
+    if (Test-Path -LiteralPath $installRoot) { throw "Gate 547 installed regression did not clean installation root: $installRoot" }
 }
 
 if ($null -ne $failure) { throw $failure }

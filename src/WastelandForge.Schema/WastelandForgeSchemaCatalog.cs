@@ -27,8 +27,13 @@ public static class WastelandForgeSchemaCatalog
         new(WastelandForgeSchemaIds.GeckAuthoringVerification010, "geck-authoring-verification", "0.1.0", "schemas/geck-authoring-verification/0.1.0/schema.json"),
         new(WastelandForgeSchemaIds.GeckHostProbeRunPlan010, "geck-host-probe-run-plan", "0.1.0", "schemas/geck-host-probe-run-plan/0.1.0/schema.json"),
         new(WastelandForgeSchemaIds.FnvGameKnowledgeExport010, "fnv-game-knowledge-export", "0.1.0", "schemas/fnv-game-knowledge-export/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.FnvGameKnowledgeExport020, "fnv-game-knowledge-export", "0.2.0", "schemas/fnv-game-knowledge-export/0.2.0/schema.json"),
         new(WastelandForgeSchemaIds.FnvGameKnowledgeIndex010, "fnv-game-knowledge-index", "0.1.0", "schemas/fnv-game-knowledge-index/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.FnvGameKnowledgeIndex020, "fnv-game-knowledge-index", "0.2.0", "schemas/fnv-game-knowledge-index/0.2.0/schema.json"),
         new(WastelandForgeSchemaIds.FnvGameKnowledgeReceipt010, "fnv-game-knowledge-receipt", "0.1.0", "schemas/fnv-game-knowledge-receipt/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.FnvGameKnowledgeReceipt020, "fnv-game-knowledge-receipt", "0.2.0", "schemas/fnv-game-knowledge-receipt/0.2.0/schema.json"),
+        new(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionPlan010, "fnv-game-knowledge-execution-plan", "0.1.0", "schemas/fnv-game-knowledge-execution-plan/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionReceipt010, "fnv-game-knowledge-execution-receipt", "0.1.0", "schemas/fnv-game-knowledge-execution-receipt/0.1.0/schema.json"),
         new(WastelandForgeSchemaIds.Fomod010, "fomod", "0.1.0", "schemas/fomod/0.1.0/schema.json"),
         new(WastelandForgeSchemaIds.FomodManifest010, "fomod-manifest", "0.1.0", "schemas/fomod-manifest/0.1.0/schema.json"),
         new(

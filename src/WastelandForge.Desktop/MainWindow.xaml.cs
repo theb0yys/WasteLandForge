@@ -18,10 +18,7 @@ public partial class MainWindow
 {
     private readonly ForgeCommandRunner forge = new();
     private readonly LocalAppSettingsStore settingsStore = new();
-    private readonly string logFilePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "WastelandForge",
-        "app.log");
+    private readonly string logFilePath = WastelandForgeLocalData.Combine("app.log");
 
     private bool initialized;
     private DoctorScanView? currentDoctorScan;
@@ -66,7 +63,8 @@ public partial class MainWindow
     private readonly BasicModBuilderWorkspace basicModBuilderWorkspace;
     private readonly GeckAuthoringReviewWorkspace geckAuthoringReviewWorkspace;
     private readonly GeckIntentBuilderWorkspace geckIntentBuilderWorkspace;
-    private readonly FnvGameKnowledgeCatalogue gameKnowledgeCatalogue = new();
+    private readonly FnvGameKnowledgeCatalogue gameKnowledgeCatalogue = new(WastelandForgeLocalData.Combine("game-knowledge", "fnv"));
+    private readonly GameKnowledgeExecutionService gameKnowledgeExecutionService;
     private readonly ReleaseCandidateMo2TestCopy releaseCandidateMo2TestCopy;
     private Mo2CompanionPackageResult mo2CompanionPackage = new(false, "Not checked.", "Not checked.");
     private readonly Mo2LaunchReceiptService mo2LaunchReceiptService = new();
@@ -105,6 +103,8 @@ public partial class MainWindow
     private string? gameKnowledgeReceiptPath;
     private string? gameKnowledgeClearToken;
     private CancellationTokenSource? gameKnowledgeCancellation;
+    private FnvGameKnowledgeExecutionPreparation? gameKnowledgeExecutionPreparation;
+    private string? gameKnowledgeExecutionArmedToken;
 
     public MainWindow()
     {
@@ -114,6 +114,7 @@ public partial class MainWindow
         geckAuthoringReviewWorkspace = new GeckAuthoringReviewWorkspace(new ForgeGeckAuthoringReviewCommandRunner(forge));
         geckIntentBuilderWorkspace = new GeckIntentBuilderWorkspace(new ForgeGeckIntentBuilderCommandRunner(forge));
         releaseCandidateMo2TestCopy = new ReleaseCandidateMo2TestCopy(candidateRunner);
+        gameKnowledgeExecutionService = new(gameKnowledgeCatalogue);
         InitializeComponent();
         GeckIntentProvidersDataGrid.ItemsSource = geckIntentProviders;
         GeckIntentResolutionsDataGrid.ItemsSource = geckIntentResolutions;
@@ -181,6 +182,7 @@ public partial class MainWindow
 
     private void RefreshGameKnowledge()
     {
+        DisarmGameKnowledgeExecution();
         var settings = settingsStore.Load();
         var masterPath = string.IsNullOrWhiteSpace(settings.DataRoot) ? string.Empty : Path.Combine(settings.DataRoot, "FalloutNV.esm");
         var providerPath = settings.ToolPaths.GetValueOrDefault("xedit", string.Empty);
@@ -220,6 +222,94 @@ public partial class MainWindow
         {
             SetGameKnowledgeBusy(false);
         }
+    }
+
+    private async void PreparePrivateGameKnowledgeRunClicked(object sender, RoutedEventArgs e)
+    {
+        var settings = settingsStore.Load();
+        var masterPath = string.IsNullOrWhiteSpace(settings.DataRoot) ? string.Empty : Path.Combine(settings.DataRoot, "FalloutNV.esm");
+        var providerPath = settings.ToolPaths.GetValueOrDefault("xedit", string.Empty);
+        var userStateRoot = WastelandForgeLocalData.FnvUserStateRoot;
+        gameKnowledgeExecutionPreparation = null;
+        DisarmGameKnowledgeExecution();
+        RunGameKnowledgeExportButton.IsEnabled = false;
+        SetGameKnowledgeBusy(true);
+        GameKnowledgeStateTextBlock.Text = FnvGameKnowledgeState.PreparingExport.ToString();
+        GameKnowledgeStatusTextBlock.Text = "Hashing the exact provider, Data, and user-state evidence for a private single-master run...";
+        try
+        {
+            var prepared = await Task.Run(() => gameKnowledgeCatalogue.PrepareAutomatedExecution(masterPath, providerPath, userStateRoot));
+            gameKnowledgeExecutionPreparation = prepared.Success ? prepared : null;
+            GameKnowledgeStateTextBlock.Text = prepared.State.ToString();
+            GameKnowledgeStatusTextBlock.Text = prepared.Message;
+            GameKnowledgeDetailsTextBox.Text = prepared.Details;
+        }
+        finally
+        {
+            SetGameKnowledgeBusy(false);
+            RunGameKnowledgeExportButton.IsEnabled = gameKnowledgeExecutionPreparation is not null;
+        }
+    }
+
+    private async void RunGameKnowledgeExportClicked(object sender, RoutedEventArgs e)
+    {
+        var approved = gameKnowledgeExecutionPreparation;
+        if (approved?.ApprovalToken is null || approved.ExecutablePath is null)
+        {
+            GameKnowledgeStatusTextBlock.Text = "The private xEdit preview is unavailable or stale. Prepare a new preview before running.";
+            DisarmGameKnowledgeExecution();
+            RunGameKnowledgeExportButton.IsEnabled = false;
+            return;
+        }
+        if (!StringComparer.Ordinal.Equals(gameKnowledgeExecutionArmedToken, approved.ApprovalToken))
+        {
+            gameKnowledgeExecutionArmedToken = approved.ApprovalToken;
+            RunGameKnowledgeExportButton.Content = "Confirm Run Export";
+            GameKnowledgeStatusTextBlock.Text = $"Confirm to execute the exact approved private xEdit plan {approved.ApprovalToken}. No provider has been started.";
+            return;
+        }
+        DisarmGameKnowledgeExecution();
+        gameKnowledgeExecutionPreparation = null;
+        RunGameKnowledgeExportButton.IsEnabled = false;
+        gameKnowledgeCancellation?.Dispose();
+        gameKnowledgeCancellation = new CancellationTokenSource();
+        SetGameKnowledgeBusy(true);
+        try
+        {
+            var result = await gameKnowledgeExecutionService.RunAsync(approved, (state, message) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    GameKnowledgeStateTextBlock.Text = state.ToString();
+                    GameKnowledgeStatusTextBlock.Text = message;
+                });
+            }, gameKnowledgeCancellation.Token);
+            GameKnowledgeStateTextBlock.Text = result.State.ToString();
+            GameKnowledgeStatusTextBlock.Text = result.Message;
+            GameKnowledgeDetailsTextBox.Text = string.Join(Environment.NewLine,
+                $"State: {result.State}",
+                $"PID: {result.ProcessId?.ToString(CultureInfo.InvariantCulture) ?? "Not created"}",
+                $"Exit code: {result.ExitCode?.ToString(CultureInfo.InvariantCulture) ?? "Unavailable"}",
+                $"Execution receipt: {result.ReceiptPath ?? "Unavailable"}",
+                $"Index: {result.IndexPath ?? "Not promoted"}",
+                $"Records: {result.RecordCount:N0}",
+                string.Empty,
+                "Observed changed paths:",
+                result.ChangedPaths.Count == 0 ? "  None" : string.Join(Environment.NewLine, result.ChangedPaths.Select(path => "  " + path)));
+            if (result.Success) RefreshGameKnowledge();
+        }
+        finally
+        {
+            SetGameKnowledgeBusy(false);
+            gameKnowledgeCancellation.Dispose();
+            gameKnowledgeCancellation = null;
+        }
+    }
+
+    private void DisarmGameKnowledgeExecution()
+    {
+        gameKnowledgeExecutionArmedToken = null;
+        if (RunGameKnowledgeExportButton is not null) RunGameKnowledgeExportButton.Content = "Run Export";
     }
 
     private async void ImportGameKnowledgeExportClicked(object sender, RoutedEventArgs e)
@@ -361,6 +451,8 @@ public partial class MainWindow
     {
         RefreshGameKnowledgeButton.IsEnabled = !busy;
         PrepareGameKnowledgeExportButton.IsEnabled = !busy;
+        PreparePrivateGameKnowledgeRunButton.IsEnabled = !busy;
+        RunGameKnowledgeExportButton.IsEnabled = !busy && gameKnowledgeExecutionPreparation is not null;
         RebuildGameKnowledgeButton.IsEnabled = !busy;
         ImportGameKnowledgeExportButton.IsEnabled = !busy && gameKnowledgeCatalogue.FindLatestRunDirectory() is not null;
         PreviewClearGameKnowledgeButton.IsEnabled = !busy;
@@ -1904,7 +1996,7 @@ public partial class MainWindow
     private void LoadXEditAuditSampleClicked(object sender, RoutedEventArgs e)
     {
         var source = Path.Combine(AppContext.BaseDirectory, "DemoProjects", "XEditAuditExample");
-        var demoRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WastelandForge", "DemoProjects");
+        var demoRoot = WastelandForgeLocalData.Combine("DemoProjects");
         var result = DemoProjectProvisioner.Prepare(source, demoRoot, reset: true, projectName: "XEditAuditExample");
         XEditAuditStatusTextBlock.Text = result.Success ? "Synthetic audit sample loaded." : result.Error;
         if (result.Success) ProjectPathTextBox.Text = result.ProjectPath!;
@@ -1963,7 +2055,7 @@ public partial class MainWindow
             var repository = FindRepositoryRoot();
             if (repository is not null) source = Path.Combine(repository, "fixtures", "projects", "CombinedModExample");
         }
-        var demoRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WastelandForge", "DemoProjects");
+        var demoRoot = WastelandForgeLocalData.Combine("DemoProjects");
         var result = DemoProjectProvisioner.Prepare(source, demoRoot, reset: false, projectName: "CombinedModExample");
         if (!result.Success || result.ProjectPath is null) { ProjectOutputsStatusTextBlock.Text = result.Error ?? "Combined sample could not be prepared."; return; }
         ProjectPathTextBox.Text = result.ProjectPath;
@@ -4398,10 +4490,7 @@ public partial class MainWindow
     {
         error = null;
         var sourceProject = FindDemoSourceProject();
-        var demoRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "WastelandForge",
-            "DemoProjects");
+        var demoRoot = WastelandForgeLocalData.Combine("DemoProjects");
         if (sourceProject is null) { error = "Bundled demo project was not found."; return null; }
         var result = DemoProjectProvisioner.Prepare(sourceProject, demoRoot, reset);
         error = result.Error;

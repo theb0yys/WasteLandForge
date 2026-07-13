@@ -113,6 +113,27 @@ public sealed class ManifestSchemaTests
         Assert.Equal("FalloutNV.esm", exportSchema?["properties"]?["source"]?["properties"]?["fileName"]?["const"]?.GetValue<string>());
         Assert.True(exportSchema?["$defs"]?["safety"]?["properties"]?["readOnly"]?["const"]?.GetValue<bool>());
         Assert.False(exportSchema?["$defs"]?["safety"]?["properties"]?["forgeExecutedXEdit"]?["const"]?.GetValue<bool>());
+
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeExport020, out var automatedExport));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeIndex020, out var automatedIndex));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeReceipt020, out var automatedReceipt));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionPlan010, out var executionPlan));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionReceipt010, out var executionReceipt));
+        Assert.Equal("0.2.0", automatedExport!.Version);
+        Assert.Equal("0.2.0", automatedIndex!.Version);
+        Assert.Equal("0.2.0", automatedReceipt!.Version);
+        Assert.Equal("fnv-game-knowledge-execution-plan", executionPlan!.Kind);
+        Assert.Equal("fnv-game-knowledge-execution-receipt", executionReceipt!.Kind);
+        var automatedSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(automatedExport));
+        Assert.True(automatedSchema?["$defs"]?["safety"]?["properties"]?["forgeExecutedXEdit"]?["const"]?.GetValue<bool>());
+        var planSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(executionPlan));
+        Assert.False(planSchema?["properties"]?["safety"]?["properties"]?["shellExecution"]?["const"]?.GetValue<bool>());
+        Assert.False(planSchema?["properties"]?["safety"]?["properties"]?["automaticRetry"]?["const"]?.GetValue<bool>());
+        Assert.False(planSchema?["properties"]?["safety"]?["properties"]?["processTermination"]?["const"]?.GetValue<bool>());
+        Assert.True(planSchema?["properties"]?["writePolicy"]?["properties"]?["backupsMustRemainEmpty"]?["const"]?.GetValue<bool>());
+        var executionReceiptSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(executionReceipt));
+        Assert.NotNull(executionReceiptSchema?["properties"]?["process"]?["properties"]?["elapsedMilliseconds"]);
+        Assert.NotNull(executionReceiptSchema?["properties"]?["inventories"]);
     }
 
     [Fact]

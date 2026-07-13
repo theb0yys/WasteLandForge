@@ -54,10 +54,7 @@ internal sealed class GeckIntentBuilderJournal
 
     public GeckIntentBuilderJournal(string? root = null)
     {
-        this.root = root ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "WastelandForge",
-            "geck-intent-journal");
+        this.root = root ?? WastelandForgeLocalData.Combine("geck-intent-journal");
         if (!Directory.Exists(this.root)) return;
         foreach (var staged in Directory.GetDirectories(this.root, "*.tmp-*", SearchOption.AllDirectories))
         {

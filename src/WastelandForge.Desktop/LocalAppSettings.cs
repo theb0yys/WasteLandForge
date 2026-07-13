@@ -28,10 +28,7 @@ internal sealed class LocalAppSettingsStore
 
     public LocalAppSettingsStore(string? settingsPath = null)
     {
-        SettingsPath = settingsPath ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "WastelandForge",
-            "app-settings.json");
+        SettingsPath = settingsPath ?? WastelandForgeLocalData.Combine("app-settings.json");
     }
 
     public string SettingsPath { get; }

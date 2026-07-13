@@ -33,6 +33,23 @@ public sealed class GameKnowledgeGoldenTests
     }
 
     [Fact]
+    public void AutomatedExportScriptHasSeparateTruthfulImmutableLineage()
+    {
+        const string output = @"C:\WastelandForge\GameKnowledge\automated\raw-export.json";
+
+        var manual = FnvGameKnowledgeCatalogue.CreateExportScript(output);
+        var automated = FnvGameKnowledgeCatalogue.CreateAutomatedExportScript(output);
+
+        Assert.NotEqual(manual, automated);
+        Assert.Contains("\"formatVersion\":\"0.2.0\"", automated, StringComparison.Ordinal);
+        Assert.Contains("fnv-game-knowledge-export/0.2.0", automated, StringComparison.Ordinal);
+        Assert.Contains("\"forgeExecutedXEdit\":true", automated, StringComparison.Ordinal);
+        Assert.DoesNotContain("ShellExecute", automated, StringComparison.Ordinal);
+        Assert.DoesNotContain("SetElement", automated, StringComparison.Ordinal);
+        Assert.Equal(automated, FnvGameKnowledgeCatalogue.CreateAutomatedExportScript(output));
+    }
+
+    [Fact]
     public void GameKnowledgeDiagnosticHasCanonicalExplainMetadata()
     {
         var explained = ExplainDiagnosticRuleFamilies.Explain(RuleId.Parse("WF-GEN-018"));

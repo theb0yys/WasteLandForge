@@ -8,10 +8,11 @@ using WastelandForge.Schema;
 
 namespace WastelandForge.Generation;
 
-public sealed class FnvGameKnowledgeCatalogue
+public sealed partial class FnvGameKnowledgeCatalogue
 {
     public const string RuleId = "WF-GEN-018";
     public const string ScriptId = "wastelandforge.fnv-game-knowledge-export/0.1.0";
+    public const string AutomatedScriptId = "wastelandforge.fnv-game-knowledge-export/0.2.0";
     public const string ScriptFileName = "WastelandForgeFNVGameKnowledge.pas";
     public const string RunManifestFileName = "run-manifest.json";
     public const string RawExportFileName = "raw-export.json";
@@ -21,9 +22,12 @@ public sealed class FnvGameKnowledgeCatalogue
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private static readonly UTF8Encoding Utf8NoBom = new(false);
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
-    private static readonly Lazy<JsonSchema> ExportSchema = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeExport010));
-    private static readonly Lazy<JsonSchema> IndexSchema = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeIndex010));
-    private static readonly Lazy<JsonSchema> ReceiptSchema = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeReceipt010));
+    private static readonly Lazy<JsonSchema> ExportSchema010 = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeExport010));
+    private static readonly Lazy<JsonSchema> ExportSchema020 = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeExport020));
+    private static readonly Lazy<JsonSchema> IndexSchema010 = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeIndex010));
+    private static readonly Lazy<JsonSchema> IndexSchema020 = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeIndex020));
+    private static readonly Lazy<JsonSchema> ReceiptSchema010 = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeReceipt010));
+    private static readonly Lazy<JsonSchema> ReceiptSchema020 = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeReceipt020));
     private static readonly string[] MutationTokens =
     [
         "AddMasterIfMissing", "SetElement", "SetEditValue", "SetNativeValue", "ElementAssign",
@@ -38,6 +42,11 @@ public sealed class FnvGameKnowledgeCatalogue
             "WastelandForge",
             "game-knowledge",
             "fnv"), FnvGameKnowledgeLimits.Default)
+    {
+    }
+
+    public FnvGameKnowledgeCatalogue(string cacheRoot)
+        : this(cacheRoot, FnvGameKnowledgeLimits.Default)
     {
     }
 
@@ -140,6 +149,8 @@ public sealed class FnvGameKnowledgeCatalogue
             var manifestPath = ResolveContainedRegularFile(run, Path.Combine(run, RunManifestFileName), "run manifest");
             var manifest = ParseObject(ReadBounded(manifestPath, 4 * 1024 * 1024, "run manifest"), "run manifest");
             ValidateRunManifest(manifest, run);
+            var evidenceVersion = RequiredText(manifest, "formatVersion");
+            var automated = StringComparer.Ordinal.Equals(evidenceVersion, "0.2.0");
 
             var providerPath = RequiredText(manifest["provider"], "path");
             var masterPath = RequiredText(manifest["master"], "path");
@@ -148,7 +159,7 @@ public sealed class FnvGameKnowledgeCatalogue
             VerifyDigestNode(manifest["provider"], ValidateProvider(providerPath), "xEdit provider");
             VerifyDigestNode(manifest["master"], ValidateMaster(masterPath), "FalloutNV.esm");
             VerifyDigestNode(manifest["script"], ResolveContainedRegularFile(run, scriptPath, "export script"), "export script");
-            var expectedScript = Utf8NoBom.GetBytes(CreateExportScript(rawExportPath));
+            var expectedScript = Utf8NoBom.GetBytes(CreateExportScript(rawExportPath, automated));
             var actualScript = ReadBounded(scriptPath, 4 * 1024 * 1024, "export script");
             RefuseMutationTokens(actualScript);
             if (!actualScript.AsSpan().SequenceEqual(expectedScript)) throw Evidence("The generated export script is stale or tampered.");
@@ -156,7 +167,7 @@ public sealed class FnvGameKnowledgeCatalogue
             var rawPath = ResolveContainedRegularFile(run, rawExportPath, "raw export");
             var rawBytes = ReadBounded(rawPath, limits.MaxExportBytes, "raw export");
             RejectDuplicateProperties(rawBytes, "raw export");
-            var export = ParseAndValidate(rawBytes, ExportSchema.Value, "fnv-game-knowledge-export/0.1.0");
+            var export = ParseAndValidate(rawBytes, ExportSchemaFor(automated), $"fnv-game-knowledge-export/{evidenceVersion}");
             cancellationToken.ThrowIfCancellationRequested();
             ValidateExport(export);
 
@@ -167,16 +178,17 @@ public sealed class FnvGameKnowledgeCatalogue
                 ValidateRecordText(records[index]);
             }
 
-            var schemaBytes = Utf8NoBom.GetBytes(WastelandForgeSchemaCatalog.ReadText(SchemaResource(WastelandForgeSchemaIds.FnvGameKnowledgeExport010)));
+            var exportSchemaId = automated ? WastelandForgeSchemaIds.FnvGameKnowledgeExport020 : WastelandForgeSchemaIds.FnvGameKnowledgeExport010;
+            var schemaBytes = Utf8NoBom.GetBytes(WastelandForgeSchemaCatalog.ReadText(SchemaResource(exportSchemaId)));
             var provenance = new JsonObject
             {
                 ["provider"] = PublicDigest(providerPath, Digest(providerPath)),
                 ["master"] = PublicDigest(masterPath, Digest(masterPath)),
-                ["script"] = PublicDigest(scriptPath, Digest(scriptPath), ScriptId, Normalize(Path.GetRelativePath(CacheRoot, scriptPath))),
+                ["script"] = PublicDigest(scriptPath, Digest(scriptPath), automated ? AutomatedScriptId : ScriptId, Normalize(Path.GetRelativePath(CacheRoot, scriptPath))),
                 ["export"] = PublicDigest(rawPath, Digest(rawPath), cachePath: Normalize(Path.GetRelativePath(CacheRoot, rawPath))),
                 ["schema"] = new JsonObject
                 {
-                    ["id"] = WastelandForgeSchemaIds.FnvGameKnowledgeExport010,
+                    ["id"] = exportSchemaId,
                     ["length"] = schemaBytes.LongLength,
                     ["sha256"] = Sha(schemaBytes)
                 }
@@ -189,7 +201,7 @@ public sealed class FnvGameKnowledgeCatalogue
             var source = export["source"]!.AsObject();
             var indexDocument = new JsonObject
             {
-                ["formatVersion"] = "0.1.0",
+                ["formatVersion"] = evidenceVersion,
                 ["kind"] = "wastelandforge.fnv-game-knowledge-index",
                 ["createdAtUtc"] = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
                 ["sourceClassification"] = source["synthetic"]!.GetValue<bool>() ? "synthetic" : "local-game-data",
@@ -197,10 +209,10 @@ public sealed class FnvGameKnowledgeCatalogue
                 ["recordCount"] = records.Length,
                 ["records"] = export["records"]!.DeepClone(),
                 ["payloadSha256"] = Sha(JsonBytes(payload)),
-                ["safety"] = Safety()
+                ["safety"] = Safety(automated)
             };
             var indexBytes = JsonBytes(indexDocument);
-            ParseAndValidate(indexBytes, IndexSchema.Value, "fnv-game-knowledge-index/0.1.0");
+            ParseAndValidate(indexBytes, IndexSchemaFor(automated), $"fnv-game-knowledge-index/{evidenceVersion}");
             var indexDigest = new DigestValue(indexBytes.LongLength, Sha(indexBytes));
             var sealBytes = Utf8NoBom.GetBytes($"{indexDigest.Sha256}  {indexDigest.Length}  {IndexFileName}\n");
             var tempIndex = IndexPath + ".importing";
@@ -208,7 +220,7 @@ public sealed class FnvGameKnowledgeCatalogue
             var tempSeal = sealPath + ".importing";
             AtomicWrite(tempIndex, indexBytes);
             AtomicWrite(tempSeal, sealBytes);
-            ParseAndValidate(ReadBounded(tempIndex, limits.MaxExportBytes, "staged index"), IndexSchema.Value, "fnv-game-knowledge-index/0.1.0");
+            ParseAndValidate(ReadBounded(tempIndex, limits.MaxExportBytes, "staged index"), IndexSchemaFor(automated), $"fnv-game-knowledge-index/{evidenceVersion}");
             cancellationToken.ThrowIfCancellationRequested();
 
             oldIndex = File.Exists(IndexPath) ? File.ReadAllBytes(IndexPath) : null;
@@ -251,7 +263,9 @@ public sealed class FnvGameKnowledgeCatalogue
 
             EnsurePrivateRoot();
             var indexBytes = ReadBounded(ResolveContainedRegularFile(CacheRoot, IndexPath, "game-knowledge index"), limits.MaxExportBytes, "game-knowledge index");
-            var index = ParseAndValidate(indexBytes, IndexSchema.Value, "fnv-game-knowledge-index/0.1.0");
+            var indexHeader = ParseObject(indexBytes, "game-knowledge index");
+            var automated = StringComparer.Ordinal.Equals(RequiredText(indexHeader, "formatVersion"), "0.2.0");
+            var index = ParseAndValidate(indexBytes, IndexSchemaFor(automated), $"fnv-game-knowledge-index/{RequiredText(indexHeader, "formatVersion")}");
             ValidateSeal(indexBytes);
             var records = index["records"]!.AsArray().OfType<JsonObject>().Select(ToRecord).ToArray();
             var created = DateTimeOffset.Parse(index["createdAtUtc"]!.GetValue<string>(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
@@ -313,11 +327,14 @@ public sealed class FnvGameKnowledgeCatalogue
             var record = snapshot.Records.SingleOrDefault(item => StringComparer.Ordinal.Equals(item.StableId, stableId))
                 ?? throw Evidence("The selected record is not present in the current sealed index.");
             var indexBytes = ReadBounded(snapshot.IndexPath, limits.MaxExportBytes, "game-knowledge index");
-            var index = ParseAndValidate(indexBytes, IndexSchema.Value, "fnv-game-knowledge-index/0.1.0");
+            var indexHeader = ParseObject(indexBytes, "game-knowledge index");
+            var automated = StringComparer.Ordinal.Equals(RequiredText(indexHeader, "formatVersion"), "0.2.0");
+            var evidenceVersion = automated ? "0.2.0" : "0.1.0";
+            var index = ParseAndValidate(indexBytes, IndexSchemaFor(automated), $"fnv-game-knowledge-index/{evidenceVersion}");
             var provenance = index["provenance"]!.AsObject();
             var receipt = new JsonObject
             {
-                ["formatVersion"] = "0.1.0",
+                ["formatVersion"] = evidenceVersion,
                 ["kind"] = "wastelandforge.fnv-game-knowledge-receipt",
                 ["createdAtUtc"] = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
                 ["sourceClassification"] = "local-only",
@@ -336,7 +353,7 @@ public sealed class FnvGameKnowledgeCatalogue
                     "GECK Intent Builder must keep this resolution provisional until a human verifies it locally.")
             };
             var bytes = JsonBytes(receipt);
-            ParseAndValidate(bytes, ReceiptSchema.Value, "fnv-game-knowledge-receipt/0.1.0");
+            ParseAndValidate(bytes, ReceiptSchemaFor(automated), $"fnv-game-knowledge-receipt/{evidenceVersion}");
             var receiptsRoot = ContainedDirectory(CacheRoot, "receipts");
             Directory.CreateDirectory(receiptsRoot);
             RefuseReparseComponents(receiptsRoot);
@@ -406,9 +423,15 @@ public sealed class FnvGameKnowledgeCatalogue
         }
     }
 
-    internal static string CreateExportScript(string rawExportPath)
+    internal static string CreateExportScript(string rawExportPath) => CreateExportScript(rawExportPath, false);
+
+    internal static string CreateAutomatedExportScript(string rawExportPath) => CreateExportScript(rawExportPath, true);
+
+    private static string CreateExportScript(string rawExportPath, bool automated)
     {
         var output = Pascal(Path.GetFullPath(rawExportPath));
+        var evidenceVersion = automated ? "0.2.0" : "0.1.0";
+        var forgeExecuted = automated ? "true" : "false";
         var builder = new StringBuilder();
         builder.AppendLine("unit WastelandForgeFNVGameKnowledge;");
         builder.AppendLine();
@@ -470,11 +493,11 @@ public sealed class FnvGameKnowledgeCatalogue
         builder.AppendLine();
         builder.AppendLine("function Finalize: Integer;");
         builder.AppendLine("var OutputLines: TStringList; Complete: Boolean; begin Records.Sort; Complete := TargetSeen and (Refusals.Count = 0) and (Omissions.Count = 0);");
-        builder.AppendLine("  OutputLines := TStringList.Create; OutputLines.Add('{\"formatVersion\":\"0.1.0\",\"kind\":\"wastelandforge.fnv-game-knowledge-export\",');");
-        builder.AppendLine("  OutputLines.Add('\"producer\":{\"name\":\"xEdit\",\"gameMode\":\"FNV\",\"scriptId\":\"wastelandforge.fnv-game-knowledge-export/0.1.0\"},');");
+        builder.AppendLine($"  OutputLines := TStringList.Create; OutputLines.Add('{{\"formatVersion\":\"{evidenceVersion}\",\"kind\":\"wastelandforge.fnv-game-knowledge-export\",');");
+        builder.AppendLine($"  OutputLines.Add('\"producer\":{{\"name\":\"xEdit\",\"gameMode\":\"FNV\",\"scriptId\":\"wastelandforge.fnv-game-knowledge-export/{evidenceVersion}\"}},');");
         builder.AppendLine("  OutputLines.Add('\"source\":{\"fileName\":\"FalloutNV.esm\",\"synthetic\":false,\"usesRealPluginBytes\":true},');");
         builder.AppendLine("  OutputLines.Add('\"completion\":{\"complete\":' + BoolJson(Complete) + ',\"recordsVisited\":' + IntToStr(RecordsVisited) + ',\"recordsEmitted\":' + IntToStr(Records.Count) + ',\"omissions\":' + JoinJson(Omissions) + ',\"refusals\":' + JoinJson(Refusals) + '},');");
-        builder.AppendLine("  OutputLines.Add('\"records\":' + JoinJson(Records) + ',\"safety\":{\"readOnly\":true,\"forgeExecutedXEdit\":false,\"mutatedPlugin\":false,\"wrotePlugin\":false,\"changedLoadOrder\":false,\"wroteGameData\":false}}');");
+        builder.AppendLine($"  OutputLines.Add('\"records\":' + JoinJson(Records) + ',\"safety\":{{\"readOnly\":true,\"forgeExecutedXEdit\":{forgeExecuted},\"mutatedPlugin\":false,\"wrotePlugin\":false,\"changedLoadOrder\":false,\"wroteGameData\":false}}}}');");
         builder.AppendLine("  OutputLines.SaveToFile(RawOutputFile); OutputLines.Free; Records.Free; Refusals.Free; Omissions.Free; Result := 0; end;");
         return builder.ToString().ReplaceLineEndings("\n");
     }
@@ -545,11 +568,13 @@ public sealed class FnvGameKnowledgeCatalogue
             var exportPath = ResolveContainedRegularFile(CacheRoot, Path.Combine(CacheRoot, RequiredText(exportEvidence, "cachePath").Replace('/', Path.DirectorySeparatorChar)), "retained raw export");
             VerifyPublicDigest(scriptEvidence, scriptPath, "retained export script");
             VerifyPublicDigest(exportEvidence, exportPath, "retained raw export");
-            var expectedScript = Utf8NoBom.GetBytes(CreateExportScript(exportPath));
+            var automated = StringComparer.Ordinal.Equals(RequiredText(scriptEvidence, "id"), AutomatedScriptId);
+            var expectedScript = Utf8NoBom.GetBytes(CreateExportScript(exportPath, automated));
             var actualScript = ReadBounded(scriptPath, 4 * 1024 * 1024, "retained export script");
             RefuseMutationTokens(actualScript);
             if (!actualScript.AsSpan().SequenceEqual(expectedScript)) return "retained export script changed";
-            var schemaBytes = Utf8NoBom.GetBytes(WastelandForgeSchemaCatalog.ReadText(SchemaResource(WastelandForgeSchemaIds.FnvGameKnowledgeExport010)));
+            var schemaId = automated ? WastelandForgeSchemaIds.FnvGameKnowledgeExport020 : WastelandForgeSchemaIds.FnvGameKnowledgeExport010;
+            var schemaBytes = Utf8NoBom.GetBytes(WastelandForgeSchemaCatalog.ReadText(SchemaResource(schemaId)));
             var schema = provenance["schema"]!.AsObject();
             if (schema["length"]!.GetValue<long>() != schemaBytes.LongLength || !StringComparer.Ordinal.Equals(schema["sha256"]!.GetValue<string>(), Sha(schemaBytes))) return "export schema changed";
             return null;
@@ -562,20 +587,23 @@ public sealed class FnvGameKnowledgeCatalogue
 
     private void ValidateRunManifest(JsonObject manifest, string run)
     {
-        if (RequiredText(manifest, "formatVersion") != "0.1.0" || RequiredText(manifest, "kind") != "wastelandforge.fnv-game-knowledge-run-manifest") throw Evidence("Run manifest contract is unsupported.");
+        var version = RequiredText(manifest, "formatVersion");
+        var automated = StringComparer.Ordinal.Equals(version, "0.2.0");
+        if ((!automated && !StringComparer.Ordinal.Equals(version, "0.1.0")) || RequiredText(manifest, "kind") != "wastelandforge.fnv-game-knowledge-run-manifest") throw Evidence("Run manifest contract is unsupported.");
         var raw = RequiredText(manifest, "rawExportPath");
         var expectedRaw = Path.Combine(run, RawExportFileName);
         if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetFullPath(raw), expectedRaw)) throw Evidence("Run manifest raw-export destination is mismatched.");
         var script = RequiredText(manifest["script"], "path");
         if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetFullPath(script), Path.Combine(run, ScriptFileName))) throw Evidence("Run manifest script destination is mismatched.");
-        if (RequiredText(manifest["script"], "id") != ScriptId) throw Evidence("Run manifest script identity is unsupported.");
-        ValidateSafety(manifest["safety"]?.AsObject() ?? throw Evidence("Run manifest safety evidence is missing."));
+        var expectedScriptId = automated ? AutomatedScriptId : ScriptId;
+        if (RequiredText(manifest["script"], "id") != expectedScriptId) throw Evidence("Run manifest script identity is unsupported.");
+        ValidateSafety(manifest["safety"]?.AsObject() ?? throw Evidence("Run manifest safety evidence is missing."), automated);
     }
 
-    private static void ValidateSafety(JsonObject safety)
+    private static void ValidateSafety(JsonObject safety, bool automated = false)
     {
         if (safety["readOnly"]?.GetValue<bool>() != true ||
-            safety["forgeExecutedXEdit"]?.GetValue<bool>() != false ||
+            safety["forgeExecutedXEdit"]?.GetValue<bool>() != automated ||
             safety["mutatedPlugin"]?.GetValue<bool>() != false ||
             safety["wrotePlugin"]?.GetValue<bool>() != false ||
             safety["changedLoadOrder"]?.GetValue<bool>() != false ||
@@ -821,10 +849,10 @@ public sealed class FnvGameKnowledgeCatalogue
         };
     }
 
-    private static JsonObject Safety() => new()
+    private static JsonObject Safety(bool automated = false) => new()
     {
         ["readOnly"] = true,
-        ["forgeExecutedXEdit"] = false,
+        ["forgeExecutedXEdit"] = automated,
         ["mutatedPlugin"] = false,
         ["wrotePlugin"] = false,
         ["changedLoadOrder"] = false,
@@ -894,6 +922,9 @@ public sealed class FnvGameKnowledgeCatalogue
     private static string Normalize(string path) => path.Replace('\\', '/');
     private static string Pascal(string value) => value.Replace("'", "''", StringComparison.Ordinal);
     private static byte[] JsonBytes(JsonNode value) => Utf8NoBom.GetBytes(value.ToJsonString(JsonOptions) + "\n");
+    private static JsonSchema ExportSchemaFor(bool automated) => automated ? ExportSchema020.Value : ExportSchema010.Value;
+    private static JsonSchema IndexSchemaFor(bool automated) => automated ? IndexSchema020.Value : IndexSchema010.Value;
+    private static JsonSchema ReceiptSchemaFor(bool automated) => automated ? ReceiptSchema020.Value : ReceiptSchema010.Value;
     private static DigestValue Digest(string path) { using var stream = File.OpenRead(path); return new(stream.Length, Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant()); }
     private static string Sha(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
     private static JsonSchema LoadSchema(string id) => JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(SchemaResource(id)), new BuildOptions { SchemaRegistry = new SchemaRegistry() });

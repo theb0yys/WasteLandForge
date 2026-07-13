@@ -10,7 +10,7 @@ internal sealed record Mo2LaunchReceiptDiscoveryResult(IReadOnlyList<Mo2LaunchRe
 
 internal sealed class Mo2LaunchReceiptService(string? requestRoot = null)
 {
-    private readonly string root = Path.GetFullPath(requestRoot ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WastelandForge", "Mo2LaunchRequests"));
+    private readonly string root = Path.GetFullPath(requestRoot ?? WastelandForgeLocalData.Combine("Mo2LaunchRequests"));
     private static readonly string[] RequestKeys = ["formatVersion", "kind", "requestId", "createdUtc", "expiresUtc", "project", "tool", "safety"];
     private static readonly string[] ProjectKeys = ["root", "contextKind", "contextId", "contextSha256"];
     private static readonly string[] ToolKeys = ["kind", "executablePath", "workingDirectory", "length", "sha256", "arguments"];

@@ -13,8 +13,13 @@ public static class WastelandForgeSchemaIds
     public const string GeckAuthoringVerification010 = "https://schemas.wastelandforge.dev/fnv/geck-authoring-verification/0.1.0/schema.json";
     public const string GeckHostProbeRunPlan010 = "https://schemas.wastelandforge.dev/fnv/geck-host-probe-run-plan/0.1.0/schema.json";
     public const string FnvGameKnowledgeExport010 = "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-export/0.1.0/schema.json";
+    public const string FnvGameKnowledgeExport020 = "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-export/0.2.0/schema.json";
     public const string FnvGameKnowledgeIndex010 = "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-index/0.1.0/schema.json";
+    public const string FnvGameKnowledgeIndex020 = "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-index/0.2.0/schema.json";
     public const string FnvGameKnowledgeReceipt010 = "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-receipt/0.1.0/schema.json";
+    public const string FnvGameKnowledgeReceipt020 = "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-receipt/0.2.0/schema.json";
+    public const string FnvGameKnowledgeExecutionPlan010 = "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-execution-plan/0.1.0/schema.json";
+    public const string FnvGameKnowledgeExecutionReceipt010 = "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-execution-receipt/0.1.0/schema.json";
     public const string Fomod010 = "https://schemas.wastelandforge.dev/fnv/fomod/0.1.0/schema.json";
     public const string FomodManifest010 = "https://schemas.wastelandforge.dev/fnv/fomod-manifest/0.1.0/schema.json";
     public const string Dependency010 = "https://schemas.wastelandforge.dev/fnv/dependencies/0.1.0/schema.json";

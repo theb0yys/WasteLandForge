@@ -44,7 +44,7 @@ internal static class GeckHandoffWorkspace
             var freshness = sources.All(source => source.Status == "Current") ? "Fresh" : "Stale";
             var manifestSha = Sha(manifestBytes);
             var projectFingerprint = Sha(Encoding.UTF8.GetBytes(project.TrimEnd(Path.DirectorySeparatorChar).ToUpperInvariant()));
-            var ledgerRoot = stateRoot ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WastelandForge", "GeckSessions");
+            var ledgerRoot = stateRoot ?? WastelandForgeLocalData.Combine("GeckSessions");
             var ledgerPath = Path.Combine(ledgerRoot, projectFingerprint, manifestSha + ".json");
             var states = ReadLedger(ledgerPath, projectFingerprint, manifestSha, tasks);
             var projected = tasks.Select(task => task with { Status = states.Contains(task.ActionId) ? "Completed" : "Pending" }).ToArray();

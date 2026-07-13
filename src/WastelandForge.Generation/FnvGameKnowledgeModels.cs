@@ -14,6 +14,18 @@ public enum FnvGameKnowledgeState
     Blocked
 }
 
+public enum FnvGameKnowledgeExecutionState
+{
+    Prepared,
+    ApprovalRequired,
+    Starting,
+    Running,
+    ProcessExited,
+    AuditingSideEffects,
+    OutputReady,
+    FailedClosed
+}
+
 public sealed record FnvGameKnowledgeRecord(
     string SourceFile,
     string Signature,
@@ -53,6 +65,47 @@ public sealed record FnvGameKnowledgeImportResult(
     bool IndexReplaced,
     bool ExternalToolExecuted,
     bool GameDataWritten);
+
+public sealed record FnvGameKnowledgeExecutionPreparation(
+    bool Success,
+    FnvGameKnowledgeExecutionState State,
+    string Message,
+    string? RuleId,
+    string? RunDirectory,
+    string? PlanPath,
+    string? ApprovalToken,
+    string? ExecutablePath,
+    string? WorkingDirectory,
+    IReadOnlyList<string> Arguments,
+    string Details);
+
+public sealed record FnvGameKnowledgeExecutionRequest(
+    string RunDirectory,
+    string ApprovalToken,
+    string ExecutablePath,
+    string WorkingDirectory,
+    IReadOnlyList<string> Arguments);
+
+public sealed record FnvGameKnowledgeProcessEvidence(
+    bool ProcessStarted,
+    int? ProcessId,
+    DateTimeOffset StartedAtUtc,
+    DateTimeOffset ExitedAtUtc,
+    int? ExitCode,
+    bool WaitCancelled,
+    string? Failure);
+
+public sealed record FnvGameKnowledgeExecutionResult(
+    bool Success,
+    FnvGameKnowledgeExecutionState State,
+    string Message,
+    string? RuleId,
+    int? ProcessId,
+    int? ExitCode,
+    string? ReceiptPath,
+    string? IndexPath,
+    int RecordCount,
+    IReadOnlyList<string> ChangedPaths);
 
 public sealed record FnvGameKnowledgeSnapshot(
     FnvGameKnowledgeState State,

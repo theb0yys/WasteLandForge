@@ -1042,12 +1042,13 @@
         </TabItem>
 
         <TabItem x:Name="GameKnowledgeTabItem" Header="Game Knowledge" AutomationProperties.AutomationId="GameKnowledgeTabItem">
-          <Grid Margin="0,18,0,0">
+          <ScrollViewer x:Name="GameKnowledgeScrollViewer" AutomationProperties.AutomationId="GameKnowledgeScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <Grid Margin="0,18,0,0" MinHeight="460">
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
-              <RowDefinition Height="3*" />
-              <RowDefinition Height="2*" />
+              <RowDefinition Height="3*" MinHeight="120" />
+              <RowDefinition Height="2*" MinHeight="100" />
               <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
@@ -1060,6 +1061,8 @@
               <WrapPanel Grid.Row="1" Margin="0,10,0,0" HorizontalAlignment="Left">
                 <Button x:Name="RefreshGameKnowledgeButton" AutomationProperties.AutomationId="RefreshGameKnowledgeButton" Content="Refresh" Click="RefreshGameKnowledgeClicked" />
                 <Button x:Name="PrepareGameKnowledgeExportButton" AutomationProperties.AutomationId="PrepareGameKnowledgeExportButton" Content="Prepare Export" Margin="8,0,0,0" Click="PrepareGameKnowledgeExportClicked" />
+                <Button x:Name="PreparePrivateGameKnowledgeRunButton" AutomationProperties.AutomationId="PreparePrivateGameKnowledgeRunButton" Content="Preview Private xEdit Run" Margin="8,0,0,0" Click="PreparePrivateGameKnowledgeRunClicked" />
+                <Button x:Name="RunGameKnowledgeExportButton" AutomationProperties.AutomationId="RunGameKnowledgeExportButton" Content="Run Export" Margin="8,0,0,0" IsEnabled="False" Style="{StaticResource PrimaryButton}" Click="RunGameKnowledgeExportClicked" />
                 <Button x:Name="ImportGameKnowledgeExportButton" AutomationProperties.AutomationId="ImportGameKnowledgeExportButton" Content="Import Export" Margin="8,0,0,0" Click="ImportGameKnowledgeExportClicked" />
                 <Button x:Name="RebuildGameKnowledgeButton" AutomationProperties.AutomationId="RebuildGameKnowledgeButton" Content="Rebuild" Margin="8,0,0,0" Click="PrepareGameKnowledgeExportClicked" />
               </WrapPanel>
@@ -1124,6 +1127,7 @@
               </WrapPanel>
             </Grid>
           </Grid>
+          </ScrollViewer>
         </TabItem>
 
         <TabItem x:Name="NewProjectTabItem" Header="New Project">
