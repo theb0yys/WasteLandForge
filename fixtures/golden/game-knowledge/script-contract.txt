@@ -1,0 +1,12 @@
+unit WastelandForgeFNVGameKnowledge;
+  TargetFile = 'FalloutNV.esm';
+  RawOutputFile = 'C:\WastelandForge\GameKnowledge\raw-export.json';
+  MaxRecords = 2000000;
+function JsonEscape(Value: string): string;
+function IdentityJson(e: IInterface): string;
+function FindParentRecord(e: IInterface; Wanted: string): IInterface;
+function ContextJson(e: IInterface): string;
+function RecordJson(e: IInterface): string;
+function Initialize: Integer;
+function Process(e: IInterface): Integer;
+function Finalize: Integer;

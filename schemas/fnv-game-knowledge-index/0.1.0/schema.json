@@ -37,6 +37,7 @@
       "required": ["fileName", "length", "sha256"],
       "properties": {
         "fileName": { "$ref": "#/$defs/text" },
+        "cachePath": { "type": "string", "minLength": 1, "maxLength": 1024 },
         "length": { "type": "integer", "minimum": 1 },
         "sha256": { "$ref": "#/$defs/sha" }
       }
@@ -48,6 +49,7 @@
       "properties": {
         "id": { "const": "wastelandforge.fnv-game-knowledge-export/0.1.0" },
         "fileName": { "$ref": "#/$defs/text" },
+        "cachePath": { "type": "string", "minLength": 1, "maxLength": 1024 },
         "length": { "type": "integer", "minimum": 1 },
         "sha256": { "$ref": "#/$defs/sha" }
       }

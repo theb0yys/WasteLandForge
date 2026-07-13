@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
@@ -8,6 +9,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
+using WastelandForge.Generation;
 using WastelandForge.Validation;
 
 namespace WastelandForge.Desktop;
@@ -64,6 +66,7 @@ public partial class MainWindow
     private readonly BasicModBuilderWorkspace basicModBuilderWorkspace;
     private readonly GeckAuthoringReviewWorkspace geckAuthoringReviewWorkspace;
     private readonly GeckIntentBuilderWorkspace geckIntentBuilderWorkspace;
+    private readonly FnvGameKnowledgeCatalogue gameKnowledgeCatalogue = new();
     private readonly ReleaseCandidateMo2TestCopy releaseCandidateMo2TestCopy;
     private Mo2CompanionPackageResult mo2CompanionPackage = new(false, "Not checked.", "Not checked.");
     private readonly Mo2LaunchReceiptService mo2LaunchReceiptService = new();
@@ -98,6 +101,10 @@ public partial class MainWindow
     private string? geckIntentRecoveryToken;
     private string? geckIntentUndoToken;
     private bool loadingGeckIntentBuilder;
+    private FnvGameKnowledgeSnapshot gameKnowledgeSnapshot = FnvGameKnowledgeSnapshot.Empty(FnvGameKnowledgeState.NotConfigured, "Not loaded.");
+    private string? gameKnowledgeReceiptPath;
+    private string? gameKnowledgeClearToken;
+    private CancellationTokenSource? gameKnowledgeCancellation;
 
     public MainWindow()
     {
@@ -110,6 +117,8 @@ public partial class MainWindow
         InitializeComponent();
         GeckIntentProvidersDataGrid.ItemsSource = geckIntentProviders;
         GeckIntentResolutionsDataGrid.ItemsSource = geckIntentResolutions;
+        GameKnowledgeSignatureComboBox.ItemsSource = new[] { "All signatures" };
+        GameKnowledgeSignatureComboBox.SelectedIndex = 0;
         InitializeNarrativeWorkspace();
 
         LoadLocalSettings();
@@ -156,7 +165,7 @@ public partial class MainWindow
         if (sender is not System.Windows.Controls.ComboBox combo || combo.SelectedItem is not System.Windows.Controls.ComboBoxItem item || item.Tag is not string route) return;
         MainTabControl.SelectedItem = route switch
         {
-            "basic" => BasicModBuilderTabItem, "geck-intent" => GeckIntentBuilderTabItem, "plugin-workbench" => PluginModWorkbenchTabItem, "mod-builder" => ModBuilderTabItem,
+            "basic" => BasicModBuilderTabItem, "game-knowledge" => GameKnowledgeTabItem, "geck-intent" => GeckIntentBuilderTabItem, "plugin-workbench" => PluginModWorkbenchTabItem, "mod-builder" => ModBuilderTabItem,
             "narrative" => NarrativeAuthorTabItem, "mcm" => McmAuthorTabItem, "jip" => JipAuthorTabItem,
             "validation" => ValidationReportTabItem, "capabilities" => CapabilitiesTabItem, "xedit" => XEditAuditTabItem,
             "plugin-intake" => PluginIntakeTabItem, "geck" => GeckHandoffTabItem, "outputs" => ProjectOutputsTabItem,
@@ -164,8 +173,221 @@ public partial class MainWindow
             "settings" => SettingsTabItem, "logs" => AdvancedLogsTabItem, _ => MainTabControl.SelectedItem
         };
         if (route == "geck" && GeckAuthoringModeTabControl is not null) GeckAuthoringModeTabControl.SelectedItem = GeckAuthoringReviewTabItem;
+        if (route == "game-knowledge") RefreshGameKnowledge();
         if (route == "geck-intent") RefreshGeckIntentBuilder();
     }
+
+    private void RefreshGameKnowledgeClicked(object sender, RoutedEventArgs e) => RefreshGameKnowledge();
+
+    private void RefreshGameKnowledge()
+    {
+        var settings = settingsStore.Load();
+        var masterPath = string.IsNullOrWhiteSpace(settings.DataRoot) ? string.Empty : Path.Combine(settings.DataRoot, "FalloutNV.esm");
+        var providerPath = settings.ToolPaths.GetValueOrDefault("xedit", string.Empty);
+        gameKnowledgeSnapshot = gameKnowledgeCatalogue.Load(masterPath, providerPath);
+        GameKnowledgeStateTextBlock.Text = gameKnowledgeSnapshot.State.ToString();
+        GameKnowledgeStatusTextBlock.Text = gameKnowledgeSnapshot.Message;
+        GameKnowledgeDetailsTextBox.Text = RenderGameKnowledgeSnapshot(gameKnowledgeSnapshot);
+        ImportGameKnowledgeExportButton.IsEnabled = gameKnowledgeSnapshot.LatestRunDirectory is not null;
+        CreateGameKnowledgeReceiptButton.IsEnabled = gameKnowledgeSnapshot.State == FnvGameKnowledgeState.Ready && GameKnowledgeResultsDataGrid.SelectedItem is FnvGameKnowledgeRecord;
+        gameKnowledgeReceiptPath = null;
+        gameKnowledgeClearToken = null;
+        ConfirmClearGameKnowledgeButton.IsEnabled = false;
+        var selectedSignature = GameKnowledgeSignatureComboBox.SelectedItem?.ToString();
+        var signatures = new[] { "All signatures" }.Concat(gameKnowledgeSnapshot.Records.Select(record => record.Signature).Distinct(StringComparer.Ordinal).OrderBy(value => value, StringComparer.Ordinal)).ToArray();
+        GameKnowledgeSignatureComboBox.ItemsSource = signatures;
+        GameKnowledgeSignatureComboBox.SelectedItem = signatures.Contains(selectedSignature, StringComparer.Ordinal) ? selectedSignature : signatures[0];
+        ApplyGameKnowledgeSearch();
+    }
+
+    private async void PrepareGameKnowledgeExportClicked(object sender, RoutedEventArgs e)
+    {
+        var settings = settingsStore.Load();
+        var masterPath = string.IsNullOrWhiteSpace(settings.DataRoot) ? string.Empty : Path.Combine(settings.DataRoot, "FalloutNV.esm");
+        var providerPath = settings.ToolPaths.GetValueOrDefault("xedit", string.Empty);
+        SetGameKnowledgeBusy(true);
+        GameKnowledgeStateTextBlock.Text = FnvGameKnowledgeState.PreparingExport.ToString();
+        GameKnowledgeStatusTextBlock.Text = "Preparing digest-bound read-only export evidence...";
+        try
+        {
+            var prepared = await Task.Run(() => gameKnowledgeCatalogue.PrepareExport(masterPath, providerPath));
+            GameKnowledgeStateTextBlock.Text = prepared.State.ToString();
+            GameKnowledgeStatusTextBlock.Text = prepared.Message;
+            GameKnowledgeDetailsTextBox.Text = prepared.Details;
+            ImportGameKnowledgeExportButton.IsEnabled = prepared.Success;
+        }
+        finally
+        {
+            SetGameKnowledgeBusy(false);
+        }
+    }
+
+    private async void ImportGameKnowledgeExportClicked(object sender, RoutedEventArgs e)
+    {
+        var run = gameKnowledgeCatalogue.FindLatestRunDirectory();
+        if (run is null) { GameKnowledgeStatusTextBlock.Text = "No prepared export run is available."; return; }
+        gameKnowledgeCancellation?.Dispose();
+        gameKnowledgeCancellation = new CancellationTokenSource();
+        SetGameKnowledgeBusy(true);
+        GameKnowledgeStateTextBlock.Text = FnvGameKnowledgeState.Importing.ToString();
+        GameKnowledgeStatusTextBlock.Text = "Validating and sealing the private local index...";
+        try
+        {
+            var imported = await Task.Run(() => gameKnowledgeCatalogue.Import(run, gameKnowledgeCancellation.Token));
+            GameKnowledgeStateTextBlock.Text = imported.State.ToString();
+            GameKnowledgeStatusTextBlock.Text = imported.Message;
+            if (imported.Success) RefreshGameKnowledge();
+        }
+        finally
+        {
+            SetGameKnowledgeBusy(false);
+            gameKnowledgeCancellation.Dispose();
+            gameKnowledgeCancellation = null;
+        }
+    }
+
+    private void GameKnowledgeSearchChanged(object sender, EventArgs e)
+    {
+        if (GameKnowledgeResultsDataGrid is not null) ApplyGameKnowledgeSearch();
+    }
+
+    private void ApplyGameKnowledgeSearch()
+    {
+        var signature = GameKnowledgeSignatureComboBox.SelectedIndex <= 0 ? null : GameKnowledgeSignatureComboBox.SelectedItem?.ToString();
+        var context = (GameKnowledgeContextComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+        var result = gameKnowledgeCatalogue.Search(gameKnowledgeSnapshot, GameKnowledgeSearchTextBox.Text, signature, context);
+        GameKnowledgeResultsDataGrid.ItemsSource = result.Records;
+        GameKnowledgeStatusTextBlock.Text = gameKnowledgeSnapshot.State is FnvGameKnowledgeState.Ready or FnvGameKnowledgeState.Stale
+            ? result.Message + (gameKnowledgeSnapshot.State == FnvGameKnowledgeState.Stale ? " Index evidence is stale; receipts are disabled." : string.Empty)
+            : gameKnowledgeSnapshot.Message;
+    }
+
+    private void GameKnowledgeSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        gameKnowledgeReceiptPath = null;
+        var record = GameKnowledgeResultsDataGrid.SelectedItem as FnvGameKnowledgeRecord;
+        CopyGameKnowledgeEditorIdButton.IsEnabled = !string.IsNullOrWhiteSpace(record?.EditorId);
+        CopyGameKnowledgeFormIdButton.IsEnabled = record is not null;
+        CreateGameKnowledgeReceiptButton.IsEnabled = record is not null && gameKnowledgeSnapshot.State == FnvGameKnowledgeState.Ready;
+        UseGameKnowledgeInIntentButton.IsEnabled = false;
+        if (record is not null) GameKnowledgeDetailsTextBox.Text = RenderGameKnowledgeRecord(record);
+    }
+
+    private void CopyGameKnowledgeEditorIdClicked(object sender, RoutedEventArgs e)
+    {
+        if (GameKnowledgeResultsDataGrid.SelectedItem is FnvGameKnowledgeRecord { EditorId: { Length: > 0 } editorId }) Clipboard.SetText(editorId);
+    }
+
+    private void CopyGameKnowledgeFormIdClicked(object sender, RoutedEventArgs e)
+    {
+        if (GameKnowledgeResultsDataGrid.SelectedItem is FnvGameKnowledgeRecord record) Clipboard.SetText(record.FixedFormId);
+    }
+
+    private void CreateGameKnowledgeReceiptClicked(object sender, RoutedEventArgs e)
+    {
+        if (GameKnowledgeResultsDataGrid.SelectedItem is not FnvGameKnowledgeRecord record) return;
+        var settings = settingsStore.Load();
+        var masterPath = string.IsNullOrWhiteSpace(settings.DataRoot) ? string.Empty : Path.Combine(settings.DataRoot, "FalloutNV.esm");
+        var result = gameKnowledgeCatalogue.CreateReceipt(record.StableId, masterPath, settings.ToolPaths.GetValueOrDefault("xedit", string.Empty));
+        gameKnowledgeReceiptPath = result.ReceiptPath;
+        GameKnowledgeStatusTextBlock.Text = result.Message;
+        if (result.Success) GameKnowledgeDetailsTextBox.Text = RenderGameKnowledgeRecord(record) + $"{Environment.NewLine}{Environment.NewLine}Receipt: {result.ReceiptPath}{Environment.NewLine}SHA-256: {result.Sha256}";
+        UpdateGameKnowledgeIntentButton();
+    }
+
+    private void GameKnowledgeIntentKindChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => UpdateGameKnowledgeIntentButton();
+
+    private void UpdateGameKnowledgeIntentButton()
+    {
+        // A ComboBox selection can change while InitializeComponent is still constructing later controls.
+        if (GameKnowledgeIntentKindComboBox is null || UseGameKnowledgeInIntentButton is null ||
+            GameKnowledgeResultsDataGrid is null || ProjectPathTextBox is null)
+        {
+            return;
+        }
+
+        var kind = (GameKnowledgeIntentKindComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+        UseGameKnowledgeInIntentButton.IsEnabled = gameKnowledgeReceiptPath is not null && GameKnowledgeResultsDataGrid.SelectedItem is FnvGameKnowledgeRecord { EditorId: { Length: > 0 } } && !string.IsNullOrWhiteSpace(kind) && !string.IsNullOrWhiteSpace(ProjectPathTextBox.Text);
+    }
+
+    private void UseGameKnowledgeInIntentClicked(object sender, RoutedEventArgs e)
+    {
+        if (gameKnowledgeReceiptPath is null || GameKnowledgeResultsDataGrid.SelectedItem is not FnvGameKnowledgeRecord { EditorId: { Length: > 0 } editorId } record) return;
+        var kind = (GameKnowledgeIntentKindComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+        if (string.IsNullOrWhiteSpace(kind)) { GameKnowledgeStatusTextBlock.Text = "Choose the intended resolution kind explicitly."; return; }
+        var loaded = geckIntentBuilderWorkspace.Load(ProjectPathTextBox.Text);
+        if (!loaded.Success || loaded.Input is null) { GameKnowledgeStatusTextBlock.Text = "GECK Intent Builder is unavailable: " + loaded.Message; return; }
+        LoadGeckIntentBuilderInput(loaded.Input);
+        var handoff = GameKnowledgeIntentHandoff.Create(record, gameKnowledgeReceiptPath, kind, geckIntentResolutions);
+        if (!handoff.Success || handoff.Row is null) { GameKnowledgeStatusTextBlock.Text = handoff.Message; return; }
+        var row = handoff.Row;
+        geckIntentResolutions.Add(row);
+        GeckIntentResolutionsDataGrid.SelectedItem = row;
+        MainTabControl.SelectedItem = GeckIntentBuilderTabItem;
+        GeckIntentOperationStateTextBlock.Text = GeckIntentBuilderState.Editing.ToString();
+        GeckIntentStatusTextBlock.Text = "Local catalogue receipt added as a provisional resolution. Review it before previewing canonical source.";
+        geckIntentBuilderPreview = null;
+        geckIntentBuilderPreviewToken = null;
+        ApplyGeckIntentButton.IsEnabled = false;
+    }
+
+    private void PreviewClearGameKnowledgeClicked(object sender, RoutedEventArgs e)
+    {
+        var preview = gameKnowledgeCatalogue.PreviewClear();
+        gameKnowledgeClearToken = preview.Token;
+        ConfirmClearGameKnowledgeButton.IsEnabled = preview.Success && preview.Paths.Count > 0;
+        GameKnowledgeStatusTextBlock.Text = preview.Message;
+        GameKnowledgeDetailsTextBox.Text = $"Owned root: {preview.Root}{Environment.NewLine}{Environment.NewLine}" + string.Join(Environment.NewLine, preview.Paths.Select(path => "  " + path));
+    }
+
+    private void ConfirmClearGameKnowledgeClicked(object sender, RoutedEventArgs e)
+    {
+        if (gameKnowledgeClearToken is null) return;
+        var result = gameKnowledgeCatalogue.Clear(gameKnowledgeClearToken);
+        gameKnowledgeClearToken = null;
+        ConfirmClearGameKnowledgeButton.IsEnabled = false;
+        GameKnowledgeStatusTextBlock.Text = result.Message;
+        if (result.Success) RefreshGameKnowledge();
+    }
+
+    private void OpenGameKnowledgeDocumentationClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button { Tag: string url }) return;
+        try { Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true }); }
+        catch (Exception exception) when (exception is InvalidOperationException or System.ComponentModel.Win32Exception) { GameKnowledgeStatusTextBlock.Text = "Documentation could not be opened: " + exception.Message; }
+    }
+
+    private void SetGameKnowledgeBusy(bool busy)
+    {
+        RefreshGameKnowledgeButton.IsEnabled = !busy;
+        PrepareGameKnowledgeExportButton.IsEnabled = !busy;
+        RebuildGameKnowledgeButton.IsEnabled = !busy;
+        ImportGameKnowledgeExportButton.IsEnabled = !busy && gameKnowledgeCatalogue.FindLatestRunDirectory() is not null;
+        PreviewClearGameKnowledgeButton.IsEnabled = !busy;
+        ConfirmClearGameKnowledgeButton.IsEnabled = !busy && gameKnowledgeClearToken is not null;
+    }
+
+    private static string RenderGameKnowledgeSnapshot(FnvGameKnowledgeSnapshot snapshot) => string.Join(Environment.NewLine,
+        $"State: {snapshot.State}",
+        $"Records: {snapshot.Records.Count:N0}",
+        $"Created: {snapshot.CreatedAtUtc?.ToLocalTime().ToString("g", CultureInfo.CurrentCulture) ?? "Not indexed"}",
+        $"Source: {snapshot.SourceClassification ?? "Unavailable"}",
+        $"Index: {snapshot.IndexPath ?? "Unavailable"}",
+        $"Index SHA-256: {snapshot.IndexSha256 ?? "Unavailable"}",
+        $"Latest export run: {snapshot.LatestRunDirectory ?? "Unavailable"}",
+        $"Stale reason: {snapshot.StaleReason ?? "None"}");
+
+    private static string RenderGameKnowledgeRecord(FnvGameKnowledgeRecord record) => string.Join(Environment.NewLine,
+        $"EditorID: {record.EditorId ?? "Unavailable"}",
+        $"File-local FormID: {record.FixedFormId}",
+        $"Load-order FormID: {record.LoadOrderFormId ?? "Unavailable (display only)"}",
+        $"Signature: {record.Signature}",
+        $"Name: {record.DisplayName ?? "Unavailable"}",
+        $"Source: {record.SourceFile}",
+        $"Deleted: {record.IsDeleted}",
+        $"Context: {record.ContextSummary}",
+        string.Empty,
+        record.Context?.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) ?? "No structured context was emitted.");
 
     private BasicModBuilderInput CaptureBasicModBuilderInput() => new(
         BasicModParentTextBox.Text, BasicModNameTextBox.Text, BasicModMenuTitleTextBox.Text,

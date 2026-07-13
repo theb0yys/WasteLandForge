@@ -1699,5 +1699,11 @@ does not execute xEdit or write plugin bytes. Once evidence is sealed into the
 Gate 522 contract, exact semantic postcondition mismatches continue to use
 `WF-SEM-046`.
 
+Gate 544 adds `WF-GEN-018` for malformed, incomplete, unsafe, stale,
+duplicated, oversized, path-escaping, reparse-linked, or digest-mismatched
+private FNV game-knowledge export, index, and receipt evidence. The diagnostic
+is emitted before private index promotion or GECK Intent Builder handoff. It
+does not authorize xEdit execution, plugin mutation, or game Data writes.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

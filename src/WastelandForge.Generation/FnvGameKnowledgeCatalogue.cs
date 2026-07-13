@@ -172,8 +172,8 @@ public sealed class FnvGameKnowledgeCatalogue
             {
                 ["provider"] = PublicDigest(providerPath, Digest(providerPath)),
                 ["master"] = PublicDigest(masterPath, Digest(masterPath)),
-                ["script"] = PublicDigest(scriptPath, Digest(scriptPath), ScriptId),
-                ["export"] = PublicDigest(rawPath, Digest(rawPath)),
+                ["script"] = PublicDigest(scriptPath, Digest(scriptPath), ScriptId, Normalize(Path.GetRelativePath(CacheRoot, scriptPath))),
+                ["export"] = PublicDigest(rawPath, Digest(rawPath), cachePath: Normalize(Path.GetRelativePath(CacheRoot, rawPath))),
                 ["schema"] = new JsonObject
                 {
                     ["id"] = WastelandForgeSchemaIds.FnvGameKnowledgeExport010,
@@ -539,6 +539,16 @@ public sealed class FnvGameKnowledgeCatalogue
         {
             VerifyPublicDigest(provenance["master"], ValidateMaster(masterPath!), "FalloutNV.esm");
             VerifyPublicDigest(provenance["provider"], ValidateProvider(providerPath!), "xEdit provider");
+            var scriptEvidence = provenance["script"]!.AsObject();
+            var exportEvidence = provenance["export"]!.AsObject();
+            var scriptPath = ResolveContainedRegularFile(CacheRoot, Path.Combine(CacheRoot, RequiredText(scriptEvidence, "cachePath").Replace('/', Path.DirectorySeparatorChar)), "retained export script");
+            var exportPath = ResolveContainedRegularFile(CacheRoot, Path.Combine(CacheRoot, RequiredText(exportEvidence, "cachePath").Replace('/', Path.DirectorySeparatorChar)), "retained raw export");
+            VerifyPublicDigest(scriptEvidence, scriptPath, "retained export script");
+            VerifyPublicDigest(exportEvidence, exportPath, "retained raw export");
+            var expectedScript = Utf8NoBom.GetBytes(CreateExportScript(exportPath));
+            var actualScript = ReadBounded(scriptPath, 4 * 1024 * 1024, "retained export script");
+            RefuseMutationTokens(actualScript);
+            if (!actualScript.AsSpan().SequenceEqual(expectedScript)) return "retained export script changed";
             var schemaBytes = Utf8NoBom.GetBytes(WastelandForgeSchemaCatalog.ReadText(SchemaResource(WastelandForgeSchemaIds.FnvGameKnowledgeExport010)));
             var schema = provenance["schema"]!.AsObject();
             if (schema["length"]!.GetValue<long>() != schemaBytes.LongLength || !StringComparer.Ordinal.Equals(schema["sha256"]!.GetValue<string>(), Sha(schemaBytes))) return "export schema changed";
@@ -787,7 +797,7 @@ public sealed class FnvGameKnowledgeCatalogue
         ["sha256"] = digest.Sha256
     };
 
-    private static JsonObject PublicDigest(string path, DigestValue digest, string? id = null)
+    private static JsonObject PublicDigest(string path, DigestValue digest, string? id = null, string? cachePath = null)
     {
         var value = new JsonObject
         {
@@ -796,6 +806,7 @@ public sealed class FnvGameKnowledgeCatalogue
             ["sha256"] = digest.Sha256
         };
         if (id is not null) value["id"] = id;
+        if (cachePath is not null) value["cachePath"] = cachePath;
         return value;
     }
 

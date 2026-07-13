@@ -1258,3 +1258,12 @@ AI requirements.
   Forge refuses to seal the report and does not execute xEdit or write plugin
   bytes. Exact postcondition mismatches in a successfully sealed report remain
   `WF-SEM-046`.
+
+## Gate 544
+
+- `WF-GEN-018`: a local FNV game-knowledge export, generated script, sealed
+  index, provenance digest, or evidence receipt is malformed, incomplete,
+  unsafe, stale, duplicated, oversized, path-escaping, reparse-linked, or
+  mismatched. Forge preserves the last good private index and does not execute
+  xEdit, write game Data, or promote the record identity as verified design
+  intent.

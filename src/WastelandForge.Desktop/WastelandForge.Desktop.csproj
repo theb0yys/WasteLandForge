@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\WastelandForge.Generation\WastelandForge.Generation.csproj" />
     <ProjectReference Include="..\WastelandForge.Validation\WastelandForge.Validation.csproj" />
   </ItemGroup>
 

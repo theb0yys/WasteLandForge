@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\WastelandForge.Core\WastelandForge.Core.csproj" />
     <ProjectReference Include="..\..\src\WastelandForge.Cli\WastelandForge.Cli.csproj" />
+    <ProjectReference Include="..\..\src\WastelandForge.Generation\WastelandForge.Generation.csproj" />
   </ItemGroup>
 
 </Project>

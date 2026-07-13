@@ -70,7 +70,7 @@
         <StackPanel>
           <TextBlock Text="Build" Foreground="{StaticResource TextMuted}" FontSize="12" FontWeight="Bold" />
           <ComboBox x:Name="BuildWorkspaceComboBox" Margin="0,7,0,0" SelectionChanged="WorkspaceNavigationChanged">
-            <ComboBoxItem Content="Basic Mod Builder" Tag="basic" /><ComboBoxItem Content="GECK Intent Builder" Tag="geck-intent" /><ComboBoxItem Content="Plugin Mod Workbench" Tag="plugin-workbench" /><ComboBoxItem Content="Legacy Mod Builder" Tag="mod-builder" /><ComboBoxItem Content="Narrative Author" Tag="narrative" /><ComboBoxItem Content="MCM Author" Tag="mcm" /><ComboBoxItem Content="JIP Author" Tag="jip" />
+            <ComboBoxItem Content="Basic Mod Builder" Tag="basic" /><ComboBoxItem Content="Game Knowledge" Tag="game-knowledge" /><ComboBoxItem Content="GECK Intent Builder" Tag="geck-intent" /><ComboBoxItem Content="Plugin Mod Workbench" Tag="plugin-workbench" /><ComboBoxItem Content="Legacy Mod Builder" Tag="mod-builder" /><ComboBoxItem Content="Narrative Author" Tag="narrative" /><ComboBoxItem Content="MCM Author" Tag="mcm" /><ComboBoxItem Content="JIP Author" Tag="jip" />
           </ComboBox>
           <TextBlock Text="Review" Foreground="{StaticResource TextMuted}" FontSize="12" FontWeight="Bold" Margin="0,12,0,0" />
           <ComboBox x:Name="ReviewWorkspaceComboBox" Margin="0,7,0,0" SelectionChanged="WorkspaceNavigationChanged">
@@ -1039,6 +1039,91 @@
               </Grid>
             </Grid>
           </ScrollViewer>
+        </TabItem>
+
+        <TabItem x:Name="GameKnowledgeTabItem" Header="Game Knowledge" AutomationProperties.AutomationId="GameKnowledgeTabItem">
+          <Grid Margin="0,18,0,0">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="3*" />
+              <RowDefinition Height="2*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid>
+              <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+              <StackPanel>
+                <TextBlock Text="Fallout: New Vegas game knowledge" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock x:Name="GameKnowledgeStateTextBlock" AutomationProperties.AutomationId="GameKnowledgeStateTextBlock" Text="Not configured" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" Margin="0,5,0,0" />
+              </StackPanel>
+              <WrapPanel Grid.Row="1" Margin="0,10,0,0" HorizontalAlignment="Left">
+                <Button x:Name="RefreshGameKnowledgeButton" AutomationProperties.AutomationId="RefreshGameKnowledgeButton" Content="Refresh" Click="RefreshGameKnowledgeClicked" />
+                <Button x:Name="PrepareGameKnowledgeExportButton" AutomationProperties.AutomationId="PrepareGameKnowledgeExportButton" Content="Prepare Export" Margin="8,0,0,0" Click="PrepareGameKnowledgeExportClicked" />
+                <Button x:Name="ImportGameKnowledgeExportButton" AutomationProperties.AutomationId="ImportGameKnowledgeExportButton" Content="Import Export" Margin="8,0,0,0" Click="ImportGameKnowledgeExportClicked" />
+                <Button x:Name="RebuildGameKnowledgeButton" AutomationProperties.AutomationId="RebuildGameKnowledgeButton" Content="Rebuild" Margin="8,0,0,0" Click="PrepareGameKnowledgeExportClicked" />
+              </WrapPanel>
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="0,14,0,10">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="150" /><ColumnDefinition Width="170" /></Grid.ColumnDefinitions>
+              <TextBox x:Name="GameKnowledgeSearchTextBox" AutomationProperties.AutomationId="GameKnowledgeSearchTextBox" TextChanged="GameKnowledgeSearchChanged" />
+              <ComboBox x:Name="GameKnowledgeSignatureComboBox" AutomationProperties.AutomationId="GameKnowledgeSignatureComboBox" Grid.Column="1" Margin="8,0,0,0" SelectionChanged="GameKnowledgeSearchChanged" />
+              <ComboBox x:Name="GameKnowledgeContextComboBox" AutomationProperties.AutomationId="GameKnowledgeContextComboBox" Grid.Column="2" Margin="8,0,0,0" SelectionChanged="GameKnowledgeSearchChanged">
+                <ComboBoxItem Content="All contexts" Tag="all" IsSelected="True" />
+                <ComboBoxItem Content="Locations" Tag="location" />
+                <ComboBoxItem Content="Cells" Tag="cell" />
+                <ComboBoxItem Content="Worldspaces" Tag="worldspace" />
+                <ComboBoxItem Content="Placed references" Tag="reference" />
+                <ComboBoxItem Content="No context" Tag="none" />
+              </ComboBox>
+            </Grid>
+
+            <DataGrid x:Name="GameKnowledgeResultsDataGrid" AutomationProperties.AutomationId="GameKnowledgeResultsDataGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single" EnableRowVirtualization="True" EnableColumnVirtualization="True" SelectionChanged="GameKnowledgeSelectionChanged">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Type" Binding="{Binding Signature}" Width="62" />
+                <DataGridTextColumn Header="EditorID" Binding="{Binding EditorId}" Width="1.3*" />
+                <DataGridTextColumn Header="FormID" Binding="{Binding FixedFormId}" Width="90" />
+                <DataGridTextColumn Header="Name" Binding="{Binding DisplayName}" Width="1.2*" />
+                <DataGridTextColumn Header="Source" Binding="{Binding SourceFile}" Width="115" />
+                <DataGridTextColumn Header="Context" Binding="{Binding ContextSummary}" Width="1.4*" />
+              </DataGrid.Columns>
+            </DataGrid>
+
+            <Grid Grid.Row="3" Margin="0,12,0,0">
+              <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+              <TextBox x:Name="GameKnowledgeDetailsTextBox" AutomationProperties.AutomationId="GameKnowledgeDetailsTextBox" AcceptsReturn="True" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" />
+              <WrapPanel Grid.Row="1" Margin="0,8,0,0">
+                <Button x:Name="CopyGameKnowledgeEditorIdButton" AutomationProperties.AutomationId="CopyGameKnowledgeEditorIdButton" Content="Copy EditorID" IsEnabled="False" Click="CopyGameKnowledgeEditorIdClicked" />
+                <Button x:Name="CopyGameKnowledgeFormIdButton" AutomationProperties.AutomationId="CopyGameKnowledgeFormIdButton" Content="Copy FormID" IsEnabled="False" Margin="8,0,0,0" Click="CopyGameKnowledgeFormIdClicked" />
+                <Button x:Name="CreateGameKnowledgeReceiptButton" AutomationProperties.AutomationId="CreateGameKnowledgeReceiptButton" Content="Create Evidence Receipt" IsEnabled="False" Margin="8,0,0,0" Click="CreateGameKnowledgeReceiptClicked" />
+                <ComboBox x:Name="GameKnowledgeIntentKindComboBox" AutomationProperties.AutomationId="GameKnowledgeIntentKindComboBox" Width="150" Margin="8,0,0,0" SelectionChanged="GameKnowledgeIntentKindChanged">
+                  <ComboBoxItem Content="Choose intent kind" Tag="" IsSelected="True" />
+                  <ComboBoxItem Content="Item" Tag="item" />
+                  <ComboBoxItem Content="Cell" Tag="cell" />
+                  <ComboBoxItem Content="Worldspace" Tag="worldspace" />
+                  <ComboBoxItem Content="Container base" Tag="container-base" />
+                </ComboBox>
+                <Button x:Name="UseGameKnowledgeInIntentButton" AutomationProperties.AutomationId="UseGameKnowledgeInIntentButton" Content="Use in GECK Intent Builder" IsEnabled="False" Margin="8,0,0,0" Style="{StaticResource PrimaryButton}" Click="UseGameKnowledgeInIntentClicked" />
+              </WrapPanel>
+            </Grid>
+
+            <Grid Grid.Row="4" Margin="0,12,0,0">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+              <StackPanel>
+                <TextBlock x:Name="GameKnowledgeStatusTextBlock" AutomationProperties.AutomationId="GameKnowledgeStatusTextBlock" Text="Refresh after configuring the local game and xEdit paths." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" />
+                <WrapPanel Margin="0,7,0,0">
+                  <Button Content="GECK ID glossary" Tag="https://geckwiki.com/index.php?title=Editor_ID" Click="OpenGameKnowledgeDocumentationClicked" />
+                  <Button Content="GECK Object Window" Tag="https://geckwiki.com/index.php/Object_Window" Margin="8,0,0,0" Click="OpenGameKnowledgeDocumentationClicked" />
+                  <Button Content="GECK form types" Tag="https://geckwiki.com/index.php/Form_Type_IDs" Margin="8,0,0,0" Click="OpenGameKnowledgeDocumentationClicked" />
+                </WrapPanel>
+              </StackPanel>
+              <WrapPanel Grid.Column="1" VerticalAlignment="Bottom">
+                <Button x:Name="PreviewClearGameKnowledgeButton" AutomationProperties.AutomationId="PreviewClearGameKnowledgeButton" Content="Preview Clear" Click="PreviewClearGameKnowledgeClicked" />
+                <Button x:Name="ConfirmClearGameKnowledgeButton" AutomationProperties.AutomationId="ConfirmClearGameKnowledgeButton" Content="Confirm Clear" IsEnabled="False" Margin="8,0,0,0" Click="ConfirmClearGameKnowledgeClicked" />
+              </WrapPanel>
+            </Grid>
+          </Grid>
         </TabItem>
 
         <TabItem x:Name="NewProjectTabItem" Header="New Project">

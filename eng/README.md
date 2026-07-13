@@ -275,6 +275,13 @@ Gate 462 adds the installed Release Candidate workspace regression:
 pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Test-InstalledReleaseCandidateWorkspace.ps1
 ```
 
+Run the isolated installed Game Knowledge regression with redirected local
+settings and synthetic master/provider evidence:
+
+```powershell
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Test-InstalledGameKnowledgeWorkspace.ps1
+```
+
 The script uses synthetic installed samples, isolated install/settings/project
 roots, and WPF UI Automation to prove ready, stale, and blocked states,
 contained evidence-action enablement, canonical diagnostic explanation, exact
