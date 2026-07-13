@@ -8,7 +8,8 @@
     ".NETCoreApp,Version=v10.0": {
       "WastelandForge/0.1.0": {
         "dependencies": {
-          "WastelandForge.Validation": "1.0.0"
+          "WastelandForge.Validation": "1.0.0",
+          "WastelandForge.Generation": "1.0.0.0"
         },
         "runtime": {
           "WastelandForge.dll": {}
@@ -106,6 +107,22 @@
             "fileVersion": "1.0.0.0"
           }
         }
+      },
+      "WastelandForge.Generation/1.0.0.0": {
+        "runtime": {
+          "WastelandForge.Generation.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "WastelandForge.Provenance/1.0.0.0": {
+        "runtime": {
+          "WastelandForge.Provenance.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
       }
     }
   },
@@ -167,6 +184,16 @@
     },
     "WastelandForge.Validation/1.0.0": {
       "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "WastelandForge.Generation/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "WastelandForge.Provenance/1.0.0.0": {
+      "type": "reference",
       "serviceable": false,
       "sha512": ""
     }

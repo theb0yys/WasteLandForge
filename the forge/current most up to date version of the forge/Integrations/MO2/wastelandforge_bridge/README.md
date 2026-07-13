@@ -12,6 +12,16 @@ requires profile selection and confirmation, then uses MO2's in-process
 Direct WastelandForge validation, generation, packaging, and tool launch do not
 depend on this companion.
 
+Gate 530 connects the Gate 529 effective-provider preflight to MO2's read-only
+`IOrganizer.virtualFileTree()` and `resolvePath()` APIs. The adapter inspects
+only the already-current profile, resolves and hashes the effective files under
+`Data/NVSE/Plugins`, requires one exact
+`WastelandForge.GeckProbe.dll`, and refuses profile drift, unresolved winners,
+additional native DLLs, digest drift, or GECK Extender/GaryHax markers. The
+adapter does not select or mutate a profile, stage files, create a launch
+request, or start GECK. Live compatibility remains unproven until the companion
+is installed into an explicitly approved FNV MO2 test instance.
+
 Build the package with `eng/Build-Mo2CompanionPackage.ps1`. Extract the archive
 contents directly into the MO2 `plugins` folder so the resulting entrypoint is
 `plugins/wastelandforge_bridge/plugin.py`. Close MO2 before installing or

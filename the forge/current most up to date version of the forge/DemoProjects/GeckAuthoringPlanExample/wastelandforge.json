@@ -1,0 +1,1 @@
+{"schemaVersion":"0.5.0","kind":"manifest","id":"io.wastelandforge.geckplanexample","name":"GECK Plan Example","version":"0.1.0","game":"falloutnv","registries":{"dependencies":"src/registries/dependencies/","capabilities":"src/registries/capabilities/","geckAuthoringIntent":"src/registries/geck-authoring/main.json"}}
