@@ -16,6 +16,9 @@ The input folder must contain:
 - `WastelandForge.exe`
 - `ForgeBackend/forge.exe`
 - `DemoProjects/ExampleMod/wastelandforge.json`
+- `DemoProjects/GeckAuthoringPlanExample/wastelandforge.json`
+- `DemoProjects/GeckAuthoringPlanExample/README.md`
+- `DemoProjects/GeckAuthoringPlanExample/evidence/valid-first-slice.json`
 - `app-build-manifest.json`
 - `checksums.sha256`
 

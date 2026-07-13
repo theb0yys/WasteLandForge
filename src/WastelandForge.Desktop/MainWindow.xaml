@@ -70,7 +70,7 @@
         <StackPanel>
           <TextBlock Text="Build" Foreground="{StaticResource TextMuted}" FontSize="12" FontWeight="Bold" />
           <ComboBox x:Name="BuildWorkspaceComboBox" Margin="0,7,0,0" SelectionChanged="WorkspaceNavigationChanged">
-            <ComboBoxItem Content="Basic Mod Builder" Tag="basic" /><ComboBoxItem Content="Plugin Mod Workbench" Tag="plugin-workbench" /><ComboBoxItem Content="Legacy Mod Builder" Tag="mod-builder" /><ComboBoxItem Content="Narrative Author" Tag="narrative" /><ComboBoxItem Content="MCM Author" Tag="mcm" /><ComboBoxItem Content="JIP Author" Tag="jip" />
+            <ComboBoxItem Content="Basic Mod Builder" Tag="basic" /><ComboBoxItem Content="GECK Intent Builder" Tag="geck-intent" /><ComboBoxItem Content="Plugin Mod Workbench" Tag="plugin-workbench" /><ComboBoxItem Content="Legacy Mod Builder" Tag="mod-builder" /><ComboBoxItem Content="Narrative Author" Tag="narrative" /><ComboBoxItem Content="MCM Author" Tag="mcm" /><ComboBoxItem Content="JIP Author" Tag="jip" />
           </ComboBox>
           <TextBlock Text="Review" Foreground="{StaticResource TextMuted}" FontSize="12" FontWeight="Bold" Margin="0,12,0,0" />
           <ComboBox x:Name="ReviewWorkspaceComboBox" Margin="0,7,0,0" SelectionChanged="WorkspaceNavigationChanged">
@@ -953,6 +953,94 @@
           </Grid>
         </TabItem>
 
+        <TabItem x:Name="GeckIntentBuilderTabItem" Header="GECK Intent Builder" AutomationProperties.AutomationId="GeckIntentBuilderTabItem">
+          <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,18,0,0">
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="440" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <StackPanel Margin="0,0,18,0">
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock Text="GECK Intent Builder" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+                    <TextBlock x:Name="GeckIntentOperationStateTextBlock" AutomationProperties.AutomationId="GeckIntentOperationStateTextBlock" Text="Not loaded" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" Margin="0,5,0,0" />
+                  </StackPanel>
+                  <Button x:Name="RefreshGeckIntentBuilderButton" AutomationProperties.AutomationId="RefreshGeckIntentBuilderButton" Grid.Column="1" Content="Refresh" Click="RefreshGeckIntentBuilderClicked" />
+                </Grid>
+
+                <TextBlock Text="Plugin" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" Margin="0,18,0,0" />
+                <Grid Margin="0,7,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <StackPanel Margin="0,0,5,0"><TextBlock Text="Filename" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentPluginFileNameTextBox" AutomationProperties.AutomationId="GeckIntentPluginFileNameTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel>
+                  <StackPanel Grid.Column="1" Margin="5,0,0,0"><TextBlock Text="Author" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentAuthorTextBox" AutomationProperties.AutomationId="GeckIntentAuthorTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel>
+                </Grid>
+                <TextBlock Text="Summary" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="GeckIntentSummaryTextBox" AutomationProperties.AutomationId="GeckIntentSummaryTextBox" TextChanged="GeckIntentBuilderInputChanged" />
+
+                <TextBlock Text="Environment" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" Margin="0,16,0,0" />
+                <ComboBox x:Name="GeckIntentEnvironmentModeComboBox" AutomationProperties.AutomationId="GeckIntentEnvironmentModeComboBox" Margin="0,7,0,0" SelectionChanged="GeckIntentBuilderInputChanged"><ComboBoxItem Content="Physical Data" Tag="physical-data" IsSelected="True" /><ComboBoxItem Content="MO2 (deferred)" Tag="mo2" /></ComboBox>
+                <Grid Margin="0,7,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                  <TextBox x:Name="GeckIntentOutputRootTextBox" AutomationProperties.AutomationId="GeckIntentOutputRootTextBox" TextChanged="GeckIntentBuilderInputChanged" />
+                  <Button x:Name="BrowseGeckIntentOutputRootButton" AutomationProperties.AutomationId="BrowseGeckIntentOutputRootButton" Grid.Column="1" Content="Browse" Margin="8,0,0,0" Click="BrowseGeckIntentOutputRootClicked" />
+                </Grid>
+
+                <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="Provider evidence" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" /><Button x:Name="BrowseGeckIntentProviderEvidenceButton" Grid.Column="1" Content="Attach evidence" Click="BrowseGeckIntentProviderEvidenceClicked" /></Grid>
+                <DataGrid x:Name="GeckIntentProvidersDataGrid" AutomationProperties.AutomationId="GeckIntentProvidersDataGrid" Height="150" Margin="0,7,0,0" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single" SelectionChanged="GeckIntentProviderSelectionChanged" CellEditEnding="GeckIntentBuilderGridCellEditEnding">
+                  <DataGrid.Columns><DataGridTextColumn Header="Role" Binding="{Binding Role}" IsReadOnly="True" Width="130" /><DataGridTextColumn Header="Evidence" Binding="{Binding EvidencePath, UpdateSourceTrigger=PropertyChanged}" Width="*" /><DataGridCheckBoxColumn Header="Attested" Binding="{Binding Attested}" Width="75" /></DataGrid.Columns>
+                </DataGrid>
+                <Grid Margin="0,7,0,0" DataContext="{Binding SelectedItem, ElementName=GeckIntentProvidersDataGrid}"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBox x:Name="GeckIntentProviderEvidencePathTextBox" AutomationProperties.AutomationId="GeckIntentProviderEvidencePathTextBox" Text="{Binding EvidencePath, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="GeckIntentBuilderInputChanged" /><CheckBox x:Name="GeckIntentProviderAttestedCheckBox" AutomationProperties.AutomationId="GeckIntentProviderAttestedCheckBox" Grid.Column="1" Content="Locally attested" Margin="10,0,0,0" IsChecked="{Binding Attested}" Click="GeckIntentBuilderInputChanged" /></Grid>
+
+                <Grid Margin="0,16,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="Resolved evidence" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" /><Button x:Name="AddGeckIntentItemResolutionButton" AutomationProperties.AutomationId="AddGeckIntentItemResolutionButton" Grid.Column="1" Content="Add item" Click="AddGeckIntentItemResolutionClicked" /><Button x:Name="RemoveGeckIntentItemResolutionButton" AutomationProperties.AutomationId="RemoveGeckIntentItemResolutionButton" Grid.Column="2" Content="Remove" Margin="6,0,0,0" Click="RemoveGeckIntentItemResolutionClicked" /><Button x:Name="BrowseGeckIntentResolutionEvidenceButton" Grid.Column="3" Content="Attach" Margin="6,0,0,0" Click="BrowseGeckIntentResolutionEvidenceClicked" /></Grid>
+                <DataGrid x:Name="GeckIntentResolutionsDataGrid" AutomationProperties.AutomationId="GeckIntentResolutionsDataGrid" Height="210" Margin="0,7,0,0" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single" SelectionChanged="GeckIntentResolutionSelectionChanged" CellEditEnding="GeckIntentBuilderGridCellEditEnding" HorizontalScrollBarVisibility="Auto">
+                  <DataGrid.Columns><DataGridTextColumn Header="ID" Binding="{Binding Id, UpdateSourceTrigger=PropertyChanged}" Width="140" /><DataGridTextColumn Header="Kind" Binding="{Binding Kind, UpdateSourceTrigger=PropertyChanged}" Width="105" /><DataGridTextColumn Header="EditorID" Binding="{Binding EditorId, UpdateSourceTrigger=PropertyChanged}" Width="130" /><DataGridTextColumn Header="FormID" Binding="{Binding FormId, UpdateSourceTrigger=PropertyChanged}" Width="85" /><DataGridTextColumn Header="Sig" Binding="{Binding Signature, UpdateSourceTrigger=PropertyChanged}" Width="55" /><DataGridTextColumn Header="Status" Binding="{Binding Status, UpdateSourceTrigger=PropertyChanged}" Width="85" /><DataGridTextColumn Header="Evidence" Binding="{Binding EvidencePath, UpdateSourceTrigger=PropertyChanged}" Width="180" /><DataGridTextColumn Header="Qty" Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="55" /></DataGrid.Columns>
+                </DataGrid>
+                <Grid Margin="0,7,0,0" DataContext="{Binding SelectedItem, ElementName=GeckIntentResolutionsDataGrid}">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="1.5*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="1.2*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                  <StackPanel Margin="0,0,4,4"><TextBlock Text="ID" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentResolutionIdTextBox" AutomationProperties.AutomationId="GeckIntentResolutionIdTextBox" Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="GeckIntentBuilderInputChanged" /></StackPanel>
+                  <StackPanel Grid.Column="1" Margin="4,0,4,4"><TextBlock Text="Kind" Foreground="{StaticResource TextMuted}" /><ComboBox x:Name="GeckIntentResolutionKindComboBox" AutomationProperties.AutomationId="GeckIntentResolutionKindComboBox" SelectedValuePath="Tag" SelectedValue="{Binding Kind, UpdateSourceTrigger=PropertyChanged}" DropDownClosed="GeckIntentBuilderDropDownClosed"><ComboBoxItem Content="Item" Tag="item" /><ComboBoxItem Content="Cell" Tag="cell" /><ComboBoxItem Content="Worldspace" Tag="worldspace" /><ComboBoxItem Content="Container base" Tag="container-base" /></ComboBox></StackPanel>
+                  <StackPanel Grid.Column="2" Margin="4,0,4,4"><TextBlock Text="EditorID" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentResolutionEditorIdTextBox" AutomationProperties.AutomationId="GeckIntentResolutionEditorIdTextBox" Text="{Binding EditorId, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="GeckIntentBuilderInputChanged" /></StackPanel>
+                  <StackPanel Grid.Column="3" Margin="4,0,0,4"><TextBlock Text="FormID" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentResolutionFormIdTextBox" AutomationProperties.AutomationId="GeckIntentResolutionFormIdTextBox" Text="{Binding FormId, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="GeckIntentBuilderInputChanged" /></StackPanel>
+                  <StackPanel Grid.Row="1" Margin="0,0,4,4"><TextBlock Text="Signature" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentResolutionSignatureTextBox" AutomationProperties.AutomationId="GeckIntentResolutionSignatureTextBox" Text="{Binding Signature, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="GeckIntentBuilderInputChanged" /></StackPanel>
+                  <StackPanel Grid.Row="1" Grid.Column="1" Margin="4,0,4,4"><TextBlock Text="Status" Foreground="{StaticResource TextMuted}" /><ComboBox x:Name="GeckIntentResolutionStatusComboBox" AutomationProperties.AutomationId="GeckIntentResolutionStatusComboBox" SelectedValuePath="Tag" SelectedValue="{Binding Status, UpdateSourceTrigger=PropertyChanged}" DropDownClosed="GeckIntentBuilderDropDownClosed"><ComboBoxItem Content="Provisional" Tag="provisional" /><ComboBoxItem Content="Local verified" Tag="local-verified" /></ComboBox></StackPanel>
+                  <StackPanel Grid.Row="1" Grid.Column="2" Margin="4,0,4,4"><TextBlock Text="Quantity" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentResolutionQuantityTextBox" AutomationProperties.AutomationId="GeckIntentResolutionQuantityTextBox" Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="GeckIntentBuilderInputChanged" /></StackPanel>
+                  <StackPanel Grid.Row="2" Grid.ColumnSpan="4"><TextBlock Text="Evidence" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentResolutionEvidencePathTextBox" AutomationProperties.AutomationId="GeckIntentResolutionEvidencePathTextBox" Text="{Binding EvidencePath, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="GeckIntentBuilderInputChanged" /></StackPanel>
+                </Grid>
+
+                <TextBlock Text="Authoring declaration" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" Margin="0,16,0,0" />
+                <Grid Margin="0,7,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <StackPanel Margin="0,0,5,0"><TextBlock Text="Container EditorID" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentContainerEditorIdTextBox" AutomationProperties.AutomationId="GeckIntentContainerEditorIdTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel>
+                  <StackPanel Grid.Column="1" Margin="5,0,0,0"><TextBlock Text="Strategy" Foreground="{StaticResource TextMuted}" /><ComboBox x:Name="GeckIntentContainerStrategyComboBox" AutomationProperties.AutomationId="GeckIntentContainerStrategyComboBox" SelectionChanged="GeckIntentBuilderInputChanged"><ComboBoxItem Content="New container" Tag="new" IsSelected="True" /><ComboBoxItem Content="Approved clone" Tag="clone-approved" /></ComboBox></StackPanel>
+                </Grid>
+                <TextBlock Text="Reference EditorID" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" /><TextBox x:Name="GeckIntentReferenceEditorIdTextBox" AutomationProperties.AutomationId="GeckIntentReferenceEditorIdTextBox" TextChanged="GeckIntentBuilderInputChanged" />
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <StackPanel Margin="0,0,4,0"><TextBlock Text="Position X" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentPositionXTextBox" AutomationProperties.AutomationId="GeckIntentPositionXTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel><StackPanel Grid.Column="1" Margin="4,0"><TextBlock Text="Y" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentPositionYTextBox" AutomationProperties.AutomationId="GeckIntentPositionYTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel><StackPanel Grid.Column="2" Margin="4,0,0,0"><TextBlock Text="Z" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentPositionZTextBox" AutomationProperties.AutomationId="GeckIntentPositionZTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel>
+                </Grid>
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <StackPanel Margin="0,0,4,0"><TextBlock Text="Rotation X" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentRotationXTextBox" AutomationProperties.AutomationId="GeckIntentRotationXTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel><StackPanel Grid.Column="1" Margin="4,0"><TextBlock Text="Y" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentRotationYTextBox" AutomationProperties.AutomationId="GeckIntentRotationYTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel><StackPanel Grid.Column="2" Margin="4,0,0,0"><TextBlock Text="Z" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentRotationZTextBox" AutomationProperties.AutomationId="GeckIntentRotationZTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel>
+                </Grid>
+                <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><CheckBox x:Name="GeckIntentPersistentCheckBox" AutomationProperties.AutomationId="GeckIntentPersistentCheckBox" Content="Persistent" Checked="GeckIntentBuilderInputChanged" Unchecked="GeckIntentBuilderInputChanged" /><ComboBox x:Name="GeckIntentEncounterPolicyComboBox" AutomationProperties.AutomationId="GeckIntentEncounterPolicyComboBox" Grid.Column="1" Margin="12,0,0,0" SelectionChanged="GeckIntentBuilderInputChanged"><ComboBoxItem Content="Inherit cell encounter zone" Tag="inherit-cell" IsSelected="True" /><ComboBoxItem Content="No encounter zone" Tag="none" /></ComboBox></Grid>
+              </StackPanel>
+
+              <Grid Grid.Column="1">
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="260" /><RowDefinition Height="170" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                <WrapPanel>
+                  <Button x:Name="PreviewGeckIntentButton" AutomationProperties.AutomationId="PreviewGeckIntentButton" Content="Preview" Click="PreviewGeckIntentClicked" />
+                  <Button x:Name="ApplyGeckIntentButton" AutomationProperties.AutomationId="ApplyGeckIntentButton" Content="Apply Source" Style="{StaticResource PrimaryButton}" IsEnabled="False" Margin="8,0,0,0" Click="ApplyGeckIntentClicked" />
+                  <Button x:Name="CancelGeckIntentOperationButton" AutomationProperties.AutomationId="CancelGeckIntentOperationButton" Content="Cancel" IsEnabled="False" Margin="8,0,0,0" Click="CancelGeckIntentOperationClicked" />
+                  <Button x:Name="ReviewGeckIntentUndoButton" AutomationProperties.AutomationId="ReviewGeckIntentUndoButton" Content="Review Undo" Margin="8,0,0,0" Click="ReviewGeckIntentUndoClicked" />
+                  <Button x:Name="UndoGeckIntentButton" AutomationProperties.AutomationId="UndoGeckIntentButton" Content="Undo" IsEnabled="False" Margin="8,0,0,0" Click="UndoGeckIntentClicked" />
+                  <Button x:Name="OpenGeckAuthoringReviewButton" AutomationProperties.AutomationId="OpenGeckAuthoringReviewButton" Content="Open Authoring Review" IsEnabled="False" Margin="8,0,0,0" Click="OpenGeckAuthoringReviewClicked" />
+                  <Button x:Name="RouteGeckIntentValidationButton" AutomationProperties.AutomationId="RouteGeckIntentValidationButton" Content="Open Validation" Margin="8,0,0,0" Click="RouteGeckIntentValidationClicked" />
+                </WrapPanel>
+                <TextBox x:Name="GeckIntentPreviewTextBox" AutomationProperties.AutomationId="GeckIntentPreviewTextBox" Grid.Row="1" Margin="0,12,0,0" AcceptsReturn="True" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas" FontSize="12" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" />
+                <DataGrid x:Name="GeckIntentDiagnosticsDataGrid" AutomationProperties.AutomationId="GeckIntentDiagnosticsDataGrid" Grid.Row="2" Margin="0,12,0,0" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"><DataGrid.Columns><DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="105" /><DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="80" /><DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" /></DataGrid.Columns></DataGrid>
+                <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                  <TextBlock x:Name="GeckIntentStatusTextBlock" AutomationProperties.AutomationId="GeckIntentStatusTextBlock" Text="Refresh the selected project." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" />
+                  <WrapPanel Margin="0,8,0,0"><Button x:Name="ReviewGeckIntentRecoveryButton" Content="Review Recovery" Click="ReviewGeckIntentRecoveryClicked" /><Button x:Name="ResumeGeckIntentRecoveryButton" Content="Resume Validation" IsEnabled="False" Margin="8,0,0,0" Click="ResumeGeckIntentRecoveryClicked" /><Button x:Name="RestoreGeckIntentOriginalButton" Content="Restore Original" IsEnabled="False" Margin="8,0,0,0" Click="RestoreGeckIntentOriginalClicked" /></WrapPanel>
+                </StackPanel>
+              </Grid>
+            </Grid>
+          </ScrollViewer>
+        </TabItem>
+
         <TabItem x:Name="NewProjectTabItem" Header="New Project">
           <Grid Margin="0,18,0,0">
             <Grid.ColumnDefinitions>
@@ -1498,6 +1586,69 @@
         </TabItem>
 
         <TabItem x:Name="GeckHandoffTabItem" Header="GECK Handoff">
+          <TabControl x:Name="GeckAuthoringModeTabControl" SelectedIndex="0">
+            <TabItem x:Name="GeckAuthoringReviewTabItem" Header="Authoring Plan &amp; Verification">
+              <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0,18,0,0">
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel>
+                      <TextBlock Text="GECK authoring evidence" Foreground="{StaticResource TextPrimary}" FontSize="20" FontWeight="SemiBold" />
+                      <TextBlock Text="Plan canonical intent, prepare the read-only observer, and seal manually collected evidence." Foreground="{StaticResource TextMuted}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button x:Name="RefreshGeckAuthoringReviewButton" Grid.Column="1" Content="Refresh Evidence" Click="RefreshGeckAuthoringReviewClicked" />
+                    <Button x:Name="CancelGeckAuthoringOperationButton" Grid.Column="2" Content="Cancel" Margin="8,0,0,0" IsEnabled="False" Click="CancelGeckAuthoringOperationClicked" />
+                  </Grid>
+
+                  <TextBlock Text="Forge generates a read-only observer bundle. FNVEdit execution and script installation are manual; Gate 534 compatibility remains unproven." Foreground="{StaticResource TextMuted}" Margin="0,12,0,0" TextWrapping="Wrap" />
+
+                  <Grid Margin="0,18,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Text="1. Intent and plan" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Resolve canonical intent into a deterministic, plugin-write-free authoring plan." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
+                    <TextBlock x:Name="GeckAuthoringPlanStateTextBlock" Grid.Column="1" Text="NotLoaded" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </Grid>
+                  <WrapPanel Margin="0,8,0,0"><Button x:Name="PreviewGeckAuthoringPlanButton" Content="Preview Plan" IsEnabled="False" Click="PreviewGeckAuthoringPlanClicked" /><Button x:Name="GenerateGeckAuthoringPlanButton" Content="Generate Plan" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="GenerateGeckAuthoringPlanClicked" /></WrapPanel>
+
+                  <Border Margin="0,16,0,0" BorderBrush="{StaticResource BorderMuted}" BorderThickness="0,1,0,0" />
+                  <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Text="2. Read-only observer" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Generate the deterministic Pascal observer bundle bound to the current plan." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
+                    <TextBlock x:Name="GeckAuthoringVerifierStateTextBlock" Grid.Column="1" Text="Locked" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </Grid>
+                  <WrapPanel Margin="0,8,0,0"><Button x:Name="PreviewGeckAuthoringVerifierButton" Content="Preview Observer" IsEnabled="False" Click="PreviewGeckAuthoringVerifierClicked" /><Button x:Name="GenerateGeckAuthoringVerifierButton" Content="Generate Observer" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="GenerateGeckAuthoringVerifierClicked" /></WrapPanel>
+
+                  <Border Margin="0,16,0,0" BorderBrush="{StaticResource BorderMuted}" BorderThickness="0,1,0,0" />
+                  <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Text="3. Raw observations" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Select the project-contained JSON written by the manually run observer." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
+                    <TextBlock x:Name="GeckAuthoringObservationsStateTextBlock" Grid.Column="1" Text="Required" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </Grid>
+                  <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBox x:Name="GeckAuthoringObservationsPathTextBox" Padding="8" TextChanged="GeckAuthoringObservationsPathChanged" /><Button x:Name="BrowseGeckAuthoringObservationsButton" Grid.Column="1" Content="Browse JSON" Margin="8,0,0,0" Click="BrowseGeckAuthoringObservationsClicked" /></Grid>
+
+                  <Border Margin="0,16,0,0" BorderBrush="{StaticResource BorderMuted}" BorderThickness="0,1,0,0" />
+                  <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Text="4. Semantic verification" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Preview the exact semantic comparison, then explicitly seal the verified report." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
+                    <TextBlock x:Name="GeckAuthoringVerificationStateTextBlock" Grid.Column="1" Text="Locked" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </Grid>
+                  <WrapPanel Margin="0,8,0,0"><Button x:Name="PreviewGeckAuthoringVerificationButton" Content="Preview Verification" IsEnabled="False" Click="PreviewGeckAuthoringVerificationClicked" /><Button x:Name="GenerateGeckAuthoringVerificationButton" Content="Seal Verification Report" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="GenerateGeckAuthoringVerificationClicked" /></WrapPanel>
+
+                  <TextBlock Text="Current evidence" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" Margin="0,18,0,0" />
+                  <TextBox x:Name="GeckAuthoringEvidenceTextBox" Height="120" Margin="0,8,0,0" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Cascadia Mono, Consolas" FontSize="11" />
+
+                  <TextBlock Text="Diagnostics" Foreground="{StaticResource TextPrimary}" FontWeight="SemiBold" Margin="0,16,0,0" />
+                  <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="3*" /><ColumnDefinition Width="2*" /></Grid.ColumnDefinitions>
+                    <DataGrid x:Name="GeckAuthoringDiagnosticsDataGrid" Height="160" Margin="0,0,8,0" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionChanged="GeckAuthoringDiagnosticSelectionChanged"><DataGrid.Columns><DataGridTextColumn Header="Rule" Binding="{Binding RuleId}" Width="120" /><DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="80" /><DataGridTextColumn Header="Stage" Binding="{Binding Stage}" Width="120" /><DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" /></DataGrid.Columns></DataGrid>
+                    <TextBox x:Name="GeckAuthoringDiagnosticDetailTextBox" Grid.Column="1" Height="160" Margin="8,0,0,0" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Padding="10" />
+                  </Grid>
+
+                  <WrapPanel Margin="0,16,0,0"><Button x:Name="RouteGeckManualHandoffButton" Content="Manual Handoff" Click="RouteGeckManualHandoffClicked" /><Button x:Name="RouteGeckXEditAuditButton" Content="xEdit Audit" Margin="8,0,0,0" Click="RouteGeckXEditAuditClicked" /><Button x:Name="RouteGeckProjectOutputsButton" Content="Project Outputs" Margin="8,0,0,0" Click="RouteGeckProjectOutputsClicked" /><Button x:Name="RouteGeckValidationButton" Content="Validation" Margin="8,0,0,0" Click="RouteGeckValidationClicked" /></WrapPanel>
+                  <TextBlock x:Name="GeckAuthoringStatusTextBlock" Text="Select a Forge project and refresh authoring evidence." Foreground="{StaticResource TextMuted}" Margin="0,12,0,18" TextWrapping="Wrap" />
+                </StackPanel>
+              </ScrollViewer>
+            </TabItem>
+
+            <TabItem x:Name="GeckManualHandoffTabItem" Header="Manual Handoff">
           <Grid Margin="0,18,0,0">
             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="2*" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
             <Grid>
@@ -1536,6 +1687,8 @@
             </Grid>
             <TextBlock x:Name="GeckHandoffWorkspaceStatusTextBlock" Grid.Row="6" Text="Load a completed GECK handoff to inspect its tasks and provenance." Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" />
           </Grid>
+            </TabItem>
+          </TabControl>
         </TabItem>
 
         <TabItem x:Name="ReleaseCandidateTabItem" Header="Release Candidate">

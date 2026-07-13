@@ -101,6 +101,21 @@ public sealed class ManifestSchemaTests
     }
 
     [Fact]
+    public void FnvGameKnowledgeEvidenceSchemasAreRegisteredAndReadOnly()
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeExport010, out var export));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeIndex010, out var index));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeReceipt010, out var receipt));
+        Assert.Equal("fnv-game-knowledge-export", export!.Kind);
+        Assert.Equal("fnv-game-knowledge-index", index!.Kind);
+        Assert.Equal("fnv-game-knowledge-receipt", receipt!.Kind);
+        var exportSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(export));
+        Assert.Equal("FalloutNV.esm", exportSchema?["properties"]?["source"]?["properties"]?["fileName"]?["const"]?.GetValue<string>());
+        Assert.True(exportSchema?["$defs"]?["safety"]?["properties"]?["readOnly"]?["const"]?.GetValue<bool>());
+        Assert.False(exportSchema?["$defs"]?["safety"]?["properties"]?["forgeExecutedXEdit"]?["const"]?.GetValue<bool>());
+    }
+
+    [Fact]
     public void FomodSchemasAndManifest040AreRegistered()
     {
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest040, out var manifest));

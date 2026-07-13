@@ -61,9 +61,13 @@
     <ItemGroup>
       <XEditDemoOutputFiles Include="$(MSBuildProjectDirectory)\..\..\fixtures\projects\XEditAuditExample\**\*.*" />
       <CombinedDemoOutputFiles Include="$(MSBuildProjectDirectory)\..\..\fixtures\projects\CombinedModExample\**\*.*" Exclude="$(MSBuildProjectDirectory)\..\..\fixtures\projects\CombinedModExample\generated\**\*.*;$(MSBuildProjectDirectory)\..\..\fixtures\projects\CombinedModExample\dist\**\*.*" />
+      <GeckAuthoringDemoOutputFiles Include="$(MSBuildProjectDirectory)\..\..\fixtures\projects\GeckAuthoringPlanExample\**\*.*" Exclude="$(MSBuildProjectDirectory)\..\..\fixtures\projects\GeckAuthoringPlanExample\generated\**\*.*;$(MSBuildProjectDirectory)\..\..\fixtures\projects\GeckAuthoringPlanExample\dist\**\*.*" />
+      <GeckAuthoringObservationOutputFile Include="$(MSBuildProjectDirectory)\..\..\fixtures\geck-authoring-observations\valid-first-slice.json" />
     </ItemGroup>
     <Copy SourceFiles="@(XEditDemoOutputFiles)" DestinationFiles="@(XEditDemoOutputFiles->'$(TargetDir)DemoProjects\XEditAuditExample\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(CombinedDemoOutputFiles)" DestinationFiles="@(CombinedDemoOutputFiles->'$(TargetDir)DemoProjects\CombinedModExample\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(GeckAuthoringDemoOutputFiles)" DestinationFiles="@(GeckAuthoringDemoOutputFiles->'$(TargetDir)DemoProjects\GeckAuthoringPlanExample\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(GeckAuthoringObservationOutputFile)" DestinationFolder="$(TargetDir)DemoProjects\GeckAuthoringPlanExample\evidence" SkipUnchangedFiles="true" />
   </Target>
 
   <Target Name="CopyDemoProjectToPublishDirectory" AfterTargets="Publish" Condition="Exists('$(MSBuildProjectDirectory)\..\..\fixtures\projects\ExampleMod')">
@@ -77,9 +81,13 @@
     <ItemGroup>
       <XEditDemoPublishFiles Include="$(MSBuildProjectDirectory)\..\..\fixtures\projects\XEditAuditExample\**\*.*" />
       <CombinedDemoPublishFiles Include="$(MSBuildProjectDirectory)\..\..\fixtures\projects\CombinedModExample\**\*.*" Exclude="$(MSBuildProjectDirectory)\..\..\fixtures\projects\CombinedModExample\generated\**\*.*;$(MSBuildProjectDirectory)\..\..\fixtures\projects\CombinedModExample\dist\**\*.*" />
+      <GeckAuthoringDemoPublishFiles Include="$(MSBuildProjectDirectory)\..\..\fixtures\projects\GeckAuthoringPlanExample\**\*.*" Exclude="$(MSBuildProjectDirectory)\..\..\fixtures\projects\GeckAuthoringPlanExample\generated\**\*.*;$(MSBuildProjectDirectory)\..\..\fixtures\projects\GeckAuthoringPlanExample\dist\**\*.*" />
+      <GeckAuthoringObservationPublishFile Include="$(MSBuildProjectDirectory)\..\..\fixtures\geck-authoring-observations\valid-first-slice.json" />
     </ItemGroup>
     <Copy SourceFiles="@(XEditDemoPublishFiles)" DestinationFiles="@(XEditDemoPublishFiles->'$(PublishDir)DemoProjects\XEditAuditExample\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(CombinedDemoPublishFiles)" DestinationFiles="@(CombinedDemoPublishFiles->'$(PublishDir)DemoProjects\CombinedModExample\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(GeckAuthoringDemoPublishFiles)" DestinationFiles="@(GeckAuthoringDemoPublishFiles->'$(PublishDir)DemoProjects\GeckAuthoringPlanExample\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(GeckAuthoringObservationPublishFile)" DestinationFolder="$(PublishDir)DemoProjects\GeckAuthoringPlanExample\evidence" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

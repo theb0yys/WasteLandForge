@@ -1,0 +1,90 @@
+{
+  "formatVersion": "0.1.0",
+  "kind": "wastelandforge.geck-authoring-observations",
+  "source": {
+    "synthetic": true,
+    "usesRealPluginBytes": false
+  },
+  "target": {
+    "expectedPlugin": "CouriersEmergencyCache.esp",
+    "observedPlugin": "CouriersEmergencyCache.esp"
+  },
+  "completion": {
+    "complete": true,
+    "recordsVisited": 2,
+    "refusals": []
+  },
+  "observations": {
+    "orderedMasters": [
+      "FalloutNV.esm"
+    ],
+    "containers": [
+      {
+        "recordFile": "CouriersEmergencyCache.esp",
+        "signature": "CONT",
+        "fixedFormId": "00000800",
+        "editorId": "CourierEmergencyCache",
+        "respawns": false,
+        "items": [
+          {
+            "recordFile": "FalloutNV.esm",
+            "signature": "ALCH",
+            "fixedFormId": "000151A3",
+            "editorId": "WaterPurified",
+            "quantity": 5
+          },
+          {
+            "recordFile": "FalloutNV.esm",
+            "signature": "MISC",
+            "fixedFormId": "0000000F",
+            "editorId": "Caps001",
+            "quantity": 5000
+          }
+        ]
+      }
+    ],
+    "references": [
+      {
+        "recordFile": "CouriersEmergencyCache.esp",
+        "signature": "REFR",
+        "fixedFormId": "00000801",
+        "editorId": "CourierEmergencyCacheRef",
+        "baseRecord": {
+          "recordFile": "CouriersEmergencyCache.esp",
+          "signature": "CONT",
+          "fixedFormId": "00000800",
+          "editorId": "CourierEmergencyCache"
+        },
+        "cell": {
+          "recordFile": "FalloutNV.esm",
+          "signature": "CELL",
+          "fixedFormId": "00000001",
+          "editorId": "SyntheticExterior"
+        },
+        "position": {
+          "x": 1,
+          "y": 2,
+          "z": 3
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 90
+        },
+        "ownershipPresent": false,
+        "persistent": false,
+        "encounterZonePresent": false,
+        "encounterZone": null
+      }
+    ],
+    "unexpectedRecords": []
+  },
+  "safety": {
+    "readOnly": true,
+    "forgeExecutedXEdit": false,
+    "mutatedPlugin": false,
+    "wrotePlugin": false,
+    "changedLoadOrder": false,
+    "wroteGameData": false
+  }
+}

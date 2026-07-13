@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 
 namespace WastelandForge.WindowsTests;
 
+[Collection("Forge CLI console")]
 public sealed class BasicModBuilderWorkspaceTests
 {
     [Theory]

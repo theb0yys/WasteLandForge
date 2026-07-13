@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using WastelandForge.Core;
 using WastelandForge.Generation;
 
 namespace WastelandForge.Cli;

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-index/0.1.0/schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "createdAtUtc", "sourceClassification", "provenance", "recordCount", "records", "payloadSha256", "safety"],
+  "properties": {
+    "formatVersion": { "const": "0.1.0" },
+    "kind": { "const": "wastelandforge.fnv-game-knowledge-index" },
+    "createdAtUtc": { "type": "string", "format": "date-time" },
+    "sourceClassification": { "enum": ["synthetic", "local-game-data"] },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "master", "script", "export", "schema"],
+      "properties": {
+        "provider": { "$ref": "#/$defs/digest" },
+        "master": { "$ref": "#/$defs/digest" },
+        "script": { "$ref": "#/$defs/scriptDigest" },
+        "export": { "$ref": "#/$defs/digest" },
+        "schema": { "$ref": "#/$defs/schemaDigest" }
+      }
+    },
+    "recordCount": { "type": "integer", "minimum": 0, "maximum": 2000000 },
+    "records": { "type": "array", "maxItems": 2000000, "items": { "$ref": "#/$defs/record" } },
+    "payloadSha256": { "$ref": "#/$defs/sha" },
+    "safety": { "$ref": "#/$defs/safety" }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "text": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "formId": { "type": "string", "pattern": "^[0-9A-F]{8}$" },
+    "signature": { "type": "string", "pattern": "^[A-Z0-9_]{4}$" },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "length", "sha256"],
+      "properties": {
+        "fileName": { "$ref": "#/$defs/text" },
+        "length": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "scriptDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fileName", "length", "sha256"],
+      "properties": {
+        "id": { "const": "wastelandforge.fnv-game-knowledge-export/0.1.0" },
+        "fileName": { "$ref": "#/$defs/text" },
+        "length": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "schemaDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "length", "sha256"],
+      "properties": {
+        "id": { "const": "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-export/0.1.0/schema.json" },
+        "length": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceFile", "signature", "fixedFormId"],
+      "properties": {
+        "sourceFile": { "const": "FalloutNV.esm" },
+        "signature": { "$ref": "#/$defs/signature" },
+        "fixedFormId": { "$ref": "#/$defs/formId" },
+        "editorId": { "$ref": "#/$defs/text" }
+      }
+    },
+    "vector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "z"],
+      "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "z": { "type": "number" } }
+    },
+    "context": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "interior"],
+          "properties": { "kind": { "const": "cell" }, "interior": { "type": "boolean" }, "gridX": { "type": "integer" }, "gridY": { "type": "integer" }, "worldspace": { "$ref": "#/$defs/identity" } }
+        },
+        { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "const": "worldspace" } } },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "baseRecord", "position", "rotation"],
+          "properties": { "kind": { "const": "reference" }, "baseRecord": { "$ref": "#/$defs/identity" }, "cell": { "$ref": "#/$defs/identity" }, "worldspace": { "$ref": "#/$defs/identity" }, "position": { "$ref": "#/$defs/vector" }, "rotation": { "$ref": "#/$defs/vector" } }
+        }
+      ]
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceFile", "signature", "fixedFormId", "isDeleted"],
+      "properties": { "sourceFile": { "const": "FalloutNV.esm" }, "signature": { "$ref": "#/$defs/signature" }, "fixedFormId": { "$ref": "#/$defs/formId" }, "loadOrderFormId": { "$ref": "#/$defs/formId" }, "editorId": { "$ref": "#/$defs/text" }, "displayName": { "$ref": "#/$defs/text" }, "isDeleted": { "type": "boolean" }, "context": { "$ref": "#/$defs/context" } }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["readOnly", "forgeExecutedXEdit", "mutatedPlugin", "wrotePlugin", "changedLoadOrder", "wroteGameData"],
+      "properties": { "readOnly": { "const": true }, "forgeExecutedXEdit": { "const": false }, "mutatedPlugin": { "const": false }, "wrotePlugin": { "const": false }, "changedLoadOrder": { "const": false }, "wroteGameData": { "const": false } }
+    }
+  }
+}

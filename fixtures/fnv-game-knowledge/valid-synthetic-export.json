@@ -1,0 +1,112 @@
+{
+  "formatVersion": "0.1.0",
+  "kind": "wastelandforge.fnv-game-knowledge-export",
+  "producer": {
+    "name": "xEdit",
+    "gameMode": "FNV",
+    "version": "synthetic-test-provider",
+    "scriptId": "wastelandforge.fnv-game-knowledge-export/0.1.0"
+  },
+  "source": {
+    "fileName": "FalloutNV.esm",
+    "synthetic": true,
+    "usesRealPluginBytes": false
+  },
+  "completion": {
+    "complete": true,
+    "recordsVisited": 5,
+    "recordsEmitted": 5,
+    "omissions": [],
+    "refusals": []
+  },
+  "records": [
+    {
+      "sourceFile": "FalloutNV.esm",
+      "signature": "AMMO",
+      "fixedFormId": "00000010",
+      "loadOrderFormId": "00000010",
+      "editorId": "SyntheticCaps",
+      "displayName": "Synthetic Currency",
+      "isDeleted": false
+    },
+    {
+      "sourceFile": "FalloutNV.esm",
+      "signature": "CELL",
+      "fixedFormId": "00000100",
+      "loadOrderFormId": "00000100",
+      "editorId": "SyntheticRoadCell",
+      "displayName": "Synthetic Road",
+      "isDeleted": false,
+      "context": {
+        "kind": "cell",
+        "interior": false,
+        "gridX": 1,
+        "gridY": -2,
+        "worldspace": {
+          "sourceFile": "FalloutNV.esm",
+          "signature": "WRLD",
+          "fixedFormId": "00000001",
+          "editorId": "SyntheticWorld"
+        }
+      }
+    },
+    {
+      "sourceFile": "FalloutNV.esm",
+      "signature": "CONT",
+      "fixedFormId": "00000200",
+      "loadOrderFormId": "00000200",
+      "editorId": "SyntheticContainer",
+      "displayName": "Synthetic Container",
+      "isDeleted": false
+    },
+    {
+      "sourceFile": "FalloutNV.esm",
+      "signature": "REFR",
+      "fixedFormId": "00000300",
+      "loadOrderFormId": "00000300",
+      "editorId": "SyntheticRoadMarker",
+      "isDeleted": false,
+      "context": {
+        "kind": "reference",
+        "baseRecord": {
+          "sourceFile": "FalloutNV.esm",
+          "signature": "CONT",
+          "fixedFormId": "00000200",
+          "editorId": "SyntheticContainer"
+        },
+        "cell": {
+          "sourceFile": "FalloutNV.esm",
+          "signature": "CELL",
+          "fixedFormId": "00000100",
+          "editorId": "SyntheticRoadCell"
+        },
+        "worldspace": {
+          "sourceFile": "FalloutNV.esm",
+          "signature": "WRLD",
+          "fixedFormId": "00000001",
+          "editorId": "SyntheticWorld"
+        },
+        "position": { "x": 128.0, "y": -64.0, "z": 16.0 },
+        "rotation": { "x": 0.0, "y": 0.0, "z": 90.0 }
+      }
+    },
+    {
+      "sourceFile": "FalloutNV.esm",
+      "signature": "WRLD",
+      "fixedFormId": "00000001",
+      "loadOrderFormId": "00000001",
+      "editorId": "SyntheticWorld",
+      "displayName": "Synthetic Worldspace",
+      "isDeleted": false,
+      "context": { "kind": "worldspace" }
+    }
+  ],
+  "safety": {
+    "readOnly": true,
+    "forgeExecutedXEdit": false,
+    "mutatedPlugin": false,
+    "wrotePlugin": false,
+    "changedLoadOrder": false,
+    "wroteGameData": false
+  }
+}

@@ -17,6 +17,24 @@ internal sealed class ForgeCommandRunner
 
     public string ForgePathDisplay => forgePath ?? "forge.exe not found";
 
+    public string ApprovalIdentity
+    {
+        get
+        {
+            if (forgePath is null) return "forge.exe unavailable";
+            try
+            {
+                var file = new FileInfo(forgePath);
+                var version = FileVersionInfo.GetVersionInfo(forgePath).ProductVersion ?? "unknown";
+                return $"{Path.GetFullPath(forgePath)}|{version}|{file.Length}|{file.LastWriteTimeUtc.Ticks}";
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+            {
+                return $"{Path.GetFullPath(forgePath)}|unreadable";
+            }
+        }
+    }
+
     public bool IsAvailable => forgePath is not null;
 
     public async Task<ForgeCommandResult> RunAsync(params string[] arguments)

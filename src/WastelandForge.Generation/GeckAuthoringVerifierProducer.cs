@@ -551,7 +551,12 @@ public sealed class GeckAuthoringVerifierProducer
     private static string Sha(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
     private static string NormalizeRelative(string path) => path.Replace('\\', '/');
     private static string Pascal(string value) => value.Replace("'", "''", StringComparison.Ordinal);
-    private static JsonSchema LoadSchema(string id) { WastelandForgeSchemaCatalog.TryGetById(id, out var resource); return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource!)); }
+    private static JsonSchema LoadSchema(string id)
+    {
+        if (!WastelandForgeSchemaCatalog.TryGetById(id, out var resource) || resource is null)
+            throw new InvalidOperationException($"Built-in schema '{id}' is unavailable.");
+        return JsonSchema.FromText(WastelandForgeSchemaCatalog.ReadText(resource), new BuildOptions { SchemaRegistry = new SchemaRegistry() });
+    }
     private static bool IsEvidenceException(Exception exception) => exception is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or ArgumentException or CryptographicException;
     private static DiagnosticIssue Issue(string message, string file) => new(
         WastelandForge.Core.RuleId.Parse(RuleId),

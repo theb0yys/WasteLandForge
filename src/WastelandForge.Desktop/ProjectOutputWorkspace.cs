@@ -25,6 +25,7 @@ internal static class ProjectOutputWorkspace
                 FomodLane(projectRoot, registries),
                 BsaPlanLane(projectRoot, registries),
                 BsaPackageLane(projectRoot, registries),
+                GeckAuthoringEvidenceLane(projectRoot, registries),
                 GeckHandoffLane(projectRoot, registries)
             };
             return new(true, $"Inspected {lanes.Length} project output lanes.", lanes);
@@ -33,6 +34,31 @@ internal static class ProjectOutputWorkspace
         {
             return new(false, "Project output inspection failed: " + ex.Message, []);
         }
+    }
+
+    private static ProjectOutputLane GeckAuthoringEvidenceLane(string root, JsonObject registries)
+    {
+        var generated = Path.GetFullPath(Path.Combine(root, "generated", "geck-authoring-plan"));
+        var plan = Path.Combine(generated, "plan.json");
+        var verification = Path.Combine(generated, "verification");
+        var observer = Path.Combine(verification, "verifier.pas");
+        var report = Path.Combine(verification, "report.json");
+        var components = new List<string>();
+        if (File.Exists(plan)) components.Add("plan");
+        if (File.Exists(observer)) components.Add("observer");
+        if (File.Exists(report)) components.Add("report");
+        int? entries = Directory.Exists(generated) ? Directory.EnumerateFiles(generated, "*", SearchOption.AllDirectories).Count() : null;
+        return new(
+            "geck-authoring-plan",
+            "GECK authoring plan and verification",
+            registries["geckAuthoringIntent"] is not null,
+            Directory.Exists(generated),
+            false,
+            "forge generate --target geck-authoring-plan",
+            Directory.Exists(generated) ? generated : null,
+            null,
+            Components: components.Count == 0 ? "-" : string.Join(", ", components),
+            EntryCount: entries);
     }
 
     private static ProjectOutputLane GeckHandoffLane(string root, JsonObject registries)

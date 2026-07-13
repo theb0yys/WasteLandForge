@@ -1717,8 +1717,6 @@ Bethesda assets, third-party mod files, external tool fixtures, runtime probes,
 generated workflow/task mutations, VS Code extension processes, language-server
 processes, local tool package publication, or AI requirements are added.
 
-Run the full local suite serially:
-
 Gate 533 adds schema, unit, and CLI coverage for the deterministic read-only
 xEdit observer bundle and Forge report sealer. Coverage includes immutable raw
 observations, exact plan/provider/script/plugin provenance, dry-run no-write,

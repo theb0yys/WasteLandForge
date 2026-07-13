@@ -68,6 +68,19 @@ function Select-ComboItem([System.Windows.Automation.AutomationElement] $ComboBo
     $ComboBox.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Collapse()
 }
 
+function Select-DataGridRow([System.Windows.Automation.AutomationElement] $DataGrid, [int] $Index) {
+    $condition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::DataItem)
+    $items = $DataGrid.FindAll([System.Windows.Automation.TreeScope]::Descendants, $condition)
+    if ($items.Count -le $Index) { throw "Installed data grid row $Index was not available; row count was $($items.Count)." }
+    $items[$Index].GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+}
+
+function Set-Toggle([System.Windows.Automation.AutomationElement] $Control, [bool] $Checked) {
+    $pattern = $Control.GetCurrentPattern([System.Windows.Automation.TogglePattern]::Pattern)
+    $isChecked = $pattern.Current.ToggleState -eq [System.Windows.Automation.ToggleState]::On
+    if ($isChecked -ne $Checked) { $pattern.Toggle() }
+}
+
 function Descendant-Text([System.Windows.Automation.AutomationElement] $Control) {
     return (($Control.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition) | ForEach-Object { $_.Current.Name }) -join "`n")
 }
@@ -75,6 +88,12 @@ function Descendant-Text([System.Windows.Automation.AutomationElement] $Control)
 function Find-FirstControlType([System.Windows.Automation.AutomationElement] $Root, [System.Windows.Automation.ControlType] $ControlType) {
     $condition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ControlTypeProperty, $ControlType)
     return $Root.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $condition)
+}
+
+function Get-TrackedEditorProcessIds {
+    return @(Get-Process -ErrorAction SilentlyContinue |
+        Where-Object { $_.ProcessName -in @('GECK','FNVEdit','xEdit','ModOrganizer','ModOrganizer2') } |
+        Select-Object -ExpandProperty Id)
 }
 
 Add-Type -AssemblyName UIAutomationClient
@@ -99,6 +118,8 @@ $mo2Root = Join-Path $env:TEMP "WastelandForge-Gate466-MO2-$runId"
 $releaseHandoffRoot = Join-Path $env:TEMP "WastelandForge-Gate477-Release-$runId"
 $geckProjectRoot = Join-Path $env:TEMP "WastelandForge-Gate480-Project-$runId"
 $geckStubRoot = Join-Path $env:TEMP "WastelandForge-Gate480-Stub-$runId"
+$geckAuthoringRoot = Join-Path $env:TEMP "WastelandForge-Gate538-Authoring-$runId"
+$geckIntentRoot = Join-Path $env:TEMP "WastelandForge-Gate541-Intent-$runId"
 $xeditProjectRoot = Join-Path $env:TEMP "WastelandForge-Gate482-Project-$runId"
 $xeditStubRoot = Join-Path $env:TEMP "WastelandForge-Gate482-Stub-$runId"
 $basicModParent = Join-Path $env:TEMP "WastelandForge-Gate506-Builder-$runId"
@@ -123,6 +144,8 @@ try {
     Copy-Item -LiteralPath (Join-Path $installRoot 'DemoProjects\CombinedModExample') -Destination $readyRoot -Recurse
     Copy-Item -LiteralPath (Join-Path $installRoot 'DemoProjects\CombinedModExample') -Destination $blockedRoot -Recurse
     Copy-Item -LiteralPath (Join-Path $installRoot 'DemoProjects\ExampleMod') -Destination $geckProjectRoot -Recurse
+    Copy-Item -LiteralPath (Join-Path $installRoot 'DemoProjects\GeckAuthoringPlanExample') -Destination $geckAuthoringRoot -Recurse
+    Copy-Item -LiteralPath (Join-Path $installRoot 'DemoProjects\ExampleMod') -Destination $geckIntentRoot -Recurse
     Copy-Item -LiteralPath (Join-Path $installRoot 'DemoProjects\ExampleMod') -Destination $xeditProjectRoot -Recurse
     Copy-Item -LiteralPath (Join-Path $installRoot 'ForgeBackend') -Destination $geckStubRoot -Recurse
     Move-Item -LiteralPath (Join-Path $geckStubRoot 'forge.exe') -Destination (Join-Path $geckStubRoot 'GECK.exe')
@@ -165,6 +188,18 @@ try {
     New-Item -ItemType Directory -Path (Split-Path $readyBsArch) -Force | Out-Null
     Copy-Item -Path (Join-Path (Split-Path $syntheticBsArch) '*') -Destination (Split-Path $readyBsArch) -Recurse -Force
     $readyBsArchHash = (Get-FileHash -LiteralPath $readyBsArch -Algorithm SHA256).Hash
+    $geckAuthoringPlugin = Join-Path $geckAuthoringRoot 'staging\Data\CouriersEmergencyCache.esp'
+    $geckAuthoringObservations = Join-Path $geckAuthoringRoot 'evidence\valid-first-slice.json'
+    $outsideGeckAuthoringObservations = Join-Path $settingsRoot 'outside-geck-authoring-observations.json'
+    New-Item -ItemType Directory -Path (Split-Path $geckAuthoringPlugin) -Force | Out-Null
+    [IO.File]::WriteAllBytes($geckAuthoringPlugin, [byte[]](0x57,0x46,0x2D,0x53,0x59,0x4E,0x54,0x48,0x45,0x54,0x49,0x43))
+    $geckAuthoringPluginHash = (Get-FileHash -LiteralPath $geckAuthoringPlugin -Algorithm SHA256).Hash.ToLowerInvariant()
+    New-Item -ItemType Directory -Path $settingsRoot -Force | Out-Null
+    Copy-Item -LiteralPath $geckAuthoringObservations -Destination $outsideGeckAuthoringObservations
+    $geckIntentData = Join-Path $geckIntentRoot 'local-game\Data'
+    $geckIntentEvidence = Join-Path $settingsRoot 'gate541-local-evidence.json'
+    New-Item -ItemType Directory -Path $geckIntentData -Force | Out-Null
+    [ordered]@{kind='synthetic-local-evidence';compatibilityClaim=$false} | ConvertTo-Json -Compress | Set-Content -LiteralPath $geckIntentEvidence -Encoding utf8NoBOM
     $xeditPlugin = Join-Path $xeditProjectRoot 'src\plugins\ReviewTarget.esp'
     $xeditRegistry = Join-Path $xeditProjectRoot 'src\registries\plugin-artifacts\main.json'
     New-Item -ItemType Directory -Path (Split-Path $xeditPlugin) -Force | Out-Null
@@ -214,8 +249,232 @@ try {
         $navigationControl = Require-Control $window $controlId
         if ($navigationControl.Current.IsOffscreen -or $navigationControl.Current.BoundingRectangle.Width -le 0 -or $navigationControl.Current.BoundingRectangle.Height -le 0) { throw "Grouped navigation is not accessible at minimum size: $controlId" }
     }
+
+    $gate541TrackedProcessesBefore = Get-TrackedEditorProcessIds
+    Set-Value (Require-Control $window 'ProjectPathTextBox') $geckIntentRoot
+    Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'Basic Mod Builder'
+    Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'GECK Intent Builder'
+    foreach ($controlId in @('GeckIntentBuilderTabItem','RefreshGeckIntentBuilderButton','GeckIntentOperationStateTextBlock','PreviewGeckIntentButton','ApplyGeckIntentButton','GeckIntentPreviewTextBox','GeckIntentStatusTextBlock')) {
+        Require-Control $window $controlId | Out-Null
+    }
     [WfNativeWindow]::MoveWindow($process.MainWindowHandle, 40, 40, 1180, 760, $true) | Out-Null
     Start-Sleep -Milliseconds 300
+
+    $populateGeckIntent = {
+        param([bool] $Resolved)
+        Set-Value (Require-Control $window 'GeckIntentPluginFileNameTextBox') 'Gate541Synthetic.esp'
+        Set-Value (Require-Control $window 'GeckIntentAuthorTextBox') 'Installed Synthetic Fixture'
+        Set-Value (Require-Control $window 'GeckIntentSummaryTextBox') 'Installed synthetic GECK authoring intent.'
+        Set-Value (Require-Control $window 'GeckIntentOutputRootTextBox') $geckIntentData
+        Set-Value (Require-Control $window 'GeckIntentContainerEditorIdTextBox') 'Gate541SyntheticContainer'
+        Set-Value (Require-Control $window 'GeckIntentReferenceEditorIdTextBox') 'Gate541SyntheticReference'
+        Set-Value (Require-Control $window 'GeckIntentPositionXTextBox') '1'
+        Set-Value (Require-Control $window 'GeckIntentPositionYTextBox') '2'
+        Set-Value (Require-Control $window 'GeckIntentPositionZTextBox') '3'
+        Set-Value (Require-Control $window 'GeckIntentRotationXTextBox') '0'
+        Set-Value (Require-Control $window 'GeckIntentRotationYTextBox') '0'
+        Set-Value (Require-Control $window 'GeckIntentRotationZTextBox') '90'
+
+        $providerGrid = Require-Control $window 'GeckIntentProvidersDataGrid'
+        for ($providerIndex = 0; $providerIndex -lt 3; $providerIndex++) {
+            Select-DataGridRow $providerGrid $providerIndex
+            Set-Value (Require-Control $window 'GeckIntentProviderEvidencePathTextBox') $geckIntentEvidence
+            Set-Toggle (Require-Control $window 'GeckIntentProviderAttestedCheckBox') $true
+        }
+
+        $statusName = if ($Resolved) { 'Local verified' } else { 'Provisional' }
+        $rows = @(
+            [ordered]@{ Id='io.installed.water'; Kind='Item'; EditorId='WaterSynthetic'; FormId='1'; Signature='ALCH'; Quantity='5' },
+            [ordered]@{ Id='io.installed.caps'; Kind='Item'; EditorId='CapsSynthetic'; FormId='2'; Signature='MISC'; Quantity='5000' },
+            [ordered]@{ Id='io.installed.cell'; Kind='Cell'; EditorId='CellSynthetic'; FormId='3'; Signature='CELL'; Quantity='0' },
+            [ordered]@{ Id='io.installed.base'; Kind='Container base'; EditorId='ContainerSynthetic'; FormId='4'; Signature='CONT'; Quantity='0' }
+        )
+        $resolutionGrid = Require-Control $window 'GeckIntentResolutionsDataGrid'
+        for ($resolutionIndex = 0; $resolutionIndex -lt $rows.Count; $resolutionIndex++) {
+            $row = $rows[$resolutionIndex]
+            Select-DataGridRow $resolutionGrid $resolutionIndex
+            Set-Value (Require-Control $window 'GeckIntentResolutionIdTextBox') $row.Id
+            Select-ComboItem (Require-Control $window 'GeckIntentResolutionKindComboBox') $row.Kind
+            Set-Value (Require-Control $window 'GeckIntentResolutionEditorIdTextBox') $row.EditorId
+            Set-Value (Require-Control $window 'GeckIntentResolutionFormIdTextBox') $row.FormId
+            Set-Value (Require-Control $window 'GeckIntentResolutionSignatureTextBox') $row.Signature
+            Select-ComboItem (Require-Control $window 'GeckIntentResolutionStatusComboBox') $statusName
+            Set-Value (Require-Control $window 'GeckIntentResolutionQuantityTextBox') $row.Quantity
+            Set-Value (Require-Control $window 'GeckIntentResolutionEvidencePathTextBox') $geckIntentEvidence
+        }
+    }
+
+    & $populateGeckIntent $false
+    $geckIntentManifest = Join-Path $geckIntentRoot 'wastelandforge.json'
+    $geckIntentSource = Join-Path $geckIntentRoot 'src\registries\geck-authoring\main.json'
+    $geckIntentManifestBefore = (Get-FileHash -LiteralPath $geckIntentManifest -Algorithm SHA256).Hash
+    Invoke-Control (Require-Control $window 'PreviewGeckIntentButton')
+    $geckIntentStatus = Require-Control $window 'GeckIntentStatusTextBlock'
+    $applyGeckIntent = Require-Control $window 'ApplyGeckIntentButton'
+    Wait-Until { $applyGeckIntent.Current.IsEnabled } "Installed GECK intent preview failed: $($geckIntentStatus.Current.Name)" | Out-Null
+    if (Test-Path -LiteralPath $geckIntentSource) { throw 'GECK intent preview wrote canonical source.' }
+    [IO.File]::AppendAllText($geckIntentEvidence, [Environment]::NewLine)
+    Invoke-Control $applyGeckIntent
+    Wait-Until { $geckIntentStatus.Current.Name -eq 'Inputs changed. Preview again.' } "Installed GECK intent stale approval was not refused: $($geckIntentStatus.Current.Name)" | Out-Null
+    if ((Get-FileHash -LiteralPath $geckIntentManifest -Algorithm SHA256).Hash -ne $geckIntentManifestBefore -or (Test-Path -LiteralPath $geckIntentSource)) { throw 'Stale GECK intent approval changed canonical source.' }
+
+    Invoke-Control (Require-Control $window 'PreviewGeckIntentButton')
+    Invoke-Control $applyGeckIntent
+    Wait-Until { $geckIntentStatus.Current.Name -eq 'Canonical GECK intent saved with provisional resolutions; local evidence is still required.' } "Installed provisional GECK intent save failed: $($geckIntentStatus.Current.Name)" | Out-Null
+    if (-not (Test-Path -LiteralPath $geckIntentSource -PathType Leaf)) { throw 'Installed GECK intent create did not write canonical intent.' }
+    if (Test-Path -LiteralPath (Join-Path $geckIntentRoot 'generated')) { throw 'Installed GECK intent source transaction wrote generated plan evidence.' }
+    $createdIntent = Get-Content -LiteralPath $geckIntentSource -Raw | ConvertFrom-Json
+    if (-not ($createdIntent.resolutions | Where-Object status -eq 'provisional')) { throw 'Installed provisional GECK intent was silently promoted.' }
+
+    Invoke-Control (Require-Control $window 'ReviewGeckIntentUndoButton')
+    $undoGeckIntent = Require-Control $window 'UndoGeckIntentButton'
+    Wait-Until { $undoGeckIntent.Current.IsEnabled } "Installed GECK intent create undo was unavailable: $($geckIntentStatus.Current.Name)" | Out-Null
+    Invoke-Control $undoGeckIntent
+    Wait-Until { -not (Test-Path -LiteralPath $geckIntentSource) } 'Installed GECK intent create undo did not restore the original source state.' | Out-Null
+    $restoredManifest = Get-Content -LiteralPath $geckIntentManifest -Raw | ConvertFrom-Json
+    if ($restoredManifest.schemaVersion -ne '0.2.0' -or $null -ne $restoredManifest.registries.geckAuthoringIntent) { throw 'Installed GECK intent create undo did not restore the exact manifest contract.' }
+    $attachedEvidence = Join-Path $geckIntentRoot 'evidence\geck-authoring'
+    if ((Test-Path -LiteralPath $attachedEvidence) -and (Get-ChildItem -LiteralPath $attachedEvidence -File).Count -ne 0) { throw 'Installed GECK intent create undo left its attached evidence file.' }
+
+    Invoke-Control (Require-Control $window 'RefreshGeckIntentBuilderButton')
+    & $populateGeckIntent $true
+    Invoke-Control (Require-Control $window 'PreviewGeckIntentButton')
+    Invoke-Control $applyGeckIntent
+    Wait-Until { $geckIntentStatus.Current.Name -eq 'Canonical GECK intent is resolved and ready for Authoring Review.' } "Installed resolved GECK intent create failed: $($geckIntentStatus.Current.Name)" | Out-Null
+    Invoke-Control (Require-Control $window 'OpenGeckAuthoringReviewButton')
+    $geckPlanStateFromBuilder = Require-Control $window 'GeckAuthoringPlanStateTextBlock'
+    Wait-Until { $geckPlanStateFromBuilder.Current.Name -eq 'ReadyToGenerate' } 'Resolved GECK Intent Builder handoff did not reach Authoring Review.' | Out-Null
+    if (@(Get-TrackedEditorProcessIds | Where-Object { $_ -notin $gate541TrackedProcessesBefore }).Count -ne 0) { throw 'GECK Intent Builder launched an editor or mod manager process.' }
+
+    Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'Basic Mod Builder'
+    Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'GECK Intent Builder'
+    $routeValidation = Require-Control $window 'RouteGeckIntentValidationButton'
+    Invoke-Control $routeValidation
+    if (-not (Require-Control $window 'ValidationReportTabItem').GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Current.IsSelected) { throw 'GECK Intent Builder validation route did not select Validation.' }
+    Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'Basic Mod Builder'
+    Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'GECK Intent Builder'
+    Invoke-Control (Require-Control $window 'RefreshGeckIntentBuilderButton')
+    Set-Value (Require-Control $window 'GeckIntentSummaryTextBox') 'Installed synthetic GECK authoring intent revision.'
+    Invoke-Control (Require-Control $window 'PreviewGeckIntentButton')
+    Invoke-Control $applyGeckIntent
+    Wait-Until { $geckIntentStatus.Current.Name -eq 'Canonical GECK intent is resolved and ready for Authoring Review.' } "Installed GECK intent revision failed: $($geckIntentStatus.Current.Name)" | Out-Null
+    Invoke-Control (Require-Control $window 'ReviewGeckIntentUndoButton')
+    Invoke-Control $undoGeckIntent
+    Wait-Until { (Get-Content -LiteralPath $geckIntentSource -Raw | ConvertFrom-Json).plugin.summary -eq 'Installed synthetic GECK authoring intent.' } 'Installed GECK intent revision undo did not restore the prior source.' | Out-Null
+    if (Test-Path -LiteralPath (Join-Path $geckIntentData 'Gate541Synthetic.esp')) { throw 'GECK Intent Builder wrote plugin bytes into the synthetic Data directory.' }
+    Write-Host 'Gate 541 UI regression: installed create, stale refusal, provisional state, undo, resolved handoff, revision, validation route, and no-execution boundaries passed.'
+
+    Select-ComboItem (Require-Control $window 'ReviewWorkspaceComboBox') 'Validation'
+    Select-ComboItem (Require-Control $window 'ReviewWorkspaceComboBox') 'GECK Handoff'
+    $geckAuthoringTab = Require-Control $window 'GeckAuthoringReviewTabItem'
+    $geckManualTab = Require-Control $window 'GeckManualHandoffTabItem'
+    if (-not $geckAuthoringTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Current.IsSelected) { throw 'GECK authoring review was not the default nested view at 960x640.' }
+    $geckManualTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+    Require-Control $window 'LoadGeckHandoffButton' | Out-Null
+    $geckAuthoringTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+    foreach ($controlId in @('RefreshGeckAuthoringReviewButton','GeckAuthoringPlanStateTextBlock','GeckAuthoringVerifierStateTextBlock','GeckAuthoringObservationsStateTextBlock','GeckAuthoringVerificationStateTextBlock')) { Require-Control $window $controlId | Out-Null }
+    [WfNativeWindow]::MoveWindow($process.MainWindowHandle, 40, 40, 1180, 760, $true) | Out-Null
+    Start-Sleep -Milliseconds 300
+    $geckManualTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+    Require-Control $window 'LoadGeckHandoffButton' | Out-Null
+    $geckAuthoringTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
+    if (-not $geckAuthoringTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Current.IsSelected) { throw 'GECK authoring review could not be selected at 1180x760.' }
+
+    $trackedEditorProcessesBefore = Get-TrackedEditorProcessIds
+    Set-Value (Require-Control $window 'ProjectPathTextBox') $geckAuthoringRoot
+    $geckAuthoringStatus = Require-Control $window 'GeckAuthoringStatusTextBlock'
+    $geckPlanState = Require-Control $window 'GeckAuthoringPlanStateTextBlock'
+    $geckObserverState = Require-Control $window 'GeckAuthoringVerifierStateTextBlock'
+    $geckObservationsState = Require-Control $window 'GeckAuthoringObservationsStateTextBlock'
+    $geckVerificationState = Require-Control $window 'GeckAuthoringVerificationStateTextBlock'
+    Invoke-Control (Require-Control $window 'RefreshGeckAuthoringReviewButton')
+    Wait-Until { $geckPlanState.Current.Name -eq 'ReadyToGenerate' } "Installed authoring plan did not become ready: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    if ($geckAuthoringStatus.Current.Name -ne 'Authoring plan preview is valid; generate the current plan before continuing.') { throw "Unexpected authoring refresh status: $($geckAuthoringStatus.Current.Name)" }
+    if (Test-Path -LiteralPath (Join-Path $geckAuthoringRoot 'generated')) { throw 'Authoring refresh wrote generated evidence.' }
+
+    Invoke-Control (Require-Control $window 'PreviewGeckAuthoringPlanButton')
+    $generatePlan = Require-Control $window 'GenerateGeckAuthoringPlanButton'
+    Wait-Until { $generatePlan.Current.IsEnabled } "Installed authoring plan preview failed: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    if ($geckAuthoringStatus.Current.Name -ne 'Authoring plan preview ready. No files were written.' -or (Test-Path -LiteralPath (Join-Path $geckAuthoringRoot 'generated'))) { throw 'Plan preview did not preserve the no-write contract.' }
+    Invoke-Control $generatePlan
+    Wait-Until { $geckPlanState.Current.Name -eq 'Current' -and $geckObserverState.Current.Name -eq 'ReadyToGenerate' } "Installed authoring plan generation did not refresh readiness: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    $geckPlanPath = Join-Path $geckAuthoringRoot 'generated\geck-authoring-plan\plan.json'
+    if (-not (Test-Path -LiteralPath $geckPlanPath -PathType Leaf)) { throw 'Installed authoring plan was not generated.' }
+
+    $geckVerificationRoot = Join-Path $geckAuthoringRoot 'generated\geck-authoring-plan\verification'
+    Invoke-Control (Require-Control $window 'PreviewGeckAuthoringVerifierButton')
+    $generateObserver = Require-Control $window 'GenerateGeckAuthoringVerifierButton'
+    Wait-Until { $generateObserver.Current.IsEnabled } "Installed observer preview failed: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    if ($geckAuthoringStatus.Current.Name -ne 'Observer bundle preview ready. No files were written.' -or (Test-Path -LiteralPath $geckVerificationRoot)) { throw 'Observer preview did not preserve the no-write contract.' }
+    Invoke-Control $generateObserver
+    Wait-Until { $geckObserverState.Current.Name -eq 'Current' } "Installed observer generation did not become current: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    foreach ($relative in @('verifier.pas','observer-contract.json','observer-manifest.json','checksums.sha256')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $geckVerificationRoot $relative) -PathType Leaf)) { throw "Installed observer bundle omitted $relative" }
+    }
+
+    Set-Value (Require-Control $window 'GeckAuthoringObservationsPathTextBox') $outsideGeckAuthoringObservations
+    Invoke-Control (Require-Control $window 'PreviewGeckAuthoringVerificationButton')
+    Wait-Until { $geckAuthoringStatus.Current.Name -eq 'Raw observations must stay inside the selected project.' } "Installed observation containment refusal was not exact: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    if ($geckPlanState.Current.Name -ne 'RefreshRequired' -or $geckVerificationState.Current.Name -ne 'RefreshRequired') { throw 'Containment refusal did not invalidate displayed authoring evidence.' }
+    $diagnosticDetail = Require-Control $window 'GeckAuthoringDiagnosticDetailTextBox'
+    Wait-Until { $diagnosticDetail.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value.Contains('WF-LOAD-DESKTOP', [StringComparison]::Ordinal) } 'Containment refusal did not expose WF-LOAD-DESKTOP detail.' | Out-Null
+
+    Set-Value (Require-Control $window 'GeckAuthoringObservationsPathTextBox') $geckAuthoringObservations
+    Invoke-Control (Require-Control $window 'RefreshGeckAuthoringReviewButton')
+    Wait-Until { $geckObservationsState.Current.Name -eq 'AcceptedForPreview' -and $geckVerificationState.Current.Name -eq 'ReadyToSeal' } "Installed valid observations did not become seal-ready: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    $geckReportPath = Join-Path $geckVerificationRoot 'report.json'
+    if (Test-Path -LiteralPath $geckReportPath) { throw 'Verification refresh unexpectedly wrote report.json.' }
+    Invoke-Control (Require-Control $window 'PreviewGeckAuthoringVerificationButton')
+    $sealVerification = Require-Control $window 'GenerateGeckAuthoringVerificationButton'
+    Wait-Until { $sealVerification.Current.IsEnabled } "Installed verification preview failed: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    if ($geckAuthoringStatus.Current.Name -ne 'Semantic verification preview passed. No report was written.' -or $geckObservationsState.Current.Name -ne 'AcceptedForPreview' -or $geckVerificationState.Current.Name -ne 'ReadyToSeal') { throw 'Verification preview state or status was inaccurate.' }
+    [IO.File]::AppendAllText($geckAuthoringObservations, [Environment]::NewLine)
+    Invoke-Control $sealVerification
+    Wait-Until { $geckAuthoringStatus.Current.Name -eq 'Inputs changed. Preview again.' } "Installed stale verification preview was not refused: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    if (Test-Path -LiteralPath $geckReportPath) { throw 'Stale verification preview wrote report.json.' }
+    Invoke-Control (Require-Control $window 'PreviewGeckAuthoringVerificationButton')
+    Wait-Until { $sealVerification.Current.IsEnabled } "Installed verification re-preview failed: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    Invoke-Control $sealVerification
+    Wait-Until { $geckVerificationState.Current.Name -eq 'Verified' -and $geckAuthoringStatus.Current.Name -eq 'Semantic verification report is current.' } "Installed verification did not become current: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    if (-not (Test-Path -LiteralPath $geckReportPath -PathType Leaf)) { throw 'Installed verification report was not sealed.' }
+    if ((Get-FileHash -LiteralPath $geckAuthoringPlugin -Algorithm SHA256).Hash.ToLowerInvariant() -ne $geckAuthoringPluginHash) { throw 'Installed authoring verification changed opaque plugin bytes.' }
+    $geckEvidence = (Require-Control $window 'GeckAuthoringEvidenceTextBox').GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
+    foreach ($expected in @('generated/geck-authoring-plan/plan.json','generated/geck-authoring-plan/verification/verifier.pas','generated/geck-authoring-plan/verification/report.json','CURRENT')) { if (-not $geckEvidence.Contains($expected, [StringComparison]::Ordinal)) { throw "Installed authoring evidence omitted $expected" } }
+    if ($geckEvidence -notmatch '[0-9a-f]{64}') { throw 'Installed authoring evidence omitted SHA-256 digests.' }
+    $authoringText = Descendant-Text $geckAuthoringTab
+    foreach ($expected in @('FNVEdit execution and script installation are manual','Gate 534 compatibility remains unproven')) { if (-not $authoringText.Contains($expected, [StringComparison]::Ordinal)) { throw "Installed authoring boundary omitted: $expected" } }
+    $newTrackedEditorProcesses = @(Get-TrackedEditorProcessIds | Where-Object { $_ -notin $trackedEditorProcessesBefore })
+    if ($newTrackedEditorProcesses.Count -ne 0) { throw "Installed authoring review launched an editor or mod manager process: $($newTrackedEditorProcesses -join ', ')" }
+
+    Invoke-Control (Require-Control $window 'RouteGeckProjectOutputsButton')
+    $projectOutputsTab = Require-Control $window 'ProjectOutputsTabItem'
+    if (-not $projectOutputsTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Current.IsSelected) { throw 'Project Outputs route did not select its owned workspace.' }
+    $projectOutputsGrid = Require-Control $window 'ProjectOutputsDataGrid'
+    $projectOutputsPattern = $projectOutputsGrid.GetCurrentPattern([System.Windows.Automation.GridPattern]::Pattern)
+    Wait-Until { $projectOutputsPattern.Current.RowCount -gt 0 } 'Project Outputs route did not populate the output grid.' | Out-Null
+    $geckOutputLaneFound = $false
+    $projectOutputTitles = @()
+    for ($row = 0; $row -lt $projectOutputsPattern.Current.RowCount; $row++) {
+        $cell = $projectOutputsPattern.GetItem($row, 0)
+        $title = $cell.Current.Name
+        if ([string]::IsNullOrWhiteSpace($title)) {
+            try { $title = $cell.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value } catch { $title = Descendant-Text $cell }
+        }
+        $projectOutputTitles += $title
+        if ($title.Contains('GECK authoring plan and verification', [StringComparison]::Ordinal)) { $geckOutputLaneFound = $true; break }
+    }
+    if (-not $geckOutputLaneFound) { throw "Project Outputs route did not expose the read-only GECK authoring evidence lane. Titles: $($projectOutputTitles -join ' | ')" }
+    Select-Tab $window 'GECK Handoff'
+    Invoke-Control (Require-Control $window 'RouteGeckXEditAuditButton')
+    if (-not (Require-Control $window 'XEditAuditTabItem').GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Current.IsSelected) { throw 'xEdit Audit route did not select its owned workspace.' }
+    Select-Tab $window 'GECK Handoff'
+    Invoke-Control (Require-Control $window 'RouteGeckValidationButton')
+    if (-not (Require-Control $window 'ValidationReportTabItem').GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Current.IsSelected) { throw 'Validation route did not select its owned workspace.' }
+    Select-Tab $window 'GECK Handoff'
+    Invoke-Control (Require-Control $window 'RouteGeckManualHandoffButton')
+    if (-not $geckManualTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Current.IsSelected) { throw 'Manual Handoff route did not select the preserved nested view.' }
+    Write-Host 'Gate 538 UI regression: installed plan, observer, containment, stale refusal, report sealing, evidence, routes, and no-editor boundary passed.'
+
     Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'Basic Mod Builder'
     foreach ($controlId in @('ReviewWorkspaceComboBox','SystemWorkspaceComboBox')) { Require-Control $window $controlId | Out-Null }
     Write-Host 'Gate 512 UI regression: grouped Build/Review/System navigation is installed and Basic Mod Builder is directly selectable.'
@@ -369,6 +628,7 @@ try {
     Select-Tab $window 'Settings'
     Set-Value (Require-Control $window 'GeckPathTextBox') (Join-Path $geckStubRoot 'GECK.exe')
     Select-Tab $window 'GECK Handoff'
+    Select-Tab $window 'Manual Handoff'
     Invoke-Control (Require-Control $window 'LoadGeckHandoffButton')
     $geckStatus = Require-Control $window 'GeckHandoffWorkspaceStatusTextBlock'
     $previewGeck = Require-Control $window 'PreviewGeckLaunchButton'
@@ -508,7 +768,7 @@ finally {
     if ($installed -and (Test-Path -LiteralPath (Join-Path $installRoot 'unins000.exe'))) {
         Start-Process -FilePath (Join-Path $installRoot 'unins000.exe') -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') -Wait -WindowStyle Hidden
     }
-    foreach ($path in @($readyRoot, $blockedRoot, $settingsRoot, $mo2Root, $releaseHandoffRoot, $geckProjectRoot, $geckStubRoot, $xeditProjectRoot, $xeditStubRoot, $basicModParent, $initRecoveryRoot)) {
+    foreach ($path in @($readyRoot, $blockedRoot, $settingsRoot, $mo2Root, $releaseHandoffRoot, $geckProjectRoot, $geckStubRoot, $geckAuthoringRoot, $geckIntentRoot, $xeditProjectRoot, $xeditStubRoot, $basicModParent, $initRecoveryRoot)) {
         if (Test-Path -LiteralPath $path) {
             $resolved = (Resolve-Path -LiteralPath $path).Path
             $tempPrefix = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'

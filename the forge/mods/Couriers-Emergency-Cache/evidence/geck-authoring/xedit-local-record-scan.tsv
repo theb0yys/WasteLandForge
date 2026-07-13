@@ -1,0 +1,482 @@
+evidence_kind	signature	fixed_form_id	editor_id	full_name	details
+scan-metadata	META	00000000	WF_CouriersEmergencyCache_EvidenceScan		read-only xEdit record scan; expected loaded source FalloutNV.esm
+candidate-reference	REFR	00177D7E			base=0015F31C:GoodspringsSack; cell=000E1942:; posX=-18195.000000; posY=-80075.000000; posZ=10756.000000; rotX=0.0000; rotY=0.0000; rotZ=329.0002
+candidate-reference	REFR	00177D7F			base=0015F31C:GoodspringsSack; cell=000E1942:; posX=-18146.000000; posY=-80057.000000; posZ=10756.270508; rotX=0.0000; rotY=0.0000; rotZ=108.0000
+candidate-cell	CELL	000E19CD	GoodspringsSource		gridX=-16; gridY=-5
+candidate-cell	CELL	000E19B4	SLGoodspringsCave		gridX=-15; gridY=-2
+candidate-reference	REFR	0010B8DC			base=0010B597:NVSignGoodsprings; cell=000E19AD:; posX=-65385.859375; posY=-1683.703613; posZ=8343.873047; rotX=1.5346; rotY=359.4760; rotZ=352.4665
+candidate-reference	REFR	0010A170			base=001699BB:NVGoodSpringsHomeExtDoorStatic; cell=000E1AB0:; posX=-75820.289062; posY=-5021.307617; posZ=8305.596680; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	00172710			base=0015F31C:GoodspringsSack; cell=000E1B47:SLNiptonRoadReststop; posX=-70318.882812; posY=-83958.156250; posZ=6336.903320; rotX=0.0000; rotY=1.1459; rotZ=35.5234
+candidate-reference	REFR	00161D06			base=0015F31C:GoodspringsSack; cell=000E1B72:; posX=-83540.460938; posY=-104468.015625; posZ=11008.000000; rotX=0.0000; rotY=0.0000; rotZ=304.9961
+candidate-reference	REFR	00161D05			base=0015F31C:GoodspringsSack; cell=000E1B72:; posX=-83599.921875; posY=-104431.437500; posZ=11008.000000; rotX=0.0000; rotY=0.0000; rotZ=80.7871
+candidate-reference	REFR	00161D04			base=0015F31C:GoodspringsSack; cell=000E1B72:; posX=-83897.906250; posY=-104734.117187; posZ=11008.000000; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	00169308			base=0015F31C:GoodspringsSack; cell=000DAC7D:HuntersFarm; posX=-20801.910156; posY=38531.386719; posZ=4208.000000; rotX=0.0000; rotY=0.0000; rotZ=239.6791
+candidate-reference	REFR	0013D715			base=001699BB:NVGoodSpringsHomeExtDoorStatic; cell=000DAD7E:BonnieSprings; posX=-59829.695312; posY=39299.921875; posZ=4358.571777; rotX=0.0000; rotY=0.0000; rotZ=81.4058
+candidate-reference	REFR	0013D716			base=001699BB:NVGoodSpringsHomeExtDoorStatic; cell=000DAD7E:BonnieSprings; posX=-60113.421875; posY=39510.027344; posZ=4358.547852; rotX=0.0000; rotY=0.0000; rotZ=171.4057
+candidate-reference	REFR	0013D717			base=001699BB:NVGoodSpringsHomeExtDoorStatic; cell=000DAD7E:BonnieSprings; posX=-59791.636719; posY=39057.105469; posZ=4352.785156; rotX=0.0000; rotY=0.0000; rotZ=261.4058
+candidate-reference	REFR	0015E140			base=0015DB3A:SnowglobeGoodsprings; cell=000DADAF:GSCemetery; posX=-62552.792969; posY=13706.027344; posZ=10267.865234; rotX=0.0000; rotY=0.0000; rotZ=217.7242
+candidate-reference	REFR	00112608			base=00112607:SFXACGoodSpringsLP; cell=000DAEBB:Goodsprings; posX=-69675.195312; posY=3911.391846; posZ=8615.394531; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-cell	CELL	000DAEBB	Goodsprings		gridX=-18; gridY=0
+candidate-reference	REFR	00112609			base=00112607:SFXACGoodSpringsLP; cell=000DAEB9:; posX=-68948.835938; posY=3794.333984; posZ=8622.762695; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	0011260B			base=00112607:SFXACGoodSpringsLP; cell=000DAEB9:; posX=-67416.906250; posY=3841.552979; posZ=8617.532227; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	0015F31D			base=0015F31C:GoodspringsSack; cell=000DAEB9:; posX=-69398.031250; posY=2840.571777; posZ=8344.000000; rotX=0.0000; rotY=0.0000; rotZ=337.0817
+candidate-reference	REFR	0015F31E			base=0015F31C:GoodspringsSack; cell=000DAEB9:; posX=-69480.851562; posY=2802.360352; posZ=8344.000000; rotX=0.0000; rotY=0.0000; rotZ=22.9184
+candidate-reference	REFR	0011260A			base=00112607:SFXACGoodSpringsLP; cell=000DAEB8:; posX=-67422.703125; posY=4097.810059; posZ=8618.169922; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	0017B615			base=001699BB:NVGoodSpringsHomeExtDoorStatic; cell=000DAEB1:; posX=-70387.726562; posY=9869.475586; posZ=8798.153320; rotX=0.0000; rotY=0.0000; rotZ=269.9544
+candidate-reference	REFR	00140642			base=001699BB:NVGoodSpringsHomeExtDoorStatic; cell=000DEBE9:; posX=26378.000000; posY=-95570.000000; posZ=6968.000000; rotX=0.0000; rotY=0.0000; rotZ=270.0002
+candidate-reference	REFR	00140646			base=001699BB:NVGoodSpringsHomeExtDoorStatic; cell=000DEBE9:; posX=26380.000000; posY=-95322.000000; posZ=6976.000000; rotX=0.0000; rotY=0.0000; rotZ=90.0002
+candidate-reference	REFR	00140647			base=001699BB:NVGoodSpringsHomeExtDoorStatic; cell=000DEBE9:; posX=26128.000000; posY=-95068.000000; posZ=6976.000000; rotX=0.0000; rotY=0.0000; rotZ=180.0000
+candidate-reference	REFR	001692B0			base=0015F31C:GoodspringsSack; cell=000DEBBE:LegionRaidCamp; posX=5978.388184; posY=-71940.187500; posZ=9391.441406; rotX=0.0000; rotY=0.0000; rotZ=176.6537
+candidate-reference	REFR	001692B1			base=0015F31C:GoodspringsSack; cell=000DEBBE:LegionRaidCamp; posX=5986.847168; posY=-71875.398438; posZ=9392.000000; rotX=0.0000; rotY=0.0000; rotZ=63.0254
+candidate-reference	ACHR	00104F03	GoodspringsSettler01Ref		base=00104F02:GSSettlerAAM; cell=000846EA:; posX=-70618.382812; posY=-1062.389282; posZ=8169.034668; rotX=0.0000; rotY=0.0000; rotZ=177.6172
+candidate-reference	ACHR	00104F06	GoodspringsSettler02Ref		base=00104F05:GSSettlerCF; cell=000846EA:; posX=-71432.695312; posY=3584.443115; posZ=8352.000000; rotX=0.0000; rotY=0.0000; rotZ=166.1578
+candidate-reference	ACHR	00104F0A	GoodspringsSettler03Ref		base=00104F07:GSSettlerAM; cell=000846EA:; posX=-71492.375000; posY=4000.531494; posZ=8352.000000; rotX=0.0000; rotY=0.0000; rotZ=91.6732
+candidate-reference	REFR	00105228			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000846EA:; posX=-71523.937500; posY=-1056.085327; posZ=8230.577148; rotX=0.0000; rotY=0.0000; rotZ=0.2758
+candidate-reference	REFR	00105D4C	GoodspringsPowderGangMarker		base=0000003B:XMarker; cell=000846EA:; posX=-66023.046875; posY=-1725.886108; posZ=8436.101562; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	001088F6	GoodspringsCemeteryMapMarker		base=00000010:MapMarker; cell=000846EA:; posX=-62219.316406; posY=12673.161133; posZ=10493.269531; rotX=0.0000; rotY=0.0000; rotZ=1.8755
+candidate-reference	REFR	00108F40			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000846EA:; posX=-75175.687500; posY=-3537.967773; posZ=8305.596680; rotX=0.0000; rotY=0.0000; rotZ=90.0000
+candidate-reference	REFR	0010A16F			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000846EA:; posX=-74520.273438; posY=-4781.540527; posZ=8303.615234; rotX=0.0000; rotY=0.0000; rotZ=180.0001
+candidate-reference	ACHR	0010B3DE	VCG02GSSettlerREF		base=0010B3DD:VCG02GSSettler; cell=000846EA:; posX=-63498.839844; posY=-17069.408203; posZ=6693.162109; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	001164A0	GoodspringsBoundaryMarker01		base=0000003B:XMarker; cell=000846EA:; posX=-59433.210937; posY=-18606.744141; posZ=6363.885742; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	001388B1			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000846EA:; posX=-33908.515625; posY=-96609.453125; posZ=6900.657715; rotX=0.0000; rotY=0.0000; rotZ=90.0001
+candidate-reference	REFR	00138976			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000846EA:; posX=-30342.185547; posY=-91513.812500; posZ=6890.858398; rotX=0.0000; rotY=0.0000; rotZ=298.1207
+candidate-reference	REFR	0013949F			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000846EA:; posX=-30475.187500; posY=-93302.468750; posZ=6992.924805; rotX=0.0000; rotY=0.0000; rotZ=118.7510
+candidate-reference	REFR	0013955F			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000846EA:; posX=-32128.865234; posY=-94579.531250; posZ=6903.712402; rotX=0.0000; rotY=0.0000; rotZ=268.7511
+candidate-reference	REFR	0013F55A			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000846EA:; posX=30984.058594; posY=-102858.187500; posZ=6897.984863; rotX=0.0000; rotY=0.0000; rotZ=180.0000
+candidate-reference	REFR	0013F55B			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000846EA:; posX=29687.875000; posY=-103097.101562; posZ=6897.984863; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	0013F55C			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000846EA:; posX=30328.507812; posY=-101611.070312; posZ=6897.984863; rotX=0.0000; rotY=0.0000; rotZ=90.0000
+candidate-reference	REFR	0015C6EE	VERGoodspringsFlyPathMarker02dREF		base=00000034:XMarkerHeading; cell=000846EA:; posX=-47699.000000; posY=-19545.000000; posZ=6009.000000; rotX=0.0000; rotY=0.0000; rotZ=41.0001
+candidate-reference	REFR	0015C6EF	VERGoodspringsFlyPathMarker02cREF		base=00000034:XMarkerHeading; cell=000846EA:; posX=-49856.000000; posY=-18808.000000; posZ=6009.000000; rotX=0.0000; rotY=0.0000; rotZ=41.0001
+candidate-reference	REFR	0015C6F0	VERGoodspringsFlyPathMarker02bREF		base=00000034:XMarkerHeading; cell=000846EA:; posX=-49826.000000; posY=-21085.000000; posZ=5903.670410; rotX=0.0000; rotY=0.0000; rotZ=41.0001
+candidate-reference	REFR	0015C6F1	VERGoodspringsFlyPathMarker02aREF		base=00000034:XMarkerHeading; cell=000846EA:; posX=-48595.000000; posY=-21857.000000; posZ=6009.000000; rotX=0.0000; rotY=0.0000; rotZ=346.0001
+candidate-reference	REFR	0015C6F2	VERGoodspringsFlyPathMarker01cREF		base=00000034:XMarkerHeading; cell=000846EA:; posX=-50800.000000; posY=-22563.000000; posZ=6009.000000; rotX=0.0000; rotY=0.0000; rotZ=300.0001
+candidate-reference	REFR	0015C6F3	VERGoodspringsFlyPathMarker01bREF		base=00000034:XMarkerHeading; cell=000846EA:; posX=-46935.000000; posY=-21942.000000; posZ=6009.000000; rotX=0.0000; rotY=0.0000; rotZ=124.0000
+candidate-reference	REFR	0015C6F4	VERGoodspringsFlyPathMarker01aREF		base=00000034:XMarkerHeading; cell=000846EA:; posX=-48157.539062; posY=-18037.380859; posZ=5940.433105; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	0015F22D	vMEGoodSpringsRef		base=0014B05F:vMojaveExpressBox; cell=000846EA:; posX=-69594.796875; posY=3438.496094; posZ=8386.871094; rotX=0.0000; rotY=0.0000; rotZ=44.3815
+candidate-reference	REFR	001658B7	GoodspringsArrivalMarker		base=00000034:XMarkerHeading; cell=000846EA:; posX=-67856.781250; posY=2332.232666; posZ=8376.000000; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	ACHR	001531F7			base=00153158:SLGoodspringsCave02DEAD; cell=00153159:SLGoodspringsCaveINT; posX=1674.804199; posY=8368.976562; posZ=215.665955; rotX=0.0000; rotY=0.0000; rotZ=90.0002
+candidate-reference	ACHR	001531F6			base=00153157:SLGoodspringsCave01DEAD; cell=00153159:SLGoodspringsCaveINT; posX=1758.436401; posY=8474.085937; posZ=216.126358; rotX=0.0000; rotY=0.0000; rotZ=35.0002
+candidate-cell	CELL	00153159	SLGoodspringsCaveINT	Goodsprings Cave	gridX=; gridY=
+candidate-cell	CELL	001057F1	GSGeneralStore	Goodsprings General Store	gridX=; gridY=
+candidate-reference	REFR	000FE8A9			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000FE889:1EHostetlerHome; posX=-132.673538; posY=65.554214; posZ=16.065855; rotX=0.0000; rotY=0.0000; rotZ=90.0001
+candidate-reference	REFR	0017720D			base=0010A424:NVGoodSpringsHomeExtDoor; cell=000FE889:1EHostetlerHome; posX=-250.688019; posY=828.111084; posZ=16.668217; rotX=0.0000; rotY=0.0000; rotZ=270.0002
+candidate-reference	REFR	001389EB			base=0010A424:NVGoodSpringsHomeExtDoor; cell=001385C5:NiptonHouse6; posX=639.177185; posY=-191.632553; posZ=2388.289307; rotX=0.0000; rotY=0.0000; rotZ=270.0003
+candidate-reference	REFR	001389E4			base=0010A424:NVGoodSpringsHomeExtDoor; cell=001385C5:NiptonHouse6; posX=385.224762; posY=-575.178101; posZ=2385.351318; rotX=0.0000; rotY=0.0000; rotZ=89.5186
+candidate-reference	REFR	00177D72			base=0015F31C:GoodspringsSack; cell=00153928:SLAbandonedShack01INT; posX=2170.000000; posY=1821.000000; posZ=6408.926758; rotX=0.0000; rotY=0.0000; rotZ=126.0004
+candidate-reference	REFR	00177D73			base=0015F31C:GoodspringsSack; cell=00153928:SLAbandonedShack01INT; posX=2245.000000; posY=1840.000000; posZ=6410.000000; rotX=0.0000; rotY=0.0000; rotZ=331.0002
+candidate-reference	REFR	00169545	GSGlobeREF		base=00169540:SnowGlobeGoodspringsSTATIC; cell=0010F23C:Lucky38SuiteFloor22; posX=1721.463989; posY=-9800.000000; posZ=11024.001953; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	00139474			base=0010A424:NVGoodSpringsHomeExtDoor; cell=001385C4:NiptonHouse7Tinker; posX=465.730652; posY=-974.510132; posZ=4568.708496; rotX=0.0000; rotY=0.0000; rotZ=90.0000
+candidate-cell	CELL	00105619	GSHouseInterior03	Goodsprings Home	gridX=; gridY=
+candidate-cell	CELL	00109038	GSGasStation	Goodsprings Gas Station	gridX=; gridY=
+candidate-cell	CELL	00105CF7	GSHouseInterior04	Goodsprings Home	gridX=; gridY=
+candidate-reference	REFR	00177BEF			base=00177BEE:VendorContainerDocMitchell; cell=0008EAE7:NVVendorChestsCell; posX=1973.621216; posY=2472.361328; posZ=8457.371094; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	001394B4			base=0010A424:NVGoodSpringsHomeExtDoor; cell=001393F6:NiptonHouse8Paranoid; posX=469.330841; posY=-578.929932; posZ=4568.708496; rotX=0.0000; rotY=0.0000; rotZ=90.0000
+candidate-reference	REFR	00105691			base=0010A425:NVGoodSpringsHomeExtDoorInt; cell=00105659:GSHouseInterior01; posX=316.476593; posY=-642.183899; posZ=2351.650879; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	00105690			base=0010A425:NVGoodSpringsHomeExtDoorInt; cell=00105659:GSHouseInterior01; posX=640.000000; posY=-72.000000; posZ=2351.726807; rotX=0.0000; rotY=0.0000; rotZ=270.0001
+candidate-cell	CELL	00105659	GSHouseInterior01	Goodsprings Home	gridX=; gridY=
+candidate-cell	CELL	001055E1	GSHouseInterior02	Goodsprings Home	gridX=; gridY=
+candidate-reference	REFR	001164C0			base=001164C1:LootSafeGoodspringsSchoolhouse; cell=00108F39:GSSchoolHouse; posX=420.811340; posY=-1792.373657; posZ=3328.000000; rotX=0.0000; rotY=0.0000; rotZ=0.0001
+candidate-cell	CELL	00108F39	GSSchoolHouse	Goodsprings Schoolhouse	gridX=; gridY=
+candidate-reference	ACHR	00104F08	GoodspringsSettler04Ref		base=00104F09:GSSettlerCM; cell=00106185:GSProspectorSaloonInterior; posX=-345.569153; posY=-90.910416; posZ=3456.000000; rotX=0.0000; rotY=0.0000; rotZ=90.7102
+candidate-reference	REFR	00109087	GSRadioRef		base=00109085:GoodspringsRadio; cell=00106185:GSProspectorSaloonInterior; posX=-62.555824; posY=-100.119293; posZ=3527.387451; rotX=0.0000; rotY=0.0000; rotZ=107.1887
+candidate-reference	ACHR	0015F316			base=0015F315:LvlGoodspringsPowderGanger; cell=00106185:GSProspectorSaloonInterior; posX=195.418243; posY=-383.260712; posZ=3456.399902; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	ACHR	0015F317			base=0015F315:LvlGoodspringsPowderGanger; cell=00106185:GSProspectorSaloonInterior; posX=-227.757629; posY=-741.553284; posZ=3456.399902; rotX=0.0000; rotY=0.0000; rotZ=262.5974
+candidate-reference	ACHR	0015F318			base=0015F315:LvlGoodspringsPowderGanger; cell=00106185:GSProspectorSaloonInterior; posX=327.409119; posY=-216.869308; posZ=3456.399902; rotX=0.0000; rotY=0.0000; rotZ=268.3270
+candidate-reference	ACHR	0015F319			base=0015F315:LvlGoodspringsPowderGanger; cell=00106185:GSProspectorSaloonInterior; posX=-353.099396; posY=-430.238342; posZ=3462.515137; rotX=0.0000; rotY=0.0000; rotZ=268.3270
+candidate-reference	REFR	00107236			base=00107232:GSDocMitchellExitTrigger; cell=00103DF9:GSDocMitchellHouse; posX=2303.293457; posY=1605.312012; posZ=7499.966797; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	ACHR	00104C0F	DocMitchellREF		base=00104C0C:DocMitchell; cell=00103DF9:GSDocMitchellHouse; posX=2288.755859; posY=2244.410400; posZ=7360.000000; rotX=0.0000; rotY=0.0000; rotZ=22.9183
+candidate-reference	REFR	00103E61	GSDocMitchellHouseIntDoorREF		base=00107233:GSDocMitchellDoor; cell=00103DF9:GSDocMitchellHouse; posX=2430.000000; posY=1536.000000; posZ=7359.935547; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	001055B8	DocMitchellChairREF		base=0006B55D:SubChairDirtyF; cell=00103DF9:GSDocMitchellHouse; posX=1171.554077; posY=1971.126221; posZ=7398.354004; rotX=0.0000; rotY=0.0000; rotZ=141.6227
+candidate-reference	REFR	00103E55	DocMitchellCouchREF		base=0012429A:VCG01DocMitchellCouch; cell=00103DF9:GSDocMitchellHouse; posX=1297.960205; posY=1849.852173; posZ=7396.000000; rotX=0.0000; rotY=0.0000; rotZ=5.7298
+candidate-reference	REFR	00105BCE	VCG01DocMitchellChairTriggerREF		base=00105BCC:VCG01DocMitchellChairTrigger; cell=00103DF9:GSDocMitchellHouse; posX=1185.286987; posY=1944.957764; posZ=7426.424316; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	001055B9	VCG01DocMitchellCouchTriggerREF		base=001055B6:VCG01DocMitchellCouchTrigger; cell=00103DF9:GSDocMitchellHouse; posX=1295.884888; posY=1877.395020; posZ=7426.504883; rotX=0.0000; rotY=0.0000; rotZ=0.0000
+candidate-reference	REFR	00105BCF	VCG01DocMitchellExitMarkerREF		base=00000034:XMarkerHeading; cell=00103DF9:GSDocMitchellHouse; posX=2310.206787; posY=1654.800537; posZ=7360.000000; rotX=0.0000; rotY=0.0000; rotZ=202.9187
+candidate-reference	REFR	00107235	GSDocMitchellBesideMarker		base=00000034:XMarkerHeading; cell=00103DF9:GSDocMitchellHouse; posX=2243.044922; posY=2276.269287; posZ=7360.000000; rotX=0.0000; rotY=0.0000; rotZ=4.4058
+candidate-reference	REFR	00103E37	DocMitchellDresserRef		base=0002FCC3:DresserAbandoned; cell=00103DF9:GSDocMitchellHouse; posX=2042.657471; posY=810.466553; posZ=7458.688965; rotX=0.0000; rotY=0.0000; rotZ=297.8114
+candidate-cell	CELL	00103DF9	GSDocMitchellHouse	Doc Mitchell's House	gridX=; gridY=
+candidate-reference	REFR	001389C5			base=0010A424:NVGoodSpringsHomeExtDoor; cell=001385C6:NiptonHouse5; posX=636.727783; posY=-194.195587; posZ=2384.708740; rotX=0.0000; rotY=0.0000; rotZ=269.5186
+candidate-reference	REFR	001389C3			base=0010A424:NVGoodSpringsHomeExtDoor; cell=001385C6:NiptonHouse5; posX=384.411591; posY=-575.366211; posZ=2385.703857; rotX=0.0000; rotY=0.0000; rotZ=91.2374
+required-item	ALCH	000151A3	WaterPurified	Purified Water	exact requested inventory base record
+required-item	MISC	0000000F	Caps001	Bottle Cap	exact requested inventory base record
+candidate-container-base	CONT	00022D8C	LootAmmoBoxBulletsRND	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002977B	MS18TheosAmmoBox	Theo's Ammo Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00031C2E	RHSFootLocker	Foot Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FAA6	CrateShippingFactory	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FE78	LootAmmoBox44Magnum	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FE79	LootAmmoBoxPowerCellsRND	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FE7B	LootAmmoBoxFlamerFuel	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FE7C	LootAmmoBoxShotgunShells	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FE7D	LootAmmoBox10mm	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FE7F	LootAmmoBox556mm	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FE80	LootAmmoBoxSmallEnergyCells	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FE81	LootAmmoBoxMicroFusionCells	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FE82	LootAmmoBoxMissiles	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002FE89	LootAmmoBoxGeneric	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00037895	CrateShippingHospital	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00037896	CrateShippingMilitary	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00037897	CrateShippingOffice	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00037898	CrateShippingSchool	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	0004525D	ToolboxContainer	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	000645CF	LootAmmoBoxAlienPowerCells	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00081156	MS04BrandiceToolbox	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	0006B52E	LootAmmoBox5mm	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0006B52F	LootAmmoBox308	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0006B530	LootAmmoBoxElectronChargePacks	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0006E8DD	EnclaveCrateContainer01	Enclave Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	0009874E	Footlocker01Empty	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0009CF75	GalloFootlocker	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0009D7CD	LootAmmoBox5mmBig	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000A281F	Footlocker01Factory	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000A2820	Footlocker01Hospital	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000A2821	Footlocker01Military	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000A2827	Footlocker01Library	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000A282E	Footlocker01School	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000A282F	Footlocker01HouseholdAlcoholic	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000A2832	Footlocker01Household	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000A3D17	Footlocker01Liquor	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000AF977	Footlocker01Toys	Toy Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000B0300	LootAmmoBoxSmallEnergyCellsEnclave	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000B0301	LootAmmoBoxMicroFusionCellsEnclave	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000B0302	LootAmmoBoxMissilesEnclave	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000B25B3	FortBannisterJabscoLocker	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000B2C61	FortIndFootlocker01	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000B41F6	VendorContainerSydney	Sydney's Ammo Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000B5BC8	LootAmmoBox10mmEnclave	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000B5BDF	LootAmmoBoxElectronChargePacksEnclave	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000B5BE9	FootlockerRavenRockAutumns	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000BB78A	ToolboxContainerVault	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	000BD137	EnclaveCratePersonals	Enclave Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00018680	PS05ToolboxContainer	Workman's Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	0002A24B	FFEC10EnclaveCrateContainer01	Enclave Storage Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094AC8	LootAmmoBox10mmLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094ACB	LootAmmoBox308Lock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094AD0	LootAmmoBox44MagnumLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094AD1	LootAmmoBox556mmLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094AD3	LootAmmoBox5mmLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094AD4	LootAmmoBox5mmBigLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094AD5	LootAmmoBoxBulletsRNDLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094AD6	LootAmmoBoxElectronChargePacksLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094AD7	LootAmmoBoxFlamerFuelLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094AD8	LootAmmoBoxGenericLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094AD9	LootAmmoBoxMicroFusionCellsLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094ADB	LootAmmoBoxMissilesLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094ADD	LootAmmoBoxPowerCellsRNDLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094ADE	LootAmmoBoxShotgunShellsLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00094ADF	LootAmmoBoxSmallEnergyCellsLock	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000C0CA6	RCFootlockerFactory100	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000C0CA7	RCFootlockerSchool100	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000C0CA8	RCFootlockerLibrary100	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000C0CA9	RCFootlockerHouseholdAlcoholic100	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000C0CAA	RCFootlockerMilitary100	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000C0CAB	RCFootlockerAddict100	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000C0CAC	RCFootlockerHousehold100	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000C3293	DClawFootlocker01	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000C9443	MS17AmmoBox	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000C9CEA	MS09FootlockerSpecial	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000CB5E1	LootFootlocker01HouseholdLock	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000CB5E2	LootFootlockerHouseholdLock	Personal Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000CB5E4	LootFootlockerOfficeLock	Personal Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000CB5E6	LootFootlockerMilitaryLock	Personal Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000CB5E8	LootFootlockerFactoryLock	Personal Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0001DD0B	FFWaste04DriversFootlocker	Personal Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0004588F	ScavengerBarnFootlocker	Personal Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00064A7F	Footlocker01HouseholdSpringvale	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00070875	MS04BrandiceFootlocker	William Brandice's Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0007862E	Footlocker01RavenRock	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0007DFE4	MS18FootlockerFood	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0007FD60	REPCONBasementDebugLocker	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00087AEC	VMS01GibsonTestContainer	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0008E663	VMS01SouvenirCrate	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00096CE7	DevArmoryContainer	Enclave Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	000CCF97	Footlocker01HouseholdNV	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000CD3C8	LootAmmoBoxGenericNV	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000CD3C9	LootAmmoBoxGenericLockNV	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000CD3CC	LootAmmoBoxEmpty	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000CE37B	Footlocker01FactoryNV	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000DA3BC	BoSFootlocker	Brotherhood Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000E29D5	DLC03WoodenCrate01Tesla		candidate clone source; operator selection still required
+candidate-container-base	CONT	000E29D6	DLC03CrateAquaPuraEmpty	Aqua-Pura Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	000E2DB4	LootAmmoBoxCarterNV	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000E7619	QJToolbox01	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	000E7660	LootAmmoBox9mm	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000E7662	LootAmmoBox22LR	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000E7663	LootAmmoBox357Magnum	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000E7664	LootAmmoBox40mmGrenade	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000E7665	LootAmmoBox25mmGrenade	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000E7666	LootAmmoBox12Ga	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	000E7667	Footlocker01MilitaryNV	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000EA7FE	VVault11GottliebFootlocker	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000EAC7D	BMRoadblockFootlocker	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000F827E	VMS08CrenshawFootlocker	Private Crenshaw's Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	000FEC8D	Footlocker01Drugs	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00103B17	SSCrateContainerFull	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00103B18	SSCrateContainerEmpty	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00103B19	SSCrateContainer	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00103B1A	SSCrateContainerCaps	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00104EFD	NellisPearlFootlocker01	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001083E6	Footlocker01Boomer	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001093C0	NVGSCrateContainer	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00122006	VMS30SupplyContainer	Camp Forlorn Hope Supply Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00124824	CrateShippingEmpty	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	0012588D	VFSSimonGearContainer	Dark Metal Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	0012679E	vGOMGunroomContainer	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0013744B	FootlockerLegionRecruit	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0013744C	FootlockerLegionVeteran	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001377E6	FootlockerLegionCaesar	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00138A9F	LootAmmoBoxNV	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00139B70	NVCCPlayerStorage	Weapons Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0013A6E9	VBSFootlockerFoodRespawning	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0013E65B	VRRCKarlsFootlocker	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00146617	CampSearchlightFootlocker	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00147DC0	VRRCInitiationLocker	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0014C104	NVCGC4Crate	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	0014C105	NVCGFragGrenadeCrate	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	0014F410	Footlocker01Nelson	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00151D01	LootFoodContainer	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00157371	VMS35SurgicalToolBox	First Aid Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001583C6	SafehouseFootlocker	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00161F71	HVGoodBenefitContainer	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00162B1C	VCFHFootlockerLetter01	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00162B1F	VCFHFootlockerLetter02	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00164246	CrimsonCaravaneerFootlocker	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00165491	Footlocker01HouseholdGS	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00165492	LootAmmoBox10mmGS	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001658C3	BrotherhoodCratePersonals	Brotherhood Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00166B57	VHDChineseStealthSuitCrate	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00166B58	NVWoodenCrateContainer	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677D0	VLootAmmoBoxNVT1Low	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677D1	VLootAmmoBoxNVT1Hi	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677D2	VLootAmmoBoxNVT1	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677D3	VLootAmmoBoxNVT2	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677D4	VLootAmmoBoxNVT2Hi	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677D5	VLootAmmoBoxNVT2Low	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677D6	VLootAmmoBoxNVT3	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677D7	VLootAmmoBoxNVT3Hi	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677D8	VLootAmmoBoxNVT3Low	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677D9	VLootAmmoBoxNVT4	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677DA	VLootAmmoBoxNVT4Hi	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677DB	VLootAmmoBoxNVT4Low	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677DC	VLootAmmoBoxNVT1Energy	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677DD	VLootAmmoBoxNVGen14	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677DE	VLootAmmoBoxNVGen15	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677DF	VLootAmmoBoxNVGen16	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677E0	VLootAmmoBoxNVGen17	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677E1	VLootAmmoBoxNVGen18	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677E2	VLootAmmoBoxNVGen19	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677E3	VLootAmmoBoxNVGen20	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677E4	VLootAmmoBoxNVGen21	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677E5	VLootAmmoBoxNVGen23	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677E6	VLootAmmoBoxNVGen22	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677E7	VLootAmmoBoxNVGen24	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677E8	VLootAmmoBoxNVGen25	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677F8	VLootAmmoBoxT1Low	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677F9	VLootAmmoBoxT1Hi	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677FA	VLootAmmoBoxT1	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677FB	VLootAmmoBoxT2	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677FC	VLootAmmoBoxT2Hi	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677FD	VLootAmmoBoxT2Low	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677FE	VLootAmmoBoxT3	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	001677FF	VLootAmmoBoxT3Hi	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167800	VLootAmmoBoxT3Low	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167801	VLootAmmoBoxT4	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167802	VLootAmmoBoxT4Hi	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167803	VLootAmmoBoxT4Low	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167804	VLootAmmoBoxGen13	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167805	VLootAmmoBoxGen14	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167806	VLootAmmoBoxGen15	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167807	VLootAmmoBoxGen16	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167808	VLootAmmoBoxGen17	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167809	VLootAmmoBoxGen18	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016780A	VLootAmmoBoxGen19	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016780B	VLootAmmoBoxGen20	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016780C	VLootAmmoBoxGen21	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016780D	VLootAmmoBoxGen22	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016780E	VLootAmmoBoxGen23	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016780F	VLootAmmoBoxGen24	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167810	VLootAmmoBoxGen25	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167811	VLootAmmoBoxGen26	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167812	VLootAmmoBoxGen27	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167813	VLootAmmoBoxGen28	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167814	VLootAmmoBoxGen29	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167815	VLootAmmoBoxGen30	Ammunition Box	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016787F	VLootBrotherhoodCrateGen01	Brotherhood Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167880	VLootBrotherhoodCrateGen02	Brotherhood Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167881	VLootBrotherhoodCrateGen03	Brotherhood Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167882	VLootBrotherhoodCrateGen04	Brotherhood Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167883	VLootBrotherhoodCrateGen05	Brotherhood Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167884	VLootBrotherhoodCrateGen06	Brotherhood Combat Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167885	VLootBrotherhoodCrateGen07	Brotherhood Combat Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167886	VLootBrotherhoodCrateGen08	Brotherhood Combat Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167887	VLootBrotherhoodCrateGen09	Brotherhood Combat Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167888	VLootBrotherhoodCrateGen10	Brotherhood Combat Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167889	VLootBrotherhoodCrateGen11	Brotherhood Storage Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016788A	VLootBrotherhoodCrateGen12	Brotherhood Storage Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016788B	VLootBrotherhoodCrateGen13	Brotherhood Storage Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016788C	VLootBrotherhoodCrateGen14	Brotherhood Storage Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016788D	VLootBrotherhoodCrateGen15	Brotherhood Storage Locker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016788E	VLootFootlocker01Gen01	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016788F	VLootFootlocker01Gen02	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167890	VLootFootlocker01Gen03	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167891	VLootFootlocker01Gen04	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167892	VLootFootlocker01Gen05	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167893	VLootFootlocker01Gen06	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167894	VLootFootlocker01Gen07	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167895	VLootFootlocker01Gen08	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167896	VLootFootlocker01Gen09	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167897	VLootFootlocker01Gen10	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167898	VLootFootlocker01Gen11	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167899	VLootFootlocker01Gen12	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016789A	VLootFootlocker01Gen13	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016789B	VLootFootlocker01Gen14	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016789C	VLootFootlocker01Gen15	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016789D	VLootFootlocker01Gen16	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016789E	VLootFootlocker01Gen17	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	0016789F	VLootFootlocker01Gen18	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678A0	VLootFootlocker01Gen19	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678A1	VLootFootlocker01Gen20	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678A2	VLootFootlocker01Gen21	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678A3	VLootFootlocker01Gen22	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678A4	VLootFootlocker01Gen23	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678A5	VLootFootlocker01Gen24	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678A6	VLootFootlocker01Gen25	Footlocker	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678A7	VLootArmorFootlocker01Gen01	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678A8	VLootArmorFootlocker01Gen02	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678A9	VLootArmorFootlocker01Gen03	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678AA	VLootArmorFootlocker01Gen04	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678AB	VLootArmorFootlocker01Tier1Wasteland	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678AC	VLootArmorFootlocker01Tier1PowderGanger	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678AD	VLootArmorFootlocker01Tier1NCR	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678AE	VLootArmorFootlocker01Tier2Prospector	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678AF	VLootArmorFootlocker01Tier2Merc	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678B0	VLootArmorFootlocker01Tier1Legion	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678B1	VLootArmorFootlocker01Gen11	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678B2	VLootArmorFootlocker01Gen12	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678B3	VLootArmorFootlocker01Gen13	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678B4	VLootArmorFootlocker01Gen14	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678B5	VLootArmorFootlocker01Gen15	Armor Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678B6	VLootGunsFootlocker01SnipersNest	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678B7	VLootGunsFootlocker01Tier1Town	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678B8	VLootGunsFootlocker01Tier1ProspectorLocked	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678B9	VLootGunsFootlocker01Tier2NCR	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678BA	VLootGunsFootlocker01Gen05	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678BB	VLootGunsFootlocker01Gen06	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678BC	VLootGunsFootlocker01Gen07	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678BD	VLootGunsFootlocker01Gen08	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678BE	VLootGunsFootlocker01Gen09	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678BF	VLootGunsFootlocker01Gen10	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678C0	VLootGunsFootlocker01Gen11	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678C1	VLootGunsFootlocker01Gen12	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678C2	VLootGunsFootlocker01Gen13	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678C3	VLootGunsFootlocker01Gen14	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678C4	VLootGunsFootlocker01Gen15	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678C5	VLootGunsFootlocker01Gen16	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678C6	VLootGunsFootlocker01Gen17	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678C7	VLootGunsFootlocker01Gen18	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678C8	VLootGunsFootlocker01Gen19	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678C9	VLootGunsFootlocker01Gen20	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678CA	VLootGunsFootlocker01Gen21	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678CB	VLootGunsFootlocker01Gen22	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678CC	VLootGunsFootlocker01Gen23	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678CD	VLootGunsFootlocker01Gen24	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678CE	VLootGunsFootlocker01Gen25	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678CF	VLootGunsFootlocker01Gen26	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678D0	VLootGunsFootlocker01Gen27	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678D1	VLootGunsFootlocker01Gen28	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678D2	VLootGunsFootlocker01Gen29	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001678D3	VLootGunsFootlocker01Gen30	Gun Case	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679B5	VLootExplosivesNVCrateXXXTier1Powder	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679B6	VLootExplosivesNVCrateXXXTier1Workshop	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679B7	VLootExplosivesNVCrateXXXTier1WorkshopHi	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679B8	VLootExplosivesNVCrateXXXTier2Powder	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679B9	VLootExplosivesNVCrateXXXTier2Workshop	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679BA	VLootExplosivesNVCrateXXXTier2WorkshopHi	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679BB	VLootExplosivesNVCrateXXXTier3Powder	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679BC	VLootExplosivesNVCrateXXXTier3Workshop	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679BD	VLootExplosivesNVCrateXXXTier3WorkshopHi	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679BE	VLootExplosivesNVCrateXXXTier4WorkshopHi	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679BF	VLootExplosivesNVCrateXXXTier4Workshop	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679C0	VLootExplosivesNVCrateXXXGen12	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679C1	VLootExplosivesNVCrateXXXGen13	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679C2	VLootExplosivesNVCrateXXXGen14	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679C3	VLootExplosivesNVCrateXXXGen15	Explosives Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679C4	VLootHouseNVCrateXXXGen01	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679C5	VLootHouseNVCrateXXXGen02	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679C6	VLootHouseNVCrateXXXGen03	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679C7	VLootHouseNVCrateXXXGen04	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679C8	VLootHouseNVCrateXXXGen05	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679C9	VLootHouseNVCrateXXXGen06	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679CA	VLootHouseNVCrateXXXGen07	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679CB	VLootHouseNVCrateXXXGen08	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679CC	VLootHouseNVCrateXXXGen09	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679CD	VLootHouseNVCrateXXXGen10	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679CE	VLootHouseNVCrateXXXGen11	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679CF	VLootHouseNVCrateXXXGen12	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679D0	VLootHouseNVCrateXXXGen13	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679D1	VLootHouseNVCrateXXXGen14	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679D2	VLootHouseNVCrateXXXGen15	Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679E2	VLootDrinkSSCrateGen01	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679E3	VLootDrinkSSCrateGen02	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679E4	VLootDrinkSSCrateGen03	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679E5	VLootDrinkSSCrateGen04	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679E6	VLootDrinkSSCrateGen05	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679E7	VLootFoodSSCrateGen01	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679E8	VLootFoodSSCrateGen02	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679E9	VLootFoodSSCrateGen03	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679EA	VLootFoodSSCrateGen04	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679EB	VLootFoodSSCrateGen05	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679EC	VLootFoodSSCrateGen06	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679ED	VLootFoodSSCrateGen07	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679EE	VLootFoodSSCrateGen08	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679EF	VLootFoodSSCrateGen09	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679F0	VLootFoodSSCrateGen10	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679F1	VLootDrinkSSCrateGen06	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679F2	VLootDrinkSSCrateGen07	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679F3	VLootDrinkSSCrateGen08	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679F4	VLootDrinkSSCrateGen09	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	001679F5	VLootDrinkSSCrateGen10	Sunset Sarsaparilla Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A00	VLootToolsToolboxAbandonedLow	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A01	VLootToolsToolboxGen02	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A02	VLootToolsToolboxGen03	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A03	VLootToolsToolboxGen04	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A04	VLootToolsToolboxGen05	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A05	VLootToolsToolboxGen06	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A06	VLootToolsToolboxGen07	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A07	VLootToolsToolboxGen08	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A08	VLootToolsToolboxGen09	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A09	VLootToolsToolboxGen10	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A0A	VLootToolsToolboxGen11	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A0B	VLootToolsToolboxGen12	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A0C	VLootToolsToolboxGen13	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A0D	VLootToolsToolboxGen14	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A0E	VLootToolsToolboxGen15	Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A0F	VLootStashToolboxAbandonedHi	Stash Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A10	VLootStashToolboxGen02	Stash Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A11	VLootStashToolboxGen03	Stash Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A12	VLootStashToolboxGen04	Stash Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A13	VLootStashToolboxGen05	Stash Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A14	VLootStashToolboxGen06	Stash Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A15	VLootStashToolboxGen07	Stash Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A16	VLootStashToolboxGen08	Stash Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A17	VLootStashToolboxGen09	Stash Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167A18	VLootStashToolboxGen10	Stash Toolbox	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C63	VLootWoodenCrateGen01	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C64	VLootWoodenCrateGen02	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C65	VLootWoodenCrateGen03	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C66	VLootWoodenCrateGen04	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C67	VLootWoodenCrateGen05	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C68	VLootWoodenCrateGen06	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C69	VLootWoodenCrateGen07	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C6A	VLootWoodenCrateGen08	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C6B	VLootWoodenCrateGen09	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C6C	VLootWoodenCrateGen10	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C6D	VLootWoodenCrateGen11	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C6E	VLootWoodenCrateGen12	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C6F	VLootWoodenCrateGen13	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C70	VLootWoodenCrateGen14	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C71	VLootWoodenCrateGen15	Wooden Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C72	VLootFoodWoodenCrateGen01	Produce Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C73	VLootFoodWoodenCrateGen02	Produce Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C74	VLootFoodWoodenCrateGen03	Produce Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C75	VLootFoodWoodenCrateGen04	Produce Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00167C76	VLootFoodWoodenCrateGen05	Produce Crate	candidate clone source; operator selection still required
+candidate-container-base	CONT	00179B2C	NVGSCrateContainerEmpty	Crate	candidate clone source; operator selection still required

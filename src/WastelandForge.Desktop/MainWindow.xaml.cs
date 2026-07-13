@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -61,6 +62,8 @@ public partial class MainWindow
     private string? bsArchApprovalToken;
     private readonly ReleaseCandidateWorkspace releaseCandidateWorkspace;
     private readonly BasicModBuilderWorkspace basicModBuilderWorkspace;
+    private readonly GeckAuthoringReviewWorkspace geckAuthoringReviewWorkspace;
+    private readonly GeckIntentBuilderWorkspace geckIntentBuilderWorkspace;
     private readonly ReleaseCandidateMo2TestCopy releaseCandidateMo2TestCopy;
     private Mo2CompanionPackageResult mo2CompanionPackage = new(false, "Not checked.", "Not checked.");
     private readonly Mo2LaunchReceiptService mo2LaunchReceiptService = new();
@@ -82,14 +85,31 @@ public partial class MainWindow
     private readonly NarrativeChangeJournal narrativeJournal = new();
     private JournalPreparation? dialogueRevisionJournalPreparation;
     private string? narrativeUndoToken;
+    private GeckAuthoringReviewSnapshot geckAuthoringReviewSnapshot = GeckAuthoringReviewSnapshot.NotLoaded();
+    private CancellationTokenSource? geckAuthoringCancellation;
+    private string? geckAuthoringPlanPreviewToken;
+    private string? geckAuthoringObserverPreviewToken;
+    private string? geckAuthoringVerificationPreviewToken;
+    private readonly ObservableCollection<GeckIntentProviderRow> geckIntentProviders = [];
+    private readonly ObservableCollection<GeckIntentResolutionRow> geckIntentResolutions = [];
+    private CancellationTokenSource? geckIntentBuilderCancellation;
+    private GeckIntentBuilderPreview? geckIntentBuilderPreview;
+    private string? geckIntentBuilderPreviewToken;
+    private string? geckIntentRecoveryToken;
+    private string? geckIntentUndoToken;
+    private bool loadingGeckIntentBuilder;
 
     public MainWindow()
     {
         var candidateRunner = new ForgeReleaseCandidateCommandRunner(forge);
         releaseCandidateWorkspace = new ReleaseCandidateWorkspace(candidateRunner);
         basicModBuilderWorkspace = new BasicModBuilderWorkspace(new ForgeBasicModBuilderCommandRunner(forge));
+        geckAuthoringReviewWorkspace = new GeckAuthoringReviewWorkspace(new ForgeGeckAuthoringReviewCommandRunner(forge));
+        geckIntentBuilderWorkspace = new GeckIntentBuilderWorkspace(new ForgeGeckIntentBuilderCommandRunner(forge));
         releaseCandidateMo2TestCopy = new ReleaseCandidateMo2TestCopy(candidateRunner);
         InitializeComponent();
+        GeckIntentProvidersDataGrid.ItemsSource = geckIntentProviders;
+        GeckIntentResolutionsDataGrid.ItemsSource = geckIntentResolutions;
         InitializeNarrativeWorkspace();
 
         LoadLocalSettings();
@@ -118,7 +138,12 @@ public partial class MainWindow
         await RefreshBackendAsync();
     }
 
-    private void WindowActivated(object? sender, EventArgs e) => MarkReleaseCandidateStale();
+    private void WindowActivated(object? sender, EventArgs e)
+    {
+        MarkReleaseCandidateStale();
+        MarkGeckAuthoringReviewStale();
+        MarkGeckIntentBuilderStale();
+    }
 
     private async void RefreshBackendClicked(object sender, RoutedEventArgs e) =>
         await RefreshBackendAsync();
@@ -131,13 +156,15 @@ public partial class MainWindow
         if (sender is not System.Windows.Controls.ComboBox combo || combo.SelectedItem is not System.Windows.Controls.ComboBoxItem item || item.Tag is not string route) return;
         MainTabControl.SelectedItem = route switch
         {
-            "basic" => BasicModBuilderTabItem, "plugin-workbench" => PluginModWorkbenchTabItem, "mod-builder" => ModBuilderTabItem,
+            "basic" => BasicModBuilderTabItem, "geck-intent" => GeckIntentBuilderTabItem, "plugin-workbench" => PluginModWorkbenchTabItem, "mod-builder" => ModBuilderTabItem,
             "narrative" => NarrativeAuthorTabItem, "mcm" => McmAuthorTabItem, "jip" => JipAuthorTabItem,
             "validation" => ValidationReportTabItem, "capabilities" => CapabilitiesTabItem, "xedit" => XEditAuditTabItem,
             "plugin-intake" => PluginIntakeTabItem, "geck" => GeckHandoffTabItem, "outputs" => ProjectOutputsTabItem,
             "candidate" => ReleaseCandidateTabItem, "dashboard" => DashboardTabItem, "new-project" => NewProjectTabItem,
             "settings" => SettingsTabItem, "logs" => AdvancedLogsTabItem, _ => MainTabControl.SelectedItem
         };
+        if (route == "geck" && GeckAuthoringModeTabControl is not null) GeckAuthoringModeTabControl.SelectedItem = GeckAuthoringReviewTabItem;
+        if (route == "geck-intent") RefreshGeckIntentBuilder();
     }
 
     private BasicModBuilderInput CaptureBasicModBuilderInput() => new(
@@ -207,6 +234,383 @@ public partial class MainWindow
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { BasicModStatusTextBlock.Text = "Could not open FOMOD: " + ex.Message; }
     }
 
+    private void RefreshGeckIntentBuilderClicked(object sender, RoutedEventArgs e) => RefreshGeckIntentBuilder();
+
+    private void RefreshGeckIntentBuilder()
+    {
+        var root = ProjectPathTextBox.Text;
+        ResetGeckIntentBuilder("Loading canonical GECK intent source...", cancel: true);
+        if (string.IsNullOrWhiteSpace(root))
+        {
+            GeckIntentOperationStateTextBlock.Text = GeckIntentBuilderState.NotLoaded.ToString();
+            GeckIntentStatusTextBlock.Text = "Select a Forge project first.";
+            return;
+        }
+
+        var recovery = geckIntentBuilderWorkspace.ReviewRecovery(root);
+        if (recovery.PendingPath is not null)
+        {
+            RenderGeckIntentRecovery(recovery);
+            return;
+        }
+
+        var result = geckIntentBuilderWorkspace.Load(root);
+        GeckIntentOperationStateTextBlock.Text = result.State.ToString();
+        GeckIntentStatusTextBlock.Text = result.Message;
+        GeckIntentPreviewTextBox.Text = result.Success
+            ? $"Operation: {result.Operation}{Environment.NewLine}Intent: {result.IntentPath}"
+            : result.Message;
+        if (result.Success && result.Input is not null) LoadGeckIntentBuilderInput(result.Input);
+    }
+
+    private void LoadGeckIntentBuilderInput(GeckIntentBuilderInput input)
+    {
+        loadingGeckIntentBuilder = true;
+        try
+        {
+            GeckIntentPluginFileNameTextBox.Text = input.PluginFileName;
+            GeckIntentAuthorTextBox.Text = input.Author;
+            GeckIntentSummaryTextBox.Text = input.Summary;
+            SelectGeckIntentCombo(GeckIntentEnvironmentModeComboBox, input.EnvironmentMode);
+            GeckIntentOutputRootTextBox.Text = input.OutputRoot;
+            geckIntentProviders.Clear();
+            foreach (var provider in input.Providers)
+                geckIntentProviders.Add(new() { Role = provider.Role, EvidencePath = provider.EvidencePath, Attested = provider.Attested });
+            geckIntentResolutions.Clear();
+            foreach (var resolution in input.Resolutions)
+                geckIntentResolutions.Add(new() { Id = resolution.Id, Kind = resolution.Kind, EditorId = resolution.EditorId, FormId = resolution.FormId, Signature = resolution.Signature, Status = resolution.Status, EvidencePath = resolution.EvidencePath, Quantity = resolution.Quantity });
+            GeckIntentContainerEditorIdTextBox.Text = input.ContainerEditorId;
+            SelectGeckIntentCombo(GeckIntentContainerStrategyComboBox, input.ContainerStrategy);
+            GeckIntentReferenceEditorIdTextBox.Text = input.ReferenceEditorId;
+            GeckIntentPositionXTextBox.Text = input.PositionX;
+            GeckIntentPositionYTextBox.Text = input.PositionY;
+            GeckIntentPositionZTextBox.Text = input.PositionZ;
+            GeckIntentRotationXTextBox.Text = input.RotationX;
+            GeckIntentRotationYTextBox.Text = input.RotationY;
+            GeckIntentRotationZTextBox.Text = input.RotationZ;
+            GeckIntentPersistentCheckBox.IsChecked = input.Persistent;
+            SelectGeckIntentCombo(GeckIntentEncounterPolicyComboBox, input.EncounterZonePolicy);
+            GeckIntentProvidersDataGrid.SelectedIndex = geckIntentProviders.Count > 0 ? 0 : -1;
+            GeckIntentResolutionsDataGrid.SelectedIndex = geckIntentResolutions.Count > 0 ? 0 : -1;
+        }
+        finally
+        {
+            loadingGeckIntentBuilder = false;
+        }
+    }
+
+    private GeckIntentBuilderInput CaptureGeckIntentBuilderInput()
+    {
+        GeckIntentProvidersDataGrid.CommitEdit(System.Windows.Controls.DataGridEditingUnit.Cell, true);
+        GeckIntentProvidersDataGrid.CommitEdit(System.Windows.Controls.DataGridEditingUnit.Row, true);
+        GeckIntentResolutionsDataGrid.CommitEdit(System.Windows.Controls.DataGridEditingUnit.Cell, true);
+        GeckIntentResolutionsDataGrid.CommitEdit(System.Windows.Controls.DataGridEditingUnit.Row, true);
+        return new(
+            ProjectPathTextBox.Text,
+            GeckIntentPluginFileNameTextBox.Text,
+            GeckIntentAuthorTextBox.Text,
+            GeckIntentSummaryTextBox.Text,
+            GeckIntentComboTag(GeckIntentEnvironmentModeComboBox, "physical-data"),
+            GeckIntentOutputRootTextBox.Text,
+            geckIntentProviders.Select(row => new GeckIntentProviderInput(row.Role, row.EvidencePath, row.Attested)).ToArray(),
+            geckIntentResolutions.Select(row => new GeckIntentResolutionInput(row.Id, row.Kind, row.EditorId, row.FormId, row.Signature, row.Status, row.EvidencePath, row.Quantity)).ToArray(),
+            GeckIntentContainerEditorIdTextBox.Text,
+            GeckIntentComboTag(GeckIntentContainerStrategyComboBox, "new"),
+            GeckIntentReferenceEditorIdTextBox.Text,
+            GeckIntentPositionXTextBox.Text,
+            GeckIntentPositionYTextBox.Text,
+            GeckIntentPositionZTextBox.Text,
+            GeckIntentRotationXTextBox.Text,
+            GeckIntentRotationYTextBox.Text,
+            GeckIntentRotationZTextBox.Text,
+            GeckIntentPersistentCheckBox.IsChecked == true,
+            GeckIntentComboTag(GeckIntentEncounterPolicyComboBox, "inherit-cell"));
+    }
+
+    private void GeckIntentBuilderInputChanged(object sender, RoutedEventArgs e)
+    {
+        if (loadingGeckIntentBuilder || GeckIntentStatusTextBlock is null) return;
+        geckIntentBuilderPreview = null;
+        geckIntentBuilderPreviewToken = null;
+        ApplyGeckIntentButton.IsEnabled = false;
+        OpenGeckAuthoringReviewButton.IsEnabled = false;
+        GeckIntentOperationStateTextBlock.Text = GeckIntentBuilderState.Editing.ToString();
+        GeckIntentStatusTextBlock.Text = "Inputs changed. Preview again.";
+    }
+
+    private void GeckIntentBuilderGridCellEditEnding(object sender, System.Windows.Controls.DataGridCellEditEndingEventArgs e) =>
+        Dispatcher.BeginInvoke(() => GeckIntentBuilderInputChanged(sender, new RoutedEventArgs()));
+
+    private void GeckIntentBuilderDropDownClosed(object? sender, EventArgs e) =>
+        GeckIntentBuilderInputChanged(sender ?? this, new RoutedEventArgs());
+
+    private void GeckIntentProviderSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) { }
+    private void GeckIntentResolutionSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) =>
+        RemoveGeckIntentItemResolutionButton.IsEnabled = GeckIntentResolutionsDataGrid.SelectedItem is GeckIntentResolutionRow { Kind: "item" };
+
+    private void BrowseGeckIntentOutputRootClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Title = "Choose the physical Fallout New Vegas Data directory" };
+        if (dialog.ShowDialog() == true) GeckIntentOutputRootTextBox.Text = dialog.FolderName;
+    }
+
+    private void BrowseGeckIntentProviderEvidenceClicked(object sender, RoutedEventArgs e)
+    {
+        if (GeckIntentProvidersDataGrid.SelectedItem is not GeckIntentProviderRow row) { GeckIntentStatusTextBlock.Text = "Select a provider row first."; return; }
+        var path = ChooseGeckIntentEvidence();
+        if (path is null) return;
+        row.EvidencePath = path;
+        row.Attested = true;
+        GeckIntentProvidersDataGrid.Items.Refresh();
+        GeckIntentBuilderInputChanged(sender, e);
+    }
+
+    private void BrowseGeckIntentResolutionEvidenceClicked(object sender, RoutedEventArgs e)
+    {
+        if (GeckIntentResolutionsDataGrid.SelectedItem is not GeckIntentResolutionRow row) { GeckIntentStatusTextBlock.Text = "Select a resolution row first."; return; }
+        var path = ChooseGeckIntentEvidence();
+        if (path is null) return;
+        row.EvidencePath = path;
+        GeckIntentResolutionsDataGrid.Items.Refresh();
+        GeckIntentBuilderInputChanged(sender, e);
+    }
+
+    private static string? ChooseGeckIntentEvidence()
+    {
+        var dialog = new OpenFileDialog { Title = "Attach local text evidence", Filter = "Evidence documents (*.json;*.txt;*.log;*.csv;*.tsv)|*.json;*.txt;*.log;*.csv;*.tsv" };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    private void AddGeckIntentItemResolutionClicked(object sender, RoutedEventArgs e)
+    {
+        var row = new GeckIntentResolutionRow();
+        geckIntentResolutions.Add(row);
+        GeckIntentResolutionsDataGrid.SelectedItem = row;
+        GeckIntentBuilderInputChanged(sender, e);
+    }
+
+    private void RemoveGeckIntentItemResolutionClicked(object sender, RoutedEventArgs e)
+    {
+        if (GeckIntentResolutionsDataGrid.SelectedItem is not GeckIntentResolutionRow { Kind: "item" } row) return;
+        if (geckIntentResolutions.Count(item => item.Kind == "item") <= 2) { GeckIntentStatusTextBlock.Text = "At least two item resolutions are required."; return; }
+        geckIntentResolutions.Remove(row);
+        GeckIntentBuilderInputChanged(sender, e);
+    }
+
+    private void PreviewGeckIntentClicked(object sender, RoutedEventArgs e)
+    {
+        geckIntentBuilderPreview = geckIntentBuilderWorkspace.Preview(CaptureGeckIntentBuilderInput());
+        geckIntentBuilderPreviewToken = geckIntentBuilderPreview.Token;
+        ApplyGeckIntentButton.IsEnabled = geckIntentBuilderPreview.Success;
+        OpenGeckAuthoringReviewButton.IsEnabled = false;
+        RenderGeckIntentPreview(geckIntentBuilderPreview);
+    }
+
+    private async void ApplyGeckIntentClicked(object sender, RoutedEventArgs e)
+    {
+        if (geckIntentBuilderPreviewToken is null) return;
+        geckIntentBuilderCancellation?.Dispose();
+        geckIntentBuilderCancellation = new CancellationTokenSource();
+        SetGeckIntentBuilderBusy(true);
+        GeckIntentOperationStateTextBlock.Text = GeckIntentBuilderState.Applying.ToString();
+        GeckIntentStatusTextBlock.Text = "Applying canonical source transaction...";
+        try
+        {
+            var result = await geckIntentBuilderWorkspace.ApplyAsync(CaptureGeckIntentBuilderInput(), geckIntentBuilderPreviewToken, geckIntentBuilderCancellation.Token);
+            GeckIntentOperationStateTextBlock.Text = result.State.ToString();
+            GeckIntentStatusTextBlock.Text = result.Message;
+            GeckIntentDiagnosticsDataGrid.ItemsSource = result.Diagnostics;
+            OpenGeckAuthoringReviewButton.IsEnabled = result.State == GeckIntentBuilderState.ReadyForReview;
+            if (result.Preview is not null) RenderGeckIntentPreview(result.Preview, preserveStatus: true);
+        }
+        finally
+        {
+            geckIntentBuilderPreviewToken = null;
+            SetGeckIntentBuilderBusy(false);
+            geckIntentBuilderCancellation?.Dispose();
+            geckIntentBuilderCancellation = null;
+        }
+    }
+
+    private void CancelGeckIntentOperationClicked(object sender, RoutedEventArgs e) => geckIntentBuilderCancellation?.Cancel();
+
+    private void ReviewGeckIntentRecoveryClicked(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(ProjectPathTextBox.Text)) return;
+        RenderGeckIntentRecovery(geckIntentBuilderWorkspace.ReviewRecovery(ProjectPathTextBox.Text));
+    }
+
+    private async void ResumeGeckIntentRecoveryClicked(object sender, RoutedEventArgs e)
+    {
+        if (geckIntentRecoveryToken is null) return;
+        geckIntentBuilderCancellation = new CancellationTokenSource();
+        SetGeckIntentBuilderBusy(true);
+        try
+        {
+            var result = await geckIntentBuilderWorkspace.ResumeValidationAsync(ProjectPathTextBox.Text, geckIntentRecoveryToken, geckIntentBuilderCancellation.Token);
+            GeckIntentStatusTextBlock.Text = result.Message;
+            GeckIntentOperationStateTextBlock.Text = result.State.ToString();
+            GeckIntentDiagnosticsDataGrid.ItemsSource = result.Diagnostics;
+            OpenGeckAuthoringReviewButton.IsEnabled = result.State == GeckIntentBuilderState.ReadyForReview;
+            geckIntentRecoveryToken = null;
+        }
+        finally
+        {
+            SetGeckIntentBuilderBusy(false);
+            geckIntentBuilderCancellation.Dispose();
+            geckIntentBuilderCancellation = null;
+        }
+    }
+
+    private void RestoreGeckIntentOriginalClicked(object sender, RoutedEventArgs e)
+    {
+        if (geckIntentRecoveryToken is null) return;
+        var result = geckIntentBuilderWorkspace.RestoreOriginal(ProjectPathTextBox.Text, geckIntentRecoveryToken);
+        GeckIntentStatusTextBlock.Text = result.Message;
+        geckIntentRecoveryToken = null;
+        if (result.Success) RefreshGeckIntentBuilder();
+    }
+
+    private void ReviewGeckIntentUndoClicked(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(ProjectPathTextBox.Text)) return;
+        var review = geckIntentBuilderWorkspace.ReviewUndo(ProjectPathTextBox.Text);
+        geckIntentUndoToken = review.Token;
+        UndoGeckIntentButton.IsEnabled = review.Success;
+        GeckIntentStatusTextBlock.Text = review.Message;
+        if (review.Metadata is not null)
+            GeckIntentPreviewTextBox.Text = $"Undo canonical files:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", review.Metadata.Files.Select(file => file.RelativePath))}";
+    }
+
+    private async void UndoGeckIntentClicked(object sender, RoutedEventArgs e)
+    {
+        if (geckIntentUndoToken is null) return;
+        geckIntentBuilderCancellation = new CancellationTokenSource();
+        SetGeckIntentBuilderBusy(true);
+        try
+        {
+            var result = await geckIntentBuilderWorkspace.UndoAsync(ProjectPathTextBox.Text, geckIntentUndoToken, geckIntentBuilderCancellation.Token);
+            GeckIntentStatusTextBlock.Text = result.Message;
+            GeckIntentOperationStateTextBlock.Text = result.State.ToString();
+            geckIntentUndoToken = null;
+            if (result.Success) RefreshGeckIntentBuilder();
+        }
+        finally
+        {
+            SetGeckIntentBuilderBusy(false);
+            geckIntentBuilderCancellation.Dispose();
+            geckIntentBuilderCancellation = null;
+        }
+    }
+
+    private void OpenGeckAuthoringReviewClicked(object sender, RoutedEventArgs e)
+    {
+        SelectGeckIntentCombo(ReviewWorkspaceComboBox, "geck");
+        MainTabControl.SelectedItem = GeckHandoffTabItem;
+        GeckAuthoringModeTabControl.SelectedItem = GeckAuthoringReviewTabItem;
+        RefreshGeckAuthoringReviewClicked(sender, e);
+    }
+
+    private async void RouteGeckIntentValidationClicked(object sender, RoutedEventArgs e)
+    {
+        MainTabControl.SelectedItem = ValidationReportTabItem;
+        await ValidateProjectAsync();
+    }
+
+    private void RenderGeckIntentPreview(GeckIntentBuilderPreview preview, bool preserveStatus = false)
+    {
+        GeckIntentOperationStateTextBlock.Text = preview.State.ToString();
+        if (!preserveStatus) GeckIntentStatusTextBlock.Text = preview.Message;
+        GeckIntentDiagnosticsDataGrid.ItemsSource = preview.Diagnostics;
+        if (!preview.Success)
+        {
+            GeckIntentPreviewTextBox.Text = preview.Message;
+            return;
+        }
+
+        var lines = new List<string>
+        {
+            $"Operation: {preview.Operation}",
+            $"Manifest: {preview.ManifestVersionBefore} -> 0.5.0",
+            $"Intent: {preview.IntentPath}",
+            $"Intent SHA-256: {preview.IntentSha256}",
+            $"Intent bytes: {preview.IntentLength}",
+            $"Provisional resolutions: {(preview.HasProvisional ? "yes" : "no")}",
+            string.Empty,
+            "Evidence:"
+        };
+        lines.AddRange(preview.Evidence.Select(item => $"  {item.ProjectPath} | {item.Length} bytes | {item.Sha256}{(item.CopyRequired ? " | copy" : string.Empty)}"));
+        lines.Add(string.Empty);
+        lines.Add("Canonical writes:");
+        lines.AddRange(preview.Writes.Select(item => $"  {item.RelativePath} | {item.AfterBytes.LongLength} bytes"));
+        lines.Add(string.Empty);
+        lines.Add("External tools: no");
+        lines.Add("Plugin bytes: no");
+        lines.Add("Game Data writes: no");
+        GeckIntentPreviewTextBox.Text = string.Join(Environment.NewLine, lines);
+    }
+
+    private void RenderGeckIntentRecovery(GeckIntentRecoveryReview review)
+    {
+        geckIntentRecoveryToken = review.Token;
+        GeckIntentOperationStateTextBlock.Text = GeckIntentBuilderState.RefreshRequired.ToString();
+        GeckIntentStatusTextBlock.Text = review.Message;
+        GeckIntentPreviewTextBox.Text = review.Metadata is null
+            ? review.Message
+            : $"Recovery state: {review.State}{Environment.NewLine}Canonical files:{Environment.NewLine}  {string.Join(Environment.NewLine + "  ", review.Metadata.Files.Select(file => file.RelativePath))}";
+        ResumeGeckIntentRecoveryButton.IsEnabled = review.Success && review.State == GeckIntentRecoveryFileState.Candidate;
+        RestoreGeckIntentOriginalButton.IsEnabled = review.Success && review.State != GeckIntentRecoveryFileState.Unknown;
+    }
+
+    private void SetGeckIntentBuilderBusy(bool busy)
+    {
+        RefreshGeckIntentBuilderButton.IsEnabled = !busy;
+        PreviewGeckIntentButton.IsEnabled = !busy;
+        ApplyGeckIntentButton.IsEnabled = false;
+        CancelGeckIntentOperationButton.IsEnabled = busy;
+        ReviewGeckIntentUndoButton.IsEnabled = !busy;
+        UndoGeckIntentButton.IsEnabled = !busy && geckIntentUndoToken is not null;
+        ResumeGeckIntentRecoveryButton.IsEnabled = false;
+        RestoreGeckIntentOriginalButton.IsEnabled = false;
+    }
+
+    private void ResetGeckIntentBuilder(string message, bool cancel)
+    {
+        if (cancel) geckIntentBuilderCancellation?.Cancel();
+        geckIntentBuilderPreview = null;
+        geckIntentBuilderPreviewToken = null;
+        geckIntentRecoveryToken = null;
+        geckIntentUndoToken = null;
+        if (GeckIntentStatusTextBlock is null) return;
+        ApplyGeckIntentButton.IsEnabled = false;
+        UndoGeckIntentButton.IsEnabled = false;
+        OpenGeckAuthoringReviewButton.IsEnabled = false;
+        ResumeGeckIntentRecoveryButton.IsEnabled = false;
+        RestoreGeckIntentOriginalButton.IsEnabled = false;
+        GeckIntentStatusTextBlock.Text = message;
+    }
+
+    private void MarkGeckIntentBuilderStale()
+    {
+        if (geckIntentBuilderCancellation is null && geckIntentBuilderPreview is not null)
+        {
+            geckIntentBuilderPreview = null;
+            geckIntentBuilderPreviewToken = null;
+            ApplyGeckIntentButton.IsEnabled = false;
+            OpenGeckAuthoringReviewButton.IsEnabled = false;
+            GeckIntentOperationStateTextBlock.Text = GeckIntentBuilderState.RefreshRequired.ToString();
+            GeckIntentStatusTextBlock.Text = "Application focus changed. Refresh and preview again.";
+        }
+    }
+
+    private static void SelectGeckIntentCombo(System.Windows.Controls.ComboBox comboBox, string tag)
+    {
+        comboBox.SelectedItem = comboBox.Items.OfType<System.Windows.Controls.ComboBoxItem>().FirstOrDefault(item => StringComparer.Ordinal.Equals(item.Tag?.ToString(), tag));
+    }
+
+    private static string GeckIntentComboTag(System.Windows.Controls.ComboBox comboBox, string fallback) =>
+        (comboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? fallback;
+
     private void ProjectPathChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
         if (NarrativeInventoryStateTextBlock is null) return;
@@ -218,6 +622,8 @@ public partial class MainWindow
         InvalidateBsArchApproval();
         pluginModWorkbenchResult = null;
         pluginRevisionPreviewToken = null;
+        ResetGeckAuthoringReview("Project changed. Refresh authoring evidence.", cancel: true, notLoaded: true);
+        ResetGeckIntentBuilder("Project changed. Refresh the GECK intent builder.", cancel: true);
     }
 
     private void RefreshPluginWorkbenchClicked(object sender, RoutedEventArgs e) => RefreshPluginWorkbench();
@@ -1913,6 +2319,313 @@ public partial class MainWindow
             catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { ReleaseCandidateMessageTextBlock.Text = "Could not open evidence: " + ex.Message; }
         }
     }
+
+    private async void RefreshGeckAuthoringReviewClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport();
+        if (root is null) return;
+        ClearGeckAuthoringPreviewTokens(GeckAuthoringReviewTarget.Plan);
+        await RunGeckAuthoringOperationAsync(async cancellationToken =>
+        {
+            geckAuthoringReviewSnapshot = await geckAuthoringReviewWorkspace.InspectAsync(root, GeckAuthoringObservationsPathTextBox.Text, cancellationToken);
+            RenderGeckAuthoringSnapshot();
+        });
+    }
+
+    private async void PreviewGeckAuthoringPlanClicked(object sender, RoutedEventArgs e) =>
+        await PreviewGeckAuthoringAsync(GeckAuthoringReviewTarget.Plan);
+
+    private async void GenerateGeckAuthoringPlanClicked(object sender, RoutedEventArgs e) =>
+        await ApplyGeckAuthoringAsync(GeckAuthoringReviewTarget.Plan, geckAuthoringPlanPreviewToken);
+
+    private async void PreviewGeckAuthoringVerifierClicked(object sender, RoutedEventArgs e) =>
+        await PreviewGeckAuthoringAsync(GeckAuthoringReviewTarget.Observer);
+
+    private async void GenerateGeckAuthoringVerifierClicked(object sender, RoutedEventArgs e) =>
+        await ApplyGeckAuthoringAsync(GeckAuthoringReviewTarget.Observer, geckAuthoringObserverPreviewToken);
+
+    private async void PreviewGeckAuthoringVerificationClicked(object sender, RoutedEventArgs e) =>
+        await PreviewGeckAuthoringAsync(GeckAuthoringReviewTarget.Verification);
+
+    private async void GenerateGeckAuthoringVerificationClicked(object sender, RoutedEventArgs e) =>
+        await ApplyGeckAuthoringAsync(GeckAuthoringReviewTarget.Verification, geckAuthoringVerificationPreviewToken);
+
+    private void CancelGeckAuthoringOperationClicked(object sender, RoutedEventArgs e) => geckAuthoringCancellation?.Cancel();
+
+    private async Task PreviewGeckAuthoringAsync(GeckAuthoringReviewTarget target)
+    {
+        var root = GetProjectRootOrReport();
+        if (root is null) return;
+        ClearGeckAuthoringPreviewTokens(target);
+        await RunGeckAuthoringOperationAsync(async cancellationToken =>
+        {
+            var result = await geckAuthoringReviewWorkspace.PreviewAsync(target, root, GeckAuthoringObservationsPathTextBox.Text, cancellationToken);
+            if (result.Success)
+            {
+                SetGeckAuthoringPreviewToken(target, result.PreviewToken);
+                ProjectGeckAuthoringPreviewState(target, result);
+            }
+            if (RequiresGeckAuthoringRefresh(result)) MarkGeckAuthoringOperationUntrusted(result);
+            else RenderGeckAuthoringOperation(result);
+        });
+    }
+
+    private async Task ApplyGeckAuthoringAsync(GeckAuthoringReviewTarget target, string? previewToken)
+    {
+        var root = GetProjectRootOrReport();
+        if (root is null || previewToken is null) return;
+        ClearGeckAuthoringPreviewTokens(target);
+        await RunGeckAuthoringOperationAsync(async cancellationToken =>
+        {
+            var result = await geckAuthoringReviewWorkspace.ApplyAsync(target, root, GeckAuthoringObservationsPathTextBox.Text, previewToken, cancellationToken);
+            if (RequiresGeckAuthoringRefresh(result))
+            {
+                MarkGeckAuthoringOperationUntrusted(result);
+                return;
+            }
+            RenderGeckAuthoringOperation(result);
+            if (!result.Success) return;
+            geckAuthoringReviewSnapshot = await geckAuthoringReviewWorkspace.InspectAsync(root, GeckAuthoringObservationsPathTextBox.Text, cancellationToken);
+            RenderGeckAuthoringSnapshot();
+            RefreshProjectOutputs();
+        });
+    }
+
+    private async Task RunGeckAuthoringOperationAsync(Func<CancellationToken, Task> operation)
+    {
+        if (geckAuthoringCancellation is not null) return;
+        geckAuthoringCancellation = new CancellationTokenSource();
+        InvalidateGeckLaunch();
+        SetBusy(true);
+        SetGeckAuthoringBusy(true);
+        try
+        {
+            await operation(geckAuthoringCancellation.Token);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            ClearGeckAuthoringPreviewTokens(GeckAuthoringReviewTarget.Plan);
+            GeckAuthoringStatusTextBlock.Text = "GECK authoring review failed: " + exception.Message;
+        }
+        finally
+        {
+            geckAuthoringCancellation.Dispose();
+            geckAuthoringCancellation = null;
+            SetBusy(false);
+            SetGeckAuthoringBusy(false);
+        }
+    }
+
+    private void BrowseGeckAuthoringObservationsClicked(object sender, RoutedEventArgs e)
+    {
+        var root = GetProjectRootOrReport();
+        if (root is null) return;
+        var evidence = Path.Combine(root, "evidence");
+        var dialog = new OpenFileDialog
+        {
+            Title = "Select project-contained GECK authoring observations",
+            Filter = "JSON evidence (*.json)|*.json",
+            InitialDirectory = Directory.Exists(evidence) ? evidence : root
+        };
+        if (dialog.ShowDialog(this) == true)
+            GeckAuthoringObservationsPathTextBox.Text = dialog.FileName;
+    }
+
+    private void GeckAuthoringObservationsPathChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        geckAuthoringVerificationPreviewToken = null;
+        if (GeckAuthoringStatusTextBlock is null || geckAuthoringReviewSnapshot.PlanState == GeckAuthoringReviewState.NotLoaded) return;
+        geckAuthoringReviewSnapshot = geckAuthoringReviewSnapshot with
+        {
+            ObservationsPath = GeckAuthoringObservationsPathTextBox.Text,
+            ObservationsState = string.IsNullOrWhiteSpace(GeckAuthoringObservationsPathTextBox.Text) ? GeckAuthoringReviewState.Required : GeckAuthoringReviewState.Selected,
+            VerificationState = GeckAuthoringReviewState.Locked,
+            Message = "Observations changed. Preview verification again."
+        };
+        RenderGeckAuthoringSnapshot();
+    }
+
+    private void GeckAuthoringDiagnosticSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (GeckAuthoringDiagnosticsDataGrid.SelectedItem is not GeckAuthoringReviewDiagnostic diagnostic)
+        {
+            GeckAuthoringDiagnosticDetailTextBox.Text = "Select a diagnostic to inspect its exact details.";
+            return;
+        }
+        GeckAuthoringDiagnosticDetailTextBox.Text = $"{diagnostic.RuleId} [{diagnostic.Severity}]\nStage: {diagnostic.Stage}\nFile: {diagnostic.File}\n\n{diagnostic.Title}\n{diagnostic.Message}";
+    }
+
+    private void RenderGeckAuthoringSnapshot()
+    {
+        GeckAuthoringPlanStateTextBlock.Text = geckAuthoringReviewSnapshot.PlanState.ToString();
+        GeckAuthoringVerifierStateTextBlock.Text = geckAuthoringReviewSnapshot.ObserverState.ToString();
+        GeckAuthoringObservationsStateTextBlock.Text = geckAuthoringReviewSnapshot.ObservationsState.ToString();
+        GeckAuthoringVerificationStateTextBlock.Text = geckAuthoringReviewSnapshot.VerificationState.ToString();
+        GeckAuthoringStatusTextBlock.Text = geckAuthoringReviewSnapshot.Message;
+        GeckAuthoringDiagnosticsDataGrid.ItemsSource = geckAuthoringReviewSnapshot.Diagnostics;
+        GeckAuthoringDiagnosticsDataGrid.SelectedIndex = geckAuthoringReviewSnapshot.Diagnostics.Count > 0 ? 0 : -1;
+        GeckAuthoringEvidenceTextBox.Text = RenderGeckAuthoringEvidence(geckAuthoringReviewSnapshot.ProjectRoot, geckAuthoringReviewSnapshot.ObservationsPath, geckAuthoringReviewSnapshot.PlanSha256, geckAuthoringReviewSnapshot.Outputs);
+        UpdateGeckAuthoringActions();
+    }
+
+    private void RenderGeckAuthoringOperation(GeckAuthoringReviewOperationResult result)
+    {
+        GeckAuthoringStatusTextBlock.Text = result.Message;
+        GeckAuthoringDiagnosticsDataGrid.ItemsSource = result.Diagnostics;
+        GeckAuthoringDiagnosticsDataGrid.SelectedIndex = result.Diagnostics.Count > 0 ? 0 : -1;
+        GeckAuthoringEvidenceTextBox.Text = RenderGeckAuthoringEvidence(geckAuthoringReviewSnapshot.ProjectRoot, GeckAuthoringObservationsPathTextBox.Text, result.PlanSha256, result.Outputs);
+        UpdateGeckAuthoringActions();
+    }
+
+    private static bool RequiresGeckAuthoringRefresh(GeckAuthoringReviewOperationResult result) =>
+        result.Cancelled || result.Diagnostics.Any(diagnostic => diagnostic.RuleId == "WF-LOAD-DESKTOP");
+
+    private void ProjectGeckAuthoringPreviewState(GeckAuthoringReviewTarget target, GeckAuthoringReviewOperationResult result)
+    {
+        var outputsCurrent = result.Outputs.Count > 0 && result.Outputs.All(output => output.Current);
+        geckAuthoringReviewSnapshot = target switch
+        {
+            GeckAuthoringReviewTarget.Plan => geckAuthoringReviewSnapshot with
+            {
+                PlanState = outputsCurrent ? GeckAuthoringReviewState.Current : GeckAuthoringReviewState.ReadyToGenerate
+            },
+            GeckAuthoringReviewTarget.Observer => geckAuthoringReviewSnapshot with
+            {
+                ObserverState = outputsCurrent ? GeckAuthoringReviewState.Current : GeckAuthoringReviewState.ReadyToGenerate
+            },
+            GeckAuthoringReviewTarget.Verification => geckAuthoringReviewSnapshot with
+            {
+                ObservationsState = GeckAuthoringReviewState.AcceptedForPreview,
+                VerificationState = outputsCurrent ? GeckAuthoringReviewState.Verified : GeckAuthoringReviewState.ReadyToSeal
+            },
+            _ => geckAuthoringReviewSnapshot
+        };
+        GeckAuthoringPlanStateTextBlock.Text = geckAuthoringReviewSnapshot.PlanState.ToString();
+        GeckAuthoringVerifierStateTextBlock.Text = geckAuthoringReviewSnapshot.ObserverState.ToString();
+        GeckAuthoringObservationsStateTextBlock.Text = geckAuthoringReviewSnapshot.ObservationsState.ToString();
+        GeckAuthoringVerificationStateTextBlock.Text = geckAuthoringReviewSnapshot.VerificationState.ToString();
+    }
+
+    private void MarkGeckAuthoringOperationUntrusted(GeckAuthoringReviewOperationResult result)
+    {
+        ClearGeckAuthoringPreviewTokens(GeckAuthoringReviewTarget.Plan);
+        geckAuthoringReviewSnapshot = geckAuthoringReviewSnapshot with
+        {
+            PlanState = GeckAuthoringReviewState.RefreshRequired,
+            ObserverState = GeckAuthoringReviewState.RefreshRequired,
+            ObservationsState = GeckAuthoringReviewState.RefreshRequired,
+            VerificationState = GeckAuthoringReviewState.RefreshRequired,
+            Message = result.Message,
+            Diagnostics = result.Diagnostics
+        };
+        RenderGeckAuthoringSnapshot();
+    }
+
+    private static string RenderGeckAuthoringEvidence(string projectRoot, string? observations, string? planSha, IReadOnlyList<GeckAuthoringReviewOutput> outputs)
+    {
+        var lines = new List<string>();
+        if (!string.IsNullOrWhiteSpace(projectRoot)) lines.Add("Project: " + projectRoot);
+        if (!string.IsNullOrWhiteSpace(observations)) lines.Add("Observations: " + observations);
+        if (planSha is not null) lines.Add("Plan SHA-256: " + planSha);
+        foreach (var output in outputs)
+            lines.Add($"{(output.Current ? "CURRENT" : "PLANNED/STALE"),-13} {output.Path} | {output.Length} bytes | {output.Sha256}");
+        return lines.Count == 0 ? "No current authoring evidence loaded." : string.Join(Environment.NewLine, lines);
+    }
+
+    private void UpdateGeckAuthoringActions()
+    {
+        if (RefreshGeckAuthoringReviewButton is null || geckAuthoringCancellation is not null) return;
+        RefreshGeckAuthoringReviewButton.IsEnabled = true;
+        PreviewGeckAuthoringPlanButton.IsEnabled = geckAuthoringReviewSnapshot.CanPreviewPlan;
+        GenerateGeckAuthoringPlanButton.IsEnabled = geckAuthoringPlanPreviewToken is not null;
+        PreviewGeckAuthoringVerifierButton.IsEnabled = geckAuthoringReviewSnapshot.CanPreviewObserver;
+        GenerateGeckAuthoringVerifierButton.IsEnabled = geckAuthoringObserverPreviewToken is not null;
+        PreviewGeckAuthoringVerificationButton.IsEnabled = geckAuthoringReviewSnapshot.CanPreviewVerification;
+        GenerateGeckAuthoringVerificationButton.IsEnabled = geckAuthoringVerificationPreviewToken is not null;
+    }
+
+    private void SetGeckAuthoringBusy(bool busy)
+    {
+        if (RefreshGeckAuthoringReviewButton is null) return;
+        CancelGeckAuthoringOperationButton.IsEnabled = busy;
+        RefreshGeckAuthoringReviewButton.IsEnabled = !busy;
+        PreviewGeckAuthoringPlanButton.IsEnabled = false;
+        GenerateGeckAuthoringPlanButton.IsEnabled = false;
+        PreviewGeckAuthoringVerifierButton.IsEnabled = false;
+        GenerateGeckAuthoringVerifierButton.IsEnabled = false;
+        PreviewGeckAuthoringVerificationButton.IsEnabled = false;
+        GenerateGeckAuthoringVerificationButton.IsEnabled = false;
+        GeckAuthoringObservationsPathTextBox.IsEnabled = !busy;
+        BrowseGeckAuthoringObservationsButton.IsEnabled = !busy;
+        RouteGeckManualHandoffButton.IsEnabled = !busy;
+        RouteGeckXEditAuditButton.IsEnabled = !busy;
+        RouteGeckProjectOutputsButton.IsEnabled = !busy;
+        RouteGeckValidationButton.IsEnabled = !busy;
+        LoadGeckHandoffButton.IsEnabled = !busy;
+        if (busy)
+        {
+            OpenGeckWorkspaceFolderButton.IsEnabled = false;
+            OpenGeckWorkspaceWorklistButton.IsEnabled = false;
+            PreviewGeckLaunchButton.IsEnabled = false;
+            LaunchGeckButton.IsEnabled = false;
+            PreviewGeckMo2RequestButton.IsEnabled = false;
+            CreateGeckMo2RequestButton.IsEnabled = false;
+        }
+        else
+        {
+            OpenGeckWorkspaceFolderButton.IsEnabled = geckWorkspaceRoot is not null && Directory.Exists(geckWorkspaceRoot);
+            OpenGeckWorkspaceWorklistButton.IsEnabled = geckWorkspaceWorklist is not null && File.Exists(geckWorkspaceWorklist);
+            PreviewGeckLaunchButton.IsEnabled = geckWorkspaceSession?.CanUpdate == true;
+            UpdateGeckAuthoringActions();
+        }
+    }
+
+    private void SetGeckAuthoringPreviewToken(GeckAuthoringReviewTarget target, string? token)
+    {
+        switch (target)
+        {
+            case GeckAuthoringReviewTarget.Plan: geckAuthoringPlanPreviewToken = token; break;
+            case GeckAuthoringReviewTarget.Observer: geckAuthoringObserverPreviewToken = token; break;
+            case GeckAuthoringReviewTarget.Verification: geckAuthoringVerificationPreviewToken = token; break;
+        }
+    }
+
+    private void ClearGeckAuthoringPreviewTokens(GeckAuthoringReviewTarget target)
+    {
+        if (target == GeckAuthoringReviewTarget.Plan) geckAuthoringPlanPreviewToken = null;
+        if (target is GeckAuthoringReviewTarget.Plan or GeckAuthoringReviewTarget.Observer) geckAuthoringObserverPreviewToken = null;
+        geckAuthoringVerificationPreviewToken = null;
+        if (GenerateGeckAuthoringPlanButton is not null) UpdateGeckAuthoringActions();
+    }
+
+    private void ResetGeckAuthoringReview(string message, bool cancel, bool notLoaded)
+    {
+        if (cancel) geckAuthoringCancellation?.Cancel();
+        ClearGeckAuthoringPreviewTokens(GeckAuthoringReviewTarget.Plan);
+        geckAuthoringReviewSnapshot = notLoaded
+            ? GeckAuthoringReviewSnapshot.NotLoaded() with { Message = message }
+            : geckAuthoringReviewSnapshot with
+            {
+                PlanState = GeckAuthoringReviewState.RefreshRequired,
+                ObserverState = GeckAuthoringReviewState.RefreshRequired,
+                ObservationsState = GeckAuthoringReviewState.RefreshRequired,
+                VerificationState = GeckAuthoringReviewState.RefreshRequired,
+                Message = message,
+                Diagnostics = []
+            };
+        if (GeckAuthoringStatusTextBlock is not null) RenderGeckAuthoringSnapshot();
+    }
+
+    private void MarkGeckAuthoringReviewStale()
+    {
+        if (geckAuthoringCancellation is null && geckAuthoringReviewSnapshot.PlanState != GeckAuthoringReviewState.NotLoaded)
+            ResetGeckAuthoringReview("Application focus changed. Refresh authoring evidence before relying on displayed state.", cancel: false, notLoaded: false);
+    }
+
+    private void RouteGeckManualHandoffClicked(object sender, RoutedEventArgs e) => GeckAuthoringModeTabControl.SelectedItem = GeckManualHandoffTabItem;
+    private void RouteGeckXEditAuditClicked(object sender, RoutedEventArgs e) => MainTabControl.SelectedItem = XEditAuditTabItem;
+    private void RouteGeckProjectOutputsClicked(object sender, RoutedEventArgs e) { MainTabControl.SelectedItem = ProjectOutputsTabItem; RefreshProjectOutputs(); }
+    private void RouteGeckValidationClicked(object sender, RoutedEventArgs e) => MainTabControl.SelectedItem = ValidationReportTabItem;
 
     private string? geckWorkspaceRoot;
     private string? geckWorkspaceWorklist;

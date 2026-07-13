@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using WastelandForge.Cli;
@@ -11357,6 +11358,90 @@ public sealed class CliGoldenTests
             Assert.Empty(Directory.GetFiles(root, "*.esp", SearchOption.AllDirectories));
         }
         finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void GeckAuthoringVerifierCliProducesAndSealsSyntheticEvidenceWithoutExecution()
+    {
+        var root = CopyFixtureProject("GeckAuthoringPlanExample");
+        try
+        {
+            Assert.Equal(0, RunCli("generate", root, "--target", "geck-authoring-plan", "--format", "json", "--no-input").ExitCode);
+
+            var verificationRoot = Path.Combine(root, "generated", "geck-authoring-plan", "verification");
+            var observerDry = RunCli("generate", root, "--target", "geck-authoring-verifier", "--dry-run", "--format", "json", "--no-input");
+            Assert.True(observerDry.ExitCode == 0, $"Exit {observerDry.ExitCode}; stdout: {observerDry.Stdout}; stderr: {observerDry.Stderr}");
+            var observerDryJson = JsonNode.Parse(observerDry.Stdout)!;
+            Assert.Equal("planned", observerDryJson["status"]!.GetValue<string>());
+            Assert.False(Directory.Exists(verificationRoot));
+
+            var observer = RunCli("generate", root, "--target", "geck-authoring-verifier", "--format", "json", "--no-input");
+            Assert.Equal(0, observer.ExitCode);
+            Assert.True(File.Exists(Path.Combine(verificationRoot, "verifier.pas")));
+            Assert.True(File.Exists(Path.Combine(verificationRoot, "observer-contract.json")));
+            Assert.True(File.Exists(Path.Combine(verificationRoot, "observer-manifest.json")));
+            Assert.True(File.Exists(Path.Combine(verificationRoot, "checksums.sha256")));
+
+            var pluginPath = Path.Combine(root, "staging", "Data", "CouriersEmergencyCache.esp");
+            Directory.CreateDirectory(Path.GetDirectoryName(pluginPath)!);
+            var pluginBytes = Encoding.UTF8.GetBytes("synthetic opaque plugin subject bytes");
+            File.WriteAllBytes(pluginPath, pluginBytes);
+
+            var evidenceRoot = Path.Combine(root, "evidence");
+            File.Copy(Path.Combine(RepositoryRoot(), "fixtures", "geck-authoring-observations", "invalid-incomplete.json"), Path.Combine(evidenceRoot, "invalid-observations.json"));
+            File.Copy(Path.Combine(RepositoryRoot(), "fixtures", "geck-authoring-observations", "valid-first-slice.json"), Path.Combine(evidenceRoot, "valid-observations.json"));
+
+            var refused = RunCli("generate", root, "--target", "geck-authoring-verification", "--observations", "evidence/invalid-observations.json", "--format", "json", "--no-input");
+            Assert.Equal(1, refused.ExitCode);
+            Assert.Contains(JsonNode.Parse(refused.Stdout)!["issues"]!.AsArray(), issue => issue?["ruleId"]?.GetValue<string>() == "WF-GEN-017");
+            Assert.False(File.Exists(Path.Combine(verificationRoot, "report.json")));
+
+            var verificationDry = RunCli("generate", root, "--target", "geck-authoring-verification", "--observations", "evidence/valid-observations.json", "--dry-run", "--format", "json", "--no-input");
+            Assert.Equal(0, verificationDry.ExitCode);
+            Assert.Equal("planned", JsonNode.Parse(verificationDry.Stdout)!["status"]!.GetValue<string>());
+            Assert.False(File.Exists(Path.Combine(verificationRoot, "report.json")));
+
+            var verified = RunCli("generate", root, "--target", "geck-authoring-verification", "--observations", "evidence/valid-observations.json", "--format", "json", "--no-input");
+            var verifiedJson = JsonNode.Parse(verified.Stdout)!;
+            Assert.Equal(0, verified.ExitCode);
+            Assert.Equal("verified", verifiedJson["status"]!.GetValue<string>());
+            Assert.False(verifiedJson["safety"]!["externalToolExecuted"]!.GetValue<bool>());
+            Assert.False(verifiedJson["safety"]!["pluginMutation"]!.GetValue<bool>());
+            Assert.True(File.Exists(Path.Combine(verificationRoot, "report.json")));
+            Assert.Equal(pluginBytes, File.ReadAllBytes(pluginPath));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void GeckAuthoringVerifierHelpExplainAndObservationOptionAreBounded()
+    {
+        var help = RunCli("help", "generate");
+        Assert.Equal(0, help.ExitCode);
+        Assert.Contains("geck-authoring-verifier", help.Stdout, StringComparison.Ordinal);
+        Assert.Contains("geck-authoring-verification", help.Stdout, StringComparison.Ordinal);
+        Assert.Contains("--observations <project-relative-path>", help.Stdout, StringComparison.Ordinal);
+
+        var missing = RunCli("generate", ".", "--target", "geck-authoring-verification", "--format", "json", "--no-input");
+        Assert.Equal(2, missing.ExitCode);
+        Assert.Contains("requires --observations", JsonNode.Parse(missing.Stdout)!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+
+        var misplaced = RunCli("generate", ".", "--target", "geck-authoring-verifier", "--observations", "evidence/unused.json", "--format", "json", "--no-input");
+        Assert.Equal(2, misplaced.ExitCode);
+        Assert.Contains("only available", JsonNode.Parse(misplaced.Stdout)!["message"]!.GetValue<string>(), StringComparison.Ordinal);
+
+        var target = RunCli("explain", "target", "geck-authoring-verification", "--format", "json");
+        Assert.Equal(0, target.ExitCode);
+        Assert.Contains("WF-GEN-017", target.Stdout, StringComparison.Ordinal);
+        Assert.Contains("WF-SEM-046", target.Stdout, StringComparison.Ordinal);
+
+        var output = RunCli("explain", "output", "generated/geck-authoring-plan/verification/report.json", "--format", "json");
+        Assert.Equal(0, output.ExitCode);
+        Assert.Equal("geck-authoring-verification-report", JsonNode.Parse(output.Stdout)!["classification"]!["outputKind"]!.GetValue<string>());
+
+        var diagnostic = RunCli("explain", "diagnostic", "WF-GEN-017", "--format", "json");
+        Assert.Equal(0, diagnostic.ExitCode);
+        Assert.Contains("observer bundle", diagnostic.Stdout, StringComparison.OrdinalIgnoreCase);
     }
 
     private static CliResult RunCli(params string[] args)
