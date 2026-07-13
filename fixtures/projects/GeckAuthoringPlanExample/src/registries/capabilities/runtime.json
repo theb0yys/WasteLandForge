@@ -1,0 +1,1 @@
+{"schemaVersion":"0.1.0","kind":"capability","id":"tool.geck.authoring.preview","title":"Synthetic preview capability","satisfiedBy":[{"id":"provider.synthetic.preview","providerType":"tool"}],"requires":{"capabilities":[]},"scope":"external-tool","stability":"experimental","features":["preview-only"]}

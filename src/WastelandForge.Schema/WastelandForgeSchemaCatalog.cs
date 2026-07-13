@@ -23,6 +23,8 @@ public static class WastelandForgeSchemaCatalog
         new(WastelandForgeSchemaIds.Manifest050, "manifest", "0.5.0", "schemas/manifest/0.5.0/schema.json"),
         new(WastelandForgeSchemaIds.GeckAuthoringIntent010, "geck-authoring-intent", "0.1.0", "schemas/geck-authoring-intent/0.1.0/schema.json"),
         new(WastelandForgeSchemaIds.GeckAuthoringPlan010, "geck-authoring-plan", "0.1.0", "schemas/geck-authoring-plan/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.GeckAuthoringVerification010, "geck-authoring-verification", "0.1.0", "schemas/geck-authoring-verification/0.1.0/schema.json"),
+        new(WastelandForgeSchemaIds.GeckHostProbeRunPlan010, "geck-host-probe-run-plan", "0.1.0", "schemas/geck-host-probe-run-plan/0.1.0/schema.json"),
         new(WastelandForgeSchemaIds.Fomod010, "fomod", "0.1.0", "schemas/fomod/0.1.0/schema.json"),
         new(WastelandForgeSchemaIds.FomodManifest010, "fomod-manifest", "0.1.0", "schemas/fomod-manifest/0.1.0/schema.json"),
         new(

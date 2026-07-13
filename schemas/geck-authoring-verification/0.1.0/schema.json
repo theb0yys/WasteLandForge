@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/geck-authoring-verification/0.1.0/schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "source", "plan", "producer", "script", "subject", "observations", "safety"],
+  "properties": {
+    "formatVersion": { "const": "0.1.0" },
+    "kind": { "const": "wastelandforge.geck-authoring-verification" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["synthetic", "usesRealPluginBytes"],
+      "properties": {
+        "synthetic": { "type": "boolean" },
+        "usesRealPluginBytes": { "type": "boolean" }
+      }
+    },
+    "plan": { "$ref": "#/$defs/digestFile" },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "gameMode", "provider"],
+      "properties": {
+        "name": { "const": "xEdit" },
+        "gameMode": { "const": "FNV" },
+        "version": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "provider": { "$ref": "#/$defs/digestFile" }
+      }
+    },
+    "script": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "length", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "path": { "$ref": "#/$defs/path" },
+        "length": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plugin", "path", "length", "sha256"],
+      "properties": {
+        "plugin": { "$ref": "#/$defs/pluginName" },
+        "path": { "$ref": "#/$defs/path" },
+        "length": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pluginFileName", "orderedMasters", "containers", "references", "unexpectedRecords"],
+      "properties": {
+        "pluginFileName": { "$ref": "#/$defs/pluginName" },
+        "orderedMasters": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/pluginName" }
+        },
+        "containers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/container" }
+        },
+        "references": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/reference" }
+        },
+        "unexpectedRecords": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/recordIdentity" }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["readOnly", "forgeExecutedXEdit", "mutatedPlugin", "wrotePlugin", "changedLoadOrder", "wroteGameData"],
+      "properties": {
+        "readOnly": { "const": true },
+        "forgeExecutedXEdit": { "const": false },
+        "mutatedPlugin": { "const": false },
+        "wrotePlugin": { "const": false },
+        "changedLoadOrder": { "const": false },
+        "wroteGameData": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)+$" },
+    "path": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "pluginName": { "type": "string", "pattern": "^[^\\/:*?\"<>|]+\\.(esm|esp|esl)$" },
+    "formId": { "type": "string", "pattern": "^[0-9A-F]{8}$" },
+    "signature": { "type": "string", "pattern": "^[A-Z0-9_]{4}$" },
+    "digestFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "length", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "length": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "recordIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordFile", "signature", "fixedFormId"],
+      "properties": {
+        "recordFile": { "$ref": "#/$defs/pluginName" },
+        "signature": { "$ref": "#/$defs/signature" },
+        "fixedFormId": { "$ref": "#/$defs/formId" },
+        "editorId": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordFile", "signature", "fixedFormId", "editorId", "quantity"],
+      "properties": {
+        "recordFile": { "$ref": "#/$defs/pluginName" },
+        "signature": { "$ref": "#/$defs/signature" },
+        "fixedFormId": { "$ref": "#/$defs/formId" },
+        "editorId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "quantity": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "container": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordFile", "signature", "fixedFormId", "editorId", "respawns", "items"],
+      "properties": {
+        "recordFile": { "$ref": "#/$defs/pluginName" },
+        "signature": { "const": "CONT" },
+        "fixedFormId": { "$ref": "#/$defs/formId" },
+        "editorId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "respawns": { "type": "boolean" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/item" } }
+      }
+    },
+    "vector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "z"],
+      "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "z": { "type": "number" } }
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recordFile", "signature", "fixedFormId", "editorId", "baseRecord", "cell", "position", "rotation", "ownership", "persistent", "encounterZonePolicy"],
+      "properties": {
+        "recordFile": { "$ref": "#/$defs/pluginName" },
+        "signature": { "const": "REFR" },
+        "fixedFormId": { "$ref": "#/$defs/formId" },
+        "editorId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "baseRecord": { "$ref": "#/$defs/recordIdentity" },
+        "cell": { "$ref": "#/$defs/recordIdentity" },
+        "position": { "$ref": "#/$defs/vector" },
+        "rotation": { "$ref": "#/$defs/vector" },
+        "ownership": { "enum": ["unowned", "owned"] },
+        "persistent": { "type": "boolean" },
+        "encounterZonePolicy": { "enum": ["inherit-cell", "none"] }
+      }
+    }
+  }
+}

@@ -281,3 +281,21 @@ contained evidence-action enablement, canonical diagnostic explanation, exact
 issue context, deterministic workspace routing, and stale-route disabling. It
 silently uninstalls and removes its isolated test roots. It does not publish
 releases or automate external game tools.
+
+Gate 527 adds the build-only xNVSE GECK host probe:
+
+- `Build-GeckProbe.ps1` verifies an external clean xNVSE 6.4.4 checkout at the
+  pinned commit/tree, requires MSVC v143 14.44, compiles Win32 `Release GECK`,
+  statically checks the DLL, and writes an ignored local build manifest.
+- `Test-GeckProbeBuild.ps1` verifies the manifest, x86 PE identity, two-symbol
+  export boundary, dependency boundary, false execution/mutation flags, source
+  inventory, and native project settings.
+
+```text
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Build-GeckProbe.ps1 -XnvseSourceRoot <xnvse-6.4.4-checkout>
+pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File eng/Test-GeckProbeBuild.ps1
+```
+
+Outputs stay under ignored `generated/geck-probe/`. These helpers do not copy
+the DLL into game Data or MO2, select or change an MO2 profile, launch GECK,
+produce runtime observations, inspect plugin records, or mutate ESP/ESM files.

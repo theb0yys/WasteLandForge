@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/geck-host-probe-run-plan/0.1.0/schema.json",
+  "title": "WastelandForge GECK Host Probe Run Plan 0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion",
+    "kind",
+    "runId",
+    "createdUtc",
+    "status",
+    "projectRoot",
+    "probeBuild",
+    "environment",
+    "staging",
+    "effectiveProviders",
+    "protectedBaseline",
+    "observation",
+    "launch",
+    "recovery",
+    "blockers",
+    "safety",
+    "planSha256"
+  ],
+  "properties": {
+    "formatVersion": { "const": "0.1" },
+    "kind": { "const": "wastelandforge.geck-host-probe-run-plan" },
+    "runId": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+    "createdUtc": { "type": "string", "format": "date-time" },
+    "status": { "enum": ["blocked", "preview-ready"] },
+    "projectRoot": { "type": "null" },
+    "probeBuild": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "buildManifest", "dll", "probeVersion", "xnvseCommit", "xnvseTree", "launchAuthorized", "approvedProbeRunId"],
+      "properties": {
+        "status": { "enum": ["planned", "refused"] },
+        "buildManifest": { "$ref": "#/$defs/nullableFile" },
+        "dll": { "$ref": "#/$defs/nullableFile" },
+        "probeVersion": { "type": ["string", "null"] },
+        "xnvseCommit": { "anyOf": [{ "$ref": "#/$defs/gitObject" }, { "type": "null" }] },
+        "xnvseTree": { "anyOf": [{ "$ref": "#/$defs/gitObject" }, { "type": "null" }] },
+        "launchAuthorized": { "type": "boolean" },
+        "approvedProbeRunId": { "type": ["string", "null"] }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gameRoot", "dataRoot", "geck", "falloutnv", "nvseLoader", "nvseRuntime", "nvseEditor", "mo2"],
+      "properties": {
+        "gameRoot": { "$ref": "#/$defs/path" },
+        "dataRoot": { "$ref": "#/$defs/path" },
+        "geck": { "$ref": "#/$defs/nullableFile" },
+        "falloutnv": { "$ref": "#/$defs/nullableFile" },
+        "nvseLoader": { "$ref": "#/$defs/nullableFile" },
+        "nvseRuntime": { "$ref": "#/$defs/nullableFile" },
+        "nvseEditor": { "$ref": "#/$defs/nullableFile" },
+        "mo2": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["executable", "instance", "profile", "pythonPlugin", "companionPackage"],
+          "properties": {
+            "executable": { "$ref": "#/$defs/nullableFile" },
+            "instance": { "type": ["string", "null"], "minLength": 1 },
+            "profile": { "type": ["string", "null"], "minLength": 1 },
+            "pythonPlugin": { "$ref": "#/$defs/nullableFile" },
+            "companionPackage": { "$ref": "#/$defs/nullableFile" }
+          }
+        }
+      }
+    },
+    "staging": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "operatorApprovedModRoot", "destinationPath", "relativePath", "effectivePath", "createOnly"],
+      "properties": {
+        "status": { "enum": ["planned", "refused"] },
+        "operatorApprovedModRoot": { "type": ["string", "null"], "minLength": 1 },
+        "destinationPath": { "type": ["string", "null"], "minLength": 1 },
+        "relativePath": { "const": "NVSE/Plugins/WastelandForge.GeckProbe.dll" },
+        "effectivePath": { "const": "Data/NVSE/Plugins/WastelandForge.GeckProbe.dll" },
+        "createOnly": { "const": true }
+      }
+    },
+    "effectiveProviders": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "instance", "profile", "virtualTreeSha256", "providers"],
+      "properties": {
+        "status": { "enum": ["passed", "refused", "unresolved"] },
+        "instance": { "type": ["string", "null"], "minLength": 1 },
+        "profile": { "type": ["string", "null"], "minLength": 1 },
+        "virtualTreeSha256": { "anyOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }] },
+        "providers": { "type": "array", "items": { "$ref": "#/$defs/file" } }
+      }
+    },
+    "protectedBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "manifestSha256", "entryCount"],
+      "properties": {
+        "status": { "enum": ["passed", "refused", "unresolved"] },
+        "manifestSha256": { "anyOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }] },
+        "entryCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "queryFilePattern", "loadFilePattern"],
+      "properties": {
+        "root": { "$ref": "#/$defs/path" },
+        "queryFilePattern": { "const": "<runId>-<pid>-query.json" },
+        "loadFilePattern": { "const": "<runId>-<pid>-load.json" }
+      }
+    },
+    "launch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contextKind", "contextId", "contextSha256", "executable", "arguments"],
+      "properties": {
+        "contextKind": { "const": "geck-host-probe" },
+        "contextId": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+        "contextSha256": { "type": "null" },
+        "executable": { "type": ["string", "null"], "minLength": 1 },
+        "arguments": { "type": "array", "maxItems": 0 }
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operatorClosesGeck", "automaticRetry", "preserveEvidence", "newRunIdRequiredForRetry"],
+      "properties": {
+        "operatorClosesGeck": { "const": true },
+        "automaticRetry": { "const": false },
+        "preserveEvidence": { "const": true },
+        "newRunIdRequiredForRetry": { "const": true }
+      }
+    },
+    "blockers": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorizedBuildExecuted", "stagingPerformed", "profileMutated", "requestWritten", "externalToolExecuted", "processLaunched", "pluginMutation", "physicalDataWritten"],
+      "properties": {
+        "authorizedBuildExecuted": { "const": false },
+        "stagingPerformed": { "const": false },
+        "profileMutated": { "const": false },
+        "requestWritten": { "const": false },
+        "externalToolExecuted": { "const": false },
+        "processLaunched": { "const": false },
+        "pluginMutation": { "const": false },
+        "physicalDataWritten": { "const": false }
+      }
+    },
+    "planSha256": { "$ref": "#/$defs/sha" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "blocked" } } },
+      "then": { "properties": { "blockers": { "minItems": 1 } } },
+      "else": { "properties": { "blockers": { "maxItems": 0 } } }
+    }
+  ],
+  "$defs": {
+    "path": { "type": "string", "minLength": 1, "maxLength": 32767 },
+    "sha": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "gitObject": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "length", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "length": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "nullableFile": { "anyOf": [{ "$ref": "#/$defs/file" }, { "type": "null" }] }
+  }
+}

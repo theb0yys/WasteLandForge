@@ -71,6 +71,32 @@ public sealed class ManifestSchemaTests
     }
 
     [Fact]
+    public void GeckAuthoringSchemasAndManifest050AreRegistered()
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest050, out var manifest));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringIntent010, out var intent));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringPlan010, out var plan));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringVerification010, out var verification));
+        Assert.NotNull(JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(manifest!))!["properties"]?["registries"]?["properties"]?["geckAuthoringIntent"]);
+        Assert.Equal("geck-authoring-intent", intent!.Kind);
+        Assert.Equal("geck-authoring-plan", plan!.Kind);
+        Assert.Equal("geck-authoring-verification", verification!.Kind);
+        var verificationSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(verification));
+        Assert.Equal("wastelandforge.geck-authoring-verification", verificationSchema?["properties"]?["kind"]?["const"]?.GetValue<string>());
+    }
+
+    [Fact]
+    public void GeckHostProbeRunPlanSchemaIsRegisteredAndNoLaunch()
+    {
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckHostProbeRunPlan010, out var resource));
+        Assert.Equal("geck-host-probe-run-plan", resource!.Kind);
+        var schema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(resource));
+        Assert.Equal("wastelandforge.geck-host-probe-run-plan", schema?["properties"]?["kind"]?["const"]?.GetValue<string>());
+        Assert.False(schema?["properties"]?["safety"]?["properties"]?["processLaunched"]?["const"]?.GetValue<bool>());
+        Assert.False(schema?["properties"]?["safety"]?["properties"]?["stagingPerformed"]?["const"]?.GetValue<bool>());
+    }
+
+    [Fact]
     public void FomodSchemasAndManifest040AreRegistered()
     {
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest040, out var manifest));

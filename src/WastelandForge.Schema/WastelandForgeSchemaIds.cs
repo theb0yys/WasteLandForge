@@ -9,6 +9,8 @@ public static class WastelandForgeSchemaIds
     public const string Manifest050 = "https://schemas.wastelandforge.dev/fnv/manifest/0.5.0/schema.json";
     public const string GeckAuthoringIntent010 = "https://schemas.wastelandforge.dev/fnv/geck-authoring-intent/0.1.0/schema.json";
     public const string GeckAuthoringPlan010 = "https://schemas.wastelandforge.dev/fnv/geck-authoring-plan/0.1.0/schema.json";
+    public const string GeckAuthoringVerification010 = "https://schemas.wastelandforge.dev/fnv/geck-authoring-verification/0.1.0/schema.json";
+    public const string GeckHostProbeRunPlan010 = "https://schemas.wastelandforge.dev/fnv/geck-host-probe-run-plan/0.1.0/schema.json";
     public const string Fomod010 = "https://schemas.wastelandforge.dev/fnv/fomod/0.1.0/schema.json";
     public const string FomodManifest010 = "https://schemas.wastelandforge.dev/fnv/fomod-manifest/0.1.0/schema.json";
     public const string Dependency010 = "https://schemas.wastelandforge.dev/fnv/dependencies/0.1.0/schema.json";

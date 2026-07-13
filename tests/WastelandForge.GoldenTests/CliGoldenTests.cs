@@ -11338,6 +11338,27 @@ public sealed class CliGoldenTests
         Assert.Equal("Unknown command 'scan'. Use 'forge help' for the canonical command surface.", Normalize(result.Stderr).TrimEnd());
     }
 
+    [Fact]
+    public void GeckAuthoringPlanCliDryRunThenWritesPlanOnly()
+    {
+        var root = CopyFixtureProject("GeckAuthoringPlanExample");
+        try
+        {
+            var dry = RunCli("generate", root, "--target", "geck-authoring-plan", "--dry-run", "--format", "json", "--no-input");
+            Assert.Equal(0, dry.ExitCode);
+            var dryJson = JsonNode.Parse(dry.Stdout)!;
+            Assert.Equal("planned", dryJson["status"]!.GetValue<string>());
+            Assert.False(dryJson["safety"]!["executesExternalTools"]!.GetValue<bool>());
+            Assert.False(Directory.Exists(Path.Combine(root, "generated", "geck-authoring-plan")));
+
+            var write = RunCli("generate", root, "--target", "geck-authoring-plan", "--format", "json", "--no-input");
+            Assert.Equal(0, write.ExitCode);
+            Assert.True(File.Exists(Path.Combine(root, "generated", "geck-authoring-plan", "plan.json")));
+            Assert.Empty(Directory.GetFiles(root, "*.esp", SearchOption.AllDirectories));
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
     private static CliResult RunCli(params string[] args)
     {
         var originalOut = Console.Out;

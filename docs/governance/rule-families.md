@@ -1227,3 +1227,16 @@ AI requirements.
 - `WF-SEM-045`: xEdit `Check(e)` returned a non-empty error for an exact
   file-local plugin record identity; inspect and correct it manually in xEdit or
   GECK, then rerun the audit.
+
+## Gate 521
+
+- `WF-GEN-016`: a GECK authoring intent or generated plan is missing,
+  schema-invalid, provisional, stale, path-unsafe, digest-mismatched, or cannot
+  be resolved deterministically. No external tool or plugin write is attempted.
+
+## Gate 522
+
+- `WF-SEM-046`: a read-only GECK authoring verification report is malformed,
+  unsafe, stale, digest-mismatched, or its observed TES4 masters, `CONT`,
+  inventory, `REFR`, ownership, persistence, encounter policy, cell, transform,
+  or unexpected-record set does not match the exact plan postconditions.

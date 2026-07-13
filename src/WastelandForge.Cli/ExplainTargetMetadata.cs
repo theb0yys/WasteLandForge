@@ -142,6 +142,19 @@ internal static class ExplainTargetCatalog
                     "Does not generate patches or mutate plugins.",
                     "Accepts only synthetic report evidence."
                 ]),
+            ["geck-authoring-plan"] = Target(
+                "geck-authoring-plan",
+                "GECK authoring plan",
+                "authoring-plan",
+                "implemented",
+                "Preview-only deterministic GECK authoring plan generated from locally verified canonical intent.",
+                "docs/adr/ADR-013.md",
+                ["forge generate --target geck-authoring-plan"],
+                ["generated/geck-authoring-plan"],
+                ["plan.json", "build-manifest.json", "checksums.sha256"],
+                ["tool.geck", "tool.xedit.record_inspection"],
+                ["WF-GEN-016"],
+                ["Does not execute GECK or xEdit.", "Does not write plugin bytes or game Data.", "Refuses provisional or stale local evidence."]),
             ["docs"] = Target(
                 "docs",
                 "Local reference docs",
