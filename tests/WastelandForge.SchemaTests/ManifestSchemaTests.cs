@@ -76,11 +76,15 @@ public sealed class ManifestSchemaTests
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest050, out var manifest));
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringIntent010, out var intent));
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringPlan010, out var plan));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringObservations010, out var observations));
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringVerification010, out var verification));
         Assert.NotNull(JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(manifest!))!["properties"]?["registries"]?["properties"]?["geckAuthoringIntent"]);
         Assert.Equal("geck-authoring-intent", intent!.Kind);
         Assert.Equal("geck-authoring-plan", plan!.Kind);
+        Assert.Equal("geck-authoring-observations", observations!.Kind);
         Assert.Equal("geck-authoring-verification", verification!.Kind);
+        var observationsSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(observations));
+        Assert.Equal("wastelandforge.geck-authoring-observations", observationsSchema?["properties"]?["kind"]?["const"]?.GetValue<string>());
         var verificationSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(verification));
         Assert.Equal("wastelandforge.geck-authoring-verification", verificationSchema?["properties"]?["kind"]?["const"]?.GetValue<string>());
     }

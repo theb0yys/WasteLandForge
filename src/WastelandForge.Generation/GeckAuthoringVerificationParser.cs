@@ -32,7 +32,24 @@ public sealed class GeckAuthoringVerificationParser
     public GeckAuthoringVerificationResult Parse(
         string projectRoot,
         string planPath = DefaultPlanPath,
+        string reportPath = DefaultReportPath) =>
+        ParseCore(projectRoot, planPath, reportPath, null);
+
+    public GeckAuthoringVerificationResult VerifyPrepared(
+        string projectRoot,
+        JsonObject report,
+        string planPath = DefaultPlanPath,
         string reportPath = DefaultReportPath)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        return ParseCore(projectRoot, planPath, reportPath, report);
+    }
+
+    private static GeckAuthoringVerificationResult ParseCore(
+        string projectRoot,
+        string planPath,
+        string reportPath,
+        JsonObject? preparedReport)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(projectRoot);
         var root = Path.GetFullPath(projectRoot);
@@ -42,10 +59,11 @@ public sealed class GeckAuthoringVerificationParser
         try
         {
             var fullPlanPath = ResolveContainedRegularFile(root, planPath, "authoring plan");
-            var fullReportPath = ResolveContainedRegularFile(root, reportPath, "verification report");
             var plan = ParseAndValidate(fullPlanPath, PlanSchema.Value, "geck-authoring-plan/0.1.0");
-            var report = ParseAndValidate(fullReportPath, ReportSchema.Value, "geck-authoring-verification/0.1.0");
-            var reportDisplayPath = Relative(root, fullReportPath);
+            var report = preparedReport is null
+                ? ParseAndValidate(ResolveContainedRegularFile(root, reportPath, "verification report"), ReportSchema.Value, "geck-authoring-verification/0.1.0")
+                : Validate(preparedReport, ReportSchema.Value, "geck-authoring-verification/0.1.0");
+            var reportDisplayPath = NormalizeRelative(reportPath);
 
             VerifyDigestIdentity(report["plan"]!.AsObject(), Relative(root, fullPlanPath), fullPlanPath, "plan", issues, reportDisplayPath);
 
@@ -204,6 +222,11 @@ public sealed class GeckAuthoringVerificationParser
         var info = new FileInfo(path);
         if (info.Length > 4 * 1024 * 1024) throw new InvalidOperationException($"{schemaName} exceeds the 4 MiB ingestion limit.");
         var root = JsonNode.Parse(File.ReadAllText(path)) as JsonObject ?? throw new JsonException($"{schemaName} root is not an object.");
+        return Validate(root, schema, schemaName);
+    }
+
+    private static JsonObject Validate(JsonObject root, JsonSchema schema, string schemaName)
+    {
         using var document = JsonDocument.Parse(root.ToJsonString());
         if (!schema.Evaluate(document.RootElement).IsValid) throw new InvalidOperationException($"Evidence does not satisfy {schemaName}.");
         return root;

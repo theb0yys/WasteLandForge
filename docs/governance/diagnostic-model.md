@@ -1692,5 +1692,12 @@ release, governance, security, external-tool, runtime-probe,
 repository-publish, signing/attestation, plugin-mutation, VS Code extension,
 language-server, installer, app-shell packaging, or AI diagnostics.
 
+Gate 533 adds `WF-GEN-017` for missing, malformed, incomplete, unsafe, stale,
+digest-mismatched, or unsupported GECK authoring observer bundle and raw
+observation evidence. Forge emits this refusal before sealing a report and
+does not execute xEdit or write plugin bytes. Once evidence is sealed into the
+Gate 522 contract, exact semantic postcondition mismatches continue to use
+`WF-SEM-046`.
+
 Gate 5 creates the diagnostic report aggregate and uses it for loader and
 validation pipeline output.

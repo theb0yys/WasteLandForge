@@ -166,6 +166,7 @@ public sealed class SchemaBackCompatTests
     [InlineData(WastelandForgeSchemaIds.Mcm010, "mcm", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.JipScript010, "jip-script", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.XEditAudit010, "xedit-audit", "0.1.0")]
+    [InlineData(WastelandForgeSchemaIds.GeckAuthoringObservations010, "geck-authoring-observations", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.McmExtenderOutput010, "mcm-extender-output", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.PackageManifest010, "package-manifest", "0.1.0")]
     [InlineData(WastelandForgeSchemaIds.InstallPreview010, "install-preview", "0.1.0")]

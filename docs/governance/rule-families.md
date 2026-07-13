@@ -1240,3 +1240,21 @@ AI requirements.
   unsafe, stale, digest-mismatched, or its observed TES4 masters, `CONT`,
   inventory, `REFR`, ownership, persistence, encounter policy, cell, transform,
   or unexpected-record set does not match the exact plan postconditions.
+
+## Gate 529
+
+- `WF-CAP-012`: required host-probe instance, profile, companion, exact
+  effective-provider view, or protected baseline is unavailable or unresolved;
+  the private run plan remains blocked.
+- `WF-SEC-006`: a host-probe build, path, digest, staging destination,
+  protected file, canonical plan, or approval identity is unsafe, stale, linked,
+  duplicated, mismatched, or otherwise unsuitable for a later live smoke.
+
+## Gate 533
+
+- `WF-GEN-017`: the generated GECK authoring observer bundle or supplied raw
+  observations are missing, malformed, incomplete, unsafe, stale,
+  path-escaping, digest-mismatched, or unsupported by the first-slice policy.
+  Forge refuses to seal the report and does not execute xEdit or write plugin
+  bytes. Exact postcondition mismatches in a successfully sealed report remain
+  `WF-SEM-046`.

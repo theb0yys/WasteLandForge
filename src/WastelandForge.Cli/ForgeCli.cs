@@ -425,6 +425,23 @@ internal static class ForgeCli
             return authoringPlan.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
         }
 
+        if (StringComparer.Ordinal.Equals(parse.Target, GeckAuthoringVerifierProducer.ObserverTarget) ||
+            StringComparer.Ordinal.Equals(parse.Target, GeckAuthoringVerifierProducer.VerificationTarget))
+        {
+            if (parse.OutputDirectory is not null)
+            {
+                WriteUsage(parse.Format, commandPath, $"Target '{parse.Target}' writes under {GeckAuthoringVerifierProducer.OutputRoot}; --output is not supported.");
+                return (int)CliExitCode.Usage;
+            }
+
+            var producer = new GeckAuthoringVerifierProducer();
+            var verifierResult = StringComparer.Ordinal.Equals(parse.Target, GeckAuthoringVerifierProducer.ObserverTarget)
+                ? producer.GenerateObserver(new(parse.ProjectPath, parse.DryRun, CliConstants.Version))
+                : producer.Seal(new(parse.ProjectPath, parse.ObservationsPath!, parse.DryRun, CliConstants.Version));
+            Console.Write(CliConstants.IsMachineFormat(parse.Format) ? GeckAuthoringVerifierResultWriter.Json(verifierResult) : GeckAuthoringVerifierResultWriter.Text(verifierResult));
+            return verifierResult.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+        }
+
         if (StringComparer.Ordinal.Equals(parse.Target, XEditAuditReportHandoffEmitter.CommandTarget))
         {
             if (parse.OutputDirectory is not null)
@@ -1692,6 +1709,7 @@ internal static class ForgeCli
         var projectPath = ".";
         var target = "reports";
         string? outputDirectory = null;
+        string? observationsPath = null;
         var dryRun = false;
         var projectWasSet = false;
 
@@ -1763,6 +1781,16 @@ internal static class ForgeCli
                 continue;
             }
 
+            if (StringComparer.Ordinal.Equals(arg, "--observations"))
+            {
+                if (!TryReadValue(args, ref index, out observationsPath))
+                {
+                    return MetadataReportParseResult.Fail(format, "Missing value for --observations.");
+                }
+
+                continue;
+            }
+
             if (StringComparer.Ordinal.Equals(arg, "--dry-run"))
             {
                 dryRun = true;
@@ -1788,7 +1816,12 @@ internal static class ForgeCli
             projectWasSet = true;
         }
 
-        return MetadataReportParseResult.Ok(projectPath, outputDirectory, target, dryRun, format);
+        if (StringComparer.Ordinal.Equals(target, GeckAuthoringVerifierProducer.VerificationTarget) && observationsPath is null)
+            return MetadataReportParseResult.Fail(format, $"Target '{GeckAuthoringVerifierProducer.VerificationTarget}' requires --observations <project-relative-path>.");
+        if (!StringComparer.Ordinal.Equals(target, GeckAuthoringVerifierProducer.VerificationTarget) && observationsPath is not null)
+            return MetadataReportParseResult.Fail(format, "--observations is only available with --target geck-authoring-verification.");
+
+        return MetadataReportParseResult.Ok(projectPath, outputDirectory, target, observationsPath, dryRun, format);
     }
 
     private static DocsParseResult ParseDocsOptions(string[] args)
@@ -1976,11 +2009,13 @@ internal static class ForgeCli
         (StringComparer.Ordinal.Equals(commandPath, "generate") &&
             (StringComparer.Ordinal.Equals(target, XEditAuditScriptScaffoldEmitter.Target) ||
                 StringComparer.Ordinal.Equals(target, XEditAuditReportHandoffEmitter.CommandTarget) ||
-                StringComparer.Ordinal.Equals(target, GeckAuthoringPlanGenerator.Target)));
+                StringComparer.Ordinal.Equals(target, GeckAuthoringPlanGenerator.Target) ||
+                StringComparer.Ordinal.Equals(target, GeckAuthoringVerifierProducer.ObserverTarget) ||
+                StringComparer.Ordinal.Equals(target, GeckAuthoringVerifierProducer.VerificationTarget)));
 
     private static string ImplementedMetadataReportTargets(string commandPath) =>
         StringComparer.Ordinal.Equals(commandPath, "generate")
-            ? $"'reports', '{McmJsonGenerator.Target}', '{JipScriptFileEmitter.Target}', '{XEditAuditScriptScaffoldEmitter.Target}', '{XEditAuditReportHandoffEmitter.CommandTarget}', and '{GeckAuthoringPlanGenerator.Target}'"
+            ? $"'reports', '{McmJsonGenerator.Target}', '{JipScriptFileEmitter.Target}', '{XEditAuditScriptScaffoldEmitter.Target}', '{XEditAuditReportHandoffEmitter.CommandTarget}', '{GeckAuthoringPlanGenerator.Target}', '{GeckAuthoringVerifierProducer.ObserverTarget}', and '{GeckAuthoringVerifierProducer.VerificationTarget}'"
             : $"'reports', '{McmJsonGenerator.Target}', and '{JipScriptFileEmitter.Target}'";
 
     private static PackageParseResult ParsePackageOptions(string[] args)
@@ -3777,15 +3812,16 @@ internal static class ForgeCli
         string ProjectPath,
         string? OutputDirectory,
         string Target,
+        string? ObservationsPath,
         bool DryRun,
         string Format,
         string Message)
     {
-        public static MetadataReportParseResult Ok(string projectPath, string? outputDirectory, string target, bool dryRun, string format) =>
-            new(true, projectPath, outputDirectory, target, dryRun, format, string.Empty);
+        public static MetadataReportParseResult Ok(string projectPath, string? outputDirectory, string target, string? observationsPath, bool dryRun, string format) =>
+            new(true, projectPath, outputDirectory, target, observationsPath, dryRun, format, string.Empty);
 
         public static MetadataReportParseResult Fail(string format, string message) =>
-            new(false, string.Empty, null, "reports", false, format, message);
+            new(false, string.Empty, null, "reports", null, false, format, message);
     }
 
     private sealed record DocsParseResult(

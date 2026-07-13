@@ -1719,6 +1719,16 @@ processes, local tool package publication, or AI requirements are added.
 
 Run the full local suite serially:
 
+Gate 533 adds schema, unit, and CLI coverage for the deterministic read-only
+xEdit observer bundle and Forge report sealer. Coverage includes immutable raw
+observations, exact plan/provider/script/plugin provenance, dry-run no-write,
+source-level record-mutation refusal, incomplete and malformed observations,
+stale bundle evidence, unsupported encounter policy, unexpected records, and
+the existing `WF-SEM-046` parser handoff. All plugin bytes remain synthetic and
+no external tool is launched.
+
+Run the full local suite serially:
+
 ```text
 dotnet test WastelandForge.sln -c Release --no-build --no-restore -m:1
 ```

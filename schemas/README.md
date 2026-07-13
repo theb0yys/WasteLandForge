@@ -33,6 +33,7 @@ Do not overwrite a released schema in place. Schema migrations are explicit tool
 - `jip-scripts/0.1.0/schema.json` - JIP LN text-script source registry schema.
 - `jip-script-emission-manifest/0.1.0/schema.json` - generated JIP LN text-script emission evidence manifest schema.
 - `xedit-audit/0.1.0/schema.json` - xEdit audit source registry schema.
+- `geck-authoring-observations/0.1.0/schema.json` - immutable raw-observation schema for the first-slice read-only xEdit verifier producer.
 - `mcm-extender-output/0.1.0/schema.json` - minimal MCM Extender runtime JSON output schema emitted by Forge.
 - `package-manifest/0.1.0/schema.json` - deterministic generated package manifest schema for the first MCM Extender loose-file package target.
 - `install-preview/0.1.0/schema.json` - deterministic generated install-preview report schema for the first MCM Extender loose-file package target.
