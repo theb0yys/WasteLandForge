@@ -129,6 +129,56 @@ public sealed class GeckIntentBuilderWorkspaceTests
     }
 
     [Fact]
+    public async Task LegacyIntentRequiresExplicitPreviewedMigrationAndUndoRestores010()
+    {
+        using var fixture = Fixture.Create();
+        var initial = fixture.Workspace(new InProcessRunner());
+        var input = fixture.Input(localVerified: true);
+        Assert.True((await initial.ApplyAsync(input, initial.Preview(input).Token!, CancellationToken.None)).Success);
+        var intentPath = Path.Combine(fixture.Root, "src", "registries", "geck-authoring", "main.json");
+        var legacy = JsonNode.Parse(File.ReadAllText(intentPath))!.AsObject();
+        legacy["schemaVersion"] = "0.1.0";
+        legacy["reference"]!.AsObject().Remove("placementEvidence");
+        WriteJson(intentPath, legacy);
+
+        var workspace = new GeckIntentBuilderWorkspace(new InProcessRunner(), new GeckIntentBuilderJournal(Path.Combine(fixture.JournalRoot, "migration")));
+        var loaded = workspace.Load(fixture.Root);
+
+        Assert.True(loaded.Success, loaded.Message);
+        Assert.Equal("migrate", loaded.Operation);
+        Assert.False(loaded.Input!.PlacementEvidenceAttested);
+        Assert.False(workspace.Preview(loaded.Input).Success);
+
+        var migrationInput = loaded.Input with { PlacementEvidencePath = fixture.ExternalPlacementEvidence, PlacementEvidenceAttested = true };
+        var preview = workspace.Preview(migrationInput);
+        Assert.True(preview.Success, preview.Message);
+        Assert.Equal("migrate", preview.Operation);
+        Assert.Equal("0.2.0", JsonNode.Parse(preview.IntentJson!)!["schemaVersion"]!.GetValue<string>());
+        var migrated = await workspace.ApplyAsync(migrationInput, preview.Token!, CancellationToken.None);
+        Assert.True(migrated.Success, migrated.Message);
+        Assert.Equal("0.2.0", JsonNode.Parse(File.ReadAllText(intentPath))!["schemaVersion"]!.GetValue<string>());
+
+        var undoReview = workspace.ReviewUndo(fixture.Root);
+        Assert.True(undoReview.Success, undoReview.Message);
+        Assert.True((await workspace.UndoAsync(fixture.Root, undoReview.Token!, CancellationToken.None)).Success);
+        Assert.Equal("0.1.0", JsonNode.Parse(File.ReadAllText(intentPath))!["schemaVersion"]!.GetValue<string>());
+        Assert.Null(JsonNode.Parse(File.ReadAllText(intentPath))!["reference"]!["placementEvidence"]);
+    }
+
+    [Fact]
+    public void PlacementEvidenceRequiresExplicitOperatorAttestation()
+    {
+        using var fixture = Fixture.Create();
+        var input = fixture.Input(localVerified: true) with { PlacementEvidenceAttested = false };
+
+        var preview = fixture.Workspace(new InProcessRunner()).Preview(input);
+
+        Assert.False(preview.Success);
+        Assert.Contains("operator attestation", preview.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.False(File.Exists(Path.Combine(fixture.Root, "src", "registries", "geck-authoring", "main.json")));
+    }
+
+    [Fact]
     public void PreviewRefusesMo2BinaryEvidenceAndNonDataOutput()
     {
         using var fixture = Fixture.Create();

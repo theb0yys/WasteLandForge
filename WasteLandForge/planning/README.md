@@ -561,6 +561,7 @@ Gate status:
 - `gates/gate-555-synthetic-verifier-subject-plan-and-manual-geck-authoring-handoff.md` - Gate 555 defined the implementation-ready deterministic manual GECK subject-handoff kit that binds an exact resolved plan to Gate 554's licensed three-file package without launching tools, creating plugin bytes, or bypassing independent verification.
 - `gates/gate-556-synthetic-verifier-subject-handoff-implementation.md` - Gate 556 implemented, published, and installed-proved the immutable plan-bound manual subject kit, deterministic five-file output, CLI/desktop workflow, and fail-closed `WF-GEN-019` policy with 975 passing tests and no real editor execution or plugin creation.
 - `gates/gate-557-explicit-placement-transform-evidence-contract.md` - Gate 557 identified the missing transform-evidence binding and defined versioned placement evidence, intent, plan, subject-handoff, migration, cross-check, and no-execution requirements for Gate 558.
+- `gates/gate-558-explicit-placement-evidence-implementation.md` - Gate 558 implemented, published, and installed-proved digest-bound human placement evidence, exact provider/cell/transform cross-checking, explicit legacy migration, operator-ready plan/subject 0.2 contracts, and no-execution safeguards with 1,000 passing tests.
 
 Next gates:
 

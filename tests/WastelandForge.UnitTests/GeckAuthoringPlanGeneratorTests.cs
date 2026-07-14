@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json.Nodes;
 using WastelandForge.Generation;
 
@@ -6,6 +7,83 @@ namespace WastelandForge.UnitTests;
 
 public sealed class GeckAuthoringPlanGeneratorTests
 {
+    [Fact]
+    public void Version020PlanCarriesExactPlacementEvidenceWithoutExecution()
+    {
+        var root = CreateVersionedProject();
+        try
+        {
+            var result = new GeckAuthoringPlanGenerator().Generate(new(root, true, "0.1.0"));
+
+            Assert.False(result.HasErrors, string.Join("\n", result.Diagnostics.Issues.Select(issue => issue.Message)));
+            Assert.Equal("0.2.0", result.Plan!["formatVersion"]!.GetValue<string>());
+            Assert.Equal("b7cf50844ba64a6aa8ec5c435896653d596fac6035bd3d2744df9ecc027ebd89", result.Plan["placementEvidence"]!["sha256"]!.GetValue<string>());
+            Assert.Equal(3, result.Plan["placementEvidence"]!["position"]!["z"]!.GetValue<int>());
+            Assert.False(result.Plan["safety"]!["executesExternalTools"]!.GetValue<bool>());
+            Assert.Equal(2, result.Sources.Count);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Theory]
+    [InlineData("provider", "sha256")]
+    [InlineData("cell", "kind")]
+    [InlineData("cell", "editorId")]
+    [InlineData("cell", "formId")]
+    [InlineData("cell", "signature")]
+    [InlineData("position", "x")]
+    [InlineData("position", "y")]
+    [InlineData("position", "z")]
+    [InlineData("rotation", "x")]
+    [InlineData("rotation", "y")]
+    [InlineData("rotation", "z")]
+    public void PlacementLineageMismatchIsRefused(string section, string field)
+    {
+        var root = CreateVersionedProject();
+        try
+        {
+            RebindPlacement(root, evidence =>
+            {
+                if (section == "provider") evidence["geckProviderSha256"] = new string('0', 64);
+                else if (section == "cell")
+                {
+                    evidence["cell"]![field] = field switch
+                    {
+                        "kind" => "worldspace",
+                        "editorId" => "DifferentSyntheticCell",
+                        "formId" => "00000009",
+                        "signature" => "WRLD",
+                        _ => throw new InvalidOperationException()
+                    };
+                }
+                else evidence[section]![field] = 12345;
+            });
+
+            var result = new GeckAuthoringPlanGenerator().Generate(new(root, true, "0.1.0"));
+
+            Assert.True(result.HasErrors);
+            Assert.Contains(result.Diagnostics.Issues, issue => issue.RuleId.ToString() == "WF-GEN-016");
+            Assert.Null(result.Plan);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void MissingMalformedOversizedAbsoluteEscapingAndDuplicatePlacementEvidenceAreRefused()
+    {
+        VerifyRefusal(root => File.Delete(Path.Combine(root, "evidence", "placement.json")));
+        VerifyRefusal(root => RebindPlacementBytes(root, Encoding.UTF8.GetBytes("{")));
+        VerifyRefusal(root => RebindPlacementBytes(root, new byte[GeckPlacementEvidenceValidator.MaxBytes + 1]));
+        VerifyRefusal(root => SetPlacementPath(root, Path.Combine(root, "evidence", "placement.json")));
+        VerifyRefusal(root => SetPlacementPath(root, "../placement.json"));
+        VerifyRefusal(root =>
+        {
+            var path = Path.Combine(root, "evidence", "placement.json");
+            var text = File.ReadAllText(path).Replace("\"game\": \"falloutnv\",", "\"game\": \"falloutnv\",\n  \"game\": \"falloutnv\",");
+            RebindPlacementBytes(root, Encoding.UTF8.GetBytes(text));
+        });
+    }
+
     [Fact]
     public void DryRunAndWriteAreDeterministicAndNeverExecute()
     {
@@ -90,7 +168,55 @@ public sealed class GeckAuthoringPlanGeneratorTests
         return root;
     }
 
+    private static string CreateVersionedProject()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "WastelandForge.GeckPlan020", Guid.NewGuid().ToString("N"));
+        Copy(FindGeckFixture(), root);
+        return root;
+    }
+
+    private static void VerifyRefusal(Action<string> mutate)
+    {
+        var root = CreateVersionedProject();
+        try
+        {
+            mutate(root);
+            var result = new GeckAuthoringPlanGenerator().Generate(new(root, true, "0.1.0"));
+            Assert.True(result.HasErrors);
+            Assert.Contains(result.Diagnostics.Issues, issue => issue.RuleId.ToString() == "WF-GEN-016" || issue.RuleId.ToString().StartsWith("WF-SCHEMA-", StringComparison.Ordinal));
+            Assert.Null(result.Plan);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    private static void RebindPlacement(string root, Action<JsonObject> mutate)
+    {
+        var path = Path.Combine(root, "evidence", "placement.json");
+        var evidence = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+        mutate(evidence);
+        RebindPlacementBytes(root, Encoding.UTF8.GetBytes(evidence.ToJsonString() + "\n"));
+    }
+
+    private static void RebindPlacementBytes(string root, byte[] bytes)
+    {
+        var path = Path.Combine(root, "evidence", "placement.json");
+        File.WriteAllBytes(path, bytes);
+        var intentPath = Path.Combine(root, "src", "registries", "geck-authoring", "main.json");
+        var intent = JsonNode.Parse(File.ReadAllText(intentPath))!.AsObject();
+        intent["reference"]!["placementEvidence"]!["length"] = bytes.LongLength;
+        intent["reference"]!["placementEvidence"]!["sha256"] = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+        File.WriteAllText(intentPath, intent.ToJsonString() + "\n");
+    }
+
+    private static void SetPlacementPath(string root, string path)
+    {
+        var intentPath = Path.Combine(root, "src", "registries", "geck-authoring", "main.json");
+        var intent = JsonNode.Parse(File.ReadAllText(intentPath))!.AsObject();
+        intent["reference"]!["placementEvidence"]!["path"] = path;
+        File.WriteAllText(intentPath, intent.ToJsonString() + "\n");
+    }
+
     private static string FindFixture() { var directory = new DirectoryInfo(AppContext.BaseDirectory); while (directory is not null) { var candidate = Path.Combine(directory.FullName, "fixtures", "projects", "ExampleMod"); if (Directory.Exists(candidate)) return candidate; directory = directory.Parent; } throw new DirectoryNotFoundException(); }
+    private static string FindGeckFixture() { var directory = new DirectoryInfo(AppContext.BaseDirectory); while (directory is not null) { var candidate = Path.Combine(directory.FullName, "fixtures", "projects", "GeckAuthoringPlanExample"); if (Directory.Exists(candidate)) return candidate; directory = directory.Parent; } throw new DirectoryNotFoundException(); }
     private static void Copy(string source, string target) { Directory.CreateDirectory(target); foreach (var file in Directory.GetFiles(source)) File.Copy(file, Path.Combine(target, Path.GetFileName(file))); foreach (var directory in Directory.GetDirectories(source)) if (!Path.GetFileName(directory).Equals("generated", StringComparison.OrdinalIgnoreCase) && !Path.GetFileName(directory).Equals("dist", StringComparison.OrdinalIgnoreCase)) Copy(directory, Path.Combine(target, Path.GetFileName(directory))); }
 }
-

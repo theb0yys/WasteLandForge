@@ -201,8 +201,18 @@ try {
     Copy-Item -LiteralPath $geckAuthoringObservations -Destination $outsideGeckAuthoringObservations
     $geckIntentData = Join-Path $geckIntentRoot 'local-game\Data'
     $geckIntentEvidence = Join-Path $settingsRoot 'gate541-local-evidence.json'
+    $geckIntentPlacementEvidence = Join-Path $settingsRoot 'gate558-placement-evidence.json'
     New-Item -ItemType Directory -Path $geckIntentData -Force | Out-Null
     [ordered]@{kind='synthetic-local-evidence';compatibilityClaim=$false} | ConvertTo-Json -Compress | Set-Content -LiteralPath $geckIntentEvidence -Encoding utf8NoBOM
+    $geckIntentProviderSha = (Get-FileHash -LiteralPath $geckIntentEvidence -Algorithm SHA256).Hash.ToLowerInvariant()
+    [ordered]@{
+        schemaVersion='0.1.0'; kind='geck-placement-evidence'; game='falloutnv'; captureMethod='human-geck-inspection'; geckProviderSha256=$geckIntentProviderSha
+        cell=[ordered]@{resolutionId='io.installed.cell';kind='cell';editorId='CellSynthetic';formId='00000003';signature='CELL'}
+        position=[ordered]@{x=1;y=2;z=3}; rotation=[ordered]@{x=0;y=0;z=90}
+        operatorStatement='Synthetic installed contract values deliberately reviewed for testing only; no game, editor, or provider compatibility is claimed.'
+        attestation=[ordered]@{suitabilityHumanReviewed=$true;forgeObservedGeck=$false;providerCompatibilityProven=$false;pluginSavedDuringCapture=$false;verificationPerformed=$false}
+        limitations=@('operator-attested-not-machine-observed','placement-suitability-not-independently-verified','provider-compatibility-not-proven','plugin-not-saved-or-verified')
+    } | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $geckIntentPlacementEvidence -Encoding utf8NoBOM
     $xeditPlugin = Join-Path $xeditProjectRoot 'src\plugins\ReviewTarget.esp'
     $xeditRegistry = Join-Path $xeditProjectRoot 'src\registries\plugin-artifacts\main.json'
     New-Item -ItemType Directory -Path (Split-Path $xeditPlugin) -Force | Out-Null
@@ -258,7 +268,7 @@ try {
     Set-Value (Require-Control $window 'ProjectPathTextBox') $geckIntentRoot
     Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'Basic Mod Builder'
     Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'GECK Intent Builder'
-    foreach ($controlId in @('GeckIntentBuilderTabItem','RefreshGeckIntentBuilderButton','GeckIntentOperationStateTextBlock','PreviewGeckIntentButton','ApplyGeckIntentButton','GeckIntentPreviewTextBox','GeckIntentStatusTextBlock')) {
+    foreach ($controlId in @('GeckIntentBuilderTabItem','RefreshGeckIntentBuilderButton','GeckIntentOperationStateTextBlock','GeckIntentPlacementEvidencePathTextBox','BrowseGeckIntentPlacementEvidenceButton','GeckIntentPlacementEvidenceAttestedCheckBox','GeckIntentPlacementEvidenceSummaryTextBlock','PreviewGeckIntentButton','ApplyGeckIntentButton','GeckIntentPreviewTextBox','GeckIntentStatusTextBlock')) {
         Require-Control $window $controlId | Out-Null
     }
     [WfNativeWindow]::MoveWindow($process.MainWindowHandle, 40, 40, 1180, 760, $true) | Out-Null
@@ -278,6 +288,8 @@ try {
         Set-Value (Require-Control $window 'GeckIntentRotationXTextBox') '0'
         Set-Value (Require-Control $window 'GeckIntentRotationYTextBox') '0'
         Set-Value (Require-Control $window 'GeckIntentRotationZTextBox') '90'
+        Set-Value (Require-Control $window 'GeckIntentPlacementEvidencePathTextBox') $geckIntentPlacementEvidence
+        Set-Toggle (Require-Control $window 'GeckIntentPlacementEvidenceAttestedCheckBox') $true
 
         $providerGrid = Require-Control $window 'GeckIntentProvidersDataGrid'
         for ($providerIndex = 0; $providerIndex -lt 3; $providerIndex++) {
@@ -317,7 +329,7 @@ try {
     $applyGeckIntent = Require-Control $window 'ApplyGeckIntentButton'
     Wait-Until { $applyGeckIntent.Current.IsEnabled } "Installed GECK intent preview failed: $($geckIntentStatus.Current.Name)" | Out-Null
     if (Test-Path -LiteralPath $geckIntentSource) { throw 'GECK intent preview wrote canonical source.' }
-    [IO.File]::AppendAllText($geckIntentEvidence, [Environment]::NewLine)
+    [IO.File]::AppendAllText($geckIntentPlacementEvidence, [Environment]::NewLine)
     Invoke-Control $applyGeckIntent
     Wait-Until { $geckIntentStatus.Current.Name -eq 'Inputs changed. Preview again.' } "Installed GECK intent stale approval was not refused: $($geckIntentStatus.Current.Name)" | Out-Null
     if ((Get-FileHash -LiteralPath $geckIntentManifest -Algorithm SHA256).Hash -ne $geckIntentManifestBefore -or (Test-Path -LiteralPath $geckIntentSource)) { throw 'Stale GECK intent approval changed canonical source.' }
@@ -418,6 +430,7 @@ try {
         if (-not (Test-Path -LiteralPath (Join-Path $geckSubjectHandoffRoot $relative) -PathType Leaf)) { throw "Installed subject handoff omitted $relative" }
     }
     $subjectContract = Get-Content -LiteralPath (Join-Path $geckSubjectHandoffRoot 'subject-contract.json') -Raw | ConvertFrom-Json
+    if ($subjectContract.formatVersion -ne '0.2.0' -or -not $subjectContract.placementEvidence.sha256) { throw 'Installed subject contract did not carry placement evidence under version 0.2.0.' }
     foreach ($property in @('executesExternalTools','forgeWritesPluginBytes','writesGameData','verificationPerformed','approvalGranted','promotionPerformed')) {
         if ($subjectContract.safety.$property -ne $false) { throw "Installed subject contract did not preserve safety.$property=false." }
     }

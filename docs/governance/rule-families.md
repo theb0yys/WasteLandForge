@@ -1232,7 +1232,10 @@ AI requirements.
 
 - `WF-GEN-016`: a GECK authoring intent or generated plan is missing,
   schema-invalid, provisional, stale, path-unsafe, digest-mismatched, or cannot
-  be resolved deterministically. No external tool or plugin write is attempted.
+  be resolved deterministically. For intent `0.2.0`, this includes missing,
+  malformed, stale, or mismatched operator-attested placement evidence and any
+  mismatch in the GECK provider, cell identity, or exact six-number transform.
+  No external tool or plugin write is attempted.
 
 ## Gate 522
 
@@ -1273,6 +1276,7 @@ AI requirements.
 - `WF-GEN-019`: a GECK verifier subject handoff is missing, schema-invalid,
   unresolved, stale, unsafe, path-escaping, reparse-linked, digest-mismatched,
   occupied by a source plugin, or inconsistent with the exact current authoring
-  plan. Forge refuses the handoff and does not launch GECK, write or inspect
-  plugin bytes, write game Data, verify the subject, grant approval, or promote
-  evidence.
+  plan or its placement-evidence lineage. Operator-ready handoff requires plan
+  `0.2.0`; legacy plan `0.1.0` remains compatibility-readable only. Forge
+  refuses the handoff and does not launch GECK, write or inspect plugin bytes,
+  write game Data, verify the subject, grant approval, or promote evidence.

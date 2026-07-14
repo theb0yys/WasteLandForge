@@ -1,9 +1,21 @@
+using System.Security.Cryptography;
 using WastelandForge.Schema;
 
 namespace WastelandForge.BackCompatTests;
 
 public sealed class SchemaBackCompatTests
 {
+    [Theory]
+    [InlineData("schemas/geck-authoring-intent/0.1.0/schema.json", "90df5d365d758eda2a71bd23448c2f6f9b36cdaf3c68c3f8733c385d6bef0836")]
+    [InlineData("schemas/geck-authoring-plan/0.1.0/schema.json", "73cba3864d9988c4eb5c20f74010e8e170af0c0b62959c208ec3fac73616c4eb")]
+    [InlineData("schemas/geck-authoring-subject-handoff/0.1.0/schema.json", "c52845252912c25b3410adf6106839bf998a4b10e6702e1ba135fa3702f6c075")]
+    public void Gate558KeepsGeckAuthoring010SchemaBytesImmutable(string relative, string expectedSha256)
+    {
+        var path = Path.Combine(RepositoryRoot(), relative.Replace('/', Path.DirectorySeparatorChar));
+        var actual = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
+        Assert.Equal(expectedSha256, actual);
+    }
+
     [Fact]
     public void ManifestSchemaIdRemainsImmutable()
     {
@@ -226,5 +238,12 @@ public sealed class SchemaBackCompatTests
         Assert.NotNull(resource);
         Assert.Equal(expectedVersion, resource.Version);
         Assert.Equal(expectedKind, resource.Kind);
+    }
+
+    private static string RepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "WastelandForge.sln"))) directory = directory.Parent;
+        return directory?.FullName ?? throw new InvalidOperationException("Repository root not found.");
     }
 }

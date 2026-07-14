@@ -22,6 +22,8 @@ public sealed class GeckAuthoringSubjectHandoffGeneratorTests
         Assert.False(dry.FilesWritten);
         Assert.Equal(5, dry.Outputs.Count);
         Assert.False(Directory.Exists(output));
+        Assert.Equal("0.2.0", dry.Contract!["formatVersion"]!.GetValue<string>());
+        Assert.Equal("b7cf50844ba64a6aa8ec5c435896653d596fac6035bd3d2744df9ecc027ebd89", dry.Contract["placementEvidence"]!["sha256"]!.GetValue<string>());
         Assert.True(dry.Contract!["safety"]!["humanGeckAuthoringRequired"]!.GetValue<bool>());
 
         var written = generator.Generate(new(fixture.Root, false, "0.1.0"));
@@ -32,6 +34,7 @@ public sealed class GeckAuthoringSubjectHandoffGeneratorTests
             Directory.GetFiles(output).Select(Path.GetFileName).OrderBy(value => value, StringComparer.Ordinal));
         Assert.Contains("CourierEmergencyCache", File.ReadAllText(Path.Combine(output, "worklist.md")), StringComparison.Ordinal);
         Assert.Contains("x=1, y=2, z=3", File.ReadAllText(Path.Combine(output, "worklist.md")), StringComparison.Ordinal);
+        Assert.Contains("Placement evidence:", File.ReadAllText(Path.Combine(output, "worklist.md")), StringComparison.Ordinal);
         Assert.Empty(Directory.GetFiles(fixture.Root, "*.esp", SearchOption.AllDirectories));
         AssertChecksums(output);
 
@@ -90,6 +93,25 @@ public sealed class GeckAuthoringSubjectHandoffGeneratorTests
 
         AssertRule(result, "WF-GEN-019");
         Assert.Contains(result.Diagnostics.Issues, issue => issue.Message.Contains("newly authored CONT", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void LegacyPlanRemainsReadableButCannotProduceOperatorReadySubject()
+    {
+        using var fixture = Fixture.Create();
+        var intentPath = Path.Combine(fixture.Root, "src", "registries", "geck-authoring", "main.json");
+        var intent = JsonNode.Parse(File.ReadAllText(intentPath))!.AsObject();
+        intent["schemaVersion"] = "0.1.0";
+        intent["reference"]!.AsObject().Remove("placementEvidence");
+        File.WriteAllText(intentPath, intent.ToJsonString() + "\n", new UTF8Encoding(false));
+        var plan = new GeckAuthoringPlanGenerator().Generate(new(fixture.Root, false, "0.1.0"));
+        Assert.False(plan.HasErrors);
+        Assert.Equal("0.1.0", plan.Plan!["formatVersion"]!.GetValue<string>());
+
+        var result = new GeckAuthoringSubjectHandoffGenerator().Generate(new(fixture.Root, true, "0.1.0"));
+
+        AssertRule(result, "WF-GEN-019");
+        Assert.Contains(result.Diagnostics.Issues, issue => issue.Message.Contains("migrate the legacy intent", StringComparison.Ordinal));
     }
 
     private static void Generate(string root)
