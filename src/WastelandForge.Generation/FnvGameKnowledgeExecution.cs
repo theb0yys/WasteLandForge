@@ -18,19 +18,23 @@ public sealed partial class FnvGameKnowledgeCatalogue
     private const int MaximumInventoryFiles = 100_000;
     private const long MaximumPrivateByproductBytes = 4L * 1024 * 1024 * 1024;
     private const long MaximumLogBytes = 32L * 1024 * 1024;
-    private static readonly Lazy<JsonSchema> ExecutionPlanSchema = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionPlan010));
-    private static readonly Lazy<JsonSchema> ExecutionReceiptSchema = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionReceipt010));
+    private const long MaximumIniBytes = 4L * 1024 * 1024;
+    private static readonly Lazy<JsonSchema> LegacyExecutionPlanSchema = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionPlan010));
+    private static readonly Lazy<JsonSchema> ExecutionPlanSchema = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionPlan020));
+    private static readonly Lazy<JsonSchema> ExecutionReceiptSchema = new(() => LoadSchema(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionReceipt020));
 
-    public FnvGameKnowledgeExecutionPreparation PrepareAutomatedExecution(string masterPath, string providerPath, string userStateRoot)
+    public FnvGameKnowledgeExecutionPreparation PrepareAutomatedExecution(string masterPath, string providerPath, string iniPath, string userStateRoot)
     {
         try
         {
             var master = ValidateMaster(masterPath);
             var provider = ValidateProvider(providerPath);
+            var ini = ValidateGameIni(iniPath);
             var dataDirectory = Path.GetDirectoryName(master) ?? throw Evidence("The configured FalloutNV.esm Data directory is unavailable.");
             var providerDirectory = Path.GetDirectoryName(provider) ?? throw Evidence("The configured xEdit provider directory is unavailable.");
             var userState = ValidateInventoryRoot(userStateRoot, "FalloutNV user state");
             RefuseOverlappingRoots(dataDirectory, providerDirectory, userState);
+            if (ContainedBy(CacheRoot, ini)) throw Evidence("Fallout.ini must be outside the private Game Knowledge cache root.");
 
             EnsurePrivateRoot();
             var runsRoot = Path.Combine(CacheRoot, "runs");
@@ -83,10 +87,10 @@ public sealed partial class FnvGameKnowledgeCatalogue
             };
             AtomicWrite(manifestPath, JsonBytes(manifest));
 
-            var arguments = CreateExecutionArguments(dataDirectory, scriptPath, runDirectory, pluginListPath, cacheDirectory, tempDirectory, backupsDirectory, logPath);
+            var arguments = CreateExecutionArguments(dataDirectory, ini, scriptPath, runDirectory, pluginListPath, cacheDirectory, tempDirectory, backupsDirectory, logPath);
             var plan = new JsonObject
             {
-                ["formatVersion"] = "0.1.0",
+                ["formatVersion"] = "0.2.0",
                 ["kind"] = "wastelandforge.fnv-game-knowledge-execution-plan",
                 ["createdAtUtc"] = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
                 ["runId"] = runId,
@@ -96,7 +100,8 @@ public sealed partial class FnvGameKnowledgeCatalogue
                 {
                     ["script"] = ExecutionFile(scriptPath),
                     ["runManifest"] = ExecutionFile(manifestPath),
-                    ["pluginList"] = ExecutionFile(pluginListPath)
+                    ["pluginList"] = ExecutionFile(pluginListPath),
+                    ["ini"] = ExecutionFile(ini, "Fallout.ini")
                 },
                 ["paths"] = new JsonObject
                 {
@@ -106,6 +111,7 @@ public sealed partial class FnvGameKnowledgeCatalogue
                     ["runManifest"] = manifestPath,
                     ["rawExport"] = rawExportPath,
                     ["pluginList"] = pluginListPath,
+                    ["ini"] = ini,
                     ["cache"] = cacheDirectory,
                     ["temp"] = tempDirectory,
                     ["backups"] = backupsDirectory,
@@ -134,12 +140,13 @@ public sealed partial class FnvGameKnowledgeCatalogue
                 {
                     ["allowedRoots"] = new JsonArray(runDirectory),
                     ["protectedRoots"] = new JsonArray(dataDirectory, providerDirectory, userState),
+                    ["protectedFiles"] = new JsonArray(ini),
                     ["backupsMustRemainEmpty"] = true
                 },
                 ["safety"] = ExecutionSafety()
             };
             var planBytes = JsonBytes(plan);
-            ParseAndValidate(planBytes, ExecutionPlanSchema.Value, "fnv-game-knowledge-execution-plan/0.1.0");
+            ParseAndValidate(planBytes, ExecutionPlanSchema.Value, "fnv-game-knowledge-execution-plan/0.2.0");
             AtomicWrite(planPath, planBytes);
             var token = Sha(planBytes);
             var details = string.Join(Environment.NewLine,
@@ -154,8 +161,10 @@ public sealed partial class FnvGameKnowledgeCatalogue
                 $"Plan SHA-256 / approval token: {token}",
                 $"Private output: {rawExportPath}",
                 $"Private log: {logPath}",
+                $"Game INI: {ini}",
+                $"Game INI SHA-256: {RequiredText(plan["inputs"]?["ini"], "sha256")}",
                 string.Empty,
-                "Only the declared private run may change. Game Data, provider installation, and user load-order/settings evidence must remain byte-identical.",
+                "Only the declared private run may change. Game Data, provider installation, Fallout.ini, and user load-order/settings evidence must remain byte-identical.",
                 "Process creation and exit code 0 do not prove export success; Forge audits side effects and validates the 0.2.0 export before indexing.");
             return new(true, FnvGameKnowledgeExecutionState.ApprovalRequired, "Private single-master execution plan prepared. Review and approve the exact plan before running.", null, runDirectory, planPath, token, provider, providerDirectory, arguments, details);
         }
@@ -194,23 +203,27 @@ public sealed partial class FnvGameKnowledgeCatalogue
             var expectedData = ReadInventory(plan["preflight"]?["data"]);
             var expectedProvider = ReadInventory(plan["preflight"]?["provider"]);
             var expectedUserState = ReadInventory(plan["preflight"]?["userState"]);
+            var iniPath = RequiredPath(paths, "ini");
+            var expectedIni = plan["inputs"]?["ini"];
             var currentData = SnapshotTree(expectedData.Root);
             var currentProvider = SnapshotTree(expectedProvider.Root);
             var currentUserState = SnapshotTree(expectedUserState.Root);
             var dataUnchanged = InventoryEquals(expectedData, currentData);
             var providerUnchanged = InventoryEquals(expectedProvider, currentProvider);
             var userStateUnchanged = InventoryEquals(expectedUserState, currentUserState);
+            var iniUnchanged = ExecutionFileMatches(expectedIni, iniPath);
             var changedPaths = new List<string>();
             changedPaths.AddRange(InventoryChanges(expectedData, currentData));
             changedPaths.AddRange(InventoryChanges(expectedProvider, currentProvider));
             changedPaths.AddRange(InventoryChanges(expectedUserState, currentUserState));
+            if (!iniUnchanged) changedPaths.Add(iniPath);
 
             var privateAudit = AuditPrivateRun(plan, approvalToken);
             changedPaths.AddRange(privateAudit.ChangedPaths);
             changedPaths = changedPaths.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(path => path, StringComparer.OrdinalIgnoreCase).ToList();
 
             var processOk = process.ProcessStarted && !process.WaitCancelled && process.ExitCode == 0 && string.IsNullOrWhiteSpace(process.Failure);
-            var auditOk = dataUnchanged && providerUnchanged && userStateUnchanged && privateAudit.PrivateWritesAllowed && privateAudit.BackupsEmpty && privateAudit.RawExportPresent && privateAudit.LogPresent;
+            var auditOk = dataUnchanged && providerUnchanged && userStateUnchanged && iniUnchanged && privateAudit.PrivateWritesAllowed && privateAudit.BackupsEmpty && privateAudit.RawExportPresent && privateAudit.LogPresent;
             FnvGameKnowledgeImportResult? imported = null;
             if (processOk && auditOk)
                 imported = Import(run, cancellationToken);
@@ -218,11 +231,11 @@ public sealed partial class FnvGameKnowledgeCatalogue
             var finalState = success ? FnvGameKnowledgeExecutionState.OutputReady : FnvGameKnowledgeExecutionState.FailedClosed;
             var message = success
                 ? $"Private xEdit export audited and indexed {imported!.RecordCount:N0} record(s)."
-                : FailureMessage(process, dataUnchanged, providerUnchanged, userStateUnchanged, privateAudit, imported);
+                : FailureMessage(process, dataUnchanged, providerUnchanged, userStateUnchanged, iniUnchanged, privateAudit, imported);
 
             var receipt = new JsonObject
             {
-                ["formatVersion"] = "0.1.0",
+                ["formatVersion"] = "0.2.0",
                 ["kind"] = "wastelandforge.fnv-game-knowledge-execution-receipt",
                 ["createdAtUtc"] = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
                 ["planSha256"] = approvalToken,
@@ -242,6 +255,7 @@ public sealed partial class FnvGameKnowledgeCatalogue
                     ["dataUnchanged"] = dataUnchanged,
                     ["providerUnchanged"] = providerUnchanged,
                     ["userStateUnchanged"] = userStateUnchanged,
+                    ["iniUnchanged"] = iniUnchanged,
                     ["privateWritesAllowed"] = privateAudit.PrivateWritesAllowed,
                     ["backupsEmpty"] = privateAudit.BackupsEmpty,
                     ["rawExportPresent"] = privateAudit.RawExportPresent,
@@ -253,6 +267,7 @@ public sealed partial class FnvGameKnowledgeCatalogue
                     ["provider"] = InventoryAuditNode(expectedProvider, currentProvider),
                     ["userState"] = InventoryAuditNode(expectedUserState, currentUserState)
                 },
+                ["ini"] = ExecutionFileAuditNode(expectedIni, iniPath, iniUnchanged),
                 ["rawExport"] = DigestNodeOrNull(RequiredPath(paths, "rawExport")),
                 ["log"] = DigestNodeOrNull(RequiredPath(paths, "log")),
                 ["finalState"] = finalState.ToString(),
@@ -261,7 +276,7 @@ public sealed partial class FnvGameKnowledgeCatalogue
                 ["changedPaths"] = new JsonArray(changedPaths.Select(path => (JsonNode?)JsonValue.Create(path)).ToArray())
             };
             var receiptBytes = JsonBytes(receipt);
-            ParseAndValidate(receiptBytes, ExecutionReceiptSchema.Value, "fnv-game-knowledge-execution-receipt/0.1.0");
+            ParseAndValidate(receiptBytes, ExecutionReceiptSchema.Value, "fnv-game-knowledge-execution-receipt/0.2.0");
             AtomicCreate(receiptPath, receiptBytes);
             return new(success, finalState, message, success ? null : RuleId, process.ProcessId, process.ExitCode, receiptPath, imported?.IndexPath, imported?.RecordCount ?? 0, changedPaths);
         }
@@ -283,7 +298,15 @@ public sealed partial class FnvGameKnowledgeCatalogue
         var planPath = ResolveContainedRegularFile(run, Path.Combine(run, ExecutionPlanFileName), "execution plan");
         var bytes = ReadBounded(planPath, 64L * 1024 * 1024, "execution plan");
         if (!StringComparer.Ordinal.Equals(Sha(bytes), approvalToken)) throw Evidence("The private xEdit execution approval is stale or digest-mismatched.");
-        var plan = ParseAndValidate(bytes, ExecutionPlanSchema.Value, "fnv-game-knowledge-execution-plan/0.1.0");
+        var unvalidated = ParseObject(bytes, "private xEdit execution plan");
+        var formatVersion = RequiredText(unvalidated, "formatVersion");
+        if (StringComparer.Ordinal.Equals(formatVersion, "0.1.0"))
+        {
+            ParseAndValidate(bytes, LegacyExecutionPlanSchema.Value, "fnv-game-knowledge-execution-plan/0.1.0");
+            throw Evidence("Legacy private xEdit execution plan 0.1.0 omits the required Fallout.ini binding and cannot be executed. Prepare and approve a new preview.");
+        }
+        if (!StringComparer.Ordinal.Equals(formatVersion, "0.2.0")) throw Evidence("The private xEdit execution plan version is unsupported.");
+        var plan = ParseAndValidate(bytes, ExecutionPlanSchema.Value, "fnv-game-knowledge-execution-plan/0.2.0");
         if (!StringComparer.OrdinalIgnoreCase.Equals(RequiredPath(plan["paths"]!.AsObject(), "runDirectory"), run)) throw Evidence("The execution plan run directory is mismatched.");
         return plan;
     }
@@ -294,8 +317,10 @@ public sealed partial class FnvGameKnowledgeCatalogue
         var run = RequiredPath(paths, "runDirectory");
         var provider = ValidateProvider(RequiredText(plan["provider"], "path"));
         var master = ValidateMaster(RequiredText(plan["master"], "path"));
+        var ini = ValidateGameIni(RequiredPath(paths, "ini"));
         VerifyExecutionFile(plan["provider"], provider, "xEdit provider");
         VerifyExecutionFile(plan["master"], master, "FalloutNV.esm");
+        VerifyExecutionFile(plan["inputs"]?["ini"], ini, "Fallout.ini");
         var script = ResolveContainedRegularFile(run, RequiredPath(paths, "script"), "automated export script");
         var manifest = ResolveContainedRegularFile(run, RequiredPath(paths, "runManifest"), "automated run manifest");
         var pluginList = ResolveContainedRegularFile(run, RequiredPath(paths, "pluginList"), "private plugins list");
@@ -307,14 +332,16 @@ public sealed partial class FnvGameKnowledgeCatalogue
         if (!File.ReadAllBytes(pluginList).AsSpan().SequenceEqual(Utf8NoBom.GetBytes("FalloutNV.esm\r\n"))) throw Evidence("The private plugins list must contain only FalloutNV.esm.");
         var manifestNode = ParseObject(ReadBounded(manifest, 4 * 1024 * 1024, "automated run manifest"), "automated run manifest");
         ValidateRunManifest(manifestNode, run);
-        var expectedArguments = CreateExecutionArguments(RequiredPath(paths, "dataDirectory"), script, run, pluginList, RequiredPath(paths, "cache"), RequiredPath(paths, "temp"), RequiredPath(paths, "backups"), RequiredPath(paths, "log"));
+        var expectedArguments = CreateExecutionArguments(RequiredPath(paths, "dataDirectory"), ini, script, run, pluginList, RequiredPath(paths, "cache"), RequiredPath(paths, "temp"), RequiredPath(paths, "backups"), RequiredPath(paths, "log"));
         var arguments = plan["arguments"]!.AsArray().Select(value => value!.GetValue<string>()).ToArray();
         if (!arguments.SequenceEqual(expectedArguments, StringComparer.Ordinal)) throw Evidence("The private xEdit argument allowlist or order is mismatched.");
         var writePolicy = plan["writePolicy"]!.AsObject();
         var allowedRoots = writePolicy["allowedRoots"]!.AsArray().Select(value => Path.GetFullPath(value!.GetValue<string>())).ToArray();
         var protectedRoots = writePolicy["protectedRoots"]!.AsArray().Select(value => Path.GetFullPath(value!.GetValue<string>())).ToArray();
+        var protectedFiles = writePolicy["protectedFiles"]!.AsArray().Select(value => Path.GetFullPath(value!.GetValue<string>())).ToArray();
         if (!allowedRoots.SequenceEqual([run], StringComparer.OrdinalIgnoreCase) ||
             !protectedRoots.SequenceEqual([RequiredPath(paths, "dataDirectory"), Path.GetDirectoryName(provider)!, RequiredPath(paths, "userStateRoot")], StringComparer.OrdinalIgnoreCase) ||
+            !protectedFiles.SequenceEqual([ini], StringComparer.OrdinalIgnoreCase) ||
             writePolicy["backupsMustRemainEmpty"]?.GetValue<bool>() != true)
             throw Evidence("The private xEdit write policy is mismatched.");
         if (!StringComparer.OrdinalIgnoreCase.Equals(RequiredText(plan["process"], "workingDirectory"), Path.GetDirectoryName(provider))) throw Evidence("The private xEdit working directory is mismatched.");
@@ -330,6 +357,8 @@ public sealed partial class FnvGameKnowledgeCatalogue
 
     private void ValidatePreflight(JsonObject plan)
     {
+        var paths = plan["paths"]!.AsObject();
+        VerifyExecutionFile(plan["inputs"]?["ini"], RequiredPath(paths, "ini"), "Fallout.ini");
         foreach (var name in new[] { "data", "provider", "userState" })
         {
             var expected = ReadInventory(plan["preflight"]?[name]);
@@ -388,7 +417,7 @@ public sealed partial class FnvGameKnowledgeCatalogue
         return new(allowed, backupsEmpty, rawPresent, logPresent, changed);
     }
 
-    private static string FailureMessage(FnvGameKnowledgeProcessEvidence process, bool dataUnchanged, bool providerUnchanged, bool userStateUnchanged, PrivateRunAudit audit, FnvGameKnowledgeImportResult? import)
+    private static string FailureMessage(FnvGameKnowledgeProcessEvidence process, bool dataUnchanged, bool providerUnchanged, bool userStateUnchanged, bool iniUnchanged, PrivateRunAudit audit, FnvGameKnowledgeImportResult? import)
     {
         var failures = new List<string>();
         if (!process.ProcessStarted) failures.Add(process.Failure ?? "process was not created");
@@ -398,6 +427,7 @@ public sealed partial class FnvGameKnowledgeCatalogue
         if (!dataUnchanged) failures.Add("game Data changed");
         if (!providerUnchanged) failures.Add("provider installation changed");
         if (!userStateUnchanged) failures.Add("user load-order/settings state changed");
+        if (!iniUnchanged) failures.Add("Fallout.ini changed");
         if (!audit.PrivateWritesAllowed) failures.Add("private output contained unexpected or tampered files");
         if (!audit.BackupsEmpty) failures.Add("private backups directory is not empty");
         if (!audit.RawExportPresent) failures.Add("raw export is missing or invalid");
@@ -406,7 +436,7 @@ public sealed partial class FnvGameKnowledgeCatalogue
         return "Private xEdit execution failed closed: " + string.Join("; ", failures.Distinct(StringComparer.OrdinalIgnoreCase)) + ".";
     }
 
-    private static string[] CreateExecutionArguments(string dataDirectory, string scriptPath, string runDirectory, string pluginListPath, string cacheDirectory, string tempDirectory, string backupsDirectory, string logPath) =>
+    private static string[] CreateExecutionArguments(string dataDirectory, string iniPath, string scriptPath, string runDirectory, string pluginListPath, string cacheDirectory, string tempDirectory, string backupsDirectory, string logPath) =>
     [
         "-FNV",
         "-view",
@@ -414,6 +444,7 @@ public sealed partial class FnvGameKnowledgeCatalogue
         "-script:" + Path.GetFullPath(scriptPath),
         "-autoexit",
         "-D:" + WithTrailingSeparator(dataDirectory),
+        "-I:" + Path.GetFullPath(iniPath),
         "-P:" + Path.GetFullPath(pluginListPath),
         "-S:" + WithTrailingSeparator(runDirectory),
         "-C:" + WithTrailingSeparator(cacheDirectory),
@@ -442,6 +473,19 @@ public sealed partial class FnvGameKnowledgeCatalogue
             ["lastWriteUtc"] = info.LastWriteTimeUtc.ToString("O", CultureInfo.InvariantCulture),
             ["sha256"] = digest.Sha256
         };
+    }
+
+    private static string ValidateGameIni(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !Path.IsPathFullyQualified(path)) throw Evidence("Configure an absolute Fallout.ini path.");
+        var full = Path.GetFullPath(path);
+        if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetFileName(full), "Fallout.ini")) throw Evidence("The configured game INI must be named Fallout.ini.");
+        RefuseReparseComponents(full);
+        if (!File.Exists(full)) throw Evidence("The configured Fallout.ini file does not exist.");
+        var info = new FileInfo(full);
+        if (info.Length <= 0 || info.Length > MaximumIniBytes) throw Evidence("The configured Fallout.ini file is empty or exceeds the 4 MiB safety limit.");
+        _ = ReadBounded(full, MaximumIniBytes, "Fallout.ini");
+        return full;
     }
 
     private static JsonObject ExecutionSafety() => new()
@@ -479,6 +523,46 @@ public sealed partial class FnvGameKnowledgeCatalogue
         catch (Exception exception) when (IsExpected(exception))
         {
             return false;
+        }
+    }
+
+    private static JsonObject ExecutionFileAuditNode(JsonNode? expected, string path, bool unchanged)
+    {
+        var before = expected?.AsObject() ?? throw Evidence("The Fallout.ini execution evidence is missing.");
+        return new JsonObject
+        {
+            ["path"] = Path.GetFullPath(path),
+            ["before"] = new JsonObject
+            {
+                ["exists"] = true,
+                ["length"] = before["length"]?.GetValue<long>(),
+                ["lastWriteUtc"] = RequiredText(before, "lastWriteUtc"),
+                ["sha256"] = RequiredText(before, "sha256")
+            },
+            ["after"] = CurrentExecutionFileState(path),
+            ["unchanged"] = unchanged
+        };
+    }
+
+    private static JsonObject CurrentExecutionFileState(string path)
+    {
+        if (!File.Exists(path)) return new JsonObject { ["exists"] = false, ["length"] = null, ["lastWriteUtc"] = null, ["sha256"] = null };
+        try
+        {
+            RefuseReparseComponents(path);
+            var info = new FileInfo(path);
+            var digest = Digest(path);
+            return new JsonObject
+            {
+                ["exists"] = true,
+                ["length"] = digest.Length,
+                ["lastWriteUtc"] = info.LastWriteTimeUtc.ToString("O", CultureInfo.InvariantCulture),
+                ["sha256"] = digest.Sha256
+            };
+        }
+        catch (Exception exception) when (IsExpected(exception))
+        {
+            return new JsonObject { ["exists"] = true, ["length"] = null, ["lastWriteUtc"] = null, ["sha256"] = null };
         }
     }
 

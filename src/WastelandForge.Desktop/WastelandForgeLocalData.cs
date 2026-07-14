@@ -60,4 +60,21 @@ internal static class WastelandForgeLocalData
 
         return root;
     }
+
+    internal static string SuggestFnvIniPath(string? documentsRoot = null)
+    {
+        try
+        {
+            var root = documentsRoot ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            if (string.IsNullOrWhiteSpace(root)) return string.Empty;
+            var candidate = Path.GetFullPath(Path.Combine(root, "My Games", "FalloutNV", "Fallout.ini"));
+            if (!File.Exists(candidate)) return string.Empty;
+            var attributes = File.GetAttributes(candidate);
+            return (attributes & (FileAttributes.Directory | FileAttributes.ReparsePoint)) == 0 ? candidate : string.Empty;
+        }
+        catch (Exception exception) when (exception is ArgumentException or IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            return string.Empty;
+        }
+    }
 }

@@ -425,6 +425,18 @@ internal static class ForgeCli
             return authoringPlan.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
         }
 
+        if (StringComparer.Ordinal.Equals(parse.Target, GeckAuthoringSubjectHandoffGenerator.Target))
+        {
+            if (parse.OutputDirectory is not null)
+            {
+                WriteUsage(parse.Format, commandPath, $"Target '{GeckAuthoringSubjectHandoffGenerator.Target}' writes under {GeckAuthoringSubjectHandoffGenerator.OutputRoot}; --output is not supported.");
+                return (int)CliExitCode.Usage;
+            }
+            var subjectHandoff = new GeckAuthoringSubjectHandoffGenerator().Generate(new(parse.ProjectPath, parse.DryRun, CliConstants.Version));
+            Console.Write(CliConstants.IsMachineFormat(parse.Format) ? GeckAuthoringSubjectHandoffResultWriter.Json(subjectHandoff) : GeckAuthoringSubjectHandoffResultWriter.Text(subjectHandoff));
+            return subjectHandoff.HasErrors ? (int)CliExitCode.BlockingDiagnostics : (int)CliExitCode.Success;
+        }
+
         if (StringComparer.Ordinal.Equals(parse.Target, GeckAuthoringVerifierProducer.ObserverTarget) ||
             StringComparer.Ordinal.Equals(parse.Target, GeckAuthoringVerifierProducer.VerificationTarget))
         {
@@ -2010,12 +2022,13 @@ internal static class ForgeCli
             (StringComparer.Ordinal.Equals(target, XEditAuditScriptScaffoldEmitter.Target) ||
                 StringComparer.Ordinal.Equals(target, XEditAuditReportHandoffEmitter.CommandTarget) ||
                 StringComparer.Ordinal.Equals(target, GeckAuthoringPlanGenerator.Target) ||
+                StringComparer.Ordinal.Equals(target, GeckAuthoringSubjectHandoffGenerator.Target) ||
                 StringComparer.Ordinal.Equals(target, GeckAuthoringVerifierProducer.ObserverTarget) ||
                 StringComparer.Ordinal.Equals(target, GeckAuthoringVerifierProducer.VerificationTarget)));
 
     private static string ImplementedMetadataReportTargets(string commandPath) =>
         StringComparer.Ordinal.Equals(commandPath, "generate")
-            ? $"'reports', '{McmJsonGenerator.Target}', '{JipScriptFileEmitter.Target}', '{XEditAuditScriptScaffoldEmitter.Target}', '{XEditAuditReportHandoffEmitter.CommandTarget}', '{GeckAuthoringPlanGenerator.Target}', '{GeckAuthoringVerifierProducer.ObserverTarget}', and '{GeckAuthoringVerifierProducer.VerificationTarget}'"
+            ? $"'reports', '{McmJsonGenerator.Target}', '{JipScriptFileEmitter.Target}', '{XEditAuditScriptScaffoldEmitter.Target}', '{XEditAuditReportHandoffEmitter.CommandTarget}', '{GeckAuthoringPlanGenerator.Target}', '{GeckAuthoringSubjectHandoffGenerator.Target}', '{GeckAuthoringVerifierProducer.ObserverTarget}', and '{GeckAuthoringVerifierProducer.VerificationTarget}'"
             : $"'reports', '{McmJsonGenerator.Target}', and '{JipScriptFileEmitter.Target}'";
 
     private static PackageParseResult ParsePackageOptions(string[] args)

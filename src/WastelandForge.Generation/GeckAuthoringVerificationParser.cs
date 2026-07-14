@@ -26,7 +26,8 @@ public sealed class GeckAuthoringVerificationParser
     public const string RuleId = "WF-SEM-046";
     public const string DefaultPlanPath = "generated/geck-authoring-plan/plan.json";
     public const string DefaultReportPath = "generated/geck-authoring-plan/verification/report.json";
-    private static readonly Lazy<JsonSchema> PlanSchema = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringPlan010));
+    private static readonly Lazy<JsonSchema> PlanSchema010 = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringPlan010));
+    private static readonly Lazy<JsonSchema> PlanSchema020 = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringPlan020));
     private static readonly Lazy<JsonSchema> ReportSchema = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringVerification010));
 
     public GeckAuthoringVerificationResult Parse(
@@ -59,7 +60,13 @@ public sealed class GeckAuthoringVerificationParser
         try
         {
             var fullPlanPath = ResolveContainedRegularFile(root, planPath, "authoring plan");
-            var plan = ParseAndValidate(fullPlanPath, PlanSchema.Value, "geck-authoring-plan/0.1.0");
+            var planVersion = JsonNode.Parse(File.ReadAllBytes(fullPlanPath))?["formatVersion"]?.GetValue<string>();
+            var plan = planVersion switch
+            {
+                "0.1.0" => ParseAndValidate(fullPlanPath, PlanSchema010.Value, "geck-authoring-plan/0.1.0"),
+                "0.2.0" => ParseAndValidate(fullPlanPath, PlanSchema020.Value, "geck-authoring-plan/0.2.0"),
+                _ => throw new InvalidOperationException("Unsupported GECK authoring plan version: " + (planVersion ?? "missing"))
+            };
             var report = preparedReport is null
                 ? ParseAndValidate(ResolveContainedRegularFile(root, reportPath, "verification report"), ReportSchema.Value, "geck-authoring-verification/0.1.0")
                 : Validate(preparedReport, ReportSchema.Value, "geck-authoring-verification/0.1.0");

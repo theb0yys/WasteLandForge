@@ -47,7 +47,8 @@ public sealed class GeckAuthoringVerifierProducer
 
     private static readonly UTF8Encoding Utf8NoBom = new(false);
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
-    private static readonly Lazy<JsonSchema> PlanSchema = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringPlan010));
+    private static readonly Lazy<JsonSchema> PlanSchema010 = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringPlan010));
+    private static readonly Lazy<JsonSchema> PlanSchema020 = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringPlan020));
     private static readonly Lazy<JsonSchema> ObservationsSchema = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringObservations010));
 
     public GeckAuthoringVerifierResult GenerateObserver(GeckAuthoringVerifierOptions options)
@@ -142,7 +143,13 @@ public sealed class GeckAuthoringVerifierProducer
             return null;
         }
 
-        var plan = ParseAndValidate(planBytes, PlanSchema.Value, "geck-authoring-plan/0.1.0");
+        var planVersion = JsonNode.Parse(planBytes)?["formatVersion"]?.GetValue<string>();
+        var plan = planVersion switch
+        {
+            "0.1.0" => ParseAndValidate(planBytes, PlanSchema010.Value, "geck-authoring-plan/0.1.0"),
+            "0.2.0" => ParseAndValidate(planBytes, PlanSchema020.Value, "geck-authoring-plan/0.2.0"),
+            _ => throw new InvalidOperationException("Unsupported GECK authoring plan version: " + (planVersion ?? "missing"))
+        };
         var provider = plan["environment"]!["providers"]!.AsArray().OfType<JsonObject>()
             .SingleOrDefault(item => item["role"]?.GetValue<string>() == "xedit-verifier");
         if (provider is null)

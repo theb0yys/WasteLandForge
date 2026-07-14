@@ -20,6 +20,27 @@ public sealed class GameKnowledgeWorkspaceTests
     }
 
     [Fact]
+    public void FalloutIniSuggestionRequiresTheExactExistingRegularFile()
+    {
+        var documents = Path.Combine(Path.GetTempPath(), "WastelandForge.IniSuggestion", Guid.NewGuid().ToString("N"));
+        try
+        {
+            Assert.Equal(string.Empty, WastelandForgeLocalData.SuggestFnvIniPath(documents));
+            var ini = Path.Combine(documents, "My Games", "FalloutNV", "Fallout.ini");
+            Directory.CreateDirectory(Path.GetDirectoryName(ini)!);
+            File.WriteAllText(ini, "[General]\r\n", new UTF8Encoding(false));
+            Assert.Equal(ini, WastelandForgeLocalData.SuggestFnvIniPath(documents));
+            File.Delete(ini);
+            Directory.CreateDirectory(ini);
+            Assert.Equal(string.Empty, WastelandForgeLocalData.SuggestFnvIniPath(documents));
+        }
+        finally
+        {
+            if (Directory.Exists(documents)) Directory.Delete(documents, true);
+        }
+    }
+
+    [Fact]
     public void XamlDeclaresGameKnowledgeRouteAndStableAutomationSurface()
     {
         var xaml = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "WastelandForge.Desktop", "MainWindow.xaml"));
@@ -39,6 +60,8 @@ public sealed class GameKnowledgeWorkspaceTests
             Assert.Contains($"AutomationProperties.AutomationId=\"{identity}\"", xaml, StringComparison.Ordinal);
         }
         Assert.Contains("Content=\"Game Knowledge\" Tag=\"game-knowledge\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"FnvIniPathTextBox\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("AutomationProperties.AutomationId=\"FnvIniPathTextBox\"", xaml, StringComparison.Ordinal);
         Assert.Contains("EnableRowVirtualization=\"True\"", xaml, StringComparison.Ordinal);
     }
 

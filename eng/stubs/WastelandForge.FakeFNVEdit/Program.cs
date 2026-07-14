@@ -31,8 +31,11 @@ internal static partial class Program
             if (Directory.EnumerateFileSystemEntries(paths.Backups).Any())
                 throw new InvalidOperationException("The private backups directory was not empty before execution.");
 
+            if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetFileName(paths.Ini), "Fallout.ini"))
+                throw new InvalidOperationException("The approved game INI was not Fallout.ini.");
+            _ = File.ReadAllBytes(paths.Ini);
             WriteText(rawOutput, CreateSyntheticExport());
-            WriteText(paths.Log, "Synthetic Gate 547 FNVEdit provider completed the approved read-only export.\n");
+            WriteText(paths.Log, "Synthetic Gate 550 FNVEdit provider completed the approved INI-bound read-only export.\n");
             WriteText(Path.ChangeExtension(paths.PluginList, ".fnvviewsettings"), "synthetic private view settings\n");
             WriteText(Path.Combine(paths.Cache, "synthetic-cache.txt"), "private cache byproduct\n");
             WriteText(Path.Combine(paths.Temp, "synthetic-temp.txt"), "private temp byproduct\n");
@@ -47,30 +50,32 @@ internal static partial class Program
 
     private static ApprovedPaths ValidateArguments(string[] args)
     {
-        if (args.Length != 12) throw new InvalidOperationException($"Expected exactly 12 approved arguments; received {args.Length}.");
+        if (args.Length != 13) throw new InvalidOperationException($"Expected exactly 13 approved arguments; received {args.Length}.");
         if (!StringComparer.Ordinal.Equals(args[0], "-FNV") ||
             !StringComparer.Ordinal.Equals(args[1], "-view") ||
             !StringComparer.Ordinal.Equals(args[2], "-autoload") ||
             !args[3].StartsWith("-script:", StringComparison.Ordinal) ||
             !StringComparer.Ordinal.Equals(args[4], "-autoexit") ||
             !args[5].StartsWith("-D:", StringComparison.Ordinal) ||
-            !args[6].StartsWith("-P:", StringComparison.Ordinal) ||
-            !args[7].StartsWith("-S:", StringComparison.Ordinal) ||
-            !args[8].StartsWith("-C:", StringComparison.Ordinal) ||
-            !args[9].StartsWith("-T:", StringComparison.Ordinal) ||
-            !args[10].StartsWith("-B:", StringComparison.Ordinal) ||
-            !args[11].StartsWith("-R:", StringComparison.Ordinal))
+            !args[6].StartsWith("-I:", StringComparison.Ordinal) ||
+            !args[7].StartsWith("-P:", StringComparison.Ordinal) ||
+            !args[8].StartsWith("-S:", StringComparison.Ordinal) ||
+            !args[9].StartsWith("-C:", StringComparison.Ordinal) ||
+            !args[10].StartsWith("-T:", StringComparison.Ordinal) ||
+            !args[11].StartsWith("-B:", StringComparison.Ordinal) ||
+            !args[12].StartsWith("-R:", StringComparison.Ordinal))
             throw new InvalidOperationException("The approved argument allowlist or order was not supplied.");
 
         return new(
             FilePath(args[3][8..]),
             DirectoryPath(args[5][3..]),
             FilePath(args[6][3..]),
-            DirectoryPath(args[7][3..]),
+            FilePath(args[7][3..]),
             DirectoryPath(args[8][3..]),
             DirectoryPath(args[9][3..]),
             DirectoryPath(args[10][3..]),
-            Path.GetFullPath(args[11][3..]));
+            DirectoryPath(args[11][3..]),
+            Path.GetFullPath(args[12][3..]));
     }
 
     private static string FilePath(string path)
@@ -99,7 +104,7 @@ internal static partial class Program
         {
             formatVersion = "0.2.0",
             kind = "wastelandforge.fnv-game-knowledge-export",
-            producer = new { name = "xEdit", gameMode = "FNV", version = "gate-547-synthetic-provider", scriptId = "wastelandforge.fnv-game-knowledge-export/0.2.0" },
+            producer = new { name = "xEdit", gameMode = "FNV", version = "gate-550-synthetic-provider", scriptId = "wastelandforge.fnv-game-knowledge-export/0.2.0" },
             source = new { fileName = "FalloutNV.esm", synthetic = true, usesRealPluginBytes = false },
             completion = new { complete = true, recordsVisited = 1, recordsEmitted = 1, omissions = Array.Empty<string>(), refusals = Array.Empty<string>() },
             records = new[]
@@ -116,5 +121,5 @@ internal static partial class Program
     [GeneratedRegex("RawOutputFile\\s*=\\s*'((?:''|[^'])+)'\\s*;", RegexOptions.CultureInvariant)]
     private static partial Regex RawOutputRegex();
 
-    private sealed record ApprovedPaths(string Script, string Data, string PluginList, string Run, string Cache, string Temp, string Backups, string Log);
+    private sealed record ApprovedPaths(string Script, string Data, string Ini, string PluginList, string Run, string Cache, string Temp, string Backups, string Log);
 }

@@ -2,7 +2,8 @@
 param(
     [string] $InstallerPath = 'artifacts/installer/inno/local/WastelandForge-Setup-local.exe',
     [string] $SyntheticBsArchPath = 'artifacts/synthetic-bsarch/bsarch.exe',
-    [int] $TimeoutSeconds = 90
+    [int] $TimeoutSeconds = 90,
+    [switch] $Gate556Only
 )
 
 $ErrorActionPreference = 'Stop'
@@ -191,9 +192,11 @@ try {
     $geckAuthoringPlugin = Join-Path $geckAuthoringRoot 'staging\Data\CouriersEmergencyCache.esp'
     $geckAuthoringObservations = Join-Path $geckAuthoringRoot 'evidence\valid-first-slice.json'
     $outsideGeckAuthoringObservations = Join-Path $settingsRoot 'outside-geck-authoring-observations.json'
+    if (-not $Gate556Only) {
     New-Item -ItemType Directory -Path (Split-Path $geckAuthoringPlugin) -Force | Out-Null
     [IO.File]::WriteAllBytes($geckAuthoringPlugin, [byte[]](0x57,0x46,0x2D,0x53,0x59,0x4E,0x54,0x48,0x45,0x54,0x49,0x43))
     $geckAuthoringPluginHash = (Get-FileHash -LiteralPath $geckAuthoringPlugin -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
     New-Item -ItemType Directory -Path $settingsRoot -Force | Out-Null
     Copy-Item -LiteralPath $geckAuthoringObservations -Destination $outsideGeckAuthoringObservations
     $geckIntentData = Join-Path $geckIntentRoot 'local-game\Data'
@@ -250,6 +253,7 @@ try {
         if ($navigationControl.Current.IsOffscreen -or $navigationControl.Current.BoundingRectangle.Width -le 0 -or $navigationControl.Current.BoundingRectangle.Height -le 0) { throw "Grouped navigation is not accessible at minimum size: $controlId" }
     }
 
+    if (-not $Gate556Only) {
     $gate541TrackedProcessesBefore = Get-TrackedEditorProcessIds
     Set-Value (Require-Control $window 'ProjectPathTextBox') $geckIntentRoot
     Select-ComboItem (Require-Control $window 'BuildWorkspaceComboBox') 'Basic Mod Builder'
@@ -363,6 +367,7 @@ try {
     Wait-Until { (Get-Content -LiteralPath $geckIntentSource -Raw | ConvertFrom-Json).plugin.summary -eq 'Installed synthetic GECK authoring intent.' } 'Installed GECK intent revision undo did not restore the prior source.' | Out-Null
     if (Test-Path -LiteralPath (Join-Path $geckIntentData 'Gate541Synthetic.esp')) { throw 'GECK Intent Builder wrote plugin bytes into the synthetic Data directory.' }
     Write-Host 'Gate 541 UI regression: installed create, stale refusal, provisional state, undo, resolved handoff, revision, validation route, and no-execution boundaries passed.'
+    }
 
     Select-ComboItem (Require-Control $window 'ReviewWorkspaceComboBox') 'Validation'
     Select-ComboItem (Require-Control $window 'ReviewWorkspaceComboBox') 'GECK Handoff'
@@ -372,7 +377,7 @@ try {
     $geckManualTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
     Require-Control $window 'LoadGeckHandoffButton' | Out-Null
     $geckAuthoringTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
-    foreach ($controlId in @('RefreshGeckAuthoringReviewButton','GeckAuthoringPlanStateTextBlock','GeckAuthoringVerifierStateTextBlock','GeckAuthoringObservationsStateTextBlock','GeckAuthoringVerificationStateTextBlock')) { Require-Control $window $controlId | Out-Null }
+    foreach ($controlId in @('RefreshGeckAuthoringReviewButton','GeckAuthoringPlanStateTextBlock','GeckAuthoringSubjectHandoffStateTextBlock','PreviewGeckAuthoringSubjectHandoffButton','GenerateGeckAuthoringSubjectHandoffButton','GeckAuthoringVerifierStateTextBlock','GeckAuthoringObservationsStateTextBlock','GeckAuthoringVerificationStateTextBlock')) { Require-Control $window $controlId | Out-Null }
     [WfNativeWindow]::MoveWindow($process.MainWindowHandle, 40, 40, 1180, 760, $true) | Out-Null
     Start-Sleep -Milliseconds 300
     $geckManualTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
@@ -384,6 +389,7 @@ try {
     Set-Value (Require-Control $window 'ProjectPathTextBox') $geckAuthoringRoot
     $geckAuthoringStatus = Require-Control $window 'GeckAuthoringStatusTextBlock'
     $geckPlanState = Require-Control $window 'GeckAuthoringPlanStateTextBlock'
+    $geckSubjectHandoffState = Require-Control $window 'GeckAuthoringSubjectHandoffStateTextBlock'
     $geckObserverState = Require-Control $window 'GeckAuthoringVerifierStateTextBlock'
     $geckObservationsState = Require-Control $window 'GeckAuthoringObservationsStateTextBlock'
     $geckVerificationState = Require-Control $window 'GeckAuthoringVerificationStateTextBlock'
@@ -400,6 +406,30 @@ try {
     Wait-Until { $geckPlanState.Current.Name -eq 'Current' -and $geckObserverState.Current.Name -eq 'ReadyToGenerate' } "Installed authoring plan generation did not refresh readiness: $($geckAuthoringStatus.Current.Name)" | Out-Null
     $geckPlanPath = Join-Path $geckAuthoringRoot 'generated\geck-authoring-plan\plan.json'
     if (-not (Test-Path -LiteralPath $geckPlanPath -PathType Leaf)) { throw 'Installed authoring plan was not generated.' }
+
+    $geckSubjectHandoffRoot = Join-Path $geckAuthoringRoot 'generated\geck-authoring-plan\subject-handoff'
+    Invoke-Control (Require-Control $window 'PreviewGeckAuthoringSubjectHandoffButton')
+    $generateSubjectHandoff = Require-Control $window 'GenerateGeckAuthoringSubjectHandoffButton'
+    Wait-Until { $generateSubjectHandoff.Current.IsEnabled } "Installed subject-handoff preview failed: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    if ($geckAuthoringStatus.Current.Name -ne 'Verifier subject handoff preview ready. No files were written.' -or (Test-Path -LiteralPath $geckSubjectHandoffRoot)) { throw 'Subject-handoff preview did not preserve the no-write contract.' }
+    Invoke-Control $generateSubjectHandoff
+    Wait-Until { $geckSubjectHandoffState.Current.Name -eq 'Current' } "Installed subject handoff did not become current: $($geckAuthoringStatus.Current.Name)" | Out-Null
+    foreach ($relative in @('subject-contract.json','worklist.md','creation-notes.template.md','build-manifest.json','checksums.sha256')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $geckSubjectHandoffRoot $relative) -PathType Leaf)) { throw "Installed subject handoff omitted $relative" }
+    }
+    $subjectContract = Get-Content -LiteralPath (Join-Path $geckSubjectHandoffRoot 'subject-contract.json') -Raw | ConvertFrom-Json
+    foreach ($property in @('executesExternalTools','forgeWritesPluginBytes','writesGameData','verificationPerformed','approvalGranted','promotionPerformed')) {
+        if ($subjectContract.safety.$property -ne $false) { throw "Installed subject contract did not preserve safety.$property=false." }
+    }
+    if (Get-ChildItem -LiteralPath $geckSubjectHandoffRoot -Recurse -File | Where-Object { $_.Extension -in @('.esp','.esm') }) { throw 'Installed subject handoff contained plugin bytes.' }
+    if ($Gate556Only) {
+        if (Get-ChildItem -LiteralPath $geckAuthoringRoot -Recurse -File | Where-Object { $_.Extension -in @('.esp','.esm') }) { throw 'Focused subject-handoff proof created or required plugin bytes.' }
+        $newTrackedEditorProcesses = @(Get-TrackedEditorProcessIds | Where-Object { $_ -notin $trackedEditorProcessesBefore })
+        if ($newTrackedEditorProcesses.Count -ne 0) { throw "Installed subject handoff launched an editor or mod manager process: $($newTrackedEditorProcesses -join ', ')" }
+        Write-Host 'Gate 556 focused installed regression passed: both viewports, preview no-write, exact five-file kit, safety flags, no plugin bytes, and no editor process.'
+        return
+    }
+    if ((Get-FileHash -LiteralPath $geckAuthoringPlugin -Algorithm SHA256).Hash.ToLowerInvariant() -ne $geckAuthoringPluginHash) { throw 'Installed subject handoff changed pre-existing opaque plugin bytes.' }
 
     $geckVerificationRoot = Join-Path $geckAuthoringRoot 'generated\geck-authoring-plan\verification'
     Invoke-Control (Require-Control $window 'PreviewGeckAuthoringVerifierButton')

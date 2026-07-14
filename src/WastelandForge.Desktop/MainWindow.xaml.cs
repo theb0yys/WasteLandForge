@@ -89,6 +89,7 @@ public partial class MainWindow
     private GeckAuthoringReviewSnapshot geckAuthoringReviewSnapshot = GeckAuthoringReviewSnapshot.NotLoaded();
     private CancellationTokenSource? geckAuthoringCancellation;
     private string? geckAuthoringPlanPreviewToken;
+    private string? geckAuthoringSubjectHandoffPreviewToken;
     private string? geckAuthoringObserverPreviewToken;
     private string? geckAuthoringVerificationPreviewToken;
     private readonly ObservableCollection<GeckIntentProviderRow> geckIntentProviders = [];
@@ -229,16 +230,17 @@ public partial class MainWindow
         var settings = settingsStore.Load();
         var masterPath = string.IsNullOrWhiteSpace(settings.DataRoot) ? string.Empty : Path.Combine(settings.DataRoot, "FalloutNV.esm");
         var providerPath = settings.ToolPaths.GetValueOrDefault("xedit", string.Empty);
+        var iniPath = settings.FnvIniPath;
         var userStateRoot = WastelandForgeLocalData.FnvUserStateRoot;
         gameKnowledgeExecutionPreparation = null;
         DisarmGameKnowledgeExecution();
         RunGameKnowledgeExportButton.IsEnabled = false;
         SetGameKnowledgeBusy(true);
         GameKnowledgeStateTextBlock.Text = FnvGameKnowledgeState.PreparingExport.ToString();
-        GameKnowledgeStatusTextBlock.Text = "Hashing the exact provider, Data, and user-state evidence for a private single-master run...";
+        GameKnowledgeStatusTextBlock.Text = "Hashing the exact provider, Data, Fallout.ini, and user-state evidence for a private single-master run...";
         try
         {
-            var prepared = await Task.Run(() => gameKnowledgeCatalogue.PrepareAutomatedExecution(masterPath, providerPath, userStateRoot));
+            var prepared = await Task.Run(() => gameKnowledgeCatalogue.PrepareAutomatedExecution(masterPath, providerPath, iniPath, userStateRoot));
             gameKnowledgeExecutionPreparation = prepared.Success ? prepared : null;
             GameKnowledgeStateTextBlock.Text = prepared.State.ToString();
             GameKnowledgeStatusTextBlock.Text = prepared.Message;
@@ -602,6 +604,9 @@ public partial class MainWindow
             GeckIntentRotationXTextBox.Text = input.RotationX;
             GeckIntentRotationYTextBox.Text = input.RotationY;
             GeckIntentRotationZTextBox.Text = input.RotationZ;
+            GeckIntentPlacementEvidencePathTextBox.Text = input.PlacementEvidencePath;
+            GeckIntentPlacementEvidenceAttestedCheckBox.IsChecked = input.PlacementEvidenceAttested;
+            GeckIntentPlacementEvidenceSummaryTextBlock.Text = string.IsNullOrWhiteSpace(input.PlacementEvidencePath) ? "Migration requires placement evidence" : "Preview to validate placement evidence";
             GeckIntentPersistentCheckBox.IsChecked = input.Persistent;
             SelectGeckIntentCombo(GeckIntentEncounterPolicyComboBox, input.EncounterZonePolicy);
             GeckIntentProvidersDataGrid.SelectedIndex = geckIntentProviders.Count > 0 ? 0 : -1;
@@ -637,6 +642,8 @@ public partial class MainWindow
             GeckIntentRotationXTextBox.Text,
             GeckIntentRotationYTextBox.Text,
             GeckIntentRotationZTextBox.Text,
+            GeckIntentPlacementEvidencePathTextBox.Text,
+            GeckIntentPlacementEvidenceAttestedCheckBox.IsChecked == true,
             GeckIntentPersistentCheckBox.IsChecked == true,
             GeckIntentComboTag(GeckIntentEncounterPolicyComboBox, "inherit-cell"));
     }
@@ -650,6 +657,7 @@ public partial class MainWindow
         OpenGeckAuthoringReviewButton.IsEnabled = false;
         GeckIntentOperationStateTextBlock.Text = GeckIntentBuilderState.Editing.ToString();
         GeckIntentStatusTextBlock.Text = "Inputs changed. Preview again.";
+        GeckIntentPlacementEvidenceSummaryTextBlock.Text = "Not validated";
     }
 
     private void GeckIntentBuilderGridCellEditEnding(object sender, System.Windows.Controls.DataGridCellEditEndingEventArgs e) =>
@@ -686,6 +694,15 @@ public partial class MainWindow
         if (path is null) return;
         row.EvidencePath = path;
         GeckIntentResolutionsDataGrid.Items.Refresh();
+        GeckIntentBuilderInputChanged(sender, e);
+    }
+
+    private void BrowseGeckIntentPlacementEvidenceClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog { Title = "Attach GECK placement evidence", Filter = "Placement evidence (*.json)|*.json" };
+        if (dialog.ShowDialog() != true) return;
+        GeckIntentPlacementEvidencePathTextBox.Text = dialog.FileName;
+        GeckIntentPlacementEvidenceAttestedCheckBox.IsChecked = false;
         GeckIntentBuilderInputChanged(sender, e);
     }
 
@@ -839,8 +856,10 @@ public partial class MainWindow
         if (!preview.Success)
         {
             GeckIntentPreviewTextBox.Text = preview.Message;
+            GeckIntentPlacementEvidenceSummaryTextBlock.Text = "Blocked: " + preview.Message;
             return;
         }
+        GeckIntentPlacementEvidenceSummaryTextBlock.Text = preview.PlacementEvidenceSummary ?? "Not validated";
 
         var lines = new List<string>
         {
@@ -850,6 +869,7 @@ public partial class MainWindow
             $"Intent SHA-256: {preview.IntentSha256}",
             $"Intent bytes: {preview.IntentLength}",
             $"Provisional resolutions: {(preview.HasProvisional ? "yes" : "no")}",
+            $"Placement evidence: operator-attested",
             string.Empty,
             "Evidence:"
         };
@@ -2652,6 +2672,12 @@ public partial class MainWindow
     private async void GenerateGeckAuthoringPlanClicked(object sender, RoutedEventArgs e) =>
         await ApplyGeckAuthoringAsync(GeckAuthoringReviewTarget.Plan, geckAuthoringPlanPreviewToken);
 
+    private async void PreviewGeckAuthoringSubjectHandoffClicked(object sender, RoutedEventArgs e) =>
+        await PreviewGeckAuthoringAsync(GeckAuthoringReviewTarget.SubjectHandoff);
+
+    private async void GenerateGeckAuthoringSubjectHandoffClicked(object sender, RoutedEventArgs e) =>
+        await ApplyGeckAuthoringAsync(GeckAuthoringReviewTarget.SubjectHandoff, geckAuthoringSubjectHandoffPreviewToken);
+
     private async void PreviewGeckAuthoringVerifierClicked(object sender, RoutedEventArgs e) =>
         await PreviewGeckAuthoringAsync(GeckAuthoringReviewTarget.Observer);
 
@@ -2772,6 +2798,7 @@ public partial class MainWindow
     private void RenderGeckAuthoringSnapshot()
     {
         GeckAuthoringPlanStateTextBlock.Text = geckAuthoringReviewSnapshot.PlanState.ToString();
+        GeckAuthoringSubjectHandoffStateTextBlock.Text = geckAuthoringReviewSnapshot.SubjectHandoffState.ToString();
         GeckAuthoringVerifierStateTextBlock.Text = geckAuthoringReviewSnapshot.ObserverState.ToString();
         GeckAuthoringObservationsStateTextBlock.Text = geckAuthoringReviewSnapshot.ObservationsState.ToString();
         GeckAuthoringVerificationStateTextBlock.Text = geckAuthoringReviewSnapshot.VerificationState.ToString();
@@ -2803,6 +2830,10 @@ public partial class MainWindow
             {
                 PlanState = outputsCurrent ? GeckAuthoringReviewState.Current : GeckAuthoringReviewState.ReadyToGenerate
             },
+            GeckAuthoringReviewTarget.SubjectHandoff => geckAuthoringReviewSnapshot with
+            {
+                SubjectHandoffState = outputsCurrent ? GeckAuthoringReviewState.Current : GeckAuthoringReviewState.ReadyToGenerate
+            },
             GeckAuthoringReviewTarget.Observer => geckAuthoringReviewSnapshot with
             {
                 ObserverState = outputsCurrent ? GeckAuthoringReviewState.Current : GeckAuthoringReviewState.ReadyToGenerate
@@ -2815,6 +2846,7 @@ public partial class MainWindow
             _ => geckAuthoringReviewSnapshot
         };
         GeckAuthoringPlanStateTextBlock.Text = geckAuthoringReviewSnapshot.PlanState.ToString();
+        GeckAuthoringSubjectHandoffStateTextBlock.Text = geckAuthoringReviewSnapshot.SubjectHandoffState.ToString();
         GeckAuthoringVerifierStateTextBlock.Text = geckAuthoringReviewSnapshot.ObserverState.ToString();
         GeckAuthoringObservationsStateTextBlock.Text = geckAuthoringReviewSnapshot.ObservationsState.ToString();
         GeckAuthoringVerificationStateTextBlock.Text = geckAuthoringReviewSnapshot.VerificationState.ToString();
@@ -2826,6 +2858,7 @@ public partial class MainWindow
         geckAuthoringReviewSnapshot = geckAuthoringReviewSnapshot with
         {
             PlanState = GeckAuthoringReviewState.RefreshRequired,
+            SubjectHandoffState = GeckAuthoringReviewState.RefreshRequired,
             ObserverState = GeckAuthoringReviewState.RefreshRequired,
             ObservationsState = GeckAuthoringReviewState.RefreshRequired,
             VerificationState = GeckAuthoringReviewState.RefreshRequired,
@@ -2852,6 +2885,8 @@ public partial class MainWindow
         RefreshGeckAuthoringReviewButton.IsEnabled = true;
         PreviewGeckAuthoringPlanButton.IsEnabled = geckAuthoringReviewSnapshot.CanPreviewPlan;
         GenerateGeckAuthoringPlanButton.IsEnabled = geckAuthoringPlanPreviewToken is not null;
+        PreviewGeckAuthoringSubjectHandoffButton.IsEnabled = geckAuthoringReviewSnapshot.CanPreviewSubjectHandoff;
+        GenerateGeckAuthoringSubjectHandoffButton.IsEnabled = geckAuthoringSubjectHandoffPreviewToken is not null;
         PreviewGeckAuthoringVerifierButton.IsEnabled = geckAuthoringReviewSnapshot.CanPreviewObserver;
         GenerateGeckAuthoringVerifierButton.IsEnabled = geckAuthoringObserverPreviewToken is not null;
         PreviewGeckAuthoringVerificationButton.IsEnabled = geckAuthoringReviewSnapshot.CanPreviewVerification;
@@ -2865,6 +2900,8 @@ public partial class MainWindow
         RefreshGeckAuthoringReviewButton.IsEnabled = !busy;
         PreviewGeckAuthoringPlanButton.IsEnabled = false;
         GenerateGeckAuthoringPlanButton.IsEnabled = false;
+        PreviewGeckAuthoringSubjectHandoffButton.IsEnabled = false;
+        GenerateGeckAuthoringSubjectHandoffButton.IsEnabled = false;
         PreviewGeckAuthoringVerifierButton.IsEnabled = false;
         GenerateGeckAuthoringVerifierButton.IsEnabled = false;
         PreviewGeckAuthoringVerificationButton.IsEnabled = false;
@@ -2899,6 +2936,7 @@ public partial class MainWindow
         switch (target)
         {
             case GeckAuthoringReviewTarget.Plan: geckAuthoringPlanPreviewToken = token; break;
+            case GeckAuthoringReviewTarget.SubjectHandoff: geckAuthoringSubjectHandoffPreviewToken = token; break;
             case GeckAuthoringReviewTarget.Observer: geckAuthoringObserverPreviewToken = token; break;
             case GeckAuthoringReviewTarget.Verification: geckAuthoringVerificationPreviewToken = token; break;
         }
@@ -2907,6 +2945,7 @@ public partial class MainWindow
     private void ClearGeckAuthoringPreviewTokens(GeckAuthoringReviewTarget target)
     {
         if (target == GeckAuthoringReviewTarget.Plan) geckAuthoringPlanPreviewToken = null;
+        if (target is GeckAuthoringReviewTarget.Plan or GeckAuthoringReviewTarget.SubjectHandoff) geckAuthoringSubjectHandoffPreviewToken = null;
         if (target is GeckAuthoringReviewTarget.Plan or GeckAuthoringReviewTarget.Observer) geckAuthoringObserverPreviewToken = null;
         geckAuthoringVerificationPreviewToken = null;
         if (GenerateGeckAuthoringPlanButton is not null) UpdateGeckAuthoringActions();
@@ -2921,6 +2960,7 @@ public partial class MainWindow
             : geckAuthoringReviewSnapshot with
             {
                 PlanState = GeckAuthoringReviewState.RefreshRequired,
+                SubjectHandoffState = GeckAuthoringReviewState.RefreshRequired,
                 ObserverState = GeckAuthoringReviewState.RefreshRequired,
                 ObservationsState = GeckAuthoringReviewState.RefreshRequired,
                 VerificationState = GeckAuthoringReviewState.RefreshRequired,
@@ -3484,7 +3524,9 @@ public partial class MainWindow
         var dialog = new OpenFileDialog
         {
             Title = "Select " + GetSettingsLabel(key),
-            Filter = "Applications (*.exe)|*.exe|All files (*.*)|*.*",
+            Filter = StringComparer.Ordinal.Equals(key, "fnvini")
+                ? "Fallout INI (Fallout.ini)|Fallout.ini|INI files (*.ini)|*.ini|All files (*.*)|*.*"
+                : "Applications (*.exe)|*.exe|All files (*.*)|*.*",
             CheckFileExists = true
         };
 
@@ -3618,7 +3660,8 @@ public partial class MainWindow
             Mo2PathTextBox is null ||
             SettingsMo2ModsRootTextBox is null ||
             GeckPathTextBox is null ||
-            XEditPathTextBox is null)
+            XEditPathTextBox is null ||
+            FnvIniPathTextBox is null)
         {
             return;
         }
@@ -3667,6 +3710,7 @@ public partial class MainWindow
         ProjectRoot = SettingsProjectRootTextBox.Text.Trim(),
         GameRoot = GameRootTextBox.Text.Trim(),
         DataRoot = DataRootTextBox.Text.Trim(),
+        FnvIniPath = FnvIniPathTextBox.Text.Trim(),
         Mo2Path = Mo2PathTextBox.Text.Trim(),
         Mo2ModsRoot = SettingsMo2ModsRootTextBox.Text.Trim(),
         ToolPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -3682,6 +3726,7 @@ public partial class MainWindow
         SettingsProjectRootTextBox.Text = settings.ProjectRoot;
         GameRootTextBox.Text = settings.GameRoot;
         DataRootTextBox.Text = settings.DataRoot;
+        FnvIniPathTextBox.Text = string.IsNullOrWhiteSpace(settings.FnvIniPath) ? WastelandForgeLocalData.SuggestFnvIniPath() : settings.FnvIniPath;
         Mo2PathTextBox.Text = settings.Mo2Path;
         SettingsMo2ModsRootTextBox.Text = settings.Mo2ModsRoot;
         Mo2ModsRootTextBox.Text = Mo2InstanceDiscovery.ValidateModsRoot(settings.Mo2ModsRoot, settings.DataRoot) is null ? settings.Mo2ModsRoot : string.Empty;
@@ -3698,6 +3743,7 @@ public partial class MainWindow
         "mo2mods" => SettingsMo2ModsRootTextBox,
         "geck" => GeckPathTextBox,
         "xedit" => XEditPathTextBox,
+        "fnvini" => FnvIniPathTextBox,
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Unknown settings path.")
     };
 
@@ -3710,6 +3756,7 @@ public partial class MainWindow
         "mo2mods" => "Mod Organizer 2 mods folder",
         "geck" => "GECK executable",
         "xedit" => "xEdit executable",
+        "fnvini" => "Fallout.ini",
         _ => "path"
     };
 

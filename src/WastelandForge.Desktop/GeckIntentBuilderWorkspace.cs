@@ -7,6 +7,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Json.Schema;
 using WastelandForge.Core;
+using WastelandForge.Generation;
 using WastelandForge.Schema;
 using WastelandForge.Validation;
 
@@ -69,6 +70,8 @@ internal sealed record GeckIntentBuilderInput(
     string RotationX,
     string RotationY,
     string RotationZ,
+    string PlacementEvidencePath,
+    bool PlacementEvidenceAttested,
     bool Persistent,
     string EncounterZonePolicy);
 
@@ -95,6 +98,7 @@ internal sealed record GeckIntentBuilderPreview(
     string? IntentJson,
     string? IntentSha256,
     long IntentLength,
+    string? PlacementEvidenceSummary,
     IReadOnlyList<GeckIntentEvidenceAttachment> Evidence,
     IReadOnlyList<GeckIntentCanonicalWrite> Writes,
     bool HasProvisional,
@@ -129,7 +133,7 @@ internal sealed class GeckIntentBuilderWorkspace
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private static readonly Lazy<JsonSchema> ManifestSchema = new(() => LoadSchema(WastelandForgeSchemaIds.Manifest050));
-    private static readonly Lazy<JsonSchema> IntentSchema = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringIntent010));
+    private static readonly Lazy<JsonSchema> IntentSchema = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringIntent020));
 
     private readonly IGeckIntentBuilderCommandRunner runner;
     private readonly GeckIntentBuilderJournal journal;
@@ -164,7 +168,17 @@ internal sealed class GeckIntentBuilderWorkspace
 
             var intentPath = ResolveRegisteredIntent(root, declared);
             var intent = ParseObject(intentPath, "GECK authoring intent");
-            return new(true, "Existing GECK authoring intent loaded for revision.", "revise", GeckIntentBuilderState.Editing, FromIntent(root, intent), Relative(root, intentPath));
+            var intentVersion = Text(intent, "schemaVersion");
+            var operation = intentVersion switch
+            {
+                "0.1.0" => "migrate",
+                "0.2.0" => "revise",
+                _ => throw new InvalidOperationException("Only GECK authoring intent versions 0.1.0 and 0.2.0 are supported.")
+            };
+            var message = operation == "migrate"
+                ? "Legacy GECK authoring intent loaded. Attach explicit placement evidence to preview migration to 0.2.0."
+                : "Existing GECK authoring intent loaded for revision.";
+            return new(true, message, operation, GeckIntentBuilderState.Editing, FromIntent(root, intent), Relative(root, intentPath));
         }
         catch (Exception exception) when (IsExpected(exception))
         {
@@ -193,12 +207,22 @@ internal sealed class GeckIntentBuilderWorkspace
             if (!ManifestVersions.Contains(version, StringComparer.Ordinal)) throw new InvalidOperationException("Only registered JSON manifest versions 0.1.0 through 0.5.0 are supported.");
             var registries = manifest["registries"]?.AsObject() ?? throw new InvalidOperationException("Project manifest registries are missing.");
             var declared = registries["geckAuthoringIntent"]?.GetValue<string>();
-            var operation = string.IsNullOrWhiteSpace(declared) ? "create" : "revise";
+            var operation = "create";
+            if (!string.IsNullOrWhiteSpace(declared))
+            {
+                var existingVersion = Text(ParseObject(ResolveRegisteredIntent(root, declared!), "GECK authoring intent"), "schemaVersion");
+                operation = existingVersion switch
+                {
+                    "0.1.0" => "migrate",
+                    "0.2.0" => "revise",
+                    _ => throw new InvalidOperationException("Only GECK authoring intent versions 0.1.0 and 0.2.0 are supported.")
+                };
+            }
             var intentRelative = operation == "create" ? DefaultIntentPath : Relative(root, ResolveRegisteredIntent(root, declared!));
             var intentPath = ResolveContained(root, intentRelative);
             if (operation == "create" && File.Exists(intentPath))
                 throw new InvalidOperationException("The default GECK authoring intent path is already occupied but is not registered in the manifest.");
-            var beforeIntent = operation == "revise" ? File.ReadAllBytes(intentPath) : null;
+            var beforeIntent = operation == "create" ? null : File.ReadAllBytes(intentPath);
 
             ValidateEnvironment(input);
             var evidence = new List<GeckIntentEvidenceAttachment>();
@@ -221,10 +245,16 @@ internal sealed class GeckIntentBuilderWorkspace
             var referenceEditorId = Required(input.ReferenceEditorId, "Reference EditorID");
             if (input.ContainerStrategy is not ("new" or "clone-approved")) throw new InvalidOperationException("Container strategy must be new or clone-approved.");
             if (input.EncounterZonePolicy is not ("inherit-cell" or "none")) throw new InvalidOperationException("Encounter policy must be inherit-cell or none.");
+            if (!input.PlacementEvidenceAttested) throw new InvalidOperationException("Explicit operator attestation is required for placement evidence.");
+
+            var position = Vector(input.PositionX, input.PositionY, input.PositionZ, "Position");
+            var rotation = Vector(input.RotationX, input.RotationY, input.RotationZ, "Rotation");
+            var placementAttachment = InspectPlacementEvidence(root, input.PlacementEvidencePath);
+            evidence.Add(placementAttachment);
 
             var intent = new JsonObject
             {
-                ["schemaVersion"] = "0.1.0",
+                ["schemaVersion"] = "0.2.0",
                 ["kind"] = "geck-authoring-intent",
                 ["id"] = intentId,
                 ["plugin"] = new JsonObject
@@ -259,14 +289,23 @@ internal sealed class GeckIntentBuilderWorkspace
                     ["editorId"] = referenceEditorId,
                     ["cellResolutionId"] = placement.Id,
                     ["baseContainerId"] = containerId,
-                    ["position"] = Vector(input.PositionX, input.PositionY, input.PositionZ, "Position"),
-                    ["rotation"] = Vector(input.RotationX, input.RotationY, input.RotationZ, "Rotation"),
+                    ["position"] = position,
+                    ["rotation"] = rotation,
+                    ["placementEvidence"] = new JsonObject
+                    {
+                        ["path"] = placementAttachment.ProjectPath,
+                        ["length"] = placementAttachment.Length,
+                        ["sha256"] = placementAttachment.Sha256,
+                        ["status"] = "operator-attested"
+                    },
                     ["ownership"] = "unowned",
                     ["persistent"] = input.Persistent,
                     ["encounterZonePolicy"] = input.EncounterZonePolicy
                 }
             };
             _ = containerBase;
+            var placementDocument = GeckPlacementEvidenceValidator.ParseAndVerify(placementAttachment.Bytes, intent);
+            var placementSummary = PlacementSummary(placementDocument, placementAttachment);
 
             var candidateManifest = manifest.DeepClone().AsObject();
             candidateManifest["schemaVersion"] = "0.5.0";
@@ -274,7 +313,7 @@ internal sealed class GeckIntentBuilderWorkspace
             var manifestJson = candidateManifest.ToJsonString(JsonOptions) + Environment.NewLine;
             var intentJson = intent.ToJsonString(JsonOptions) + Environment.NewLine;
             ValidateSchema(ManifestSchema.Value, manifestJson, "Candidate manifest does not satisfy manifest/0.5.0.");
-            ValidateSchema(IntentSchema.Value, intentJson, "Candidate intent does not satisfy geck-authoring-intent/0.1.0.");
+            ValidateSchema(IntentSchema.Value, intentJson, "Candidate intent does not satisfy geck-authoring-intent/0.2.0.");
 
             var writes = evidence.Where(item => item.CopyRequired)
                 .GroupBy(item => item.ProjectPath, StringComparer.Ordinal)
@@ -301,6 +340,7 @@ internal sealed class GeckIntentBuilderWorkspace
                 intentJson,
                 Hash(intentBytes),
                 intentBytes.LongLength,
+                placementSummary,
                 evidence.OrderBy(item => item.ProjectPath, StringComparer.Ordinal).ToArray(),
                 writes,
                 hasProvisional,
@@ -547,6 +587,17 @@ internal sealed class GeckIntentBuilderWorkspace
         return new(source, relative, destination, bytes.LongLength, sha, copy, bytes);
     }
 
+    private static GeckIntentEvidenceAttachment InspectPlacementEvidence(string root, string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) throw new InvalidOperationException("Placement evidence JSON is required.");
+        if (!StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(value.Trim()), ".json"))
+            throw new InvalidOperationException("Placement evidence must be a JSON document.");
+        var attachment = InspectEvidence(root, value);
+        if (attachment.Length > GeckPlacementEvidenceValidator.MaxBytes)
+            throw new InvalidOperationException("Placement evidence must contain 1 byte through 64 KiB.");
+        return attachment;
+    }
+
     private static void ValidateEnvironment(GeckIntentBuilderInput input)
     {
         if (input.EnvironmentMode != "physical-data") throw new InvalidOperationException("Gate 541 supports physical-data only; MO2 routing remains deferred.");
@@ -566,7 +617,7 @@ internal sealed class GeckIntentBuilderWorkspace
             new("", "cell", "", "", "", "provisional", "", 0),
             new("", "container-base", "", "", "", "provisional", "", 0)
         ],
-        string.Empty, "new", string.Empty, "0", "0", "0", "0", "0", "0", false, "inherit-cell");
+        string.Empty, "new", string.Empty, "0", "0", "0", "0", "0", "0", string.Empty, false, false, "inherit-cell");
 
     private static GeckIntentBuilderInput FromIntent(string root, JsonObject intent)
     {
@@ -583,6 +634,7 @@ internal sealed class GeckIntentBuilderWorkspace
         var reference = intent["reference"]?.AsObject() ?? throw new InvalidOperationException("Existing intent reference is missing.");
         var position = reference["position"]?.AsObject() ?? throw new InvalidOperationException("Existing position is missing.");
         var rotation = reference["rotation"]?.AsObject() ?? throw new InvalidOperationException("Existing rotation is missing.");
+        var placementEvidence = reference["placementEvidence"]?.AsObject();
         return new(
             root,
             Text(intent["plugin"]!.AsObject(), "fileName"),
@@ -597,6 +649,8 @@ internal sealed class GeckIntentBuilderWorkspace
             Text(reference, "editorId"),
             Number(position, "x"), Number(position, "y"), Number(position, "z"),
             Number(rotation, "x"), Number(rotation, "y"), Number(rotation, "z"),
+            placementEvidence?["path"]?.GetValue<string>() ?? string.Empty,
+            placementEvidence?["status"]?.GetValue<string>() == "operator-attested",
             reference["persistent"]?.GetValue<bool>() ?? false,
             Text(reference, "encounterZonePolicy"));
     }
@@ -647,6 +701,22 @@ internal sealed class GeckIntentBuilderWorkspace
         ["y"] = ParseFinite(y, label + " Y"),
         ["z"] = ParseFinite(z, label + " Z")
     };
+
+    private static string PlacementSummary(JsonObject document, GeckIntentEvidenceAttachment attachment)
+    {
+        var cell = document["cell"]!.AsObject();
+        var position = document["position"]!.AsObject();
+        var rotation = document["rotation"]!.AsObject();
+        return string.Join(Environment.NewLine,
+            $"Capture: {document["captureMethod"]!.GetValue<string>()}",
+            $"Cell: {cell["editorId"]!.GetValue<string>()} | {cell["formId"]!.GetValue<string>()} | {cell["signature"]!.GetValue<string>()}",
+            $"Position: {Number(position, "x")}, {Number(position, "y")}, {Number(position, "z")}",
+            $"Rotation: {Number(rotation, "x")}, {Number(rotation, "y")}, {Number(rotation, "z")}",
+            $"GECK provider SHA-256: {document["geckProviderSha256"]!.GetValue<string>()}",
+            $"Evidence SHA-256: {attachment.Sha256}",
+            "Attestation: human-reviewed; Forge observation, provider proof, save, and verification are false",
+            "Limitations: " + string.Join(", ", document["limitations"]!.AsArray().Select(item => item!.GetValue<string>())));
+    }
 
     private static double ParseFinite(string value, string label) =>
         double.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) && double.IsFinite(parsed)
@@ -726,7 +796,7 @@ internal sealed class GeckIntentBuilderWorkspace
     private static string FirstIssue(DiagnosticReport report, string fallback) => report.Issues.FirstOrDefault(issue => issue.Severity == DiagnosticSeverity.Error)?.Message ?? fallback;
     private static IReadOnlyList<GeckAuthoringReviewDiagnostic> Diagnostics(DiagnosticReport report) => report.Issues.Select(issue => new GeckAuthoringReviewDiagnostic(issue.RuleId.Value, issue.Severity.ToString().ToLowerInvariant(), issue.Category, issue.Title, issue.Message, issue.PrimaryLocation.File)).ToArray();
     private static bool IsExpected(Exception exception) => exception is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException or ArgumentException or NotSupportedException or PathTooLongException or CryptographicException or DecoderFallbackException;
-    private static GeckIntentBuilderPreview FailedPreview(string message, string root, IReadOnlyList<GeckAuthoringReviewDiagnostic>? diagnostics = null) => new(false, message, GeckIntentBuilderState.Blocked, null, "blocked", root, "wastelandforge.json", string.Empty, string.Empty, null, null, null, 0, [], [], false, diagnostics ?? []);
+    private static GeckIntentBuilderPreview FailedPreview(string message, string root, IReadOnlyList<GeckAuthoringReviewDiagnostic>? diagnostics = null) => new(false, message, GeckIntentBuilderState.Blocked, null, "blocked", root, "wastelandforge.json", string.Empty, string.Empty, null, null, null, 0, null, [], [], false, diagnostics ?? []);
     private static GeckIntentBuilderResult FailedResult(string message, IReadOnlyList<GeckAuthoringReviewDiagnostic>? diagnostics = null, GeckIntentBuilderPreview? preview = null) => new(false, false, GeckIntentBuilderState.Blocked, message, diagnostics ?? [], preview);
     private static GeckIntentBuilderResult CancelledResult() => new(false, true, GeckIntentBuilderState.Editing, "GECK intent operation cancelled before canonical promotion.", []);
 

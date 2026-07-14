@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-execution-plan/0.2.0/schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "createdAtUtc", "runId", "provider", "master", "inputs", "paths", "arguments", "process", "preflight", "writePolicy", "safety"],
+  "properties": {
+    "formatVersion": { "const": "0.2.0" },
+    "kind": { "const": "wastelandforge.fnv-game-knowledge-execution-plan" },
+    "createdAtUtc": { "type": "string", "format": "date-time" },
+    "runId": { "type": "string", "pattern": "^[0-9]{8}T[0-9]{9}Z-[a-f0-9]{32}$" },
+    "provider": { "$ref": "#/$defs/provider" },
+    "master": { "$ref": "#/$defs/master" },
+    "inputs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["script", "runManifest", "pluginList", "ini"],
+      "properties": {
+        "script": { "$ref": "#/$defs/digest" },
+        "runManifest": { "$ref": "#/$defs/digest" },
+        "pluginList": { "$ref": "#/$defs/digest" },
+        "ini": { "$ref": "#/$defs/ini" }
+      }
+    },
+    "paths": { "$ref": "#/$defs/paths" },
+    "arguments": { "type": "array", "minItems": 13, "maxItems": 13, "items": { "type": "string", "minLength": 1, "maxLength": 4096 } },
+    "process": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workingDirectory", "useShellExecute", "createNoWindow", "verb", "redirectStandardInput", "redirectStandardOutput", "redirectStandardError"],
+      "properties": {
+        "workingDirectory": { "$ref": "#/$defs/path" },
+        "useShellExecute": { "const": false },
+        "createNoWindow": { "const": false },
+        "verb": { "const": "" },
+        "redirectStandardInput": { "const": false },
+        "redirectStandardOutput": { "const": false },
+        "redirectStandardError": { "const": false }
+      }
+    },
+    "preflight": {
+      "type": "object", "additionalProperties": false,
+      "required": ["data", "provider", "userState"],
+      "properties": {
+        "data": { "$ref": "#/$defs/inventory" },
+        "provider": { "$ref": "#/$defs/inventory" },
+        "userState": { "$ref": "#/$defs/inventory" }
+      }
+    },
+    "writePolicy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowedRoots", "protectedRoots", "protectedFiles", "backupsMustRemainEmpty"],
+      "properties": {
+        "allowedRoots": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "$ref": "#/$defs/path" } },
+        "protectedRoots": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "#/$defs/path" } },
+        "protectedFiles": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "$ref": "#/$defs/path" } },
+        "backupsMustRemainEmpty": { "const": true }
+      }
+    },
+    "safety": {
+      "type": "object", "additionalProperties": false,
+      "required": ["readOnly", "forgeExecutedXEdit", "shellExecution", "elevation", "automaticRetry", "processTermination", "uiAutomation", "pluginWrites", "loadOrderWrites", "gameDataWrites"],
+      "properties": {
+        "readOnly": { "const": true },
+        "forgeExecutedXEdit": { "const": true },
+        "shellExecution": { "const": false },
+        "elevation": { "const": false },
+        "automaticRetry": { "const": false },
+        "processTermination": { "const": false },
+        "uiAutomation": { "const": false },
+        "pluginWrites": { "const": false },
+        "loadOrderWrites": { "const": false },
+        "gameDataWrites": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "path": { "type": "string", "minLength": 3, "maxLength": 4096 },
+    "digest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "fileName", "length", "lastWriteUtc", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "fileName": { "type": "string", "minLength": 1, "maxLength": 260 },
+        "length": { "type": "integer", "minimum": 1 },
+        "lastWriteUtc": { "type": "string", "format": "date-time" },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "ini": {
+      "allOf": [
+        { "$ref": "#/$defs/digest" },
+        { "type": "object", "properties": { "fileName": { "const": "Fallout.ini" } } }
+      ]
+    },
+    "provider": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "fileName", "length", "lastWriteUtc", "sha256", "version"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "fileName": { "enum": ["FNVEdit.exe", "xEdit.exe"] },
+        "length": { "type": "integer", "minimum": 1 },
+        "lastWriteUtc": { "type": "string", "format": "date-time" },
+        "sha256": { "$ref": "#/$defs/sha" },
+        "version": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "master": {
+      "allOf": [
+        { "$ref": "#/$defs/digest" },
+        { "type": "object", "properties": { "fileName": { "const": "FalloutNV.esm" } } }
+      ]
+    },
+    "paths": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runDirectory", "dataDirectory", "script", "runManifest", "rawExport", "pluginList", "ini", "cache", "temp", "backups", "log", "executionReceipt", "userStateRoot"],
+      "properties": {
+        "runDirectory": { "$ref": "#/$defs/path" },
+        "dataDirectory": { "$ref": "#/$defs/path" },
+        "script": { "$ref": "#/$defs/path" },
+        "runManifest": { "$ref": "#/$defs/path" },
+        "rawExport": { "$ref": "#/$defs/path" },
+        "pluginList": { "$ref": "#/$defs/path" },
+        "ini": { "$ref": "#/$defs/path" },
+        "cache": { "$ref": "#/$defs/path" },
+        "temp": { "$ref": "#/$defs/path" },
+        "backups": { "$ref": "#/$defs/path" },
+        "log": { "$ref": "#/$defs/path" },
+        "executionReceipt": { "$ref": "#/$defs/path" },
+        "userStateRoot": { "$ref": "#/$defs/path" }
+      }
+    },
+    "file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["relativePath", "length", "lastWriteUtc", "sha256"],
+      "properties": {
+        "relativePath": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "length": { "type": "integer", "minimum": 0 },
+        "lastWriteUtc": { "type": "string", "format": "date-time" },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "inventory": {
+      "type": "object", "additionalProperties": false,
+      "required": ["root", "exists", "fileCount", "totalBytes", "compositeSha256", "files"],
+      "properties": {
+        "root": { "$ref": "#/$defs/path" },
+        "exists": { "type": "boolean" },
+        "fileCount": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "totalBytes": { "type": "integer", "minimum": 0 },
+        "compositeSha256": { "$ref": "#/$defs/sha" },
+        "files": { "type": "array", "maxItems": 100000, "items": { "$ref": "#/$defs/file" } }
+      }
+    }
+  }
+}

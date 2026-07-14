@@ -54,6 +54,7 @@ public sealed class ProjectValidationPipeline
     private static readonly Lazy<JsonSchema> ManifestSchema040 = new(() => LoadBuiltInSchema(WastelandForgeSchemaIds.Manifest040, "Manifest schema 0.4.0"));
     private static readonly Lazy<JsonSchema> ManifestSchema050 = new(() => LoadBuiltInSchema(WastelandForgeSchemaIds.Manifest050, "Manifest schema 0.5.0"));
     private static readonly Lazy<JsonSchema> GeckAuthoringIntentSchema010 = new(() => LoadBuiltInSchema(WastelandForgeSchemaIds.GeckAuthoringIntent010, "GECK authoring intent schema 0.1.0"));
+    private static readonly Lazy<JsonSchema> GeckAuthoringIntentSchema020 = new(() => LoadBuiltInSchema(WastelandForgeSchemaIds.GeckAuthoringIntent020, "GECK authoring intent schema 0.2.0"));
     private static readonly Lazy<JsonSchema> DependencyRegistrySchema = new(() => LoadBuiltInSchema(
         WastelandForgeSchemaIds.Dependency010,
         "Dependency registry schema 0.1.0"));
@@ -936,6 +937,7 @@ public sealed class ProjectValidationPipeline
             "jip-script" => JipScriptRegistrySchema.Value,
             "xedit-audit" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => XEditAuditRegistrySchema020.Value,
             "xedit-audit" => XEditAuditRegistrySchema.Value,
+            "geck-authoring-intent" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.2.0") => GeckAuthoringIntentSchema020.Value,
             "geck-authoring-intent" => GeckAuthoringIntentSchema010.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.6.0") => QuestRegistrySchema060.Value,
             "quest" when StringComparer.Ordinal.Equals(GetString(source.Root, "schemaVersion"), "0.5.0") => QuestRegistrySchema050.Value,

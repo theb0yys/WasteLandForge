@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/geck-authoring-subject-handoff/0.2.0/schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "project", "intent", "plan", "plugin", "providers", "resolutions", "container", "reference", "placementEvidence", "operatorPackage", "pluginEvidence", "safety"],
+  "properties": {
+    "formatVersion": { "const": "0.2.0" },
+    "kind": { "const": "wastelandforge.geck-authoring-subject-handoff" },
+    "project": { "type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": { "id": { "$ref": "#/$defs/id" }, "version": { "type": "string", "minLength": 1 } } },
+    "intent": { "$ref": "#/$defs/fileDigest" },
+    "plan": { "$ref": "#/$defs/fileDigest" },
+    "plugin": { "$ref": "#/$defs/plugin" },
+    "providers": { "type": "array", "minItems": 3, "items": { "$ref": "#/$defs/provider" } },
+    "resolutions": { "type": "array", "minItems": 4, "items": { "$ref": "#/$defs/resolution" } },
+    "container": { "$ref": "#/$defs/container" },
+    "reference": { "$ref": "#/$defs/reference" },
+    "placementEvidence": { "$ref": "#/$defs/placementEvidence" },
+    "operatorPackage": { "type": "object", "additionalProperties": false, "required": ["location", "pluginFileName", "licenseFileName", "creationNotesFileName", "intakeBeforeVerification"], "properties": { "location": { "const": "operator-controlled-external-directory" }, "pluginFileName": { "$ref": "#/$defs/pluginName" }, "licenseFileName": { "const": "LICENSE.txt" }, "creationNotesFileName": { "const": "creation-notes.md" }, "intakeBeforeVerification": { "const": false } } },
+    "pluginEvidence": { "type": "object", "additionalProperties": false, "required": ["status", "length", "sha256"], "properties": { "status": { "const": "unavailable-before-gate-553-approval-a" }, "length": { "type": "null" }, "sha256": { "type": "null" } } },
+    "safety": { "type": "object", "additionalProperties": false, "required": ["executesExternalTools", "forgeWritesPluginBytes", "writesGameData", "verificationPerformed", "approvalGranted", "promotionPerformed", "humanGeckAuthoringRequired"], "properties": { "executesExternalTools": { "const": false }, "forgeWritesPluginBytes": { "const": false }, "writesGameData": { "const": false }, "verificationPerformed": { "const": false }, "approvalGranted": { "const": false }, "promotionPerformed": { "const": false }, "humanGeckAuthoringRequired": { "const": true } } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)+$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "path": { "type": "string", "minLength": 1 },
+    "pluginName": { "type": "string", "pattern": "^[^\\/:*?\"<>|]+\\.esp$" },
+    "fileDigest": { "type": "object", "additionalProperties": false, "required": ["path", "length", "sha256"], "properties": { "path": { "$ref": "#/$defs/path" }, "length": { "type": "integer", "minimum": 1 }, "sha256": { "$ref": "#/$defs/digest" } } },
+    "plugin": { "type": "object", "additionalProperties": false, "required": ["fileName", "author", "summary", "masters"], "properties": { "fileName": { "$ref": "#/$defs/pluginName" }, "author": { "type": "string", "minLength": 1 }, "summary": { "type": "string", "minLength": 1 }, "masters": { "const": ["FalloutNV.esm"] } } },
+    "provider": { "type": "object", "additionalProperties": false, "required": ["role", "path", "length", "sha256", "status"], "properties": { "role": { "enum": ["geck", "authoring-provider", "xedit-verifier", "xnvse", "geck-extender"] }, "path": { "$ref": "#/$defs/path" }, "length": { "type": "integer", "minimum": 1 }, "sha256": { "$ref": "#/$defs/digest" }, "status": { "const": "local-verified" } } },
+    "resolution": { "type": "object", "additionalProperties": false, "required": ["id", "kind", "editorId", "formId", "signature", "status", "evidence"], "properties": { "id": { "$ref": "#/$defs/id" }, "kind": { "enum": ["item", "cell", "worldspace", "container-base"] }, "editorId": { "type": "string", "minLength": 1 }, "formId": { "type": "string", "pattern": "^[A-F0-9]{8}$" }, "signature": { "type": "string", "pattern": "^[A-Z0-9_]{4}$" }, "status": { "const": "local-verified" }, "evidence": { "$ref": "#/$defs/fileDigest" } } },
+    "container": { "type": "object", "additionalProperties": false, "required": ["id", "editorId", "strategy", "respawns", "items"], "properties": { "id": { "$ref": "#/$defs/id" }, "editorId": { "type": "string", "minLength": 1 }, "strategy": { "const": "new" }, "respawns": { "const": false }, "items": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["resolutionId", "quantity"], "properties": { "resolutionId": { "$ref": "#/$defs/id" }, "quantity": { "type": "integer", "minimum": 1 } } } } } },
+    "reference": { "type": "object", "additionalProperties": false, "required": ["id", "editorId", "cellResolutionId", "baseContainerId", "position", "rotation", "placementEvidence", "ownership", "persistent", "encounterZonePolicy"], "properties": { "id": { "$ref": "#/$defs/id" }, "editorId": { "type": "string", "minLength": 1 }, "cellResolutionId": { "$ref": "#/$defs/id" }, "baseContainerId": { "$ref": "#/$defs/id" }, "position": { "$ref": "#/$defs/vector" }, "rotation": { "$ref": "#/$defs/vector" }, "placementEvidence": { "$ref": "#/$defs/placementDigest" }, "ownership": { "const": "unowned" }, "persistent": { "type": "boolean" }, "encounterZonePolicy": { "enum": ["inherit-cell", "none"] } } },
+    "placementDigest": { "type": "object", "additionalProperties": false, "required": ["path", "length", "sha256", "status"], "properties": { "path": { "$ref": "#/$defs/path" }, "length": { "type": "integer", "minimum": 1 }, "sha256": { "$ref": "#/$defs/digest" }, "status": { "const": "operator-attested" } } },
+    "vector": { "type": "object", "additionalProperties": false, "required": ["x", "y", "z"], "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "z": { "type": "number" } } },
+    "placementEvidence": { "type": "object", "additionalProperties": false, "required": ["path", "length", "sha256", "status", "captureMethod", "geckProviderSha256", "cell", "position", "rotation", "attestation", "limitations"], "properties": {
+      "path": { "$ref": "#/$defs/path" }, "length": { "type": "integer", "minimum": 1 }, "sha256": { "$ref": "#/$defs/digest" }, "status": { "const": "operator-attested" }, "captureMethod": { "const": "human-geck-inspection" }, "geckProviderSha256": { "$ref": "#/$defs/digest" },
+      "cell": { "type": "object", "additionalProperties": false, "required": ["resolutionId", "kind", "editorId", "formId", "signature"], "properties": { "resolutionId": { "$ref": "#/$defs/id" }, "kind": { "enum": ["cell", "worldspace"] }, "editorId": { "type": "string", "minLength": 1 }, "formId": { "type": "string", "pattern": "^[A-F0-9]{8}$" }, "signature": { "type": "string", "pattern": "^[A-Z0-9_]{4}$" } } },
+      "position": { "$ref": "#/$defs/vector" }, "rotation": { "$ref": "#/$defs/vector" },
+      "attestation": { "type": "object", "additionalProperties": false, "required": ["suitabilityHumanReviewed", "forgeObservedGeck", "providerCompatibilityProven", "pluginSavedDuringCapture", "verificationPerformed"], "properties": { "suitabilityHumanReviewed": { "const": true }, "forgeObservedGeck": { "const": false }, "providerCompatibilityProven": { "const": false }, "pluginSavedDuringCapture": { "const": false }, "verificationPerformed": { "const": false } } },
+      "limitations": { "const": ["operator-attested-not-machine-observed", "placement-suitability-not-independently-verified", "provider-compatibility-not-proven", "plugin-not-saved-or-verified"] }
+    } }
+  }
+}

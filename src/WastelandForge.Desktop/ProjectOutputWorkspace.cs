@@ -41,10 +41,12 @@ internal static class ProjectOutputWorkspace
         var generated = Path.GetFullPath(Path.Combine(root, "generated", "geck-authoring-plan"));
         var plan = Path.Combine(generated, "plan.json");
         var verification = Path.Combine(generated, "verification");
+        var subjectHandoff = Path.Combine(generated, "subject-handoff");
         var observer = Path.Combine(verification, "verifier.pas");
         var report = Path.Combine(verification, "report.json");
         var components = new List<string>();
         if (File.Exists(plan)) components.Add("plan");
+        if (File.Exists(Path.Combine(subjectHandoff, "subject-contract.json"))) components.Add("subject handoff");
         if (File.Exists(observer)) components.Add("observer");
         if (File.Exists(report)) components.Add("report");
         int? entries = Directory.Exists(generated) ? Directory.EnumerateFiles(generated, "*", SearchOption.AllDirectories).Count() : null;

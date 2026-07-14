@@ -11,6 +11,8 @@ internal sealed class LocalAppSettings
 
     public string DataRoot { get; set; } = string.Empty;
 
+    public string FnvIniPath { get; set; } = string.Empty;
+
     public string Mo2Path { get; set; } = string.Empty;
 
     public string Mo2ModsRoot { get; set; } = string.Empty;

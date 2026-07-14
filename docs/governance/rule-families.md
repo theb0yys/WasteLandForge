@@ -1267,3 +1267,12 @@ AI requirements.
   mismatched. Forge preserves the last good private index and does not execute
   xEdit, write game Data, or promote the record identity as verified design
   intent.
+
+## Gate 556
+
+- `WF-GEN-019`: a GECK verifier subject handoff is missing, schema-invalid,
+  unresolved, stale, unsafe, path-escaping, reparse-linked, digest-mismatched,
+  occupied by a source plugin, or inconsistent with the exact current authoring
+  plan. Forge refuses the handoff and does not launch GECK, write or inspect
+  plugin bytes, write game Data, verify the subject, grant approval, or promote
+  evidence.

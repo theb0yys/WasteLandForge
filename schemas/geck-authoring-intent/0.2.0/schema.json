@@ -1,0 +1,21 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://schemas.wastelandforge.dev/fnv/geck-authoring-intent/0.2.0/schema.json","type":"object","additionalProperties":false,
+ "required":["schemaVersion","kind","id","plugin","environment","resolutions","container","reference"],
+ "properties":{
+  "schemaVersion":{"const":"0.2.0"},"kind":{"const":"geck-authoring-intent"},"id":{"$ref":"#/$defs/id"},
+  "plugin":{"type":"object","additionalProperties":false,"required":["fileName","author","summary","masters"],"properties":{"fileName":{"type":"string","pattern":"^[^\\/:*?\"<>|]+\\.esp$"},"author":{"type":"string","minLength":1},"summary":{"type":"string","minLength":1},"masters":{"const":["FalloutNV.esm"]}}},
+  "environment":{"type":"object","additionalProperties":false,"required":["mode","outputRoot","providers"],"properties":{"mode":{"enum":["physical-data","mo2-profile"]},"outputRoot":{"$ref":"#/$defs/path"},"providers":{"type":"array","minItems":3,"items":{"$ref":"#/$defs/provider"}}}},
+  "resolutions":{"type":"array","minItems":4,"items":{"$ref":"#/$defs/resolution"}},
+  "container":{"type":"object","additionalProperties":false,"required":["id","editorId","strategy","respawns","items"],"properties":{"id":{"$ref":"#/$defs/id"},"editorId":{"type":"string","minLength":1},"strategy":{"enum":["new","clone-approved"]},"respawns":{"const":false},"items":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["resolutionId","quantity"],"properties":{"resolutionId":{"$ref":"#/$defs/id"},"quantity":{"type":"integer","minimum":1}}}}}},
+  "reference":{"type":"object","additionalProperties":false,"required":["id","editorId","cellResolutionId","baseContainerId","position","rotation","placementEvidence","ownership","persistent","encounterZonePolicy"],"properties":{"id":{"$ref":"#/$defs/id"},"editorId":{"type":"string","minLength":1},"cellResolutionId":{"$ref":"#/$defs/id"},"baseContainerId":{"$ref":"#/$defs/id"},"position":{"$ref":"#/$defs/vector"},"rotation":{"$ref":"#/$defs/vector"},"placementEvidence":{"$ref":"#/$defs/placementEvidence"},"ownership":{"const":"unowned"},"persistent":{"type":"boolean"},"encounterZonePolicy":{"enum":["inherit-cell","none"]}}}
+ },
+ "$defs":{
+  "id":{"type":"string","pattern":"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)+$"},"path":{"type":"string","minLength":1},
+  "digest":{"type":"string","pattern":"^[a-f0-9]{64}$"},
+  "fileDigest":{"type":"object","additionalProperties":false,"required":["path","length","sha256"],"properties":{"path":{"$ref":"#/$defs/path"},"length":{"type":"integer","minimum":1},"sha256":{"$ref":"#/$defs/digest"}}},
+  "placementEvidence":{"type":"object","additionalProperties":false,"required":["path","length","sha256","status"],"properties":{"path":{"$ref":"#/$defs/path"},"length":{"type":"integer","minimum":1},"sha256":{"$ref":"#/$defs/digest"},"status":{"const":"operator-attested"}}},
+  "provider":{"type":"object","additionalProperties":false,"required":["role","path","length","sha256","status"],"properties":{"role":{"enum":["geck","authoring-provider","xedit-verifier","xnvse","geck-extender"]},"path":{"$ref":"#/$defs/path"},"length":{"type":"integer","minimum":1},"sha256":{"$ref":"#/$defs/digest"},"status":{"const":"local-verified"}}},
+  "resolution":{"type":"object","additionalProperties":false,"required":["id","kind","editorId","formId","signature","status","evidence"],"properties":{"id":{"$ref":"#/$defs/id"},"kind":{"enum":["item","cell","worldspace","container-base"]},"editorId":{"type":"string","minLength":1},"formId":{"type":"string","pattern":"^[A-F0-9]{8}$"},"signature":{"type":"string","pattern":"^[A-Z0-9_]{4}$"},"status":{"enum":["local-verified","provisional"]},"evidence":{"$ref":"#/$defs/fileDigest"}}},
+  "vector":{"type":"object","additionalProperties":false,"required":["x","y","z"],"properties":{"x":{"type":"number"},"y":{"type":"number"},"z":{"type":"number"}}}
+ }
+}

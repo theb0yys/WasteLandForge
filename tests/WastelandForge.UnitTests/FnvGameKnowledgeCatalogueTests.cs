@@ -45,26 +45,28 @@ public sealed class FnvGameKnowledgeCatalogueTests
         var masterBefore = Sha(File.ReadAllBytes(fixture.MasterPath));
         var providerBefore = Sha(File.ReadAllBytes(fixture.ProviderPath));
 
-        var prepared = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, fixture.UserStateRoot);
+        var prepared = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, fixture.IniPath, fixture.UserStateRoot);
 
         Assert.True(prepared.Success, prepared.Message);
         Assert.Equal(FnvGameKnowledgeExecutionState.ApprovalRequired, prepared.State);
         Assert.NotNull(prepared.PlanPath);
         Assert.NotNull(prepared.ApprovalToken);
-        Assert.Equal(12, prepared.Arguments.Count);
+        Assert.Equal(13, prepared.Arguments.Count);
         Assert.Equal("-FNV", prepared.Arguments[0]);
         Assert.Equal("-view", prepared.Arguments[1]);
         Assert.Equal("-autoload", prepared.Arguments[2]);
         Assert.StartsWith("-script:", prepared.Arguments[3], StringComparison.Ordinal);
         Assert.Equal("-autoexit", prepared.Arguments[4]);
         Assert.StartsWith("-D:", prepared.Arguments[5], StringComparison.Ordinal);
-        Assert.StartsWith("-P:", prepared.Arguments[6], StringComparison.Ordinal);
-        Assert.StartsWith("-S:", prepared.Arguments[7], StringComparison.Ordinal);
-        Assert.StartsWith("-C:", prepared.Arguments[8], StringComparison.Ordinal);
-        Assert.StartsWith("-T:", prepared.Arguments[9], StringComparison.Ordinal);
-        Assert.StartsWith("-B:", prepared.Arguments[10], StringComparison.Ordinal);
-        Assert.StartsWith("-R:", prepared.Arguments[11], StringComparison.Ordinal);
-        foreach (var index in new[] { 5, 7, 8, 9, 10 }) Assert.EndsWith(Path.DirectorySeparatorChar.ToString(), prepared.Arguments[index], StringComparison.Ordinal);
+        Assert.Equal("-I:" + fixture.IniPath, prepared.Arguments[6]);
+        Assert.StartsWith("-P:", prepared.Arguments[7], StringComparison.Ordinal);
+        Assert.StartsWith("-S:", prepared.Arguments[8], StringComparison.Ordinal);
+        Assert.StartsWith("-C:", prepared.Arguments[9], StringComparison.Ordinal);
+        Assert.StartsWith("-T:", prepared.Arguments[10], StringComparison.Ordinal);
+        Assert.StartsWith("-B:", prepared.Arguments[11], StringComparison.Ordinal);
+        Assert.StartsWith("-R:", prepared.Arguments[12], StringComparison.Ordinal);
+        foreach (var index in new[] { 5, 8, 9, 10, 11 }) Assert.EndsWith(Path.DirectorySeparatorChar.ToString(), prepared.Arguments[index], StringComparison.Ordinal);
+        Assert.False(prepared.Arguments[6].EndsWith(Path.DirectorySeparatorChar));
         Assert.Equal("FalloutNV.esm\r\n", File.ReadAllText(Path.Combine(prepared.RunDirectory!, "state", FnvGameKnowledgeCatalogue.PrivatePluginListFileName)));
         var script = File.ReadAllText(Path.Combine(prepared.RunDirectory!, FnvGameKnowledgeCatalogue.ScriptFileName));
         Assert.Contains("fnv-game-knowledge-export/0.2.0", script, StringComparison.Ordinal);
@@ -75,6 +77,10 @@ public sealed class FnvGameKnowledgeCatalogueTests
         var plan = JsonNode.Parse(File.ReadAllText(prepared.PlanPath!))!;
         Assert.Equal(prepared.RunDirectory, Assert.Single(plan["writePolicy"]!["allowedRoots"]!.AsArray())!.GetValue<string>());
         Assert.Equal(3, plan["writePolicy"]!["protectedRoots"]!.AsArray().Count);
+        Assert.Equal(fixture.IniPath, Assert.Single(plan["writePolicy"]!["protectedFiles"]!.AsArray())!.GetValue<string>());
+        Assert.Equal("Fallout.ini", plan["inputs"]!["ini"]!["fileName"]!.GetValue<string>());
+        Assert.Contains(fixture.IniPath, prepared.Details, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(plan["inputs"]!["ini"]!["sha256"]!.GetValue<string>(), prepared.Details, StringComparison.Ordinal);
         Assert.True(plan["writePolicy"]!["backupsMustRemainEmpty"]!.GetValue<bool>());
         Assert.Equal(masterBefore, Sha(File.ReadAllBytes(fixture.MasterPath)));
         Assert.Equal(providerBefore, Sha(File.ReadAllBytes(fixture.ProviderPath)));
@@ -96,10 +102,13 @@ public sealed class FnvGameKnowledgeCatalogueTests
         Assert.True(File.Exists(result.ReceiptPath));
         Assert.Contains(result.ChangedPaths, path => path.EndsWith(FnvGameKnowledgeCatalogue.RawExportFileName, StringComparison.OrdinalIgnoreCase));
         var executionReceipt = JsonNode.Parse(File.ReadAllText(result.ReceiptPath!))!;
+        Assert.Equal("0.2.0", executionReceipt["formatVersion"]!.GetValue<string>());
         Assert.Equal(1000, executionReceipt["process"]!["elapsedMilliseconds"]!.GetValue<long>());
         Assert.True(executionReceipt["inventories"]!["data"]!["unchanged"]!.GetValue<bool>());
         Assert.True(executionReceipt["inventories"]!["provider"]!["unchanged"]!.GetValue<bool>());
         Assert.True(executionReceipt["inventories"]!["userState"]!["unchanged"]!.GetValue<bool>());
+        Assert.True(executionReceipt["audit"]!["iniUnchanged"]!.GetValue<bool>());
+        Assert.True(executionReceipt["ini"]!["unchanged"]!.GetValue<bool>());
         var index = JsonNode.Parse(File.ReadAllText(fixture.Catalogue.IndexPath))!;
         Assert.Equal("0.2.0", index["formatVersion"]!.GetValue<string>());
         Assert.True(index["safety"]!["forgeExecutedXEdit"]!.GetValue<bool>());
@@ -138,16 +147,75 @@ public sealed class FnvGameKnowledgeCatalogueTests
     public void AutomatedExecutionRejectsTamperedInputsAndDirtyReservedOutputsBeforeProcessCreation()
     {
         using var tampered = Fixture.Create();
-        var tamperedPrepared = tampered.Catalogue.PrepareAutomatedExecution(tampered.MasterPath, tampered.ProviderPath, tampered.UserStateRoot);
+        var tamperedPrepared = tampered.Catalogue.PrepareAutomatedExecution(tampered.MasterPath, tampered.ProviderPath, tampered.IniPath, tampered.UserStateRoot);
         File.AppendAllText(Path.Combine(tamperedPrepared.RunDirectory!, FnvGameKnowledgeCatalogue.ScriptFileName), "tamper", new UTF8Encoding(false));
         var tamperedError = Assert.Throws<InvalidOperationException>(() => tampered.Catalogue.ValidateAutomatedExecution(tamperedPrepared.RunDirectory!, tamperedPrepared.ApprovalToken!));
         Assert.Contains("changed", tamperedError.Message, StringComparison.OrdinalIgnoreCase);
 
         using var dirty = Fixture.Create();
-        var dirtyPrepared = dirty.Catalogue.PrepareAutomatedExecution(dirty.MasterPath, dirty.ProviderPath, dirty.UserStateRoot);
+        var dirtyPrepared = dirty.Catalogue.PrepareAutomatedExecution(dirty.MasterPath, dirty.ProviderPath, dirty.IniPath, dirty.UserStateRoot);
         File.WriteAllText(Path.Combine(dirtyPrepared.RunDirectory!, FnvGameKnowledgeCatalogue.RawExportFileName), "reserved output", new UTF8Encoding(false));
         var dirtyError = Assert.Throws<InvalidOperationException>(() => dirty.Catalogue.ValidateAutomatedExecution(dirtyPrepared.RunDirectory!, dirtyPrepared.ApprovalToken!));
         Assert.Contains("already contains output", dirtyError.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void AutomatedExecutionRefusesMissingDirectoryAndWrongBasenameIniInputs()
+    {
+        using var fixture = Fixture.Create();
+        var blank = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, string.Empty, fixture.UserStateRoot);
+        Assert.False(blank.Success);
+        Assert.Contains("absolute Fallout.ini", blank.Message, StringComparison.OrdinalIgnoreCase);
+
+        var missingPath = Path.Combine(fixture.Root, "Missing", "Fallout.ini");
+        var missing = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, missingPath, fixture.UserStateRoot);
+        Assert.False(missing.Success);
+        Assert.Contains("does not exist", missing.Message, StringComparison.OrdinalIgnoreCase);
+
+        var directoryPath = Path.Combine(fixture.Root, "Directory", "Fallout.ini");
+        Directory.CreateDirectory(directoryPath);
+        var directory = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, directoryPath, fixture.UserStateRoot);
+        Assert.False(directory.Success);
+
+        var wrongPath = Path.Combine(fixture.Root, "FalloutPrefs.ini");
+        File.WriteAllText(wrongPath, "[Display]\r\n", new UTF8Encoding(false));
+        var wrong = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, wrongPath, fixture.UserStateRoot);
+        Assert.False(wrong.Success);
+        Assert.Contains("named Fallout.ini", wrong.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void AutomatedExecutionRefusesIniDriftBeforeProcessCreation()
+    {
+        using var fixture = Fixture.Create();
+        var prepared = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, fixture.IniPath, fixture.UserStateRoot);
+        Assert.True(prepared.Success, prepared.Message);
+        File.AppendAllText(fixture.IniPath, "bSyntheticDrift=1\r\n", new UTF8Encoding(false));
+
+        var error = Assert.Throws<InvalidOperationException>(() => fixture.Catalogue.ValidateAutomatedExecution(prepared.RunDirectory!, prepared.ApprovalToken!));
+
+        Assert.Contains("Fallout.ini changed", error.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void AutomatedExecutionRefusesLegacyPlanEvenWhenItsDigestIsApproved()
+    {
+        using var fixture = Fixture.Create();
+        var prepared = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, fixture.IniPath, fixture.UserStateRoot);
+        Assert.True(prepared.Success, prepared.Message);
+        var plan = JsonNode.Parse(File.ReadAllText(prepared.PlanPath!))!.AsObject();
+        plan["formatVersion"] = "0.1.0";
+        plan["inputs"]!.AsObject().Remove("ini");
+        plan["paths"]!.AsObject().Remove("ini");
+        plan["arguments"]!.AsArray().RemoveAt(6);
+        plan["writePolicy"]!.AsObject().Remove("protectedFiles");
+        Write(prepared.PlanPath!, plan);
+        var legacyToken = Sha(File.ReadAllBytes(prepared.PlanPath!));
+
+        var error = Assert.Throws<InvalidOperationException>(() => fixture.Catalogue.ValidateAutomatedExecution(prepared.RunDirectory!, legacyToken));
+
+        Assert.Contains("Legacy", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Fallout.ini", error.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -167,6 +235,18 @@ public sealed class FnvGameKnowledgeCatalogueTests
         var userResult = userDrift.Catalogue.CompleteAutomatedExecution(userPrepared.RunDirectory!, userPrepared.ApprovalToken!, new(true, 11, now, now, 0, false, null), TestContext.Current.CancellationToken);
         Assert.False(userResult.Success);
         Assert.Contains("user load-order/settings state changed", userResult.Message, StringComparison.OrdinalIgnoreCase);
+
+        using var iniDrift = Fixture.Create();
+        var iniPrepared = iniDrift.PrepareAutomatedRunWithValidOutput();
+        File.AppendAllText(iniDrift.IniPath, "bSyntheticDrift=1\r\n", new UTF8Encoding(false));
+        var iniResult = iniDrift.Catalogue.CompleteAutomatedExecution(iniPrepared.RunDirectory!, iniPrepared.ApprovalToken!, new(true, 111, now, now, 0, false, null), TestContext.Current.CancellationToken);
+        Assert.False(iniResult.Success);
+        Assert.Contains("Fallout.ini changed", iniResult.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(iniDrift.IniPath, iniResult.ChangedPaths, StringComparer.OrdinalIgnoreCase);
+        var iniReceipt = JsonNode.Parse(File.ReadAllText(iniResult.ReceiptPath!))!;
+        Assert.False(iniReceipt["audit"]!["iniUnchanged"]!.GetValue<bool>());
+        Assert.False(iniReceipt["ini"]!["unchanged"]!.GetValue<bool>());
+        Assert.NotEqual(iniReceipt["ini"]!["before"]!["sha256"]!.GetValue<string>(), iniReceipt["ini"]!["after"]!["sha256"]!.GetValue<string>());
 
         using var backup = Fixture.Create();
         var backupPrepared = backup.PrepareAutomatedRunWithValidOutput();
@@ -329,7 +409,7 @@ public sealed class FnvGameKnowledgeCatalogueTests
         if (OperatingSystem.IsWindows()) CreateJunction(runs, outside); else Directory.CreateSymbolicLink(runs, outside);
         try
         {
-            var result = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, fixture.UserStateRoot);
+            var result = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, fixture.IniPath, fixture.UserStateRoot);
 
             Assert.False(result.Success);
             Assert.Equal(FnvGameKnowledgeCatalogue.RuleId, result.RuleId);
@@ -339,6 +419,26 @@ public sealed class FnvGameKnowledgeCatalogueTests
         finally
         {
             if (OperatingSystem.IsWindows()) DeleteJunction(runs); else Directory.Delete(runs);
+        }
+    }
+
+    [Fact]
+    public void ReparsePointIniPathIsRefused()
+    {
+        using var fixture = Fixture.Create();
+        var link = Path.Combine(fixture.Root, "LinkedIni");
+        var target = Path.GetDirectoryName(fixture.IniPath)!;
+        if (OperatingSystem.IsWindows()) CreateJunction(link, target); else Directory.CreateSymbolicLink(link, target);
+        try
+        {
+            var result = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, Path.Combine(link, "Fallout.ini"), fixture.UserStateRoot);
+
+            Assert.False(result.Success);
+            Assert.Contains("reparse", result.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (OperatingSystem.IsWindows()) DeleteJunction(link); else Directory.Delete(link);
         }
     }
 
@@ -410,13 +510,17 @@ public sealed class FnvGameKnowledgeCatalogueTests
             var data = Path.Combine(root, "Game", "Data");
             var tools = Path.Combine(root, "Tools");
             UserStateRoot = Path.Combine(root, "UserState", "FalloutNV");
+            var documents = Path.Combine(root, "Documents", "My Games", "FalloutNV");
             Directory.CreateDirectory(data);
             Directory.CreateDirectory(tools);
             Directory.CreateDirectory(UserStateRoot);
+            Directory.CreateDirectory(documents);
             MasterPath = Path.Combine(data, "FalloutNV.esm");
             ProviderPath = Path.Combine(tools, "FNVEdit.exe");
+            IniPath = Path.Combine(documents, "Fallout.ini");
             File.WriteAllText(MasterPath, "synthetic master identity bytes", new UTF8Encoding(false));
             File.WriteAllText(ProviderPath, "synthetic xEdit provider bytes", new UTF8Encoding(false));
+            File.WriteAllText(IniPath, "[General]\r\nbUseThreadedAI=1\r\n", new UTF8Encoding(false));
             Catalogue = new FnvGameKnowledgeCatalogue(CacheRoot, limits);
         }
 
@@ -424,6 +528,7 @@ public sealed class FnvGameKnowledgeCatalogueTests
         public string CacheRoot { get; }
         public string MasterPath { get; }
         public string ProviderPath { get; }
+        public string IniPath { get; }
         public string UserStateRoot { get; }
         public FnvGameKnowledgeCatalogue Catalogue { get; }
 
@@ -439,7 +544,7 @@ public sealed class FnvGameKnowledgeCatalogueTests
 
         public FnvGameKnowledgeExecutionPreparation PrepareAutomatedRunWithValidOutput()
         {
-            var prepared = Catalogue.PrepareAutomatedExecution(MasterPath, ProviderPath, UserStateRoot);
+            var prepared = Catalogue.PrepareAutomatedExecution(MasterPath, ProviderPath, IniPath, UserStateRoot);
             Assert.True(prepared.Success, prepared.Message);
             var export = JsonNode.Parse(File.ReadAllText(FindSyntheticExport()))!;
             export["formatVersion"] = "0.2.0";

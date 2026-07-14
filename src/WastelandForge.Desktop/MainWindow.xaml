@@ -842,6 +842,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
 
               <StackPanel Grid.ColumnSpan="3" Margin="0,0,0,18">
@@ -911,7 +912,11 @@
               <TextBox x:Name="XEditPathTextBox" Grid.Row="8" Grid.Column="1" Margin="12,5" TextChanged="SettingsPathChanged" />
               <Button Grid.Row="8" Grid.Column="2" Content="Browse" Margin="8,5,0,5" Tag="xedit" Click="BrowseSettingsFileClicked" />
 
-              <Grid Grid.Row="9" Grid.ColumnSpan="3" Margin="0,20,0,0">
+              <TextBlock Grid.Row="9" Text="Fallout.ini" VerticalAlignment="Center" FontWeight="SemiBold" />
+              <TextBox x:Name="FnvIniPathTextBox" AutomationProperties.AutomationId="FnvIniPathTextBox" Grid.Row="9" Grid.Column="1" Margin="12,5" TextChanged="SettingsPathChanged" />
+              <Button Grid.Row="9" Grid.Column="2" Content="Browse" Margin="8,5,0,5" Tag="fnvini" Click="BrowseSettingsFileClicked" />
+
+              <Grid Grid.Row="10" Grid.ColumnSpan="3" Margin="0,20,0,0">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="Auto" />
@@ -1016,6 +1021,10 @@
                 <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                   <StackPanel Margin="0,0,4,0"><TextBlock Text="Rotation X" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentRotationXTextBox" AutomationProperties.AutomationId="GeckIntentRotationXTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel><StackPanel Grid.Column="1" Margin="4,0"><TextBlock Text="Y" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentRotationYTextBox" AutomationProperties.AutomationId="GeckIntentRotationYTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel><StackPanel Grid.Column="2" Margin="4,0,0,0"><TextBlock Text="Z" Foreground="{StaticResource TextMuted}" /><TextBox x:Name="GeckIntentRotationZTextBox" AutomationProperties.AutomationId="GeckIntentRotationZTextBox" TextChanged="GeckIntentBuilderInputChanged" /></StackPanel>
                 </Grid>
+                <TextBlock Text="Placement evidence" Foreground="{StaticResource TextMuted}" Margin="0,8,0,0" />
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBox x:Name="GeckIntentPlacementEvidencePathTextBox" AutomationProperties.AutomationId="GeckIntentPlacementEvidencePathTextBox" TextChanged="GeckIntentBuilderInputChanged" /><Button x:Name="BrowseGeckIntentPlacementEvidenceButton" AutomationProperties.AutomationId="BrowseGeckIntentPlacementEvidenceButton" Grid.Column="1" Content="Browse" Margin="8,0,0,0" Click="BrowseGeckIntentPlacementEvidenceClicked" /></Grid>
+                <CheckBox x:Name="GeckIntentPlacementEvidenceAttestedCheckBox" AutomationProperties.AutomationId="GeckIntentPlacementEvidenceAttestedCheckBox" Content="I attest this exact transform was inspected and deliberately selected in GECK" Margin="0,8,0,0" Checked="GeckIntentBuilderInputChanged" Unchecked="GeckIntentBuilderInputChanged" />
+                <TextBlock x:Name="GeckIntentPlacementEvidenceSummaryTextBlock" AutomationProperties.AutomationId="GeckIntentPlacementEvidenceSummaryTextBlock" Text="Not validated" Foreground="{StaticResource TextMuted}" Margin="0,6,0,0" TextWrapping="Wrap" />
                 <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><CheckBox x:Name="GeckIntentPersistentCheckBox" AutomationProperties.AutomationId="GeckIntentPersistentCheckBox" Content="Persistent" Checked="GeckIntentBuilderInputChanged" Unchecked="GeckIntentBuilderInputChanged" /><ComboBox x:Name="GeckIntentEncounterPolicyComboBox" AutomationProperties.AutomationId="GeckIntentEncounterPolicyComboBox" Grid.Column="1" Margin="12,0,0,0" SelectionChanged="GeckIntentBuilderInputChanged"><ComboBoxItem Content="Inherit cell encounter zone" Tag="inherit-cell" IsSelected="True" /><ComboBoxItem Content="No encounter zone" Tag="none" /></ComboBox></Grid>
               </StackPanel>
 
@@ -1701,7 +1710,15 @@
                   <Border Margin="0,16,0,0" BorderBrush="{StaticResource BorderMuted}" BorderThickness="0,1,0,0" />
                   <Grid Margin="0,16,0,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <StackPanel><TextBlock Text="2. Read-only observer" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Generate the deterministic Pascal observer bundle bound to the current plan." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
+                    <StackPanel><TextBlock Text="2. Manual verifier subject handoff" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Prepare the plan-bound worklist and creation-notes template for human GECK authoring." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
+                    <TextBlock x:Name="GeckAuthoringSubjectHandoffStateTextBlock" Grid.Column="1" Text="Locked" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </Grid>
+                  <WrapPanel Margin="0,8,0,0"><Button x:Name="PreviewGeckAuthoringSubjectHandoffButton" Content="Preview Subject Kit" IsEnabled="False" Click="PreviewGeckAuthoringSubjectHandoffClicked" /><Button x:Name="GenerateGeckAuthoringSubjectHandoffButton" Content="Prepare Subject Kit" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="GenerateGeckAuthoringSubjectHandoffClicked" /></WrapPanel>
+
+                  <Border Margin="0,16,0,0" BorderBrush="{StaticResource BorderMuted}" BorderThickness="0,1,0,0" />
+                  <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Text="3. Read-only observer" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Generate the deterministic Pascal observer bundle bound to the current plan." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
                     <TextBlock x:Name="GeckAuthoringVerifierStateTextBlock" Grid.Column="1" Text="Locked" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" VerticalAlignment="Center" />
                   </Grid>
                   <WrapPanel Margin="0,8,0,0"><Button x:Name="PreviewGeckAuthoringVerifierButton" Content="Preview Observer" IsEnabled="False" Click="PreviewGeckAuthoringVerifierClicked" /><Button x:Name="GenerateGeckAuthoringVerifierButton" Content="Generate Observer" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="GenerateGeckAuthoringVerifierClicked" /></WrapPanel>
@@ -1709,7 +1726,7 @@
                   <Border Margin="0,16,0,0" BorderBrush="{StaticResource BorderMuted}" BorderThickness="0,1,0,0" />
                   <Grid Margin="0,16,0,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <StackPanel><TextBlock Text="3. Raw observations" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Select the project-contained JSON written by the manually run observer." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
+                    <StackPanel><TextBlock Text="4. Raw observations" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Select the project-contained JSON written by the manually run observer." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
                     <TextBlock x:Name="GeckAuthoringObservationsStateTextBlock" Grid.Column="1" Text="Required" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" VerticalAlignment="Center" />
                   </Grid>
                   <Grid Margin="0,8,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBox x:Name="GeckAuthoringObservationsPathTextBox" Padding="8" TextChanged="GeckAuthoringObservationsPathChanged" /><Button x:Name="BrowseGeckAuthoringObservationsButton" Grid.Column="1" Content="Browse JSON" Margin="8,0,0,0" Click="BrowseGeckAuthoringObservationsClicked" /></Grid>
@@ -1717,7 +1734,7 @@
                   <Border Margin="0,16,0,0" BorderBrush="{StaticResource BorderMuted}" BorderThickness="0,1,0,0" />
                   <Grid Margin="0,16,0,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <StackPanel><TextBlock Text="4. Semantic verification" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Preview the exact semantic comparison, then explicitly seal the verified report." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
+                    <StackPanel><TextBlock Text="5. Semantic verification" Foreground="{StaticResource TextPrimary}" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Preview the exact semantic comparison, then explicitly seal the verified report." Foreground="{StaticResource TextMuted}" Margin="0,3,0,0" TextWrapping="Wrap" /></StackPanel>
                     <TextBlock x:Name="GeckAuthoringVerificationStateTextBlock" Grid.Column="1" Text="Locked" Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" VerticalAlignment="Center" />
                   </Grid>
                   <WrapPanel Margin="0,8,0,0"><Button x:Name="PreviewGeckAuthoringVerificationButton" Content="Preview Verification" IsEnabled="False" Click="PreviewGeckAuthoringVerificationClicked" /><Button x:Name="GenerateGeckAuthoringVerificationButton" Content="Seal Verification Report" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" IsEnabled="False" Click="GenerateGeckAuthoringVerificationClicked" /></WrapPanel>

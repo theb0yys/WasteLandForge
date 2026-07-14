@@ -47,16 +47,18 @@ function Set-Value([System.Windows.Automation.AutomationElement] $Control, [stri
 
 function Select-ComboItem([System.Windows.Automation.AutomationElement] $ComboBox, [string] $Name) {
     $ComboBox.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Expand()
-    $condition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::NameProperty, $Name)
-    $item = $ComboBox.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $condition)
-    if ($null -eq $item) {
-        $itemCondition = [System.Windows.Automation.AndCondition]::new(@(
-            $condition,
-            [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::ListItem)
-        ))
-        $item = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $itemCondition)
-    }
-    if ($null -eq $item) { throw "Installed combo item was not found: $Name" }
+    $nameCondition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::NameProperty, $Name)
+    $itemCondition = [System.Windows.Automation.AndCondition]::new(@(
+        $nameCondition,
+        [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::ListItem)
+    ))
+    $item = Wait-Until {
+        $candidate = $ComboBox.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $nameCondition)
+        if ($null -eq $candidate) {
+            $candidate = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $itemCondition)
+        }
+        $candidate
+    } "Installed combo item was not found: $Name" 10
     $item.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern).Select()
     $ComboBox.GetCurrentPattern([System.Windows.Automation.ExpandCollapsePattern]::Pattern).Collapse()
 }
@@ -93,16 +95,18 @@ public static class WfGameKnowledgeWindow {
 $installer = Resolve-RepositoryFile $InstallerPath 'Installer'
 $fakeProviderProject = Resolve-RepositoryFile $FakeProviderProjectPath 'Synthetic FNVEdit provider project'
 $runId = [Guid]::NewGuid().ToString('N')
-$installRoot = Join-Path $env:LOCALAPPDATA "WastelandForge\Gate547-$runId"
-$settingsRoot = Join-Path $env:TEMP "WastelandForge-Gate547-Settings-$runId"
-$fixtureRoot = Join-Path $env:TEMP "WastelandForge-Gate547-Fixture-$runId"
+$installRoot = Join-Path $env:LOCALAPPDATA "WastelandForge\Gate550-$runId"
+$settingsRoot = Join-Path $env:TEMP "WastelandForge-Gate550-Settings-$runId"
+$fixtureRoot = Join-Path $env:TEMP "WastelandForge-Gate550-Fixture-$runId"
 $gameRoot = Join-Path $fixtureRoot 'Game'
 $dataRoot = Join-Path $gameRoot 'Data'
 $toolRoot = Join-Path $fixtureRoot 'Tools'
 $userStateRoot = Join-Path $fixtureRoot 'UserState\FalloutNV'
+$documentsRoot = Join-Path $fixtureRoot 'Documents\My Games\FalloutNV'
 $projectRoot = Join-Path $fixtureRoot 'Project'
 $masterPath = Join-Path $dataRoot 'FalloutNV.esm'
 $providerPath = Join-Path $toolRoot 'FNVEdit.exe'
+$iniPath = Join-Path $documentsRoot 'Fallout.ini'
 $process = $null
 $installed = $false
 $failure = $null
@@ -111,14 +115,16 @@ try {
     $install = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installRoot") -Wait -PassThru -WindowStyle Hidden
     if ($install.ExitCode -ne 0) { throw "Installer exited with $($install.ExitCode)." }
     $installed = $true
-    New-Item -ItemType Directory -Path $dataRoot,$toolRoot,$userStateRoot,(Join-Path $settingsRoot 'WastelandForge') -Force | Out-Null
+    New-Item -ItemType Directory -Path $dataRoot,$toolRoot,$userStateRoot,$documentsRoot,(Join-Path $settingsRoot 'WastelandForge') -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $installRoot 'DemoProjects\ExampleMod') -Destination $projectRoot -Recurse
     [IO.File]::WriteAllBytes($masterPath, [Text.Encoding]::UTF8.GetBytes('synthetic FalloutNV.esm identity bytes'))
     [IO.File]::WriteAllText((Join-Path $userStateRoot 'plugins.txt'), 'synthetic user load-order state', [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($iniPath, "[General]`r`nbUseThreadedAI=1`r`n", [Text.UTF8Encoding]::new($false))
     $publish = Start-Process -FilePath 'dotnet' -ArgumentList @('publish', $fakeProviderProject, '-c', 'Release', '-o', $toolRoot, '-p:UseAppHost=true', '-m:1', '/nodeReuse:false') -Wait -PassThru -NoNewWindow
     if ($publish.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $providerPath -PathType Leaf)) { throw "Synthetic FNVEdit provider publish failed with exit code $($publish.ExitCode)." }
     $masterHash = (Get-FileHash -LiteralPath $masterPath -Algorithm SHA256).Hash
     $providerHash = (Get-FileHash -LiteralPath $providerPath -Algorithm SHA256).Hash
+    $iniHash = (Get-FileHash -LiteralPath $iniPath -Algorithm SHA256).Hash
     $projectBefore = Get-ProjectSnapshot $projectRoot
     $dataBefore = Get-ProjectSnapshot $dataRoot
     $toolsBefore = Get-ProjectSnapshot $toolRoot
@@ -127,6 +133,7 @@ try {
         ProjectRoot = $projectRoot
         GameRoot = $gameRoot
         DataRoot = $dataRoot
+        FnvIniPath = $iniPath
         Mo2Path = ''
         Mo2ModsRoot = ''
         ToolPaths = [ordered]@{ geck = ''; xedit = $providerPath }
@@ -177,8 +184,12 @@ try {
     $runRoot = Wait-Until { Get-ChildItem -LiteralPath (Join-Path $cacheRoot 'runs') -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1 -ExpandProperty FullName } 'Prepared private export run was not created.'
     foreach ($name in @('WastelandForgeFNVGameKnowledge.pas','run-manifest.json','execution-plan.json','state\Plugins.txt')) { if (-not (Test-Path -LiteralPath (Join-Path $runRoot $name) -PathType Leaf)) { throw "Prepared private execution bundle omitted $name." } }
     $plan = Get-Content -LiteralPath (Join-Path $runRoot 'execution-plan.json') -Raw | ConvertFrom-Json
-    if ($plan.arguments.Count -ne 12) { throw "Installed private execution plan did not contain exactly 12 arguments." }
+    if ($plan.formatVersion -ne '0.2.0' -or $plan.arguments.Count -ne 13) { throw "Installed private execution plan did not contain the INI-bound 0.2.0 contract with exactly 13 arguments." }
     if ($plan.arguments[0] -ne '-FNV' -or $plan.arguments[1] -ne '-view' -or $plan.arguments[2] -ne '-autoload' -or $plan.arguments[4] -ne '-autoexit') { throw 'Installed private execution plan changed the fixed argument order.' }
+    if ($plan.arguments[5] -ne ('-D:' + $dataRoot + '\') -or $plan.arguments[6] -ne ('-I:' + $iniPath) -or -not $plan.arguments[7].StartsWith('-P:', [StringComparison]::Ordinal)) { throw 'Installed private execution plan did not place the exact Fallout.ini argument after -D and before -P.' }
+    if ($plan.inputs.ini.path -ne $iniPath -or $plan.inputs.ini.fileName -ne 'Fallout.ini' -or $plan.inputs.ini.sha256 -ne $iniHash.ToLowerInvariant() -or $plan.writePolicy.protectedFiles.Count -ne 1 -or $plan.writePolicy.protectedFiles[0] -ne $iniPath) { throw 'Installed private execution plan did not bind and protect the exact Fallout.ini evidence.' }
+    $previewDetails = (Require-Control $window 'GameKnowledgeDetailsTextBox').GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value
+    if (-not $previewDetails.Contains($iniPath, [StringComparison]::OrdinalIgnoreCase) -or -not $previewDetails.Contains($iniHash.ToLowerInvariant(), [StringComparison]::Ordinal)) { throw 'Installed operator preview did not expose the exact Fallout.ini path and digest.' }
     if ((Get-Content -LiteralPath (Join-Path $runRoot 'state\Plugins.txt') -Raw) -ne "FalloutNV.esm`r`n") { throw 'Installed private execution plan did not isolate FalloutNV.esm.' }
 
     Invoke-Control (Require-Control $window 'RunGameKnowledgeExportButton')
@@ -190,7 +201,8 @@ try {
     foreach ($name in @('raw-export.json','logs\FNVEdit.log.txt','state\Plugins.fnvviewsettings','cache\synthetic-cache.txt','temp\synthetic-temp.txt','execution-receipt.json')) { if (-not (Test-Path -LiteralPath (Join-Path $runRoot $name) -PathType Leaf)) { throw "Synthetic private execution omitted audited output $name." } }
     if ((Get-ChildItem -LiteralPath (Join-Path $runRoot 'backups') -Force).Count -ne 0) { throw 'Synthetic private execution wrote a backup.' }
     $executionReceipt = Get-Content -LiteralPath (Join-Path $runRoot 'execution-receipt.json') -Raw | ConvertFrom-Json
-    if (-not $executionReceipt.success -or -not $executionReceipt.audit.dataUnchanged -or -not $executionReceipt.audit.providerUnchanged -or -not $executionReceipt.audit.userStateUnchanged -or -not $executionReceipt.audit.privateWritesAllowed -or -not $executionReceipt.audit.backupsEmpty) { throw 'Installed execution receipt did not prove a successful bounded audit.' }
+    if ($executionReceipt.formatVersion -ne '0.2.0' -or -not $executionReceipt.success -or -not $executionReceipt.audit.dataUnchanged -or -not $executionReceipt.audit.providerUnchanged -or -not $executionReceipt.audit.userStateUnchanged -or -not $executionReceipt.audit.iniUnchanged -or -not $executionReceipt.ini.unchanged -or -not $executionReceipt.audit.privateWritesAllowed -or -not $executionReceipt.audit.backupsEmpty) { throw 'Installed execution receipt did not prove a successful INI-bound audit.' }
+    if ($executionReceipt.ini.path -ne $iniPath -or $executionReceipt.ini.before.sha256 -ne $iniHash.ToLowerInvariant() -or $executionReceipt.ini.after.sha256 -ne $iniHash.ToLowerInvariant()) { throw 'Installed execution receipt did not preserve exact Fallout.ini before/after evidence.' }
     $index = Get-Content -LiteralPath (Join-Path $cacheRoot 'index.json') -Raw | ConvertFrom-Json
     if ($index.formatVersion -ne '0.2.0' -or -not $index.safety.forgeExecutedXEdit) { throw 'Installed automated export was not sealed as the 0.2.0 Forge-executed lineage.' }
 
@@ -220,13 +232,14 @@ try {
     if (Test-Path -LiteralPath $cacheRoot) { throw 'Installed private-cache clear left the owned FNV cache root behind.' }
     if ((Get-FileHash -LiteralPath $masterPath -Algorithm SHA256).Hash -ne $masterHash) { throw 'Installed workflow changed the synthetic master bytes.' }
     if ((Get-FileHash -LiteralPath $providerPath -Algorithm SHA256).Hash -ne $providerHash) { throw 'Installed workflow changed the synthetic provider bytes.' }
+    if ((Get-FileHash -LiteralPath $iniPath -Algorithm SHA256).Hash -ne $iniHash) { throw 'Installed workflow changed the synthetic Fallout.ini bytes.' }
     $trackedAfter = Get-TrackedEditorProcessIds
     if (@($trackedAfter | Where-Object { $_ -notin $trackedBefore }).Count -ne 0) { throw 'Installed workflow created an editor, mod-manager, or game process.' }
-    Write-Host 'Gate 547 installed synthetic private xEdit execution regression passed at 960x640 and 1180x760.'
+    Write-Host 'Gate 550 installed synthetic INI-bound private xEdit execution regression passed at 960x640 and 1180x760.'
 }
 catch {
     $failure = $_
-    Write-Host ("Gate 547 installed synthetic private xEdit execution regression failed: " + $_.Exception.Message)
+    Write-Host ("Gate 550 installed synthetic INI-bound private xEdit execution regression failed: " + $_.Exception.Message)
 }
 finally {
     if ($null -ne $process -and -not $process.HasExited) { $process.Kill($true); $process.WaitForExit(5000) | Out-Null }
@@ -237,11 +250,11 @@ finally {
         if (Test-Path -LiteralPath $path) {
             $resolved = (Resolve-Path -LiteralPath $path).Path
             $tempPrefix = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
-            if (-not $resolved.StartsWith($tempPrefix, [StringComparison]::OrdinalIgnoreCase)) { throw "Refusing unsafe Gate 547 cleanup: $resolved" }
+            if (-not $resolved.StartsWith($tempPrefix, [StringComparison]::OrdinalIgnoreCase)) { throw "Refusing unsafe Gate 550 cleanup: $resolved" }
             Remove-Item -LiteralPath $resolved -Recurse -Force
         }
     }
-    if (Test-Path -LiteralPath $installRoot) { throw "Gate 547 installed regression did not clean installation root: $installRoot" }
+    if (Test-Path -LiteralPath $installRoot) { throw "Gate 550 installed regression did not clean installation root: $installRoot" }
 }
 
 if ($null -ne $failure) { throw $failure }

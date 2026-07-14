@@ -1,0 +1,23 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://schemas.wastelandforge.dev/fnv/geck-authoring-plan/0.2.0/schema.json","type":"object","additionalProperties":false,
+ "required":["formatVersion","kind","status","project","intent","environment","plugin","resolutions","declarations","placementEvidence","operations","verification","recovery","safety"],
+ "properties":{
+  "formatVersion":{"const":"0.2.0"},"kind":{"const":"wastelandforge.geck-authoring-plan"},"status":{"const":"resolved"},
+  "project":{"type":"object"},"intent":{"type":"object"},"environment":{"type":"object"},"plugin":{"type":"object"},"resolutions":{"type":"array","minItems":4},"declarations":{"type":"object"},
+  "placementEvidence":{"$ref":"#/$defs/placementEvidence"},
+  "operations":{"type":"array","minItems":12,"maxItems":12,"items":{"type":"object","additionalProperties":false,"required":["order","kind"],"properties":{"order":{"type":"integer","minimum":1,"maximum":12},"kind":{"enum":["validate-environment","launch-editor-provider","load-ordered-masters","confirm-no-active-plugin","create-container-base","set-container-inventory-and-flags","load-resolved-cell","place-container-reference","set-reference-identity-policy-and-transform","save-new-plugin","close-or-handoff-editor","invoke-read-only-verifier"]}}}},
+  "verification":{"type":"object"},"recovery":{"type":"object"},
+  "safety":{"type":"object","additionalProperties":false,"required":["executesExternalTools","forgeWritesPluginBytes","providerMayWriteApprovedPlugin","verificationRequiredForPromotion","writesGameData"],"properties":{"executesExternalTools":{"const":false},"forgeWritesPluginBytes":{"const":false},"providerMayWriteApprovedPlugin":{"const":true},"verificationRequiredForPromotion":{"const":true},"writesGameData":{"const":false}}}
+ },
+ "$defs":{
+  "digest":{"type":"string","pattern":"^[a-f0-9]{64}$"},"path":{"type":"string","minLength":1},"id":{"type":"string","pattern":"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)+$"},
+  "vector":{"type":"object","additionalProperties":false,"required":["x","y","z"],"properties":{"x":{"type":"number"},"y":{"type":"number"},"z":{"type":"number"}}},
+  "placementEvidence":{"type":"object","additionalProperties":false,"required":["path","length","sha256","status","captureMethod","geckProviderSha256","cell","position","rotation","attestation","limitations"],"properties":{
+    "path":{"$ref":"#/$defs/path"},"length":{"type":"integer","minimum":1},"sha256":{"$ref":"#/$defs/digest"},"status":{"const":"operator-attested"},"captureMethod":{"const":"human-geck-inspection"},"geckProviderSha256":{"$ref":"#/$defs/digest"},
+    "cell":{"type":"object","additionalProperties":false,"required":["resolutionId","kind","editorId","formId","signature"],"properties":{"resolutionId":{"$ref":"#/$defs/id"},"kind":{"enum":["cell","worldspace"]},"editorId":{"type":"string","minLength":1},"formId":{"type":"string","pattern":"^[A-F0-9]{8}$"},"signature":{"type":"string","pattern":"^[A-Z0-9_]{4}$"}}},
+    "position":{"$ref":"#/$defs/vector"},"rotation":{"$ref":"#/$defs/vector"},
+    "attestation":{"type":"object","additionalProperties":false,"required":["suitabilityHumanReviewed","forgeObservedGeck","providerCompatibilityProven","pluginSavedDuringCapture","verificationPerformed"],"properties":{"suitabilityHumanReviewed":{"const":true},"forgeObservedGeck":{"const":false},"providerCompatibilityProven":{"const":false},"pluginSavedDuringCapture":{"const":false},"verificationPerformed":{"const":false}}},
+    "limitations":{"const":["operator-attested-not-machine-observed","placement-suitability-not-independently-verified","provider-compatibility-not-proven","plugin-not-saved-or-verified"]}
+  }}
+ }
+}

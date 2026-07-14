@@ -75,15 +75,31 @@ public sealed class ManifestSchemaTests
     {
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.Manifest050, out var manifest));
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringIntent010, out var intent));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringIntent020, out var intent020));
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringPlan010, out var plan));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringPlan020, out var plan020));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringSubjectHandoff010, out var subjectHandoff));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringSubjectHandoff020, out var subjectHandoff020));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckPlacementEvidence010, out var placementEvidence));
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringObservations010, out var observations));
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.GeckAuthoringVerification010, out var verification));
         Assert.NotNull(JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(manifest!))!["properties"]?["registries"]?["properties"]?["geckAuthoringIntent"]);
         Assert.Equal("geck-authoring-intent", intent!.Kind);
+        Assert.Equal("0.2.0", intent020!.Version);
         Assert.Equal("geck-authoring-plan", plan!.Kind);
+        Assert.Equal("0.2.0", plan020!.Version);
+        Assert.Equal("geck-authoring-subject-handoff", subjectHandoff!.Kind);
+        Assert.Equal("0.2.0", subjectHandoff020!.Version);
+        Assert.Equal("geck-placement-evidence", placementEvidence!.Kind);
         Assert.Equal("geck-authoring-observations", observations!.Kind);
         Assert.Equal("geck-authoring-verification", verification!.Kind);
         var observationsSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(observations));
+        var subjectHandoffSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(subjectHandoff));
+        Assert.Equal("wastelandforge.geck-authoring-subject-handoff", subjectHandoffSchema?["properties"]?["kind"]?["const"]?.GetValue<string>());
+        Assert.False(subjectHandoffSchema?["properties"]?["safety"]?["properties"]?["forgeWritesPluginBytes"]?["const"]?.GetValue<bool>());
+        var placementSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(placementEvidence));
+        Assert.Equal("human-geck-inspection", placementSchema?["properties"]?["captureMethod"]?["const"]?.GetValue<string>());
+        Assert.False(placementSchema?["properties"]?["attestation"]?["properties"]?["providerCompatibilityProven"]?["const"]?.GetValue<bool>());
         Assert.Equal("wastelandforge.geck-authoring-observations", observationsSchema?["properties"]?["kind"]?["const"]?.GetValue<string>());
         var verificationSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(verification));
         Assert.Equal("wastelandforge.geck-authoring-verification", verificationSchema?["properties"]?["kind"]?["const"]?.GetValue<string>());
@@ -119,11 +135,15 @@ public sealed class ManifestSchemaTests
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeReceipt020, out var automatedReceipt));
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionPlan010, out var executionPlan));
         Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionReceipt010, out var executionReceipt));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionPlan020, out var iniBoundExecutionPlan));
+        Assert.True(WastelandForgeSchemaCatalog.TryGetById(WastelandForgeSchemaIds.FnvGameKnowledgeExecutionReceipt020, out var iniBoundExecutionReceipt));
         Assert.Equal("0.2.0", automatedExport!.Version);
         Assert.Equal("0.2.0", automatedIndex!.Version);
         Assert.Equal("0.2.0", automatedReceipt!.Version);
         Assert.Equal("fnv-game-knowledge-execution-plan", executionPlan!.Kind);
         Assert.Equal("fnv-game-knowledge-execution-receipt", executionReceipt!.Kind);
+        Assert.Equal("0.2.0", iniBoundExecutionPlan!.Version);
+        Assert.Equal("0.2.0", iniBoundExecutionReceipt!.Version);
         var automatedSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(automatedExport));
         Assert.True(automatedSchema?["$defs"]?["safety"]?["properties"]?["forgeExecutedXEdit"]?["const"]?.GetValue<bool>());
         var planSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(executionPlan));
@@ -134,6 +154,13 @@ public sealed class ManifestSchemaTests
         var executionReceiptSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(executionReceipt));
         Assert.NotNull(executionReceiptSchema?["properties"]?["process"]?["properties"]?["elapsedMilliseconds"]);
         Assert.NotNull(executionReceiptSchema?["properties"]?["inventories"]);
+        var iniBoundPlanSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(iniBoundExecutionPlan));
+        Assert.Equal(13, iniBoundPlanSchema?["properties"]?["arguments"]?["minItems"]?.GetValue<int>());
+        Assert.Contains("ini", iniBoundPlanSchema?["properties"]?["inputs"]?["required"]?.AsArray().Select(node => node!.GetValue<string>()) ?? []);
+        Assert.Contains("protectedFiles", iniBoundPlanSchema?["properties"]?["writePolicy"]?["required"]?.AsArray().Select(node => node!.GetValue<string>()) ?? []);
+        var iniBoundReceiptSchema = JsonNode.Parse(WastelandForgeSchemaCatalog.ReadText(iniBoundExecutionReceipt));
+        Assert.Contains("iniUnchanged", iniBoundReceiptSchema?["properties"]?["audit"]?["required"]?.AsArray().Select(node => node!.GetValue<string>()) ?? []);
+        Assert.NotNull(iniBoundReceiptSchema?["properties"]?["ini"]);
     }
 
     [Fact]

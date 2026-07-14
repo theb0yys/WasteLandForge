@@ -1,5 +1,5 @@
 {
-  "schemaVersion":"0.1.0","kind":"geck-authoring-intent","id":"io.wastelandforge.geckplanexample.authoring",
+  "schemaVersion":"0.2.0","kind":"geck-authoring-intent","id":"io.wastelandforge.geckplanexample.authoring",
   "plugin":{"fileName":"CouriersEmergencyCache.esp","author":"Synthetic Fixture","summary":"Preview-only synthetic plan.","masters":["FalloutNV.esm"]},
   "environment":{"mode":"physical-data","outputRoot":"staging/Data","providers":[
     {"role":"geck","path":"evidence/local.txt","length":25,"sha256":"53ffdbf57b32352938afa292b87dac5044f92b784c083513d549beeffc2b330b","status":"local-verified"},
@@ -13,5 +13,5 @@
     {"id":"io.fixture.base","kind":"container-base","editorId":"SyntheticContainerBase","formId":"00000002","signature":"CONT","status":"local-verified","evidence":{"path":"evidence/local.txt","length":25,"sha256":"53ffdbf57b32352938afa292b87dac5044f92b784c083513d549beeffc2b330b"}}
   ],
   "container":{"id":"io.fixture.container","editorId":"CourierEmergencyCache","strategy":"new","respawns":false,"items":[{"resolutionId":"io.fixture.water","quantity":5},{"resolutionId":"io.fixture.caps","quantity":5000}]},
-  "reference":{"id":"io.fixture.reference","editorId":"CourierEmergencyCacheRef","cellResolutionId":"io.fixture.cell","baseContainerId":"io.fixture.container","position":{"x":1,"y":2,"z":3},"rotation":{"x":0,"y":0,"z":90},"ownership":"unowned","persistent":false,"encounterZonePolicy":"inherit-cell"}
+  "reference":{"id":"io.fixture.reference","editorId":"CourierEmergencyCacheRef","cellResolutionId":"io.fixture.cell","baseContainerId":"io.fixture.container","position":{"x":1,"y":2,"z":3},"rotation":{"x":0,"y":0,"z":90},"placementEvidence":{"path":"evidence/placement.json","length":1071,"sha256":"b7cf50844ba64a6aa8ec5c435896653d596fac6035bd3d2744df9ecc027ebd89","status":"operator-attested"},"ownership":"unowned","persistent":false,"encounterZonePolicy":"inherit-cell"}
 }

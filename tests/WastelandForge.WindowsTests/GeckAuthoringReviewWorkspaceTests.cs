@@ -21,6 +21,7 @@ public sealed class GeckAuthoringReviewWorkspaceTests
 
         var initial = await workspace.InspectAsync(fixture.Root, null, CancellationToken.None);
         Assert.Equal(GeckAuthoringReviewState.ReadyToGenerate, initial.PlanState);
+        Assert.Equal(GeckAuthoringReviewState.Locked, initial.SubjectHandoffState);
         Assert.Equal(GeckAuthoringReviewState.Locked, initial.ObserverState);
 
         var planPreview = await workspace.PreviewAsync(GeckAuthoringReviewTarget.Plan, fixture.Root, null, CancellationToken.None);
@@ -31,7 +32,14 @@ public sealed class GeckAuthoringReviewWorkspaceTests
 
         var afterPlan = await workspace.InspectAsync(fixture.Root, null, CancellationToken.None);
         Assert.Equal(GeckAuthoringReviewState.Current, afterPlan.PlanState);
+        Assert.Equal(GeckAuthoringReviewState.ReadyToGenerate, afterPlan.SubjectHandoffState);
         Assert.Equal(GeckAuthoringReviewState.ReadyToGenerate, afterPlan.ObserverState);
+
+        var subjectPreview = await workspace.PreviewAsync(GeckAuthoringReviewTarget.SubjectHandoff, fixture.Root, null, CancellationToken.None);
+        Assert.True(subjectPreview.Success, subjectPreview.Message);
+        var subject = await workspace.ApplyAsync(GeckAuthoringReviewTarget.SubjectHandoff, fixture.Root, null, subjectPreview.PreviewToken!, CancellationToken.None);
+        Assert.True(subject.Success, subject.Message);
+        Assert.True(File.Exists(Path.Combine(fixture.Root, "generated", "geck-authoring-plan", "subject-handoff", "worklist.md")));
 
         var observerPreview = await workspace.PreviewAsync(GeckAuthoringReviewTarget.Observer, fixture.Root, null, CancellationToken.None);
         Assert.True(observerPreview.Success, observerPreview.Message);
@@ -46,6 +54,7 @@ public sealed class GeckAuthoringReviewWorkspaceTests
 
         var ready = await workspace.InspectAsync(fixture.Root, observations, CancellationToken.None);
         Assert.Equal(GeckAuthoringReviewState.Current, ready.ObserverState);
+        Assert.Equal(GeckAuthoringReviewState.Current, ready.SubjectHandoffState);
         Assert.Equal(GeckAuthoringReviewState.AcceptedForPreview, ready.ObservationsState);
         Assert.Equal(GeckAuthoringReviewState.ReadyToSeal, ready.VerificationState);
 
@@ -189,6 +198,7 @@ public sealed class GeckAuthoringReviewWorkspaceTests
         {
             "GeckHandoffTabItem", "GeckAuthoringModeTabControl", "GeckAuthoringReviewTabItem", "GeckManualHandoffTabItem",
             "RefreshGeckAuthoringReviewButton", "PreviewGeckAuthoringPlanButton", "GenerateGeckAuthoringPlanButton",
+            "GeckAuthoringSubjectHandoffStateTextBlock", "PreviewGeckAuthoringSubjectHandoffButton", "GenerateGeckAuthoringSubjectHandoffButton",
             "PreviewGeckAuthoringVerifierButton", "GenerateGeckAuthoringVerifierButton", "GeckAuthoringObservationsPathTextBox",
             "PreviewGeckAuthoringVerificationButton", "GenerateGeckAuthoringVerificationButton", "CancelGeckAuthoringOperationButton",
             "GeckAuthoringDiagnosticsDataGrid", "GeckAuthoringDiagnosticDetailTextBox", "RouteGeckManualHandoffButton",
@@ -213,7 +223,7 @@ public sealed class GeckAuthoringReviewWorkspaceTests
         Assert.Equal("generate", arguments[0]);
         Assert.Equal(Path.GetFullPath(root), arguments[1]);
         Assert.Equal("--target", arguments[2]);
-        Assert.Contains(arguments[3], new[] { "geck-authoring-plan", "geck-authoring-verifier", "geck-authoring-verification" });
+        Assert.Contains(arguments[3], new[] { "geck-authoring-plan", "geck-authoring-subject-handoff", "geck-authoring-verifier", "geck-authoring-verification" });
         Assert.Equal("--format", arguments[^3]);
         Assert.Equal("json", arguments[^2]);
         Assert.Equal("--no-input", arguments[^1]);

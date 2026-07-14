@@ -20,6 +20,7 @@ internal sealed class ForgeGeckAuthoringReviewCommandRunner(ForgeCommandRunner r
 internal enum GeckAuthoringReviewTarget
 {
     Plan,
+    SubjectHandoff,
     Observer,
     Verification
 }
@@ -71,7 +72,9 @@ internal sealed record GeckAuthoringReviewSnapshot(
     IReadOnlyList<GeckAuthoringReviewOutput> Outputs,
     IReadOnlyList<GeckAuthoringReviewDiagnostic> Diagnostics)
 {
+    public GeckAuthoringReviewState SubjectHandoffState { get; init; } = GeckAuthoringReviewState.Locked;
     public bool CanPreviewPlan => PlanState != GeckAuthoringReviewState.NotLoaded;
+    public bool CanPreviewSubjectHandoff => PlanState == GeckAuthoringReviewState.Current;
     public bool CanPreviewObserver => PlanState == GeckAuthoringReviewState.Current;
     public bool CanPreviewVerification => ObserverState == GeckAuthoringReviewState.Current &&
         ObservationsState is GeckAuthoringReviewState.Selected or GeckAuthoringReviewState.AcceptedForPreview;
@@ -92,6 +95,7 @@ internal sealed record GeckAuthoringReviewSnapshot(
 internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRunner runner)
 {
     private const string PlanTarget = "geck-authoring-plan";
+    private const string SubjectHandoffTarget = "geck-authoring-subject-handoff";
     private const string ObserverTarget = "geck-authoring-verifier";
     private const string VerificationTarget = "geck-authoring-verification";
     private const string PlanPath = "generated/geck-authoring-plan/plan.json";
@@ -119,13 +123,22 @@ internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRu
                 string.IsNullOrWhiteSpace(observationsPath) ? GeckAuthoringReviewState.Required : GeckAuthoringReviewState.Selected,
                 GeckAuthoringReviewState.Locked, "Authoring plan preview is valid; generate the current plan before continuing.", plan.PlanSha256, outputs, diagnostics);
 
+        var subjectHandoff = await RunAsync(root, GeckAuthoringReviewTarget.SubjectHandoff, dryRun: true, null, cancellationToken).ConfigureAwait(false);
+        diagnostics.AddRange(subjectHandoff.Diagnostics);
+        outputs.AddRange(subjectHandoff.Outputs);
+        var subjectHandoffState = !subjectHandoff.Success
+            ? GeckAuthoringReviewState.Blocked
+            : subjectHandoff.Outputs.Count > 0 && subjectHandoff.Outputs.All(output => output.Current)
+                ? GeckAuthoringReviewState.Current
+                : GeckAuthoringReviewState.ReadyToGenerate;
+
         var observer = await RunAsync(root, GeckAuthoringReviewTarget.Observer, dryRun: true, null, cancellationToken).ConfigureAwait(false);
         diagnostics.AddRange(observer.Diagnostics);
         outputs.AddRange(observer.Outputs);
         if (!observer.Success)
             return Snapshot(root, observationsPath, GeckAuthoringReviewState.Current, GeckAuthoringReviewState.Blocked,
                 string.IsNullOrWhiteSpace(observationsPath) ? GeckAuthoringReviewState.Required : GeckAuthoringReviewState.Selected,
-                GeckAuthoringReviewState.Locked, observer.Message, plan.PlanSha256, outputs, diagnostics);
+                GeckAuthoringReviewState.Locked, observer.Message, plan.PlanSha256, outputs, diagnostics, subjectHandoffState);
 
         var observerCurrent = observer.Outputs.Count > 0 && observer.Outputs.All(output => output.Current);
         if (!TryResolveObservation(root, observationsPath, out var observation, out var observationFailure))
@@ -138,14 +151,14 @@ internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRu
                 observationFailure?.Message ?? (observerCurrent
                     ? "Observer bundle is current. Select project-contained raw observations to continue."
                     : "Generate the current observer bundle, then select raw observations."),
-                plan.PlanSha256, outputs, diagnostics);
+                plan.PlanSha256, outputs, diagnostics, subjectHandoffState);
         }
 
         var selectedObservation = observation!;
         if (!observerCurrent)
             return Snapshot(root, selectedObservation.RelativePath, GeckAuthoringReviewState.Current, GeckAuthoringReviewState.ReadyToGenerate,
                 GeckAuthoringReviewState.Selected, GeckAuthoringReviewState.Locked,
-                "Observer preview is valid; generate the current bundle before sealing observations.", plan.PlanSha256, outputs, diagnostics);
+                "Observer preview is valid; generate the current bundle before sealing observations.", plan.PlanSha256, outputs, diagnostics, subjectHandoffState);
 
         var verification = await RunAsync(root, GeckAuthoringReviewTarget.Verification, dryRun: true, selectedObservation, cancellationToken).ConfigureAwait(false);
         diagnostics.AddRange(verification.Diagnostics);
@@ -156,7 +169,7 @@ internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRu
             return Snapshot(root, selectedObservation.RelativePath, GeckAuthoringReviewState.Current, GeckAuthoringReviewState.Current,
                 semanticFailure ? GeckAuthoringReviewState.AcceptedForPreview : GeckAuthoringReviewState.Blocked,
                 semanticFailure ? GeckAuthoringReviewState.Failed : GeckAuthoringReviewState.Locked,
-                verification.Message, plan.PlanSha256, outputs, diagnostics);
+                verification.Message, plan.PlanSha256, outputs, diagnostics, subjectHandoffState);
         }
 
         var reportCurrent = verification.Outputs.Count == 1 && verification.Outputs.All(output => output.Current);
@@ -164,7 +177,7 @@ internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRu
             GeckAuthoringReviewState.AcceptedForPreview,
             reportCurrent ? GeckAuthoringReviewState.Verified : GeckAuthoringReviewState.ReadyToSeal,
             reportCurrent ? "Semantic verification report is current." : "Observations passed preview; seal the semantic verification report.",
-            plan.PlanSha256, outputs, diagnostics);
+            plan.PlanSha256, outputs, diagnostics, subjectHandoffState);
     }
 
     public async Task<GeckAuthoringReviewOperationResult> PreviewAsync(
@@ -185,6 +198,7 @@ internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRu
         var label = target switch
         {
             GeckAuthoringReviewTarget.Plan => "Authoring plan preview ready. No files were written.",
+            GeckAuthoringReviewTarget.SubjectHandoff => "Verifier subject handoff preview ready. No files were written.",
             GeckAuthoringReviewTarget.Observer => "Observer bundle preview ready. No files were written.",
             _ => "Semantic verification preview passed. No report was written."
         };
@@ -217,6 +231,7 @@ internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRu
         var message = target switch
         {
             GeckAuthoringReviewTarget.Plan => "Current authoring plan generated.",
+            GeckAuthoringReviewTarget.SubjectHandoff => "Current manual verifier subject handoff generated.",
             GeckAuthoringReviewTarget.Observer => "Current read-only observer bundle generated.",
             _ => "Semantic verification report sealed and verified."
         };
@@ -282,8 +297,8 @@ internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRu
             if (command.ExitCode == 0 && !success) throw new InvalidOperationException("Backend success status is inconsistent.");
             if (command.ExitCode != 0 && status != "failed") throw new InvalidOperationException("Backend failure status is inconsistent.");
 
-            var planSha = target == GeckAuthoringReviewTarget.Plan ? TextOrNull(json, "planSha256") : null;
-            if (success && target == GeckAuthoringReviewTarget.Plan && (planSha is null || planSha.Length != 64))
+            var planSha = target is GeckAuthoringReviewTarget.Plan or GeckAuthoringReviewTarget.SubjectHandoff ? TextOrNull(json, "planSha256") : null;
+            if (success && target is (GeckAuthoringReviewTarget.Plan or GeckAuthoringReviewTarget.SubjectHandoff) && (planSha is null || planSha.Length != 64))
                 throw new InvalidOperationException("Backend plan digest is missing or invalid.");
             var message = success ? status : issues.FirstOrDefault()?.Message ?? ErrorFallback(command);
             return new(success, false, message, toolVersion, planSha, safetyFingerprint, outputs, issues, expectedTarget, root, dryRun);
@@ -322,6 +337,16 @@ internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRu
         {
             if (Boolean(safety, "executesExternalTools") || Boolean(safety, "writesPluginBytes") || Boolean(safety, "writesGameData"))
                 throw new InvalidOperationException("Backend plan safety flags permit an unsafe effect.");
+            return;
+        }
+
+        if (target == GeckAuthoringReviewTarget.SubjectHandoff)
+        {
+            if (Boolean(safety, "executesExternalTools") || Boolean(safety, "writesPluginBytes") || Boolean(safety, "writesGameData") ||
+                Boolean(safety, "verificationPerformed") || Boolean(safety, "approvalGranted") || Boolean(safety, "promotionPerformed"))
+                throw new InvalidOperationException("Backend subject-handoff safety flags permit an unsafe effect or claim.");
+            if (dryRun && Boolean(safety, "filesWritten"))
+                throw new InvalidOperationException("Backend subject-handoff dry-run reported file writes.");
             return;
         }
 
@@ -387,10 +412,12 @@ internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRu
         string message,
         string? planSha,
         IEnumerable<GeckAuthoringReviewOutput> outputs,
-        IEnumerable<GeckAuthoringReviewDiagnostic> diagnostics) =>
+        IEnumerable<GeckAuthoringReviewDiagnostic> diagnostics,
+        GeckAuthoringReviewState subjectHandoff = GeckAuthoringReviewState.Locked) =>
         new(root, observations, plan, observer, observation, verification, message, planSha,
             outputs.GroupBy(output => output.Path, StringComparer.OrdinalIgnoreCase).Select(group => group.Last()).OrderBy(output => output.Path, StringComparer.Ordinal).ToArray(),
-            diagnostics.GroupBy(issue => string.Join('|', issue.RuleId, issue.Message, issue.File), StringComparer.Ordinal).Select(group => group.First()).ToArray());
+            diagnostics.GroupBy(issue => string.Join('|', issue.RuleId, issue.Message, issue.File), StringComparer.Ordinal).Select(group => group.First()).ToArray())
+        { SubjectHandoffState = subjectHandoff };
 
     private static GeckAuthoringReviewOperationResult ToOperation(BackendResult result, string? token) =>
         new(result.Success, result.Cancelled, result.Message, token, result.PlanSha256, result.Outputs, result.Diagnostics);
@@ -443,6 +470,7 @@ internal sealed class GeckAuthoringReviewWorkspace(IGeckAuthoringReviewCommandRu
     private static string TargetName(GeckAuthoringReviewTarget target) => target switch
     {
         GeckAuthoringReviewTarget.Plan => PlanTarget,
+        GeckAuthoringReviewTarget.SubjectHandoff => SubjectHandoffTarget,
         GeckAuthoringReviewTarget.Observer => ObserverTarget,
         GeckAuthoringReviewTarget.Verification => VerificationTarget,
         _ => throw new ArgumentOutOfRangeException(nameof(target), target, null)

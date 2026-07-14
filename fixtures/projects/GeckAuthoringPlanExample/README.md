@@ -8,3 +8,7 @@ The fixture exercises deterministic Forge planning and verification contracts.
 It does not prove compatibility with GECK, FNVEdit/xEdit, MO2, or the Fallout:
 New Vegas plugin format. Installed regression creates temporary opaque subject
 bytes and removes them after the test.
+
+The placement document exercises the operator-attestation contract only. Its
+cell identity and transform are invented and are not real game or editor
+evidence.

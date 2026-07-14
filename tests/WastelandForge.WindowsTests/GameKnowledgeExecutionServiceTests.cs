@@ -28,7 +28,7 @@ public sealed class GameKnowledgeExecutionServiceTests
     public async Task ApprovedPrivatePlanRunsExactArgumentsAuditsAndImportsSyntheticOutput()
     {
         using var fixture = Fixture.Create();
-        var prepared = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, fixture.UserStateRoot);
+        var prepared = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, fixture.IniPath, fixture.UserStateRoot);
         Assert.True(prepared.Success, prepared.Message);
         var runner = new SyntheticRunner(writeOutput: true);
         var service = new GameKnowledgeExecutionService(fixture.Catalogue, runner);
@@ -53,7 +53,7 @@ public sealed class GameKnowledgeExecutionServiceTests
     public async Task MissingOutputAndCancelledWaitFailClosedWithoutRetryOrIndexPromotion()
     {
         using var missing = Fixture.Create();
-        var missingPrepared = missing.Catalogue.PrepareAutomatedExecution(missing.MasterPath, missing.ProviderPath, missing.UserStateRoot);
+        var missingPrepared = missing.Catalogue.PrepareAutomatedExecution(missing.MasterPath, missing.ProviderPath, missing.IniPath, missing.UserStateRoot);
         var missingRunner = new SyntheticRunner(writeOutput: false);
         var missingService = new GameKnowledgeExecutionService(missing.Catalogue, missingRunner);
 
@@ -65,7 +65,7 @@ public sealed class GameKnowledgeExecutionServiceTests
         Assert.False(File.Exists(missing.Catalogue.IndexPath));
 
         using var cancelled = Fixture.Create();
-        var cancelledPrepared = cancelled.Catalogue.PrepareAutomatedExecution(cancelled.MasterPath, cancelled.ProviderPath, cancelled.UserStateRoot);
+        var cancelledPrepared = cancelled.Catalogue.PrepareAutomatedExecution(cancelled.MasterPath, cancelled.ProviderPath, cancelled.IniPath, cancelled.UserStateRoot);
         var cancelledService = new GameKnowledgeExecutionService(cancelled.Catalogue, new SyntheticRunner(writeOutput: true, waitCancelled: true));
         var cancelledResult = await cancelledService.RunAsync(cancelledPrepared, cancellationToken: TestContext.Current.CancellationToken);
         Assert.False(cancelledResult.Success);
@@ -77,7 +77,7 @@ public sealed class GameKnowledgeExecutionServiceTests
     public async Task ProcessCreationAndNonzeroExitFailuresAreNotRetriedOrPromoted()
     {
         using var creation = Fixture.Create();
-        var creationPrepared = creation.Catalogue.PrepareAutomatedExecution(creation.MasterPath, creation.ProviderPath, creation.UserStateRoot);
+        var creationPrepared = creation.Catalogue.PrepareAutomatedExecution(creation.MasterPath, creation.ProviderPath, creation.IniPath, creation.UserStateRoot);
         var creationRunner = new SyntheticRunner(writeOutput: false, processStarted: false);
         var creationResult = await new GameKnowledgeExecutionService(creation.Catalogue, creationRunner).RunAsync(creationPrepared, cancellationToken: TestContext.Current.CancellationToken);
         Assert.False(creationResult.Success);
@@ -86,7 +86,7 @@ public sealed class GameKnowledgeExecutionServiceTests
         Assert.False(File.Exists(creation.Catalogue.IndexPath));
 
         using var nonzero = Fixture.Create();
-        var nonzeroPrepared = nonzero.Catalogue.PrepareAutomatedExecution(nonzero.MasterPath, nonzero.ProviderPath, nonzero.UserStateRoot);
+        var nonzeroPrepared = nonzero.Catalogue.PrepareAutomatedExecution(nonzero.MasterPath, nonzero.ProviderPath, nonzero.IniPath, nonzero.UserStateRoot);
         var nonzeroRunner = new SyntheticRunner(writeOutput: true, exitCode: 5);
         var nonzeroResult = await new GameKnowledgeExecutionService(nonzero.Catalogue, nonzeroRunner).RunAsync(nonzeroPrepared, cancellationToken: TestContext.Current.CancellationToken);
         Assert.False(nonzeroResult.Success);
@@ -99,7 +99,7 @@ public sealed class GameKnowledgeExecutionServiceTests
     public async Task ConcurrentExecutionIsRefusedWithoutSecondRunnerCall()
     {
         using var fixture = Fixture.Create();
-        var prepared = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, fixture.UserStateRoot);
+        var prepared = fixture.Catalogue.PrepareAutomatedExecution(fixture.MasterPath, fixture.ProviderPath, fixture.IniPath, fixture.UserStateRoot);
         var runner = new BlockingRunner();
         var service = new GameKnowledgeExecutionService(fixture.Catalogue, runner);
         var first = service.RunAsync(prepared, cancellationToken: TestContext.Current.CancellationToken);
@@ -167,19 +167,24 @@ public sealed class GameKnowledgeExecutionServiceTests
             var data = Path.Combine(root, "Game", "Data");
             var tools = Path.Combine(root, "Tools");
             UserStateRoot = Path.Combine(root, "UserState", "FalloutNV");
+            var documents = Path.Combine(root, "Documents", "My Games", "FalloutNV");
             Directory.CreateDirectory(data);
             Directory.CreateDirectory(tools);
             Directory.CreateDirectory(UserStateRoot);
+            Directory.CreateDirectory(documents);
             MasterPath = Path.Combine(data, "FalloutNV.esm");
             ProviderPath = Path.Combine(tools, "FNVEdit.exe");
+            IniPath = Path.Combine(documents, "Fallout.ini");
             File.WriteAllText(MasterPath, "synthetic master", new UTF8Encoding(false));
             File.WriteAllText(ProviderPath, "synthetic provider", new UTF8Encoding(false));
+            File.WriteAllText(IniPath, "[General]\r\nbUseThreadedAI=1\r\n", new UTF8Encoding(false));
             Catalogue = new FnvGameKnowledgeCatalogue(Path.Combine(root, "Private", "game-knowledge", "fnv"));
         }
 
         public string Root { get; }
         public string MasterPath { get; }
         public string ProviderPath { get; }
+        public string IniPath { get; }
         public string UserStateRoot { get; }
         public FnvGameKnowledgeCatalogue Catalogue { get; }
 

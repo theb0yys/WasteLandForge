@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.wastelandforge.dev/fnv/fnv-game-knowledge-execution-receipt/0.2.0/schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "createdAtUtc", "planSha256", "process", "audit", "inventories", "ini", "finalState", "success", "message", "changedPaths"],
+  "properties": {
+    "formatVersion": { "const": "0.2.0" },
+    "kind": { "const": "wastelandforge.fnv-game-knowledge-execution-receipt" },
+    "createdAtUtc": { "type": "string", "format": "date-time" },
+    "planSha256": { "$ref": "#/$defs/sha" },
+    "process": {
+      "type": "object", "additionalProperties": false,
+      "required": ["started", "startedAtUtc", "exitedAtUtc", "elapsedMilliseconds", "waitCancelled"],
+      "properties": {
+        "started": { "type": "boolean" },
+        "processId": { "type": ["integer", "null"], "minimum": 1 },
+        "startedAtUtc": { "type": "string", "format": "date-time" },
+        "exitedAtUtc": { "type": "string", "format": "date-time" },
+        "elapsedMilliseconds": { "type": "integer", "minimum": 0 },
+        "exitCode": { "type": ["integer", "null"] },
+        "waitCancelled": { "type": "boolean" },
+        "failure": { "type": ["string", "null"], "maxLength": 2048 }
+      }
+    },
+    "audit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dataUnchanged", "providerUnchanged", "userStateUnchanged", "iniUnchanged", "privateWritesAllowed", "backupsEmpty", "rawExportPresent", "logPresent"],
+      "properties": {
+        "dataUnchanged": { "type": "boolean" },
+        "providerUnchanged": { "type": "boolean" },
+        "userStateUnchanged": { "type": "boolean" },
+        "iniUnchanged": { "type": "boolean" },
+        "privateWritesAllowed": { "type": "boolean" },
+        "backupsEmpty": { "type": "boolean" },
+        "rawExportPresent": { "type": "boolean" },
+        "logPresent": { "type": "boolean" }
+      }
+    },
+    "inventories": {
+      "type": "object", "additionalProperties": false,
+      "required": ["data", "provider", "userState"],
+      "properties": {
+        "data": { "$ref": "#/$defs/inventoryAudit" },
+        "provider": { "$ref": "#/$defs/inventoryAudit" },
+        "userState": { "$ref": "#/$defs/inventoryAudit" }
+      }
+    },
+    "ini": { "$ref": "#/$defs/fileAudit" },
+    "rawExport": { "$ref": "#/$defs/optionalDigest" },
+    "log": { "$ref": "#/$defs/optionalDigest" },
+    "finalState": { "enum": ["OutputReady", "FailedClosed"] },
+    "success": { "type": "boolean" },
+    "message": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "changedPaths": { "type": "array", "maxItems": 100000, "items": { "type": "string", "minLength": 1, "maxLength": 4096 } }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "inventoryAudit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["root", "beforeCompositeSha256", "afterCompositeSha256", "beforeFileCount", "afterFileCount", "unchanged"],
+      "properties": {
+        "root": { "type": "string", "minLength": 3, "maxLength": 4096 },
+        "beforeCompositeSha256": { "$ref": "#/$defs/sha" },
+        "afterCompositeSha256": { "$ref": "#/$defs/sha" },
+        "beforeFileCount": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "afterFileCount": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "unchanged": { "type": "boolean" }
+      }
+    },
+    "fileState": {
+      "type": "object", "additionalProperties": false,
+      "required": ["exists", "length", "lastWriteUtc", "sha256"],
+      "properties": {
+        "exists": { "type": "boolean" },
+        "length": { "type": ["integer", "null"], "minimum": 1 },
+        "lastWriteUtc": { "type": ["string", "null"], "format": "date-time" },
+        "sha256": { "anyOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }] }
+      }
+    },
+    "fileAudit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "before", "after", "unchanged"],
+      "properties": {
+        "path": { "type": "string", "minLength": 3, "maxLength": 4096 },
+        "before": { "$ref": "#/$defs/fileState" },
+        "after": { "$ref": "#/$defs/fileState" },
+        "unchanged": { "type": "boolean" }
+      }
+    },
+    "optionalDigest": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["fileName", "length", "sha256"],
+      "properties": {
+        "fileName": { "type": "string", "minLength": 1, "maxLength": 260 },
+        "length": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha" }
+      }
+    }
+  }
+}

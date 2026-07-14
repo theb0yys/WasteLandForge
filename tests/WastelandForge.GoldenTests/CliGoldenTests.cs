@@ -11361,6 +11361,41 @@ public sealed class CliGoldenTests
     }
 
     [Fact]
+    public void GeckAuthoringSubjectHandoffCliPreviewsAndWritesManualKitOnly()
+    {
+        var root = CopyFixtureProject("GeckAuthoringPlanExample");
+        try
+        {
+            Assert.Equal(0, RunCli("generate", root, "--target", "geck-authoring-plan", "--format", "json", "--no-input").ExitCode);
+            var subjectRoot = Path.Combine(root, "generated", "geck-authoring-plan", "subject-handoff");
+            var dry = RunCli("generate", root, "--target", "geck-authoring-subject-handoff", "--dry-run", "--format", "json", "--no-input");
+            Assert.Equal(0, dry.ExitCode);
+            var dryJson = JsonNode.Parse(dry.Stdout)!;
+            Assert.Equal("planned", dryJson["status"]!.GetValue<string>());
+            Assert.Equal(5, dryJson["outputs"]!.AsArray().Count);
+            Assert.False(dryJson["safety"]!["executesExternalTools"]!.GetValue<bool>());
+            Assert.False(dryJson["safety"]!["writesPluginBytes"]!.GetValue<bool>());
+            Assert.False(Directory.Exists(subjectRoot));
+
+            var write = RunCli("generate", root, "--target", "geck-authoring-subject-handoff", "--format", "json", "--no-input");
+            Assert.Equal(0, write.ExitCode);
+            Assert.True(File.Exists(Path.Combine(subjectRoot, "subject-contract.json")));
+            Assert.True(File.Exists(Path.Combine(subjectRoot, "worklist.md")));
+            Assert.True(File.Exists(Path.Combine(subjectRoot, "creation-notes.template.md")));
+            Assert.Empty(Directory.GetFiles(root, "*.esp", SearchOption.AllDirectories));
+
+            var target = RunCli("explain", "target", "geck-authoring-subject-handoff", "--format", "json");
+            Assert.Equal(0, target.ExitCode);
+            Assert.Contains("WF-GEN-019", target.Stdout, StringComparison.Ordinal);
+            var output = RunCli("explain", "output", "generated/geck-authoring-plan/subject-handoff/worklist.md", "--format", "json");
+            Assert.Equal("manual-geck-authoring-worklist", JsonNode.Parse(output.Stdout)!["classification"]!["outputKind"]!.GetValue<string>());
+            var diagnostic = RunCli("explain", "diagnostic", "WF-GEN-019", "--format", "json");
+            Assert.Equal(0, diagnostic.ExitCode);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [Fact]
     public void GeckAuthoringVerifierCliProducesAndSealsSyntheticEvidenceWithoutExecution()
     {
         var root = CopyFixtureProject("GeckAuthoringPlanExample");

@@ -33,7 +33,7 @@ public sealed class GeckIntentBuilderWorkspaceTests
         Assert.Equal("generated/docs/", manifest["outputs"]!["docs"]!["path"]!.GetValue<string>());
         Assert.Equal("src/registries/dependencies/", manifest["registries"]!["dependencies"]!.GetValue<string>());
         Assert.Equal("src/registries/geck-authoring/main.json", manifest["registries"]!["geckAuthoringIntent"]!.GetValue<string>());
-        Assert.Single(Directory.GetFiles(Path.Combine(fixture.Root, "evidence", "geck-authoring")));
+        Assert.Equal(2, Directory.GetFiles(Path.Combine(fixture.Root, "evidence", "geck-authoring")).Length);
         Assert.Equal(0, ForgeCli.Run(["validate", fixture.Root, "--format", "json", "--no-input"]));
     }
 
@@ -218,7 +218,9 @@ public sealed class GeckIntentBuilderWorkspaceTests
             "RemoveGeckIntentItemResolutionButton", "GeckIntentContainerEditorIdTextBox", "GeckIntentContainerStrategyComboBox",
             "GeckIntentReferenceEditorIdTextBox", "GeckIntentPositionXTextBox", "GeckIntentPositionYTextBox",
             "GeckIntentPositionZTextBox", "GeckIntentRotationXTextBox", "GeckIntentRotationYTextBox",
-            "GeckIntentRotationZTextBox", "GeckIntentPersistentCheckBox", "GeckIntentEncounterPolicyComboBox",
+            "GeckIntentRotationZTextBox", "GeckIntentPlacementEvidencePathTextBox", "BrowseGeckIntentPlacementEvidenceButton",
+            "GeckIntentPlacementEvidenceAttestedCheckBox", "GeckIntentPlacementEvidenceSummaryTextBlock",
+            "GeckIntentPersistentCheckBox", "GeckIntentEncounterPolicyComboBox",
             "PreviewGeckIntentButton", "ApplyGeckIntentButton", "CancelGeckIntentOperationButton",
             "ReviewGeckIntentUndoButton", "UndoGeckIntentButton", "OpenGeckAuthoringReviewButton",
             "RouteGeckIntentValidationButton", "GeckIntentPreviewTextBox", "GeckIntentDiagnosticsDataGrid", "GeckIntentStatusTextBlock"
@@ -384,6 +386,7 @@ public sealed class GeckIntentBuilderWorkspaceTests
             Root = Path.Combine(parent, "project");
             JournalRoot = Path.Combine(parent, "journal");
             ExternalEvidence = Path.Combine(parent, "local-evidence.json");
+            ExternalPlacementEvidence = Path.Combine(parent, "placement-evidence.json");
             CopyDirectory(Path.Combine(RepositoryRoot(), "fixtures", "projects", "GeckAuthoringPlanExample"), Root);
             var manifestPath = Path.Combine(Root, "wastelandforge.json");
             var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))!.AsObject();
@@ -399,12 +402,28 @@ public sealed class GeckIntentBuilderWorkspaceTests
             var data = Path.Combine(Root, "local-game", "Data");
             Directory.CreateDirectory(data);
             File.WriteAllText(ExternalEvidence, "{\"kind\":\"synthetic-local-evidence\"}\n", new UTF8Encoding(false));
+            var providerSha = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(ExternalEvidence))).ToLowerInvariant();
+            WriteJson(ExternalPlacementEvidence, new JsonObject
+            {
+                ["schemaVersion"] = "0.1.0",
+                ["kind"] = "geck-placement-evidence",
+                ["game"] = "falloutnv",
+                ["captureMethod"] = "human-geck-inspection",
+                ["geckProviderSha256"] = providerSha,
+                ["cell"] = new JsonObject { ["resolutionId"] = "io.synthetic.cell", ["kind"] = "cell", ["editorId"] = "CellSynthetic", ["formId"] = "00000003", ["signature"] = "CELL" },
+                ["position"] = new JsonObject { ["x"] = 1, ["y"] = 2, ["z"] = 3 },
+                ["rotation"] = new JsonObject { ["x"] = 0, ["y"] = 0, ["z"] = 90 },
+                ["operatorStatement"] = "Synthetic values deliberately reviewed for contract testing only; no real game, editor, or provider compatibility is claimed.",
+                ["attestation"] = new JsonObject { ["suitabilityHumanReviewed"] = true, ["forgeObservedGeck"] = false, ["providerCompatibilityProven"] = false, ["pluginSavedDuringCapture"] = false, ["verificationPerformed"] = false },
+                ["limitations"] = new JsonArray("operator-attested-not-machine-observed", "placement-suitability-not-independently-verified", "provider-compatibility-not-proven", "plugin-not-saved-or-verified")
+            });
         }
 
         public string Parent { get; }
         public string Root { get; }
         public string JournalRoot { get; }
         public string ExternalEvidence { get; }
+        public string ExternalPlacementEvidence { get; }
 
         public static Fixture Create()
         {
@@ -449,6 +468,8 @@ public sealed class GeckIntentBuilderWorkspaceTests
                 "new",
                 "SyntheticCacheReference",
                 "1", "2", "3", "0", "0", "90",
+                ExternalPlacementEvidence,
+                true,
                 false,
                 "inherit-cell");
         }

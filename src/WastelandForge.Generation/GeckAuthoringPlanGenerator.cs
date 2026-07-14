@@ -20,7 +20,8 @@ public sealed class GeckAuthoringPlanGenerator
 {
     public const string Target = "geck-authoring-plan";
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
-    private static readonly Lazy<JsonSchema> PlanSchema = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringPlan010));
+    private static readonly Lazy<JsonSchema> PlanSchema010 = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringPlan010));
+    private static readonly Lazy<JsonSchema> PlanSchema020 = new(() => LoadSchema(WastelandForgeSchemaIds.GeckAuthoringPlan020));
 
     public GeckAuthoringPlanResult Generate(GeckAuthoringPlanOptions options)
     {
@@ -47,14 +48,20 @@ public sealed class GeckAuthoringPlanGenerator
             if (issues.Any(issue => issue.Severity == DiagnosticSeverity.Error)) return Result(root, options, issues, null, null, [], []);
 
             var sourceDigest = Digest(intentPath, root);
-            var plan = CreatePlan(manifest, intent, sourceDigest, options.ToolVersion);
+            var version = intent["schemaVersion"]?.GetValue<string>() ?? "0.1.0";
+            GeckPlacementEvidenceResult? placement = null;
+            if (version == "0.2.0") placement = GeckPlacementEvidenceValidator.ReadAndVerify(root, intent);
+            else if (version != "0.1.0") return Failed("Unsupported GECK authoring intent version: " + version, Relative(root, intentPath));
+            var sources = placement is null ? new[] { sourceDigest } : new[] { sourceDigest, placement.Digest };
+            var plan = CreatePlan(manifest, intent, sourceDigest, placement, options.ToolVersion);
             using var planDocument = JsonDocument.Parse(plan.ToJsonString());
-            if (!PlanSchema.Value.Evaluate(planDocument.RootElement).IsValid)
-                return Failed("Generated plan failed geck-authoring-plan/0.1.0 validation.", Relative(root, intentPath));
+            var planSchema = version == "0.2.0" ? PlanSchema020.Value : PlanSchema010.Value;
+            if (!planSchema.Evaluate(planDocument.RootElement).IsValid)
+                return Failed($"Generated plan failed geck-authoring-plan/{version} validation.", Relative(root, intentPath));
 
             var canonical = plan.ToJsonString(JsonOptions) + "\n";
             var sha = Sha(Encoding.UTF8.GetBytes(canonical));
-            if (options.DryRun) return Result(root, options, issues, plan, sha, [sourceDigest], []);
+            if (options.DryRun) return Result(root, options, issues, plan, sha, sources, []);
 
             var output = Path.Combine(root, "generated", Target);
             Directory.CreateDirectory(output);
@@ -66,7 +73,7 @@ public sealed class GeckAuthoringPlanGenerator
                 ["target"] = Target,
                 ["toolVersion"] = options.ToolVersion,
                 ["planSha256"] = sha,
-                ["sources"] = Digests([sourceDigest]),
+                ["sources"] = Digests(sources),
                 ["safety"] = new JsonObject { ["executesExternalTools"] = false, ["writesPluginBytes"] = false, ["writesGameData"] = false }
             };
             var buildPath = Path.Combine(output, "build-manifest.json");
@@ -75,7 +82,7 @@ public sealed class GeckAuthoringPlanGenerator
             var checksums = payloads.Select(path => Digest(path, output)).OrderBy(item => item.Path, StringComparer.Ordinal).Select(item => $"{item.Sha256}  {item.Path}");
             File.WriteAllText(Path.Combine(output, "checksums.sha256"), string.Join("\n", checksums) + "\n", new UTF8Encoding(false));
             var outputs = Directory.GetFiles(output).Select(path => Digest(path, root)).OrderBy(item => item.Path, StringComparer.Ordinal).ToArray();
-            return Result(root, options, issues, plan, sha, [sourceDigest], outputs);
+            return Result(root, options, issues, plan, sha, sources, outputs);
 
             GeckAuthoringPlanResult Failed(string message, string file)
             {
@@ -90,12 +97,12 @@ public sealed class GeckAuthoringPlanGenerator
         }
     }
 
-    private static JsonObject CreatePlan(JsonObject manifest, JsonObject intent, FileDigest source, string toolVersion)
+    private static JsonObject CreatePlan(JsonObject manifest, JsonObject intent, FileDigest source, GeckPlacementEvidenceResult? placement, string toolVersion)
     {
         var operations = new[] { "validate-environment", "launch-editor-provider", "load-ordered-masters", "confirm-no-active-plugin", "create-container-base", "set-container-inventory-and-flags", "load-resolved-cell", "place-container-reference", "set-reference-identity-policy-and-transform", "save-new-plugin", "close-or-handoff-editor", "invoke-read-only-verifier" };
-        return new JsonObject
+        var plan = new JsonObject
         {
-            ["formatVersion"] = "0.1.0", ["kind"] = "wastelandforge.geck-authoring-plan", ["status"] = "resolved",
+            ["formatVersion"] = placement is null ? "0.1.0" : "0.2.0", ["kind"] = "wastelandforge.geck-authoring-plan", ["status"] = "resolved",
             ["project"] = new JsonObject { ["id"] = manifest["id"]!.DeepClone(), ["version"] = manifest["version"]!.DeepClone(), ["plannerVersion"] = toolVersion },
             ["intent"] = new JsonObject { ["id"] = intent["id"]!.DeepClone(), ["path"] = source.Path, ["length"] = source.Length, ["sha256"] = source.Sha256 },
             ["environment"] = intent["environment"]!.DeepClone(), ["plugin"] = intent["plugin"]!.DeepClone(), ["resolutions"] = intent["resolutions"]!.DeepClone(),
@@ -105,6 +112,8 @@ public sealed class GeckAuthoringPlanGenerator
             ["recovery"] = new JsonObject { ["overwritePolicy"] = "refuse-existing", ["automaticRerunAfterSave"] = false, ["indeterminateRequiresHumanRecovery"] = true },
             ["safety"] = new JsonObject { ["executesExternalTools"] = false, ["forgeWritesPluginBytes"] = false, ["providerMayWriteApprovedPlugin"] = true, ["verificationRequiredForPromotion"] = true, ["writesGameData"] = false }
         };
+        if (placement is not null) plan["placementEvidence"] = GeckPlacementEvidenceValidator.CreateProjection(placement.Document, placement.Digest);
+        return plan;
     }
 
     private static void VerifyEvidence(string root, JsonObject item, List<DiagnosticIssue> issues, string source)
@@ -132,4 +141,3 @@ public sealed class GeckAuthoringPlanGenerator
     private static DiagnosticIssue Issue(string message, string file) => new(RuleId.Parse("WF-GEN-016"), DiagnosticSeverity.Error, "generation", "GECK authoring plan unresolved", message, new SourceLocation(file), docsUri: new Uri("https://docs.wastelandforge.dev/rules/WF-GEN-016"));
     private static GeckAuthoringPlanResult Result(string root, GeckAuthoringPlanOptions options, IReadOnlyList<DiagnosticIssue> issues, JsonObject? plan, string? sha, IReadOnlyList<FileDigest> sources, IReadOnlyList<FileDigest> outputs) => new(root, Target, options.DryRun, issues.Any(item => item.Severity == DiagnosticSeverity.Error) ? "failed" : options.DryRun ? "planned" : "passed", new DiagnosticReport(null, issues), plan, sha, sources, outputs);
 }
-
