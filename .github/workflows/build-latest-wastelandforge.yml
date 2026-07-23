@@ -1,0 +1,53 @@
+name: Build latest WastelandForge Windows app
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - chatgpt/build-latest-quest-tools
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-app:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore Windows runtime dependencies
+        shell: pwsh
+        run: dotnet restore WastelandForge.sln -r win-x64
+
+      - name: Publish current desktop app and bundled backend
+        shell: pwsh
+        run: >-
+          ./eng/Publish-AppShell.ps1
+          -Configuration Release
+          -RuntimeIdentifier win-x64
+          -SelfContained
+
+      - name: Create portable update ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/app-shell | Out-Null
+          Compress-Archive -Path dist/app/WastelandForge.Desktop/* -DestinationPath artifacts/app-shell/WastelandForge-latest-win-x64.zip -Force
+
+      - name: Upload Windows update
+        uses: actions/upload-artifact@v4
+        with:
+          name: WastelandForge-latest-win-x64
+          path: artifacts/app-shell/WastelandForge-latest-win-x64.zip
+          if-no-files-found: error
+          retention-days: 14
