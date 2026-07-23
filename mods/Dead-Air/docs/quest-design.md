@@ -2,7 +2,7 @@
 
 ## Premise
 
-A dormant emergency network begins broadcasting names shortly before those people die. The latest transmission names an NCR communications officer, a Followers doctor, Mara Voss, Jonas Creed, and the Courier.
+A dormant emergency network begins broadcasting names shortly before those people die. The opening transmission names an NCR communications officer, a Followers doctor, Mara Voss, Jonas Creed, and the Courier.
 
 The system is not supernatural. ORACLE combines intercepted movement, medical, supply, military, and radio data to estimate casualty risk. Broadcasting the predictions changes human behaviour and can make the predicted deaths more likely.
 
@@ -32,14 +32,19 @@ Leader of the NCR recovery team. Hale wants ORACLE contained and used for milita
 
 A Followers physician who wants ORACLE converted into a public early-warning system. She accepts that predictions can cause panic but believes secrecy is worse.
 
+### Corporal Eli Venn
+
+An NCR signal-corps technician assigned to maintain an isolated field repeater on the old highway. He is the first named victim investigated by the Courier. The broadcast gives a time—18:40—and the phrase `line failure`, which can describe communications equipment, electrical infrastructure, or a death.
+
 ## Act structure
 
 ### Act I — Voices After Midnight
 
-1. The Courier receives the impossible broadcast.
-2. The signal points toward Lone Wolf Radio.
-3. Mara explains that Lone Wolf is receiving spill from a stronger relay.
-4. The Courier agrees to investigate the first named victim.
+1. A broken emergency transmission plays as the Courier approaches Lone Wolf Radio.
+2. The Courier inspects a quest-owned receiver beside the abandoned trailer.
+3. Mara explains that Lone Wolf is catching spill from a stronger relay.
+4. The Courier may question the signal, make a Science 45 deduction, accept the investigation, or refuse temporarily.
+5. Accepting reveals Corporal Eli Venn as the first target and activates the objective to reach him before the predicted time.
 
 ### Act II — The Quiet Frequency
 
@@ -59,6 +64,15 @@ A Followers physician who wants ORACLE converted into a public early-warning sys
 
 The Courier decides whether to destroy, expose, surrender, repurpose, or control ORACLE. A separate high-difficulty route allows the Courier to save every person named in the final broadcast.
 
+## Opening-state contract
+
+`openingphase` is reserved as:
+
+- `0` — Mara's investigation offer remains open;
+- `1` — the Courier accepted, the first-victim briefing is available, and acceptance cannot repeat.
+
+Temporary refusal does not change `openingphase`. Acceptance increases `maratrust` by one and advances `DAQDeadAir` to stage 30 in GECK.
+
 ## Ending values
 
 `oracledisposition` is reserved as:
@@ -76,12 +90,19 @@ The Courier decides whether to destroy, expose, surrender, repurpose, or control
 
 Use only vanilla architecture kits, doors, terminals, radios, antenna pieces, furniture, clutter, lighting, effects, weapons, outfits, creatures, and sounds. New source content may include plugin records, scripts, quest text, terminal text, notes, and dialogue declarations, but no new models or textures are planned.
 
-## Initial playable slice
+The opening slice is intentionally unvoiced during development. It does not add custom voice audio or silently claim that a compatible vanilla voice asset exists. Voice presentation remains a later production decision.
 
-The first playable milestone ends after the Courier accepts Mara's investigation:
+## Opening playable slice
 
-1. create the quest and stages 10–30;
-2. place Mara at Lone Wolf Radio without altering existing content;
-3. provide the opening interaction and Science 45 line;
-4. advance the quest to the first prediction objective;
-5. verify the plugin in xEdit before expanding Act II.
+The first playable milestone ends when stage 30 activates the Eli Venn objective:
+
+1. create `DAQDeadAir` with stages 10, 20, 30, and the stage-40 handoff;
+2. start stage 10 once from a quest-owned approach trigger;
+3. inspect a quest-owned emergency receiver to reach stage 20;
+4. place Mara at Lone Wolf Radio without altering existing content;
+5. provide the linked opening interaction and Science 45 line;
+6. leave temporary refusal reopenable;
+7. make acceptance idempotent through `openingphase`;
+8. advance to stage 30 and display `Reach Corporal Eli Venn before the predicted time`;
+9. stop before building the actual Eli Venn encounter;
+10. verify the plugin in xEdit before expanding Act II.
