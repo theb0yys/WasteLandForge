@@ -3,11 +3,12 @@
   "kind": "manifest",
   "id": "io.github.theboyyss.deadair",
   "name": "Dead Air",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "game": "falloutnv",
   "metadata": {
-    "summary": "A mystery quest mod centered on a lethal midnight broadcast originating from Lone Wolf Radio.",
-    "contentPolicy": "Vanilla Fallout: New Vegas assets and records only."
+    "summary": "A mystery quest mod centered on a lethal emergency transmission first intercepted at Lone Wolf Radio.",
+    "contentPolicy": "Vanilla Fallout: New Vegas assets and records only.",
+    "milestone": "opening-playable-slice"
   },
   "registries": {
     "dependencies": "src/registries/dependencies/",
