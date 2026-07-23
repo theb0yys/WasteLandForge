@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "capability",
+  "id": "tool.xedit.record_inspection",
+  "title": "xEdit record inspection",
+  "satisfiedBy": [
+    {
+      "id": "provider.tool.xedit",
+      "providerType": "external-tool"
+    }
+  ],
+  "requires": {
+    "capabilities": [
+      {
+        "id": "game.falloutnv"
+      }
+    ]
+  },
+  "scope": "external-tool",
+  "stability": "stable",
+  "features": [
+    "plugin-inspection",
+    "conflict-review",
+    "record-verification"
+  ]
+}
