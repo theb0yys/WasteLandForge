@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "0.1.0",
+  "kind": "capability",
+  "id": "game.falloutnv",
+  "title": "Fallout: New Vegas game install",
+  "satisfiedBy": [
+    {
+      "id": "provider.game.falloutnv",
+      "providerType": "game"
+    }
+  ],
+  "requires": {
+    "capabilities": []
+  },
+  "scope": "root",
+  "stability": "stable",
+  "features": [
+    "vanilla-game-records",
+    "vanilla-assets"
+  ]
+}
