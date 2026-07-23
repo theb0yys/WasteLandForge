@@ -1,0 +1,303 @@
+{
+  "schemaVersion": "0.6.0",
+  "kind": "quest",
+  "id": "io.github.theboyyss.deadair.quests",
+  "quests": [
+    {
+      "id": "io.github.theboyyss.deadair.quest.deadair",
+      "title": "Dead Air",
+      "summary": "A midnight numbers broadcast predicts three deaths and names the Courier as its final target.",
+      "variables": [
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.variable.evidencecount",
+          "variableType": "integer",
+          "initialValue": 0,
+          "title": "Evidence count",
+          "summary": "Tracks how many prediction scenes the Courier has investigated."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.variable.maratrust",
+          "variableType": "integer",
+          "initialValue": 0,
+          "title": "Mara trust",
+          "summary": "Tracks Mara Voss's confidence in the Courier."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.variable.oracledisposition",
+          "variableType": "integer",
+          "initialValue": 0,
+          "title": "ORACLE disposition",
+          "summary": "Records the final choice for the ORACLE system."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.variable.finalnamessaved",
+          "variableType": "integer",
+          "initialValue": 0,
+          "title": "Final names saved",
+          "summary": "Tracks how many people named in the final broadcast survive."
+        }
+      ],
+      "stages": [
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.broadcast",
+          "stage": 10,
+          "title": "The broadcast",
+          "summary": "The Courier hears a midnight transmission naming three people and the Courier."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.lonewolfradio",
+          "stage": 20,
+          "title": "Lone Wolf Radio",
+          "summary": "The signal trail leads to the abandoned pirate-radio trailer south of Goodsprings."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.meetmara",
+          "stage": 30,
+          "title": "Mara Voss",
+          "summary": "The Courier meets former NCR radio technician Mara Voss at Lone Wolf Radio."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.firstprediction",
+          "stage": 40,
+          "title": "First prediction",
+          "summary": "The Courier investigates the first apparently predicted death."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.secondprediction",
+          "stage": 50,
+          "title": "Second prediction",
+          "summary": "The Courier investigates the second apparently predicted death."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.thirdprediction",
+          "stage": 60,
+          "title": "Third prediction",
+          "summary": "The Courier investigates the third apparently predicted death."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.tracecinder",
+          "stage": 70,
+          "title": "Trace Station CINDER",
+          "summary": "Evidence reveals a buried pre-war emergency relay beneath the broadcast network."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.entercinder",
+          "stage": 80,
+          "title": "Enter Station CINDER",
+          "summary": "The Courier enters the sealed emergency-command bunker."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.confrontcreed",
+          "stage": 90,
+          "title": "Confront Jonas Creed",
+          "summary": "The Courier learns how ORACLE predicts deaths and how the broadcasts shape events."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.finalbroadcast",
+          "stage": 100,
+          "title": "The final broadcast",
+          "summary": "ORACLE names Mara, Creed, the NCR recovery team, and the Courier."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.resolveoracle",
+          "stage": 110,
+          "title": "Resolve ORACLE",
+          "summary": "The Courier decides the fate of ORACLE and Station CINDER."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.stage.complete",
+          "stage": 200,
+          "title": "Dead Air complete",
+          "summary": "The Mojave reacts to the Courier's decision and the final broadcast."
+        }
+      ],
+      "objectives": [
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.objective.goto.lonewolfradio",
+          "text": "Go to Lone Wolf Radio.",
+          "startStageId": "io.github.theboyyss.deadair.quest.deadair.stage.broadcast",
+          "completionStageId": "io.github.theboyyss.deadair.quest.deadair.stage.lonewolfradio"
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.objective.speak.mara",
+          "text": "Speak to Mara Voss.",
+          "startStageId": "io.github.theboyyss.deadair.quest.deadair.stage.lonewolfradio",
+          "completionStageId": "io.github.theboyyss.deadair.quest.deadair.stage.meetmara"
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.objective.investigate.first",
+          "text": "Investigate the first predicted death.",
+          "startStageId": "io.github.theboyyss.deadair.quest.deadair.stage.meetmara",
+          "completionStageId": "io.github.theboyyss.deadair.quest.deadair.stage.firstprediction"
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.objective.investigate.second",
+          "text": "Investigate the second predicted death.",
+          "startStageId": "io.github.theboyyss.deadair.quest.deadair.stage.firstprediction",
+          "completionStageId": "io.github.theboyyss.deadair.quest.deadair.stage.secondprediction"
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.objective.investigate.third",
+          "text": "Investigate the third predicted death.",
+          "startStageId": "io.github.theboyyss.deadair.quest.deadair.stage.secondprediction",
+          "completionStageId": "io.github.theboyyss.deadair.quest.deadair.stage.thirdprediction"
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.objective.trace.signal",
+          "text": "Trace the broadcast to Station CINDER.",
+          "startStageId": "io.github.theboyyss.deadair.quest.deadair.stage.thirdprediction",
+          "completionStageId": "io.github.theboyyss.deadair.quest.deadair.stage.tracecinder"
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.objective.enter.cinder",
+          "text": "Enter Station CINDER.",
+          "startStageId": "io.github.theboyyss.deadair.quest.deadair.stage.tracecinder",
+          "completionStageId": "io.github.theboyyss.deadair.quest.deadair.stage.entercinder"
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.objective.confront.creed",
+          "text": "Confront Jonas Creed.",
+          "startStageId": "io.github.theboyyss.deadair.quest.deadair.stage.entercinder",
+          "completionStageId": "io.github.theboyyss.deadair.quest.deadair.stage.confrontcreed"
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.objective.stop.final",
+          "text": "Prevent the final broadcast from becoming true.",
+          "startStageId": "io.github.theboyyss.deadair.quest.deadair.stage.confrontcreed",
+          "completionStageId": "io.github.theboyyss.deadair.quest.deadair.stage.finalbroadcast"
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.objective.resolve.oracle",
+          "text": "Decide the fate of ORACLE.",
+          "startStageId": "io.github.theboyyss.deadair.quest.deadair.stage.finalbroadcast",
+          "completionStageId": "io.github.theboyyss.deadair.quest.deadair.stage.resolveoracle"
+        }
+      ],
+      "transitions": [
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.broadcast.lonewolfradio",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.broadcast",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.lonewolfradio",
+          "title": "Broadcast to Lone Wolf Radio",
+          "summary": "Declared quest progression transition."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.lonewolfradio.meetmara",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.lonewolfradio",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.meetmara",
+          "title": "Lone Wolf Radio to Meet Mara",
+          "summary": "Declared quest progression transition."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.meetmara.firstprediction",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.meetmara",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.firstprediction",
+          "title": "Meet Mara to First Prediction",
+          "summary": "Declared quest progression transition."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.firstprediction.secondprediction",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.firstprediction",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.secondprediction",
+          "title": "First Prediction to Second Prediction",
+          "summary": "Declared quest progression transition."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.secondprediction.thirdprediction",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.secondprediction",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.thirdprediction",
+          "title": "Second Prediction to Third Prediction",
+          "summary": "Declared quest progression transition."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.thirdprediction.tracecinder",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.thirdprediction",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.tracecinder",
+          "title": "Third Prediction to Trace Station CINDER",
+          "summary": "Declared quest progression transition."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.tracecinder.entercinder",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.tracecinder",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.entercinder",
+          "title": "Trace Station CINDER to Enter Station CINDER",
+          "summary": "Declared quest progression transition."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.entercinder.confrontcreed",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.entercinder",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.confrontcreed",
+          "title": "Enter Station CINDER to Confront Jonas Creed",
+          "summary": "Declared quest progression transition."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.confrontcreed.finalbroadcast",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.confrontcreed",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.finalbroadcast",
+          "title": "Confront Jonas Creed to Final Broadcast",
+          "summary": "Declared quest progression transition."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.finalbroadcast.resolveoracle",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.finalbroadcast",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.resolveoracle",
+          "title": "Final Broadcast to Resolve ORACLE",
+          "summary": "Declared quest progression transition."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.transition.resolveoracle.complete",
+          "fromStageId": "io.github.theboyyss.deadair.quest.deadair.stage.resolveoracle",
+          "toStageId": "io.github.theboyyss.deadair.quest.deadair.stage.complete",
+          "title": "Resolve ORACLE to Complete",
+          "summary": "Declared quest progression transition."
+        }
+      ],
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.condition.started",
+          "conditionType": "stageDone",
+          "stageId": "io.github.theboyyss.deadair.quest.deadair.stage.broadcast",
+          "title": "Dead Air started",
+          "summary": "The opening broadcast has been heard."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.condition.maramet",
+          "conditionType": "stageDone",
+          "stageId": "io.github.theboyyss.deadair.quest.deadair.stage.meetmara",
+          "title": "Mara met",
+          "summary": "The Courier has met Mara Voss."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.condition.evidence.three",
+          "conditionType": "variableEquals",
+          "variableId": "io.github.theboyyss.deadair.quest.deadair.variable.evidencecount",
+          "equalsInteger": 3,
+          "title": "Three prediction scenes investigated",
+          "summary": "The Courier has completed all three investigations."
+        },
+        {
+          "id": "io.github.theboyyss.deadair.quest.deadair.condition.oracle.unresolved",
+          "conditionType": "variableEquals",
+          "variableId": "io.github.theboyyss.deadair.quest.deadair.variable.oracledisposition",
+          "equalsInteger": 0,
+          "title": "ORACLE unresolved",
+          "summary": "The Courier has not selected ORACLE's fate."
+        }
+      ],
+      "externalRefs": [
+        {
+          "provider": "geck",
+          "plugin": "DeadAir.esp",
+          "editorId": "DAQDeadAir"
+        }
+      ],
+      "tags": [
+        "quest",
+        "mystery",
+        "radio",
+        "lone-wolf-radio",
+        "vanilla-assets"
+      ]
+    }
+  ]
+}
