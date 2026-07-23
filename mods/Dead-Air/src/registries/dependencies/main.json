@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "dependency",
+  "id": "io.github.theboyyss.deadair.dependencies",
+  "requires": {
+    "capabilities": [
+      {
+        "id": "game.falloutnv"
+      },
+      {
+        "id": "editor.geck"
+      },
+      {
+        "id": "tool.xedit.record_inspection"
+      }
+    ]
+  }
+}
