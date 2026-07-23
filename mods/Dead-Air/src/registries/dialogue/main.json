@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "0.23.0",
+  "kind": "dialogue",
+  "id": "io.github.theboyyss.deadair.dialogue",
+  "topics": [
+    {
+      "id": "io.github.theboyyss.deadair.topic.mara.greeting",
+      "title": "Mara Voss greeting",
+      "summary": "Opening conversation at Lone Wolf Radio."
+    },
+    {
+      "id": "io.github.theboyyss.deadair.topic.mara.broadcast",
+      "title": "The midnight broadcast",
+      "summary": "Questions about the signal and its victims."
+    },
+    {
+      "id": "io.github.theboyyss.deadair.topic.mara.agreement",
+      "title": "Agree to investigate",
+      "summary": "The Courier accepts Mara's request."
+    },
+    {
+      "id": "io.github.theboyyss.deadair.topic.mara.refusal",
+      "title": "Refuse the investigation",
+      "summary": "The Courier declines without permanently blocking the quest."
+    }
+  ],
+  "questGates": [
+    {
+      "id": "io.github.theboyyss.deadair.dialogue.gate.opening",
+      "questId": "io.github.theboyyss.deadair.quest.deadair",
+      "conditions": [
+        {
+          "id": "io.github.theboyyss.deadair.dialogue.gate.opening.condition.broadcast",
+          "conditionType": "questStageDone",
+          "stageId": "io.github.theboyyss.deadair.quest.deadair.stage.broadcast",
+          "summary": "Opening dialogue is available after the first broadcast."
+        }
+      ],
+      "summary": "Controls Mara's opening dialogue."
+    }
+  ],
+  "lines": [
+    {
+      "id": "io.github.theboyyss.deadair.dialogue.mara.greeting.first",
+      "questId": "io.github.theboyyss.deadair.quest.deadair",
+      "topicId": "io.github.theboyyss.deadair.topic.mara.greeting",
+      "speaker": "MaraVoss",
+      "responseText": "You heard it too. Good. Means I'm not losing my mind—or at least not alone.",
+      "priority": 50,
+      "tags": [
+        "mara",
+        "opening",
+        "lone-wolf-radio"
+      ]
+    },
+    {
+      "id": "io.github.theboyyss.deadair.dialogue.mara.broadcast.names",
+      "questId": "io.github.theboyyss.deadair.quest.deadair",
+      "topicId": "io.github.theboyyss.deadair.topic.mara.broadcast",
+      "speaker": "MaraVoss",
+      "promptText": "What exactly did the broadcast say?",
+      "priority": 50,
+      "responseText": "Three names, a time, and a place. Then yours. Same format the NCR used for casualty traffic, except this signal is older than the Republic.",
+      "tags": [
+        "mara",
+        "exposition"
+      ]
+    },
+    {
+      "id": "io.github.theboyyss.deadair.dialogue.mara.broadcast.station",
+      "questId": "io.github.theboyyss.deadair.quest.deadair",
+      "topicId": "io.github.theboyyss.deadair.topic.mara.broadcast",
+      "speaker": "MaraVoss",
+      "promptText": "Is this trailer transmitting it?",
+      "priority": 50,
+      "responseText": "No. Lone Wolf is only catching the spill. Somebody woke up a stronger relay and aimed it through every dead repeater in the valley.",
+      "tags": [
+        "mara",
+        "location"
+      ]
+    },
+    {
+      "id": "io.github.theboyyss.deadair.dialogue.mara.broadcast.science",
+      "questId": "io.github.theboyyss.deadair.quest.deadair",
+      "topicId": "io.github.theboyyss.deadair.topic.mara.broadcast",
+      "speaker": "MaraVoss",
+      "promptText": "[Science 45] A prediction needs data. What is it listening to?",
+      "priority": 50,
+      "skillGates": [
+        {
+          "id": "io.github.theboyyss.deadair.dialogue.mara.broadcast.science.gate",
+          "skill": "science",
+          "threshold": 45,
+          "summary": "Recognize that the system needs a surveillance data source."
+        }
+      ],
+      "responseText": "Exactly. Caravan schedules, medical calls, troop chatter, water reports—enough scraps and you can make tomorrow look like prophecy.",
+      "tags": [
+        "mara",
+        "science",
+        "evidence"
+      ]
+    },
+    {
+      "id": "io.github.theboyyss.deadair.dialogue.mara.agreement.accept",
+      "questId": "io.github.theboyyss.deadair.quest.deadair",
+      "topicId": "io.github.theboyyss.deadair.topic.mara.agreement",
+      "speaker": "MaraVoss",
+      "promptText": "I'll help you trace it.",
+      "priority": 50,
+      "responseText": "Then we start with the first name. If the broadcast is engineering these deaths, there'll be fingerprints before there are bodies.",
+      "tags": [
+        "mara",
+        "accept"
+      ]
+    },
+    {
+      "id": "io.github.theboyyss.deadair.dialogue.mara.refusal.later",
+      "questId": "io.github.theboyyss.deadair.quest.deadair",
+      "topicId": "io.github.theboyyss.deadair.topic.mara.refusal",
+      "speaker": "MaraVoss",
+      "promptText": "This sounds like someone else's problem.",
+      "priority": 50,
+      "responseText": "It became yours when the voice said your name. I'll be here when that sinks in.",
+      "tags": [
+        "mara",
+        "refusal",
+        "reopenable"
+      ]
+    }
+  ]
+}
