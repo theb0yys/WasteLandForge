@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - chatgpt/build-latest-quest-tools
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
