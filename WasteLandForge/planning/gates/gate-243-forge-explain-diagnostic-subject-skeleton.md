@@ -84,8 +84,8 @@ Gate 243 does not implement:
 
 ## Validation
 
-Gate 243 requires build, targeted explain golden tests, full local tests,
-whitespace checks, stale routing checks, and protected-file status checks.
+Gate 243 requires build, targeted explain golden tests, full local tests, and
+whitespace checks.
 
 ## Next Gate
 

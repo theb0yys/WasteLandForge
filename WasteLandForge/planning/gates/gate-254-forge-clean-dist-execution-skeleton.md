@@ -81,8 +81,7 @@ Gate 254 does not implement:
 ## Validation
 
 Gate 254 requires build, targeted clean golden tests, full local tests,
-manual synthetic dist-root smoke testing, whitespace checks, stale routing
-checks, and protected-file status checks.
+manual synthetic dist-root smoke testing, and whitespace checks.
 
 ## Next Gate
 

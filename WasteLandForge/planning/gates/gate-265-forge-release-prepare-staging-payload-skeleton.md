@@ -98,8 +98,8 @@ Gate 265 does not implement:
 
 ## Validation
 
-Gate 265 requires build, targeted release golden tests, full local tests,
-whitespace checks, stale routing checks, and protected-file status checks.
+Gate 265 requires build, targeted release golden tests, full local tests, and
+whitespace checks.
 
 ## Next Gate
 
