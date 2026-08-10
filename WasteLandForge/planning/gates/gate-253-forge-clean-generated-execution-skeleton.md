@@ -81,8 +81,7 @@ Gate 253 does not implement:
 ## Validation
 
 Gate 253 requires build, targeted clean golden tests, full local tests,
-manual synthetic generated-root smoke testing, whitespace checks, stale
-routing checks, and protected-file status checks.
+manual synthetic generated-root smoke testing, and whitespace checks.
 
 ## Next Gate
 

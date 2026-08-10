@@ -79,8 +79,7 @@ Gate 257 does not implement:
 ## Validation
 
 Gate 257 requires build, targeted clean golden tests, full local tests,
-manual synthetic all-scope smoke testing, whitespace checks, stale routing
-checks, and protected-file status checks.
+manual synthetic all-scope smoke testing, and whitespace checks.
 
 ## Next Gate
 

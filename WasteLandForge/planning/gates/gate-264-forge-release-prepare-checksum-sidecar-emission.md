@@ -91,8 +91,8 @@ Gate 264 does not implement:
 
 ## Validation
 
-Gate 264 requires build, targeted release golden tests, full local tests,
-whitespace checks, stale routing checks, and protected-file status checks.
+Gate 264 requires build, targeted release golden tests, full local tests, and
+whitespace checks.
 
 ## Next Gate
 

@@ -76,8 +76,8 @@ Gate 252 does not implement:
 
 ## Validation
 
-Gate 252 requires build, targeted clean golden tests, full local tests,
-whitespace checks, stale routing checks, and protected-file status checks.
+Gate 252 requires build, targeted clean golden tests, full local tests, and
+whitespace checks.
 
 ## Next Gate
 

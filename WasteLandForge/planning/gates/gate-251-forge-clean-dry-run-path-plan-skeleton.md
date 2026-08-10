@@ -77,8 +77,8 @@ Gate 251 does not implement:
 
 ## Validation
 
-Gate 251 requires build, targeted clean golden tests, full local tests,
-whitespace checks, stale routing checks, and protected-file status checks.
+Gate 251 requires build, targeted clean golden tests, full local tests, and
+whitespace checks.
 
 ## Next Gate
 

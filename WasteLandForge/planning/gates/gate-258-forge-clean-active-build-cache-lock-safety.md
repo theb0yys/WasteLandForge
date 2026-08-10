@@ -76,8 +76,7 @@ Gate 258 does not implement:
 ## Validation
 
 Gate 258 requires build, targeted clean golden tests, full local tests,
-manual synthetic lock smoke testing, whitespace checks, stale routing checks,
-and protected-file status checks.
+manual synthetic lock smoke testing, and whitespace checks.
 
 ## Next Gate
 

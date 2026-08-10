@@ -78,8 +78,8 @@ Gate 249 does not implement:
 
 ## Validation
 
-Gate 249 requires build, targeted explain golden tests, full local tests,
-whitespace checks, stale routing checks, and protected-file status checks.
+Gate 249 requires build, targeted explain golden tests, full local tests, and
+whitespace checks.
 
 ## Next Gate
 
